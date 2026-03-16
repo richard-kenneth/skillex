@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String            @id @default(uuid())
+  name             String?
+  email            String            @unique
+  emailVerified    Boolean           @default(false)
+  image            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  bio              String?
+  credits          Int               @default(0)
+  accounts         Account[]
+  receivedRequests ExchangeRequest[] @relation("Receiver")
+  sentRequests     ExchangeRequest[] @relation("Sender")
+  receivedReviews  Review[]          @relation("Reviewee")
+  givenReviews     Review[]          @relation("Reviewer")
+  sessions         Session[]
+  skills           UserSkill[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String    @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  skills    Skill[]
+}
+
+model Skill {
+  id                 String            @id @default(uuid())
+  name               String            @unique
+  categoryId         String?
+  createdAt          DateTime          @default(now())
+  offeredExchanges   ExchangeRequest[] @relation("OfferedSkill")
+  requestedExchanges ExchangeRequest[] @relation("RequestedSkill")
+  category           Category?         @relation(fields: [categoryId], references: [id])
+  userSkills         UserSkill[]
+}
+
+model UserSkill {
+  id              String    @id @default(uuid())
+  userId          String
+  skillId         String
+  type            SkillType
+  experienceLevel String?
+  createdAt       DateTime  @default(now())
+  skill           Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId, type])
+}
+
+model ExchangeRequest {
+  id               String        @id @default(uuid())
+  senderId         String
+  receiverId       String
+  requestedSkillId String
+  offeredSkillId   String?
+  status           RequestStatus @default(PENDING)
+  message          String?
+  scheduledAt      DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  offeredSkill     Skill?        @relation("OfferedSkill", fields: [offeredSkillId], references: [id])
+  receiver         User          @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  requestedSkill   Skill         @relation("RequestedSkill", fields: [requestedSkillId], references: [id])
+  sender           User          @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  reviews          Review[]
+}
+
+model Review {
+  id         String          @id @default(uuid())
+  reviewerId String
+  revieweeId String
+  exchangeId String
+  rating     Int
+  comment    String?
+  createdAt  DateTime        @default(now())
+  exchange   ExchangeRequest @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  reviewee   User            @relation("Reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
+  reviewer   User            @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewerId, exchangeId])
+}
+
+enum SkillType {
+  OFFERING
+  SEEKING
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
