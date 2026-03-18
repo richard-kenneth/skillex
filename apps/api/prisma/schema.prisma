@@ -8,22 +8,27 @@ datasource db {
 }
 
 model User {
-  id               String            @id @default(uuid())
+  id               String              @id @default(uuid())
   name             String?
-  email            String            @unique
-  emailVerified    Boolean           @default(false)
+  email            String              @unique
+  emailVerified    Boolean             @default(false)
   image            String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
   bio              String?
-  credits          Int               @default(0)
+  pointsBalance    Int                 @default(0)
   accounts         Account[]
-  receivedRequests ExchangeRequest[] @relation("Receiver")
-  sentRequests     ExchangeRequest[] @relation("Sender")
-  receivedReviews  Review[]          @relation("Reviewee")
-  givenReviews     Review[]          @relation("Reviewer")
+  receivedRequests ExchangeRequest[]   @relation("Receiver")
+  sentRequests     ExchangeRequest[]   @relation("Sender")
+  receivedReviews  Review[]            @relation("Reviewee")
+  givenReviews     Review[]            @relation("Reviewer")
   sessions         Session[]
   skills           UserSkill[]
+  exchangesAsTeacher Exchange[]        @relation("Teacher")
+  exchangesAsLearner Exchange[]        @relation("Learner")
+  pointsTransactions PointsTransaction[]
+  sentMessages     Message[]           @relation("MessageSender")
+  receivedMessages Message[]           @relation("MessageReceiver")
 }
 
 model Session {
@@ -78,6 +83,8 @@ model Skill {
   createdAt          DateTime          @default(now())
   offeredExchanges   ExchangeRequest[] @relation("OfferedSkill")
   requestedExchanges ExchangeRequest[] @relation("RequestedSkill")
+  taughtExchanges    Exchange[]        @relation("TaughtSkill")
+  receivedExchanges  Exchange[]        @relation("ReceivedSkill")
   category           Category?         @relation(fields: [categoryId], references: [id])
   userSkills         UserSkill[]
 }
@@ -111,20 +118,82 @@ model ExchangeRequest {
   receiver         User          @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
   requestedSkill   Skill         @relation("RequestedSkill", fields: [requestedSkillId], references: [id])
   sender           User          @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
-  reviews          Review[]
+  exchange         Exchange?
+  messages         Message[]     @relation("RequestMessages")
+}
+
+model Exchange {
+  id                String           @id @default(uuid())
+  requestId         String           @unique
+  teacherId         String
+  learnerId         String
+  taughtSkillId     String
+  receivedSkillId   String?
+  pointsAmount      Int              @default(0)
+  escrowLocked      Boolean          @default(false)
+  sessionCount      Int              @default(1)
+  sessionDuration   Int              @default(60)
+  completedSessions Int              @default(0)
+  status            ExchangeStatus   @default(COMMITTED)
+  completionCriteria String?
+  committedAt       DateTime         @default(now())
+  completedAt       DateTime?
+  request           ExchangeRequest  @relation(fields: [requestId], references: [id])
+  teacher           User             @relation("Teacher", fields: [teacherId], references: [id])
+  learner           User             @relation("Learner", fields: [learnerId], references: [id])
+  taughtSkill       Skill            @relation("TaughtSkill", fields: [taughtSkillId], references: [id])
+  receivedSkill     Skill?           @relation("ReceivedSkill", fields: [receivedSkillId], references: [id])
+  sessions          ExchangeSession[]
+  messages          Message[]        @relation("ExchangeMessages")
+  reviews           Review[]
+}
+
+model ExchangeSession {
+  id          String        @id @default(uuid())
+  exchangeId  String
+  scheduledAt DateTime
+  completedAt DateTime?
+  status      SessionStatus @default(SCHEDULED)
+  exchange    Exchange      @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+}
+
+model PointsTransaction {
+  id          String          @id @default(uuid())
+  userId      String
+  amount      Int
+  type        TransactionType
+  referenceId String?
+  description String?
+  createdAt   DateTime        @default(now())
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id           String           @id @default(uuid())
+  exchangeId   String?
+  requestId    String?
+  senderId     String
+  receiverId   String
+  content      String
+  isPredefined Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  exchange     Exchange?        @relation("ExchangeMessages", fields: [exchangeId], references: [id], onDelete: Cascade)
+  request      ExchangeRequest? @relation("RequestMessages", fields: [requestId], references: [id], onDelete: Cascade)
+  sender       User             @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver     User             @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 }
 
 model Review {
-  id         String          @id @default(uuid())
+  id         String   @id @default(uuid())
   reviewerId String
   revieweeId String
   exchangeId String
   rating     Int
   comment    String?
-  createdAt  DateTime        @default(now())
-  exchange   ExchangeRequest @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
-  reviewee   User            @relation("Reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
-  reviewer   User            @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  exchange   Exchange @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  reviewee   User     @relation("Reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
+  reviewer   User     @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
 
   @@unique([reviewerId, exchangeId])
 }
@@ -140,4 +209,26 @@ enum RequestStatus {
   REJECTED
   COMPLETED
   CANCELLED
+}
+
+enum ExchangeStatus {
+  COMMITTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  MISSED
+  CANCELLED
+}
+
+enum TransactionType {
+  PURCHASE
+  ESCROW_LOCK
+  ESCROW_RELEASE
+  PENALTY
+  CONVERSION
 }
