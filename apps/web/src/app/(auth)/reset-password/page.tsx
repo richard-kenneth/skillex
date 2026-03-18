@@ -15,11 +15,11 @@ import { authClient } from "@/lib/auth-client";
 import { Lock, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
@@ -178,5 +178,31 @@ export default function ResetPasswordPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+       <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12 sm:px-6 lg:px-8">
+        <Card className="w-full max-w-md shadow-lg border-border/50 bg-card/80 backdrop-blur-md">
+          <CardHeader className="space-y-1 text-center">
+             <div className="flex justify-center mb-4">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Lock className="h-10 w-10 text-primary animate-pulse" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl font-bold tracking-tight">
+              Loading
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

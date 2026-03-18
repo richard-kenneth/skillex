@@ -1,9 +1,16 @@
 {
   "name": "@skil-ex2/shared",
   "version": "1.0.0",
-  "main": "index.ts",
-  "types": "index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "echo Done"
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "valibot": "^1.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

@@ -27,8 +27,9 @@ export async function GET(req: NextRequest) {
     
     const token = await at.toJwt();
     return NextResponse.json({ token });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Error generating LiveKit token", e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    const message = e instanceof Error ? e.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

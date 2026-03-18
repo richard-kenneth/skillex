@@ -12,19 +12,22 @@ export class ExchangesService {
   async findMatches(userId: string) {
     // 1. Get current user's skills
     const currentUserSkills = await this.prisma.userSkill.findMany({
-      where: { userId }
+      where: { userId },
     });
 
     const seekingSkillIds = currentUserSkills
-      .filter(s => s.type === 'SEEKING')
-      .map(s => s.skillId);
+      .filter((s) => s.type === 'SEEKING')
+      .map((s) => s.skillId);
 
     const offeringSkillIds = currentUserSkills
-      .filter(s => s.type === 'OFFERING')
-      .map(s => s.skillId);
+      .filter((s) => s.type === 'OFFERING')
+      .map((s) => s.skillId);
 
     if (seekingSkillIds.length === 0) {
-      return { message: "You are not seeking any skills. Add skills you want to learn to find matches!" };
+      return {
+        message:
+          'You are not seeking any skills. Add skills you want to learn to find matches!',
+      };
     }
 
     // 2. Query for perfect matches
@@ -35,17 +38,17 @@ export class ExchangesService {
         skills: {
           some: {
             skillId: { in: seekingSkillIds },
-            type: 'OFFERING'
-          }
+            type: 'OFFERING',
+          },
         },
         AND: {
           skills: {
             some: {
               skillId: { in: offeringSkillIds },
-              type: 'SEEKING'
-            }
-          }
-        }
+              type: 'SEEKING',
+            },
+          },
+        },
       },
       select: {
         id: true,
@@ -53,24 +56,24 @@ export class ExchangesService {
         bio: true,
         image: true,
         skills: {
-          include: { skill: true }
-        }
-      }
+          include: { skill: true },
+        },
+      },
     });
 
     // 3. Query for partial matches (People offering what I seek, but maybe they want Timebank credits instead)
     const partialMatches = await this.prisma.user.findMany({
       where: {
-        id: { 
+        id: {
           not: userId,
-          notIn: perfectMatches.map(m => m.id) // Exclude those already in perfect matches
+          notIn: perfectMatches.map((m) => m.id), // Exclude those already in perfect matches
         },
         skills: {
           some: {
             skillId: { in: seekingSkillIds },
-            type: 'OFFERING'
-          }
-        }
+            type: 'OFFERING',
+          },
+        },
       },
       select: {
         id: true,
@@ -78,20 +81,27 @@ export class ExchangesService {
         bio: true,
         image: true,
         skills: {
-          include: { skill: true }
-        }
-      }
+          include: { skill: true },
+        },
+      },
     });
 
     return {
       perfectMatches,
-      partialMatches
+      partialMatches,
     };
   }
 
-  async createRequest(senderId: string, receiverId: string, requestedSkillId: string, offeredSkillId?: string) {
+  async createRequest(
+    senderId: string,
+    receiverId: string,
+    requestedSkillId: string,
+    offeredSkillId?: string,
+  ) {
     if (senderId === receiverId) {
-      throw new BadRequestException("You cannot request an exchange with yourself.");
+      throw new BadRequestException(
+        'You cannot request an exchange with yourself.',
+      );
     }
 
     return this.prisma.exchangeRequest.create({
@@ -100,9 +110,10 @@ export class ExchangesService {
         receiverId,
         requestedSkillId,
         offeredSkillId,
-        message: "Hi! I saw you are offering a skill I want to learn. Let's connect!",
-        status: 'PENDING'
-      }
+        message:
+          "Hi! I saw you are offering a skill I want to learn. Let's connect!",
+        status: 'PENDING',
+      },
     });
   }
 }

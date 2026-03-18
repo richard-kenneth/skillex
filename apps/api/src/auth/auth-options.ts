@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import type { BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -10,6 +11,28 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
     provider: 'postgresql',
   }),
   experimental: { joins: true },
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      // 1. Listen specifically for the update user endpoint
+      if (ctx.path === '/update-user') {
+        // 2. Check if the incoming payload is trying to modify the image
+        if (ctx.body && 'image' in ctx.body) {
+          // 3. Look for a secret header that only NestJS has access to
+
+          const isTrustedBackend =
+            ctx.headers?.get('x-server-secret') === process.env.INTERNAL_SECRET;
+
+          if (!isTrustedBackend) {
+            // 4. Block the frontend request immediately
+            throw new APIError('FORBIDDEN', {
+              message:
+                'Direct image updates are not allowed. Please use the secure upload flow.',
+            });
+          }
+        }
+      }
+    }),
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
