@@ -31,20 +31,6 @@ export const CommitExchangeSchema = v.strictObject({
     ),
     60,
   ),
-  pointsAmount: v.optional(
-    v.pipe(
-      v.number(),
-      v.integer(),
-      v.minValue(0, "Points amount cannot be negative."),
-    ),
-    0,
-  ),
-  completionCriteria: v.optional(
-    v.pipe(
-      v.string(),
-      v.maxLength(500, "Completion criteria must be under 500 characters."),
-    ),
-  ),
 });
 
 export type CommitExchangePayload = v.InferInput<typeof CommitExchangeSchema>;

@@ -22,12 +22,14 @@ interface MatchesContentProps {
   perfectMatches: MatchUser[];
   partialMatches: MatchUser[];
   currentUserSkills: UserSkill[];
+  currentUserId: string;
 }
 
 export function MatchesContent({
   perfectMatches,
   partialMatches,
   currentUserSkills,
+  currentUserId,
 }: MatchesContentProps) {
   const [search, setSearch] = useState("");
 
@@ -76,7 +78,6 @@ export function MatchesContent({
 
   return (
     <div className="space-y-8">
-      {/* Search */}
       <div className="relative w-full md:w-80">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
@@ -102,7 +103,6 @@ export function MatchesContent({
         </div>
       ) : (
         <>
-          {/* Perfect Matches */}
           {filteredPerfect.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2">
@@ -125,13 +125,13 @@ export function MatchesContent({
                     user={user}
                     isPerfect
                     currentUserSkills={currentUserSkills}
+                    currentUserId={currentUserId}
                   />
                 ))}
               </div>
             </section>
           )}
 
-          {/* Partial Matches */}
           {filteredPartial.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export function MatchesContent({
               </div>
               <p className="text-sm text-muted-foreground">
                 These users offer skills you&apos;re looking for. You can
-                exchange using credits.
+                exchange using points.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPartial.map((user) => (
@@ -154,6 +154,7 @@ export function MatchesContent({
                     user={user}
                     isPerfect={false}
                     currentUserSkills={currentUserSkills}
+                    currentUserId={currentUserId}
                   />
                 ))}
               </div>

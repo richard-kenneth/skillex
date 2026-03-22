@@ -17,8 +17,9 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Home", href: "/" },
-  { label: "Browse", href: "/browse" },
   { label: "Matches", href: "/matches" },
+  { label: "Exchanges", href: "/exchanges" },
+  { label: "Points", href: "/points" },
   { label: "Dashboard", href: "/dashboard" },
 ];
 
@@ -73,15 +74,13 @@ export function Navbar() {
                   Log out
                 </Button>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-9 w-9 rounded-full outline-none ring-offset-background transition-all hover:ring-2 hover:ring-primary/20">
+                  <DropdownMenuTrigger className="relative h-9 w-9 rounded-full outline-none ring-offset-background transition-all hover:ring-2 hover:ring-primary/20 cursor-pointer">
                       <Avatar className="h-9 w-9 border border-white/10">
                         <AvatarImage src={session.user.image ?? ""} alt={session.user.name ?? "User avatar"} />
                         <AvatarFallback className="bg-primary/10 text-primary font-medium">
                           {session.user.name?.charAt(0) ?? "U"}
                         </AvatarFallback>
                       </Avatar>
-                    </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-64 p-2 bg-zinc-950 border-zinc-800" align="end" sideOffset={8}>
                     <div className="flex flex-col space-y-1 p-2">
@@ -91,13 +90,13 @@ export function Navbar() {
                       </p>
                     </div>
                     <DropdownMenuSeparator className="bg-zinc-800" />
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem className="p-0">
                       <Link href="/dashboard" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
                         <LayoutDashboard className="h-4 w-4" />
                         <span>Dashboard</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem className="p-0">
                       <Link href="/dashboard/profile" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
                         <User className="h-4 w-4" />
                         <span>Profile Settings</span>
@@ -137,16 +136,14 @@ export function Navbar() {
 
           {/* Mobile Menu Toggle */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden text-zinc-400 hover:text-white">
+            <DropdownMenuTrigger className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle Menu</span>
-              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[240px] md:hidden bg-zinc-950 border-zinc-800 p-2">
               <div className="flex flex-col gap-1">
                 {navItems.map((item) => (
-                  <DropdownMenuItem key={item.href} asChild>
+                  <DropdownMenuItem key={item.href} className="p-0">
                     <Link 
                       href={item.href} 
                       className={cn(
@@ -167,7 +164,7 @@ export function Navbar() {
                       <p className="text-sm font-medium text-white truncate">{session.user.name}</p>
                       <p className="text-xs text-zinc-500 truncate">{session.user.email}</p>
                     </div>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem className="p-0">
                       <Link href="/dashboard/profile" className="flex w-full items-center gap-2 p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">
                         <User className="h-4 w-4" />
                         <span>Profile Settings</span>
@@ -183,10 +180,10 @@ export function Navbar() {
                   </>
                 ) : (
                   <>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem className="p-0">
                       <Link href="/sign-in" className="flex w-full items-center p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">Log in</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem className="p-0">
                       <Link href="/sign-up" className="flex w-full items-center p-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium">Get Started</Link>
                     </DropdownMenuItem>
                   </>

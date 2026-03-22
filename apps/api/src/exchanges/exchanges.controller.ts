@@ -2,18 +2,31 @@ import {
   Body,
   Controller,
   Get,
+  MessageEvent,
   Param,
   Patch,
   Post,
   Req,
+  Sse,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
+  type AcceptSlotsDto,
+  AcceptSlotsSchema,
   type CreateExchangeRequestDto,
   CreateExchangeRequestSchema,
+  type ProposeTermsAndSlotsDto,
+  ProposeTermsAndSlotsSchema,
+  type SendMessageDto,
+  SendMessageSchema,
+  type UpdateAvailabilityDto,
+  UpdateAvailabilitySchema,
 } from '@skil-ex2/shared';
 import { Request } from 'express';
+import { Observable, fromEvent } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
 import { ExchangesService } from './exchanges.service';
@@ -21,7 +34,31 @@ import { ExchangesService } from './exchanges.service';
 @Controller('exchanges')
 @UseGuards(BetterAuthGuard)
 export class ExchangesController {
-  constructor(private readonly exchangesService: ExchangesService) {}
+  constructor(
+    private readonly exchangesService: ExchangesService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
+
+  @Sse('stream')
+  streamEvents(
+    @Req() req: Request & { user: { id: string } },
+  ): Observable<MessageEvent> {
+    return (
+      fromEvent(this.eventEmitter, 'exchange.updated') as Observable<{
+        userIds: string[];
+        requestId: string;
+        message: string;
+      }>
+    ).pipe(
+      filter((payload) => payload.userIds?.includes(req.user.id)),
+      map((payload) => ({
+        data: {
+          requestId: payload.requestId,
+          message: payload.message,
+        },
+      })),
+    );
+  }
 
   @Get('matches')
   getMatches(@Req() req: Request & { user: { id: string } }) {
@@ -33,6 +70,11 @@ export class ExchangesController {
     return this.exchangesService.getMyRequests(req.user.id);
   }
 
+  @Get()
+  getMyExchanges(@Req() req: Request & { user: { id: string } }) {
+    return this.exchangesService.getMyExchanges(req.user.id);
+  }
+
   @Post('request')
   @UsePipes(new ValibotValidationPipe(CreateExchangeRequestSchema))
   createRequest(
@@ -42,12 +84,68 @@ export class ExchangesController {
     return this.exchangesService.createRequest(req.user.id, data);
   }
 
-  @Patch('requests/:id/accept')
-  acceptRequest(
+  @Get('requests/:id')
+  getRequestById(
     @Req() req: Request & { user: { id: string } },
     @Param('id') requestId: string,
   ) {
-    return this.exchangesService.acceptRequest(req.user.id, requestId);
+    return this.exchangesService.getRequestById(req.user.id, requestId);
+  }
+
+  @Post('requests/:id/messages')
+  sendMessage(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') requestId: string,
+    @Body(new ValibotValidationPipe(SendMessageSchema)) data: SendMessageDto,
+  ) {
+    return this.exchangesService.sendMessage(req.user.id, requestId, data);
+  }
+
+  @Post('requests/:id/propose')
+  @UsePipes()
+  proposeTermsAndSlots(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') requestId: string,
+    @Body(new ValibotValidationPipe(ProposeTermsAndSlotsSchema))
+    data: ProposeTermsAndSlotsDto,
+  ) {
+    return this.exchangesService.proposeTermsAndSlots(
+      req.user.id,
+      requestId,
+      data,
+    );
+  }
+
+  @Post('requests/:id/accept-slots')
+  @UsePipes()
+  acceptTermsAndSlots(
+    @Req() req: Request & { user: { id: string } },
+    @Body(new ValibotValidationPipe(AcceptSlotsSchema)) data: AcceptSlotsDto,
+  ) {
+    return this.exchangesService.acceptTermsAndSlots(req.user.id, data);
+  }
+
+  @Patch('requests/:id/availability')
+  @UsePipes()
+  updateAvailability(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') requestId: string,
+    @Body(new ValibotValidationPipe(UpdateAvailabilitySchema))
+    data: UpdateAvailabilityDto,
+  ) {
+    return this.exchangesService.updateAvailability(
+      req.user.id,
+      requestId,
+      data,
+    );
+  }
+
+  @Get('requests/:id/messages')
+  getMessages(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') requestId: string,
+  ) {
+    return this.exchangesService.getMessages(req.user.id, requestId);
   }
 
   @Patch('requests/:id/reject')

@@ -16,6 +16,8 @@ export class AuthService {
     );
     console.log('Secret Loaded:', !!process.env.BETTER_AUTH_SECRET);
 
-    this.auth = betterAuth(getAuthConfig(this.prisma as PrismaClient));
+    this.auth = betterAuth(
+      getAuthConfig(this.prisma as unknown as PrismaClient),
+    );
   }
 }

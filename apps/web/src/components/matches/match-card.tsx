@@ -26,15 +26,15 @@ interface MatchCardProps {
   user: MatchUser;
   isPerfect: boolean;
   currentUserSkills: UserSkill[];
+  currentUserId: string;
 }
 
-export function MatchCard({ user, isPerfect, currentUserSkills }: MatchCardProps) {
+export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }: MatchCardProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const offering = user.skills.filter((s) => s.type === "OFFERING");
   const seeking = user.skills.filter((s) => s.type === "SEEKING");
 
-  // Skills I'm seeking that they offer (overlap)
   const mySeekingIds = new Set(
     currentUserSkills.filter((s) => s.type === "SEEKING").map((s) => s.skill.id),
   );
@@ -55,7 +55,6 @@ export function MatchCard({ user, isPerfect, currentUserSkills }: MatchCardProps
         )}
 
         <CardContent className="p-6 space-y-4">
-          {/* User Info */}
           <div className="flex items-center gap-4">
             <Avatar className="h-14 w-14 border-2 border-border/50 group-hover:border-primary/30 transition-colors">
               <AvatarImage src={user.image ?? ""} alt={user.name ?? "User"} />
@@ -75,9 +74,7 @@ export function MatchCard({ user, isPerfect, currentUserSkills }: MatchCardProps
             </div>
           </div>
 
-          {/* Skills */}
           <div className="space-y-3">
-            {/* What they offer */}
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                 Can Teach
@@ -100,7 +97,6 @@ export function MatchCard({ user, isPerfect, currentUserSkills }: MatchCardProps
               </div>
             </div>
 
-            {/* What they seek */}
             {seeking.length > 0 && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
@@ -126,7 +122,6 @@ export function MatchCard({ user, isPerfect, currentUserSkills }: MatchCardProps
             )}
           </div>
 
-          {/* Action */}
           <Button
             className="w-full mt-2 gap-2"
             onClick={() => setDialogOpen(true)}
@@ -142,6 +137,7 @@ export function MatchCard({ user, isPerfect, currentUserSkills }: MatchCardProps
         onOpenChange={setDialogOpen}
         matchUser={user}
         currentUserSkills={currentUserSkills}
+        currentUserId={currentUserId}
       />
     </>
   );

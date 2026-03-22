@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Send } from "lucide-react";
+import { Coins, Loader2, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -31,6 +31,7 @@ interface RequestDialogProps {
   onOpenChange: (open: boolean) => void;
   matchUser: MatchUser;
   currentUserSkills: UserSkill[];
+  currentUserId: string;
 }
 
 export function RequestDialog({
@@ -38,11 +39,13 @@ export function RequestDialog({
   onOpenChange,
   matchUser,
   currentUserSkills,
+  currentUserId,
 }: RequestDialogProps) {
   const router = useRouter();
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
+  const [pointsAmount, setPointsAmount] = useState(0);
+  const [payerIsMe, setPayerIsMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,18 +60,24 @@ export function RequestDialog({
     setLoading(true);
     setError(null);
     try {
+      const body: Record<string, unknown> = {
+        receiverId: matchUser.id,
+        requestedSkillId: selectedSkillId,
+        offeredSkillId: selectedOfferId ?? undefined,
+      };
+
+      if (pointsAmount > 0) {
+        body.pointsProposal = pointsAmount;
+        body.pointsPayerId = payerIsMe ? currentUserId : matchUser.id;
+      }
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/request`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({
-            receiverId: matchUser.id,
-            requestedSkillId: selectedSkillId,
-            offeredSkillId: selectedOfferId ?? undefined,
-            message: message || undefined,
-          }),
+          body: JSON.stringify(body),
         },
       );
 
@@ -78,6 +87,10 @@ export function RequestDialog({
       }
 
       onOpenChange(false);
+      setSelectedSkillId(null);
+      setSelectedOfferId(null);
+      setPointsAmount(0);
+      setPayerIsMe(true);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -159,22 +172,56 @@ export function RequestDialog({
             </div>
           )}
 
-          {/* Message */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium">
-              Message{" "}
-              <span className="text-muted-foreground font-normal">
-                (optional)
+          {/* Points Proposal */}
+          <div className="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-4">
+            <div className="flex items-center gap-2">
+              <Coins className="h-4 w-4 text-amber-400" />
+              <p className="text-sm font-medium">Points Proposal</p>
+              <span className="text-xs text-muted-foreground">
+                (for uneven exchanges)
               </span>
-            </p>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Hi! I'd love to learn from you..."
-              className="w-full rounded-md border border-border/50 bg-muted/50 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              rows={3}
-              maxLength={500}
-            />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={0}
+                value={pointsAmount}
+                onChange={(e) =>
+                  setPointsAmount(Math.max(0, parseInt(e.target.value) || 0))
+                }
+                className="w-24 rounded-md border border-border/50 bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                placeholder="0"
+              />
+              <span className="text-sm text-muted-foreground">points</span>
+            </div>
+
+            {pointsAmount > 0 && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPayerIsMe(true)}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                    payerIsMe
+                      ? "bg-primary/20 text-primary border border-primary/30"
+                      : "bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted"
+                  }`}
+                >
+                  I&apos;ll pay
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayerIsMe(false)}
+                  className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+                    !payerIsMe
+                      ? "bg-primary/20 text-primary border border-primary/30"
+                      : "bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted"
+                  }`}
+                >
+                  They pay
+                </button>
+              </div>
+            )}
           </div>
 
           {error && (

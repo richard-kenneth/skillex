@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Check, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -9,6 +9,10 @@ interface RequestActionsProps {
   requestId: string;
   type: "received" | "sent";
   status: string;
+  pointsProposal: number;
+  pointsPayerId: string | null;
+  currentUserId: string;
+  otherUserName: string;
 }
 
 export function RequestActions({
@@ -19,9 +23,7 @@ export function RequestActions({
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
 
-  if (status !== "PENDING") return null;
-
-  const handleAction = async (action: "accept" | "reject" | "cancel") => {
+  const handleAction = async (action: "reject" | "cancel") => {
     setLoading(action);
     try {
       const res = await fetch(
@@ -45,23 +47,11 @@ export function RequestActions({
     }
   };
 
+  if (status !== "PENDING") return null;
+
   if (type === "received") {
     return (
       <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5 border-green-500/30 text-green-400 hover:bg-green-500/10 hover:text-green-300"
-          onClick={() => handleAction("accept")}
-          disabled={loading !== null}
-        >
-          {loading === "accept" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Check className="h-3.5 w-3.5" />
-          )}
-          Accept
-        </Button>
         <Button
           size="sm"
           variant="outline"

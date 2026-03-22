@@ -24,7 +24,7 @@ export default async function DashboardPage() {
 
   const { user } = session;
 
-  // Re-fetch user from API to get the latest bio, credits and skills
+  // Re-fetch user from API to get the latest bio, pointsBalance and skills
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/me`,
     {
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
             className="px-3 py-1 text-sm font-medium flex items-center gap-2 bg-primary/10 border-primary/20 hover:bg-primary/20 transition-colors"
           >
             <Coins className="h-4 w-4 text-primary" />
-            <span>{fullUser.credits ?? 0} Credits</span>
+            <span>{fullUser.pointsBalance ?? 0} Points</span>
           </Badge>
           <Button
             variant="outline"

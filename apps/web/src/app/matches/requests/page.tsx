@@ -45,6 +45,7 @@ export default async function RequestsPage() {
       <RequestsContent
         received={requests.received}
         sent={requests.sent}
+        currentUserId={session.user.id}
       />
     </div>
   );

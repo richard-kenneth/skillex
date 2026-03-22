@@ -52,6 +52,7 @@ export default async function MatchesPage() {
         perfectMatches={matches.perfectMatches}
         partialMatches={matches.partialMatches}
         currentUserSkills={user.skills || []}
+        currentUserId={session.user.id}
       />
     </div>
   );

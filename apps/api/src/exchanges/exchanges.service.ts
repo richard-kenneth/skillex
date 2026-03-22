@@ -5,12 +5,25 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateExchangeRequestDto } from '@skil-ex2/shared';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  AcceptSlotsDto,
+  CreateExchangeRequestDto,
+  ProposeTermsAndSlotsDto,
+  SendMessageDto,
+  type UpdateAvailabilityDto,
+} from '@skil-ex2/shared';
+import { ExchangeRequest } from '../generated/prisma/client';
+import { PointsService } from '../points/points.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ExchangesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private pointsService: PointsService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   /**
    * Finds users who are OFFERING the skill the current user is SEEKING,
@@ -91,10 +104,31 @@ export class ExchangesService {
     return { perfectMatches, partialMatches };
   }
 
+  /**
+   * Create a new exchange request with an optional initial points proposal.
+   */
   async createRequest(senderId: string, data: CreateExchangeRequestDto) {
     if (senderId === data.receiverId) {
       throw new BadRequestException(
         'You cannot request an exchange with yourself.',
+      );
+    }
+
+    // If points > 0, a payer must be specified
+    if ((data.pointsProposal ?? 0) > 0 && !data.pointsPayerId) {
+      throw new BadRequestException(
+        'pointsPayerId is required when proposing points.',
+      );
+    }
+
+    // Payer must be sender or receiver
+    if (
+      data.pointsPayerId &&
+      data.pointsPayerId !== senderId &&
+      data.pointsPayerId !== data.receiverId
+    ) {
+      throw new BadRequestException(
+        'Points payer must be the sender or receiver.',
       );
     }
 
@@ -114,13 +148,22 @@ export class ExchangesService {
       );
     }
 
-    return this.prisma.exchangeRequest.create({
+    const request = await this.prisma.exchangeRequest.create({
       data: {
         senderId,
         receiverId: data.receiverId,
         requestedSkillId: data.requestedSkillId,
         offeredSkillId: data.offeredSkillId,
-        message: data.message ?? "Hi! I'd love to exchange skills with you.",
+        requestedSkillSessions: data.requestedSkillSessions ?? 1,
+        requestedSkillDuration: data.requestedSkillDuration ?? 60,
+        offeredSkillSessions: data.offeredSkillSessions ?? 1,
+        offeredSkillDuration: data.offeredSkillDuration ?? 60,
+        senderAgreed: true,
+        receiverAgreed: false,
+        pointsProposal: data.pointsProposal ?? 0,
+        pointsPayerId:
+          (data.pointsProposal ?? 0) > 0 ? data.pointsPayerId : null,
+        pointsProposedBy: (data.pointsProposal ?? 0) > 0 ? senderId : null,
         status: 'PENDING',
       },
       include: {
@@ -129,16 +172,46 @@ export class ExchangesService {
         receiver: { select: { id: true, name: true, image: true } },
       },
     });
+
+    this.eventEmitter.emit('exchange.updated', {
+      userIds: [request.senderId, request.receiverId],
+      requestId: request.id,
+    });
+
+    return request;
   }
 
   async getMyRequests(userId: string) {
+    const includeFields = {
+      requestedSkill: true,
+      offeredSkill: true,
+      proposedSlots: {
+        include: { skill: true },
+        orderBy: { createdAt: 'asc' as const },
+      },
+      messages: {
+        orderBy: { createdAt: 'asc' as const },
+        select: {
+          id: true,
+          messageKey: true,
+          pointsProposal: true,
+          pointsPayerId: true,
+          requestedSkillSessions: true,
+          requestedSkillDuration: true,
+          offeredSkillSessions: true,
+          offeredSkillDuration: true,
+          senderId: true,
+          createdAt: true,
+        },
+      },
+    };
+
     const [sent, received] = await Promise.all([
       this.prisma.exchangeRequest.findMany({
         where: { senderId: userId },
         include: {
           receiver: { select: { id: true, name: true, image: true } },
-          requestedSkill: true,
-          offeredSkill: true,
+          ...includeFields,
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -146,8 +219,7 @@ export class ExchangesService {
         where: { receiverId: userId },
         include: {
           sender: { select: { id: true, name: true, image: true } },
-          requestedSkill: true,
-          offeredSkill: true,
+          ...includeFields,
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -156,25 +228,479 @@ export class ExchangesService {
     return { sent, received };
   }
 
-  async acceptRequest(userId: string, requestId: string) {
-    const request = await this.findRequestOrFail(requestId);
+  /**
+   * Get a single request with full details for the negotiation page.
+   */
+  async getRequestById(userId: string, requestId: string) {
+    const request = await this.prisma.exchangeRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        sender: { select: { id: true, name: true, image: true } },
+        receiver: { select: { id: true, name: true, image: true } },
+        requestedSkill: true,
+        offeredSkill: true,
+        proposedSlots: {
+          include: { 
+            skill: true,
+            proposer: { select: { id: true, name: true } }
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            messageKey: true,
+            pointsProposal: true,
+            pointsPayerId: true,
+            requestedSkillSessions: true,
+            requestedSkillDuration: true,
+            offeredSkillSessions: true,
+            offeredSkillDuration: true,
+            senderId: true,
+            createdAt: true,
+          },
+        },
+        exchange: { select: { id: true } },
+      },
+    });
 
-    if (request.receiverId !== userId) {
-      throw new ForbiddenException('Only the receiver can accept a request.');
+    if (!request) {
+      throw new NotFoundException('Exchange request not found.');
     }
-    if (request.status !== 'PENDING') {
-      throw new BadRequestException(
-        `Cannot accept a request with status: ${request.status}`,
+
+    if (request.senderId !== userId && request.receiverId !== userId) {
+      throw new ForbiddenException(
+        'Only the request participants can view this request.',
       );
     }
 
-    return this.prisma.exchangeRequest.update({
-      where: { id: requestId },
-      data: { status: 'ACCEPTED' },
-      include: {
-        sender: { select: { id: true, name: true, image: true } },
-        requestedSkill: true,
-        offeredSkill: true,
+    return request;
+  }
+
+  /**
+   * Send a predefined message on a PENDING request.
+   * Handles term proposals and mutual agreement.
+   */
+  async sendMessage(userId: string, requestId: string, data: SendMessageDto) {
+    const request = await this.findRequestOrFail(requestId);
+
+    if (request.senderId !== userId && request.receiverId !== userId) {
+      throw new ForbiddenException(
+        'Only the request participants can send messages.',
+      );
+    }
+
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException(
+        'Can only send messages on PENDING requests.',
+      );
+    }
+
+    const otherUserId =
+      userId === request.senderId ? request.receiverId : request.senderId;
+
+    let isCounterProposal = false;
+    let newSenderAgreed = request.senderAgreed;
+    let newReceiverAgreed = request.receiverAgreed;
+
+    if (data.messageKey === 'PROPOSE_TERMS') {
+      isCounterProposal = true;
+      if (!data.pointsPayerId && (data.pointsProposal ?? 0) > 0) {
+        throw new BadRequestException(
+          'pointsPayerId is required when proposing points.',
+        );
+      }
+      if (userId === request.senderId) {
+        newSenderAgreed = true;
+        newReceiverAgreed = false;
+      } else {
+        newReceiverAgreed = true;
+        newSenderAgreed = false;
+      }
+    } else if (data.messageKey === 'AGREE_TO_TERMS') {
+      if (userId === request.senderId) {
+        newSenderAgreed = true;
+      } else {
+        newReceiverAgreed = true;
+      }
+    }
+
+    const [message] = await this.prisma.$transaction([
+      this.prisma.message.create({
+        data: {
+          requestId,
+          senderId: userId,
+          receiverId: otherUserId,
+          messageKey: data.messageKey,
+          pointsProposal: isCounterProposal ? data.pointsProposal : null,
+          pointsPayerId: isCounterProposal ? data.pointsPayerId : null,
+          requestedSkillSessions: isCounterProposal
+            ? data.requestedSkillSessions
+            : null,
+          requestedSkillDuration: isCounterProposal
+            ? data.requestedSkillDuration
+            : null,
+          offeredSkillSessions: isCounterProposal
+            ? data.offeredSkillSessions
+            : null,
+          offeredSkillDuration: isCounterProposal
+            ? data.offeredSkillDuration
+            : null,
+        },
+      }),
+      this.prisma.exchangeRequest.update({
+        where: { id: requestId },
+        data: {
+          senderAgreed: newSenderAgreed,
+          receiverAgreed: newReceiverAgreed,
+          ...(isCounterProposal && {
+            pointsProposal: data.pointsProposal ?? 0,
+            pointsPayerId: data.pointsPayerId ?? null,
+            pointsProposedBy: userId,
+            requestedSkillSessions: data.requestedSkillSessions,
+            requestedSkillDuration: data.requestedSkillDuration,
+            offeredSkillSessions: data.offeredSkillSessions,
+            offeredSkillDuration: data.offeredSkillDuration,
+          }),
+        },
+      }),
+    ]);
+
+    // Re-fetch to check auto-commit conditions
+    const updatedRequest = await this.findRequestOrFail(requestId);
+    await this.checkAutoCommit(updatedRequest);
+
+    this.eventEmitter.emit('exchange.updated', {
+      userIds: [request.senderId, request.receiverId],
+      requestId: request.id,
+      message,
+    });
+
+    return message;
+  }
+
+  /**
+   * Propose terms and available time slots.
+   */
+  async proposeTermsAndSlots(
+    userId: string,
+    requestId: string,
+    data: ProposeTermsAndSlotsDto,
+  ) {
+    const request = await this.findRequestOrFail(requestId);
+
+    if (request.senderId !== userId && request.receiverId !== userId) {
+      throw new ForbiddenException(
+        'Only the request participants can propose.',
+      );
+    }
+
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Can only propose on PENDING requests.');
+    }
+
+    if (!data.pointsPayerId && (data.pointsProposal ?? 0) > 0) {
+      throw new BadRequestException(
+        'pointsPayerId is required when proposing points.',
+      );
+    }
+
+    const validSkillIds = [
+      request.requestedSkillId,
+      request.offeredSkillId,
+    ].filter(Boolean) as string[];
+
+    for (const slot of data.slots) {
+      if (!validSkillIds.includes(slot.skillId)) {
+        throw new BadRequestException(
+          `Skill ${slot.skillId} is not part of this exchange.`,
+        );
+      }
+    }
+
+    const otherUserId =
+      userId === request.senderId ? request.receiverId : request.senderId;
+
+    let newSenderAgreed = false;
+    let newReceiverAgreed = false;
+    if (userId === request.senderId) {
+      newSenderAgreed = true;
+    } else {
+      newReceiverAgreed = true;
+    }
+
+    const existingSlots = await this.prisma.proposedSlot.findMany({
+      where: { requestId, status: 'PROPOSED' }
+    });
+
+    const existingSlotsMap = new Map<string, string>();
+    for (const slot of existingSlots) {
+      const key = `${slot.skillId}-${slot.dayOfWeek}-${slot.startTime}`;
+      if (!existingSlotsMap.has(key)) {
+        existingSlotsMap.set(key, slot.proposerId);
+      }
+    }
+
+    const [, , message] = await this.prisma.$transaction([
+      this.prisma.proposedSlot.deleteMany({
+        where: { requestId, status: 'PROPOSED' },
+      }),
+      this.prisma.proposedSlot.createMany({
+        data: data.slots.map((slot) => {
+          const key = `${slot.skillId}-${slot.dayOfWeek}-${slot.startTime}`;
+          return {
+            requestId,
+            proposerId: existingSlotsMap.get(key) || userId,
+            skillId: slot.skillId,
+            dayOfWeek: slot.dayOfWeek,
+            startTime: slot.startTime,
+          };
+        }),
+      }),
+      this.prisma.message.create({
+        data: {
+          requestId,
+          senderId: userId,
+          receiverId: otherUserId,
+          messageKey: 'PROPOSE_TERMS',
+          pointsProposal: data.pointsProposal,
+          pointsPayerId: data.pointsPayerId,
+          requestedSkillSessions: data.requestedSkillSessions,
+          requestedSkillDuration: data.requestedSkillDuration,
+          offeredSkillSessions: data.offeredSkillSessions,
+          offeredSkillDuration: data.offeredSkillDuration,
+        },
+      }),
+      this.prisma.exchangeRequest.update({
+        where: { id: requestId },
+        data: {
+          senderAgreed: newSenderAgreed,
+          receiverAgreed: newReceiverAgreed,
+          pointsProposal: data.pointsProposal ?? 0,
+          pointsPayerId: data.pointsPayerId ?? null,
+          pointsProposedBy: userId,
+          requestedSkillSessions: data.requestedSkillSessions,
+          requestedSkillDuration: data.requestedSkillDuration,
+          offeredSkillSessions: data.offeredSkillSessions,
+          offeredSkillDuration: data.offeredSkillDuration,
+        },
+      }),
+    ]);
+
+    const updatedRequest = await this.findRequestOrFail(requestId);
+    await this.checkAutoCommit(updatedRequest);
+
+    this.eventEmitter.emit('exchange.updated', {
+      userIds: [request.senderId, request.receiverId],
+      requestId: request.id,
+      message,
+    });
+
+    return message;
+  }
+
+  /**
+   * Accept proposed time slots and overall terms.
+   */
+  async acceptTermsAndSlots(userId: string, data: AcceptSlotsDto) {
+    const request = await this.findRequestOrFail(data.requestId);
+
+    if (request.senderId !== userId && request.receiverId !== userId) {
+      throw new ForbiddenException('Only the request participants can accept.');
+    }
+
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Can only accept on PENDING requests.');
+    }
+
+    const slots = await this.prisma.proposedSlot.findMany({
+      where: {
+        id: { in: data.slotIds },
+        requestId: data.requestId,
+      },
+    });
+
+    if (slots.length !== data.slotIds.length || data.slotIds.length === 0) {
+      throw new BadRequestException(
+        'One or more slot IDs are invalid or missing.',
+      );
+    }
+
+
+    const otherUserId =
+      userId === request.senderId ? request.receiverId : request.senderId;
+
+    let newSenderAgreed = request.senderAgreed;
+    let newReceiverAgreed = request.receiverAgreed;
+    if (userId === request.senderId) {
+      newSenderAgreed = true;
+    } else {
+      newReceiverAgreed = true;
+    }
+
+    const [, message] = await this.prisma.$transaction([
+      this.prisma.proposedSlot.updateMany({
+        where: { id: { in: data.slotIds } },
+        data: { status: 'ACCEPTED' },
+      }),
+      this.prisma.exchangeRequest.update({
+        where: { id: data.requestId },
+        data: {
+          senderAgreed: newSenderAgreed,
+          receiverAgreed: newReceiverAgreed,
+        },
+      }),
+      this.prisma.message.create({
+        data: {
+          requestId: data.requestId,
+          senderId: userId,
+          receiverId: otherUserId,
+          messageKey: 'AGREE_TO_TERMS',
+        },
+      }),
+    ]);
+
+    const updatedRequest = await this.findRequestOrFail(data.requestId);
+    await this.checkAutoCommit(updatedRequest);
+
+    this.eventEmitter.emit('exchange.updated', {
+      userIds: [request.senderId, request.receiverId],
+      requestId: request.id,
+      message,
+    });
+
+    return message;
+  }
+
+  /**
+   * Check if auto-commit conditions are met:
+   * 1. Both users agreed on terms
+   * 2. All required sessions have accepted slots
+   */
+  private async checkAutoCommit(request: ExchangeRequest) {
+    if (request.status !== 'PENDING') return;
+    if (!request.senderAgreed || !request.receiverAgreed) return;
+
+    const totalRequired =
+      request.requestedSkillSessions + request.offeredSkillSessions;
+
+    const acceptedSlotCount = await this.prisma.proposedSlot.count({
+      where: {
+        requestId: request.id,
+        status: 'ACCEPTED',
+      },
+    });
+
+    if (acceptedSlotCount >= totalRequired) {
+      await this.commitExchangeInternal(request);
+    }
+  }
+
+  /**
+   * Internal mechanism to commit an exchange.
+   * Creates the Exchange, ExchangeSession records, and locks escrow.
+   */
+  private async commitExchangeInternal(request: ExchangeRequest) {
+    const pointsAmount = request.pointsProposal;
+    const pointsPayerId = request.pointsPayerId;
+
+    if (pointsAmount > 0 && pointsPayerId) {
+      await this.pointsService.lockEscrow(
+        pointsPayerId,
+        pointsAmount,
+        request.id,
+      );
+    }
+
+    // Get accepted slots to create sessions
+    const acceptedSlots = await this.prisma.proposedSlot.findMany({
+      where: { requestId: request.id, status: 'ACCEPTED' },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Create the exchange with sessions
+    await this.prisma.$transaction([
+      this.prisma.exchange.create({
+        data: {
+          requestId: request.id,
+          senderId: request.senderId,
+          receiverId: request.receiverId,
+          taughtSkillId: request.requestedSkillId,
+          receivedSkillId: request.offeredSkillId,
+          pointsAmount,
+          pointsPayerId,
+          escrowLocked: pointsAmount > 0,
+          requestedSkillSessions: request.requestedSkillSessions,
+          requestedSkillDuration: request.requestedSkillDuration,
+          offeredSkillSessions: request.offeredSkillSessions,
+          offeredSkillDuration: request.offeredSkillDuration,
+          status: 'COMMITTED',
+          sessions: {
+            create: acceptedSlots.map((slot) => {
+              // Convert dayOfWeek + startTime to next occurrence
+              const scheduledAt = this.getNextOccurrence(
+                slot.dayOfWeek,
+                slot.startTime,
+              );
+              return {
+                skillId: slot.skillId,
+                scheduledAt,
+              };
+            }),
+          },
+        },
+      }),
+      this.prisma.exchangeRequest.update({
+        where: { id: request.id },
+        data: { status: 'COMMITTED' },
+      }),
+    ]);
+  }
+
+  /**
+   * Convert dayOfWeek (0=Sun..6=Sat) + startTime ("14:00") to a real Date
+   * for the next occurrence of that day from today.
+   */
+  private getNextOccurrence(dayOfWeek: number, startTime: string): Date {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const now = new Date();
+    const todayDay = now.getDay();
+    let daysUntil = dayOfWeek - todayDay;
+    if (daysUntil <= 0) daysUntil += 7;
+
+    const date = new Date(now);
+    date.setDate(date.getDate() + daysUntil);
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  }
+
+  /**
+   * Get the negotiation thread for a request.
+   */
+  async getMessages(userId: string, requestId: string) {
+    const request = await this.findRequestOrFail(requestId);
+
+    if (request.senderId !== userId && request.receiverId !== userId) {
+      throw new ForbiddenException(
+        'Only the request participants can view messages.',
+      );
+    }
+
+    return this.prisma.message.findMany({
+      where: { requestId },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        messageKey: true,
+        pointsProposal: true,
+        pointsPayerId: true,
+        requestedSkillSessions: true,
+        requestedSkillDuration: true,
+        offeredSkillSessions: true,
+        offeredSkillDuration: true,
+        senderId: true,
+        createdAt: true,
       },
     });
   }
@@ -183,45 +709,70 @@ export class ExchangesService {
     const request = await this.findRequestOrFail(requestId);
 
     if (request.receiverId !== userId) {
-      throw new ForbiddenException('Only the receiver can reject a request.');
-    }
-    if (request.status !== 'PENDING') {
-      throw new BadRequestException(
-        `Cannot reject a request with status: ${request.status}`,
+      throw new ForbiddenException(
+        'Only the receiver can reject this exchange request.',
       );
     }
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Only pending requests can be rejected.');
+    }
 
-    return this.prisma.exchangeRequest.update({
+    const updated = await this.prisma.exchangeRequest.update({
       where: { id: requestId },
       data: { status: 'REJECTED' },
-      include: {
-        sender: { select: { id: true, name: true, image: true } },
-        requestedSkill: true,
-        offeredSkill: true,
-      },
     });
+
+    this.eventEmitter.emit('exchange.updated', {
+      userIds: [request.senderId, request.receiverId],
+      requestId: request.id,
+      message: 'Exchange request rejected.',
+    });
+
+    return updated;
   }
 
   async cancelRequest(userId: string, requestId: string) {
     const request = await this.findRequestOrFail(requestId);
 
     if (request.senderId !== userId) {
-      throw new ForbiddenException('Only the sender can cancel a request.');
-    }
-    if (request.status !== 'PENDING') {
-      throw new BadRequestException(
-        `Cannot cancel a request with status: ${request.status}`,
+      throw new ForbiddenException(
+        'Only the sender can cancel this exchange request.',
       );
     }
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Only pending requests can be canceled.');
+    }
 
-    return this.prisma.exchangeRequest.update({
+    const updated = await this.prisma.exchangeRequest.update({
       where: { id: requestId },
       data: { status: 'CANCELLED' },
-      include: {
-        receiver: { select: { id: true, name: true, image: true } },
-        requestedSkill: true,
-        offeredSkill: true,
+    });
+
+    this.eventEmitter.emit('exchange.updated', {
+      userIds: [request.senderId, request.receiverId],
+      requestId: request.id,
+      message: 'Exchange request canceled.',
+    });
+
+    return updated;
+  }
+
+  /**
+   * Get all exchanges for a user (as teacher or learner).
+   */
+  async getMyExchanges(userId: string) {
+    return this.prisma.exchange.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
       },
+      include: {
+        sender: { select: { id: true, name: true, image: true } },
+        receiver: { select: { id: true, name: true, image: true } },
+        taughtSkill: true,
+        receivedSkill: true,
+        sessions: { orderBy: { scheduledAt: 'asc' } },
+      },
+      orderBy: { committedAt: 'desc' },
     });
   }
 
@@ -235,5 +786,48 @@ export class ExchangesService {
     }
 
     return request;
+  }
+
+  async updateAvailability(
+    userId: string,
+    requestId: string,
+    data: UpdateAvailabilityDto,
+  ) {
+    const request = await this.findRequestOrFail(requestId);
+
+    if (request.senderId !== userId && request.receiverId !== userId) {
+      throw new ForbiddenException(
+        'Only participants can update availability.',
+      );
+    }
+
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException(
+        'Availability can only be updated for pending requests.',
+      );
+    }
+
+    const isSender = request.senderId === userId;
+    const availabilityField = isSender
+      ? 'senderAvailability'
+      : 'receiverAvailability';
+
+    const updatedRequest = await this.prisma.exchangeRequest.update({
+      where: { id: requestId },
+      data: {
+        [availabilityField]: data as any,
+      },
+      include: {
+        sender: { select: { id: true, name: true, image: true } },
+        receiver: { select: { id: true, name: true, image: true } },
+      },
+    });
+
+    this.eventEmitter.emit('exchange.updated', {
+      userIds: [request.senderId, request.receiverId],
+      requestId: request.id,
+    });
+
+    return updatedRequest;
   }
 }

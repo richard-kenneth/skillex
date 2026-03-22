@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ExchangesModule } from './exchanges/exchanges.module';
+import { PointsModule } from './points/points.module';
 import { SkillsModule } from './skills/skills.module';
 import { UsersModule } from './users/users.module';
 
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -47,7 +49,9 @@ import { UploadsModule } from './uploads/uploads.module';
     UsersModule,
     SkillsModule,
     ExchangesModule,
+    PointsModule,
     UploadsModule,
+    EventEmitterModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],
