@@ -2,38 +2,81 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Post,
   Req,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { type PurchasePointsDto, PurchasePointsSchema } from '@skil-ex2/shared';
+import {
+  type PurchasePointsDto,
+  PurchasePointsSchema,
+  type WithdrawPointsDto,
+  WithdrawPointsSchema,
+} from '@skil-ex2/shared';
 import { Request } from 'express';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
 import { PointsService } from './points.service';
 
 @Controller('points')
-@UseGuards(BetterAuthGuard)
 export class PointsController {
   constructor(private readonly pointsService: PointsService) {}
 
+  @Get('fee-config')
+  getFeeConfig() {
+    return this.pointsService.getFeeConfig();
+  }
+
+  @Get('banks')
+  @UseGuards(BetterAuthGuard)
+  getBanks() {
+    return this.pointsService.getBanks();
+  }
+
   @Get('balance')
+  @UseGuards(BetterAuthGuard)
   getBalance(@Req() req: Request & { user: { id: string } }) {
     return this.pointsService.getBalance(req.user.id);
   }
 
   @Get('transactions')
+  @UseGuards(BetterAuthGuard)
   getTransactions(@Req() req: Request & { user: { id: string } }) {
     return this.pointsService.getTransactions(req.user.id);
   }
 
   @Post('purchase')
+  @UseGuards(BetterAuthGuard)
   @UsePipes(new ValibotValidationPipe(PurchasePointsSchema))
   purchasePoints(
     @Req() req: Request & { user: { id: string } },
     @Body() data: PurchasePointsDto,
   ) {
-    return this.pointsService.purchasePoints(req.user.id, data);
+    return this.pointsService.initiatePurchase(req.user.id, data);
+  }
+
+  @Post('withdraw')
+  @UseGuards(BetterAuthGuard)
+  @UsePipes(new ValibotValidationPipe(WithdrawPointsSchema))
+  withdrawPoints(
+    @Req() req: Request & { user: { id: string } },
+    @Body() data: WithdrawPointsDto,
+  ) {
+    return this.pointsService.withdrawPoints(req.user.id, data);
+  }
+
+  @Post('resolve-account')
+  @UseGuards(BetterAuthGuard)
+  resolveAccount(@Body() data: { accountNumber: string; bankCode: string }) {
+    return this.pointsService.resolveAccount(data.accountNumber, data.bankCode);
+  }
+
+  @Post('webhook')
+  verifyWebhook(
+    @Headers('verif-hash') signature: string,
+    @Body() payload: any,
+  ) {
+    return this.pointsService.verifyWebhook(signature, payload);
   }
 }

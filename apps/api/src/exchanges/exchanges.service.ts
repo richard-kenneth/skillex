@@ -240,9 +240,9 @@ export class ExchangesService {
         requestedSkill: true,
         offeredSkill: true,
         proposedSlots: {
-          include: { 
+          include: {
             skill: true,
-            proposer: { select: { id: true, name: true } }
+            proposer: { select: { id: true, name: true } },
           },
           orderBy: { createdAt: 'asc' },
         },
@@ -431,7 +431,7 @@ export class ExchangesService {
     }
 
     const existingSlots = await this.prisma.proposedSlot.findMany({
-      where: { requestId, status: 'PROPOSED' }
+      where: { requestId, status: 'PROPOSED' },
     });
 
     const existingSlotsMap = new Map<string, string>();
@@ -526,7 +526,6 @@ export class ExchangesService {
         'One or more slot IDs are invalid or missing.',
       );
     }
-
 
     const otherUserId =
       userId === request.senderId ? request.receiverId : request.senderId;

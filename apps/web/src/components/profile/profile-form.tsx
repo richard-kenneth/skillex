@@ -123,7 +123,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
               </AvatarFallback>
             </Avatar>
             <div className="space-y-1 text-center md:text-left">
-              <CardTitle className="text-2xl font-bold">{user.name}</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                {displayName}
+              </CardTitle>
               <CardDescription className="text-base">
                 {user.email}
               </CardDescription>

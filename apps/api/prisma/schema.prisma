@@ -193,15 +193,27 @@ model ProposedSlot {
 }
 
 model PointsTransaction {
-  id          String          @id @default(uuid())
+  id          String            @id @default(uuid())
   userId      String
   amount      Int
   type        TransactionType
+  status      TransactionStatus @default(PENDING)
   referenceId String?
   description String?
-  createdAt   DateTime        @default(now())
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model AppConfig {
+  id                      String   @id @default("singleton")
+  purchaseFeePercentage   Float    @default(0.05)
+  purchaseFeeFixed        Int      @default(100)
+  withdrawalFeePercentage Float    @default(0.05)
+  withdrawalFeeFixed      Int      @default(50)
+  minWithdrawalAmount     Int      @default(100)
+  updatedAt               DateTime @updatedAt
+}
+
 
 model Message {
   id                     String           @id @default(uuid())
@@ -271,6 +283,13 @@ enum TransactionType {
   PENALTY
   CONVERSION
 }
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 
 enum MessageKey {
   INTERESTED_IN_EXCHANGE
