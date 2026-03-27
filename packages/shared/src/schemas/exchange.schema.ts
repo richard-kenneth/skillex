@@ -191,3 +191,29 @@ export const UpdateAvailabilitySchema = v.strictObject({
 export type UpdateAvailabilityPayload = v.InferInput<typeof UpdateAvailabilitySchema>;
 export type UpdateAvailabilityDto = v.InferOutput<typeof UpdateAvailabilitySchema>;
 
+export const UpdateSessionStatusSchema = v.strictObject({
+  status: v.picklist(["COMPLETED", "MISSED", "CANCELLED", "SCHEDULED"]),
+});
+
+export type UpdateSessionStatusPayload = v.InferInput<typeof UpdateSessionStatusSchema>;
+export type UpdateSessionStatusDto = v.InferOutput<typeof UpdateSessionStatusSchema>;
+
+export const CreateReviewSchema = v.strictObject({
+  exchangeId: v.string("Exchange ID is required."),
+  rating: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(5)),
+  tags: v.array(v.picklist([
+    "GREAT_TEACHER",
+    "PATIENT",
+    "KNOWLEDGEABLE",
+    "ON_TIME",
+    "CLEAR_EXPLANATIONS",
+    "GOOD_COMMUNICATOR",
+    "WELL_PREPARED",
+    "WOULD_EXCHANGE_AGAIN",
+    "NEEDS_IMPROVEMENT",
+    "UNRESPONSIVE",
+  ])),
+});
+
+export type CreateReviewPayload = v.InferInput<typeof CreateReviewSchema>;
+export type CreateReviewDto = v.InferOutput<typeof CreateReviewSchema>;

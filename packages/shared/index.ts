@@ -12,3 +12,4 @@ export * from "./src/schemas/profile.schema";
 export * from "./src/schemas/upload.schema";
 export * from "./src/schemas/exchange.schema";
 export * from "./src/schemas/points.schema";
+export * from "./src/schemas/video.schema";

@@ -227,7 +227,7 @@ export default async function ExchangesPage() {
                       )}
                     </p>
                     <Button size="sm" asChild className="gap-2">
-                       <Link href={`/room/${exchange.id}`}>
+                       <Link href={`/exchanges/${exchange.id}`}>
                          Go to Exchange
                          <ArrowRight className="h-3 w-3" />
                        </Link>

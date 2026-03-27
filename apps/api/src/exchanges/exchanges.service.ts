@@ -13,7 +13,11 @@ import {
   SendMessageDto,
   type UpdateAvailabilityDto,
 } from '@skil-ex2/shared';
-import { ExchangeRequest } from '../generated/prisma/client';
+import {
+  ExchangeRequest,
+  SessionStatus,
+  ExchangeStatus,
+} from '../generated/prisma/client';
 import { PointsService } from '../points/points.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -828,5 +832,144 @@ export class ExchangesService {
     });
 
     return updatedRequest;
+  }
+
+  async getExchangeById(userId: string, exchangeId: string) {
+    const exchange = await this.prisma.exchange.findUnique({
+      where: { id: exchangeId },
+      include: {
+        sender: {
+          select: { id: true, name: true, image: true },
+        },
+        receiver: {
+          select: { id: true, name: true, image: true },
+        },
+        taughtSkill: true,
+        receivedSkill: true,
+        sessions: {
+          orderBy: { scheduledAt: 'asc' },
+          include: { skill: true },
+        },
+        request: true,
+      },
+    });
+
+    if (!exchange) {
+      throw new NotFoundException('Exchange not found');
+    }
+
+    if (exchange.senderId !== userId && exchange.receiverId !== userId) {
+      throw new ForbiddenException('You are not part of this exchange');
+    }
+
+    return exchange;
+  }
+
+  async updateSessionStatus(
+    userId: string,
+    exchangeId: string,
+    sessionId: string,
+    status: (typeof SessionStatus)[keyof typeof SessionStatus],
+  ) {
+    const exchange = await this.prisma.exchange.findUnique({
+      where: { id: exchangeId },
+      include: { sessions: true },
+    });
+
+    if (!exchange) {
+      throw new NotFoundException('Exchange not found');
+    }
+
+    if (exchange.senderId !== userId && exchange.receiverId !== userId) {
+      throw new ForbiddenException('You are not part of this exchange');
+    }
+
+    const session = exchange.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    const updatedSession = await this.prisma.exchangeSession.update({
+      where: { id: sessionId },
+      data: {
+        status,
+        completedAt: status === 'COMPLETED' ? new Date() : null,
+      },
+    });
+
+    this.eventEmitter.emit('session.updated', {
+      userIds: [exchange.senderId, exchange.receiverId],
+      exchangeId,
+      sessionId,
+    });
+
+    return updatedSession;
+  }
+
+  async markExchangeComplete(userId: string, exchangeId: string) {
+    const exchange = await this.prisma.exchange.findUnique({
+      where: { id: exchangeId },
+    });
+
+    if (!exchange) {
+      throw new NotFoundException('Exchange not found');
+    }
+
+    if (exchange.senderId !== userId && exchange.receiverId !== userId) {
+      throw new ForbiddenException('You are not part of this exchange');
+    }
+
+    const isSender = exchange.senderId === userId;
+    const updateData = isSender
+      ? { senderCompleted: true }
+      : { receiverCompleted: true };
+
+    const updatedExchange = await this.prisma.exchange.update({
+      where: { id: exchangeId },
+      data: updateData,
+    });
+
+    // Check mutual completion
+    if (updatedExchange.senderCompleted && updatedExchange.receiverCompleted) {
+      await this.prisma.exchange.update({
+        where: { id: exchangeId },
+        data: {
+          status: 'COMPLETED',
+          completedAt: new Date(),
+        },
+      });
+
+      // Release escrow if points were involved
+      if (
+        updatedExchange.pointsAmount > 0 &&
+        updatedExchange.pointsPayerId &&
+        updatedExchange.escrowLocked
+      ) {
+        const receiverId =
+          updatedExchange.pointsPayerId === updatedExchange.senderId
+            ? updatedExchange.receiverId
+            : updatedExchange.senderId;
+
+        await this.pointsService.releaseEscrow(
+          updatedExchange.pointsPayerId,
+          receiverId,
+          updatedExchange.pointsAmount,
+          exchangeId,
+        );
+
+        // update escrowLocked to false
+        await this.prisma.exchange.update({
+          where: { id: exchangeId },
+          data: { escrowLocked: false },
+        });
+      }
+
+      this.eventEmitter.emit('exchange.completed', {
+        userIds: [exchange.senderId, exchange.receiverId],
+        exchangeId,
+      });
+    }
+
+    return await this.getExchangeById(userId, exchangeId);
   }
 }

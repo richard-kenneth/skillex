@@ -31,6 +31,7 @@ model User {
   sentMessages        Message[]           @relation("MessageSender")
   receivedMessages    Message[]           @relation("MessageReceiver")
   proposedSlots       ProposedSlot[]      @relation("SlotProposer")
+  recordingConsents   RecordingConsent[]  @relation("ConsentUser")
 }
 
 model Session {
@@ -153,6 +154,8 @@ model Exchange {
   offeredSkillDuration   Int            @default(60)
   completedSessions      Int            @default(0)
   status                 ExchangeStatus @default(COMMITTED)
+  senderCompleted        Boolean        @default(false)
+  receiverCompleted      Boolean        @default(false)
 
   committedAt   DateTime          @default(now())
   completedAt   DateTime?
@@ -167,14 +170,31 @@ model Exchange {
 }
 
 model ExchangeSession {
-  id          String        @id @default(uuid())
-  exchangeId  String
-  skillId     String
-  scheduledAt DateTime
-  completedAt DateTime?
-  status      SessionStatus @default(SCHEDULED)
-  exchange    Exchange      @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
-  skill       Skill         @relation("SessionSkill", fields: [skillId], references: [id])
+  id                String             @id @default(uuid())
+  exchangeId        String
+  skillId           String
+  scheduledAt       DateTime
+  completedAt       DateTime?
+  status            SessionStatus      @default(SCHEDULED)
+  recordingUrl      String?
+  recordingKey      String?
+  recordingEgressId String?
+  recordingStatus   RecordingStatus?
+  exchange          Exchange           @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  skill             Skill              @relation("SessionSkill", fields: [skillId], references: [id])
+  recordingConsents RecordingConsent[]
+}
+
+model RecordingConsent {
+  id                String          @id @default(uuid())
+  exchangeSessionId String
+  userId            String
+  consented         Boolean
+  consentedAt       DateTime        @default(now())
+  exchangeSession   ExchangeSession @relation(fields: [exchangeSessionId], references: [id], onDelete: Cascade)
+  user              User            @relation("ConsentUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([exchangeSessionId, userId])
 }
 
 model ProposedSlot {
@@ -267,6 +287,14 @@ enum ExchangeStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum RecordingStatus {
+  PENDING_CONSENT
+  RECORDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 enum SessionStatus {

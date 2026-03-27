@@ -321,17 +321,6 @@ export class PointsService {
           description: `Received ${amount} points from completed exchange`,
         },
       });
-
-      // Record the outgoing for the payer
-      await tx.pointsTransaction.create({
-        data: {
-          userId: payerId,
-          amount: -amount,
-          type: 'ESCROW_RELEASE',
-          referenceId: exchangeId,
-          description: `Paid ${amount} points for completed exchange`,
-        },
-      });
     });
   }
 

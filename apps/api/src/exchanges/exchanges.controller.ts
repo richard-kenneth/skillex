@@ -23,6 +23,8 @@ import {
   SendMessageSchema,
   type UpdateAvailabilityDto,
   UpdateAvailabilitySchema,
+  type UpdateSessionStatusDto,
+  UpdateSessionStatusSchema,
 } from '@skil-ex2/shared';
 import { Request } from 'express';
 import { Observable, fromEvent } from 'rxjs';
@@ -162,5 +164,40 @@ export class ExchangesController {
     @Param('id') requestId: string,
   ) {
     return this.exchangesService.cancelRequest(req.user.id, requestId);
+  }
+
+  @Get(':id')
+  @UseGuards(BetterAuthGuard)
+  getExchangeById(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') exchangeId: string,
+  ) {
+    return this.exchangesService.getExchangeById(req.user.id, exchangeId);
+  }
+
+  @Patch(':id/sessions/:sessionId/status')
+  @UseGuards(BetterAuthGuard)
+  updateSessionStatus(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') exchangeId: string,
+    @Param('sessionId') sessionId: string,
+    @Body(new ValibotValidationPipe(UpdateSessionStatusSchema))
+    data: UpdateSessionStatusDto,
+  ) {
+    return this.exchangesService.updateSessionStatus(
+      req.user.id,
+      exchangeId,
+      sessionId,
+      data.status,
+    );
+  }
+
+  @Post(':id/complete')
+  @UseGuards(BetterAuthGuard)
+  markExchangeComplete(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') exchangeId: string,
+  ) {
+    return this.exchangesService.markExchangeComplete(req.user.id, exchangeId);
   }
 }

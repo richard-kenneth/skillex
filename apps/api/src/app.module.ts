@@ -12,6 +12,8 @@ import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { VideoModule } from './video/video.module';
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { UploadsModule } from './uploads/uploads.module';
     PointsModule,
     UploadsModule,
     EventEmitterModule.forRoot(),
+    ReviewsModule,
+    VideoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
