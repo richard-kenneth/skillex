@@ -5,12 +5,14 @@ import { signIn } from "@/lib/auth-client";
 import { getAuthCallbackUrl } from "@/lib/utils";
 import { Chrome, Linkedin } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface SocialLoginsProps {
   className?: string;
 }
 
 export function SocialLogins({ className }: SocialLoginsProps) {
+  const t = useTranslations("auth");
   const handleSocialSignIn = async (provider: "google" | "linkedin") => {
     try {
       await signIn.social({
@@ -18,7 +20,7 @@ export function SocialLogins({ className }: SocialLoginsProps) {
         callbackURL: getAuthCallbackUrl(),
       });
     } catch {
-      toast.error(`Failed to sign in with ${provider}`);
+      toast.error(t("signInFailed"));
     }
   };
 
@@ -30,7 +32,7 @@ export function SocialLogins({ className }: SocialLoginsProps) {
         onClick={() => handleSocialSignIn("google")}
       >
         <Chrome className="h-5 w-5" />
-        Google
+        {t("continueWithGoogle")}
       </Button>
       <Button
         variant="outline"
@@ -38,7 +40,7 @@ export function SocialLogins({ className }: SocialLoginsProps) {
         onClick={() => handleSocialSignIn("linkedin")}
       >
         <Linkedin className="h-5 w-5" />
-        LinkedIn
+        {t("continueWithLinkedin")}
       </Button>
     </div>
   );

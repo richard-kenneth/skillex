@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 
 interface Skill {
   id: string;
@@ -36,6 +37,7 @@ export function SkillManager({}: SkillManagerProps) {
   const [searchResults, setSearchResults] = useState<Skill[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<"OFFERING" | "SEEKING">("OFFERING");
+  const t = useTranslations("profile");
 
   const fetchUserSkills = useCallback(async () => {
     try {
@@ -101,15 +103,15 @@ export function SkillManager({}: SkillManagerProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to add skill");
+        throw new Error(errorData.message || t("failedToAddSkill"));
       }
 
-      toast.success("Skill added!");
+      toast.success(t("skillAdded"));
       setSearchQuery("");
       setSearchResults([]);
       fetchUserSkills();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to add skill";
+      const errorMessage = error instanceof Error ? error.message : t("failedToAddSkill");
       toast.error(errorMessage);
     }
   };
@@ -120,12 +122,12 @@ export function SkillManager({}: SkillManagerProps) {
         method: "DELETE",
         credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to remove skill");
-      toast.success("Skill removed");
+      if (!response.ok) throw new Error(t("failedToRemoveSkill"));
+      toast.success(t("skillRemoved"));
       fetchUserSkills();
     } catch (error: unknown) {
       console.error("Error removing skill:", error);
-      toast.error("Failed to remove skill");
+      toast.error(t("failedToRemoveSkill"));
     }
   };
 
@@ -134,10 +136,10 @@ export function SkillManager({}: SkillManagerProps) {
       <CardHeader>
         <CardTitle className="text-xl flex items-center gap-2">
           <Award className="h-5 w-5 text-primary" />
-          Skills & Expertise
+          {t("skillsTitle")}
         </CardTitle>
         <CardDescription>
-          Manage the skills you can offer and the skills you are looking to learn.
+          {t("skillsDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -149,7 +151,7 @@ export function SkillManager({}: SkillManagerProps) {
             className="rounded-md transition-all sm:px-6"
           >
             <Briefcase className="h-4 w-4 mr-2" />
-            Skills I Offer
+            {t("skillsIOffer")}
           </Button>
           <Button
             variant={activeTab === "SEEKING" ? "default" : "ghost"}
@@ -158,7 +160,7 @@ export function SkillManager({}: SkillManagerProps) {
             className="rounded-md transition-all sm:px-6"
           >
             <GraduationCap className="h-4 w-4 mr-2" />
-            Skills I Seek
+            {t("skillsISeek")}
           </Button>
         </div>
 
@@ -167,7 +169,7 @@ export function SkillManager({}: SkillManagerProps) {
             <Search className="h-4 w-4" />
           </div>
           <Input
-            placeholder={`Search for a skill to ${activeTab === "OFFERING" ? "teach" : "learn"}...`}
+            placeholder={activeTab === "OFFERING" ? t("searchSkillOffer") : t("searchSkillSeek")}
             className="pl-10 bg-background/50 focus:bg-background h-11 transition-all border-border/60"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -197,7 +199,7 @@ export function SkillManager({}: SkillManagerProps) {
           
           {searchQuery && searchResults.length === 0 && !isSearching && (
             <div className="absolute top-full left-0 right-0 mt-2 p-4 bg-popover text-popover-foreground rounded-xl shadow-2xl border border-border/50 z-50 text-center text-sm">
-              No skills found matching &quot;{searchQuery}&quot;
+              {t("noSkillsFound", { query: searchQuery })}
             </div>
           )}
         </div>
@@ -208,12 +210,12 @@ export function SkillManager({}: SkillManagerProps) {
               {activeTab === "OFFERING" ? (
                 <>
                   <Briefcase className="h-4 w-4" />
-                  Currently Offering
+                  {t("currentlyOffering")}
                 </>
               ) : (
                 <>
                   <GraduationCap className="h-4 w-4" />
-                  Currently Seeking
+                  {t("currentlySeeking")}
                 </>
               )}
             </h4>
@@ -236,7 +238,7 @@ export function SkillManager({}: SkillManagerProps) {
                 ))
               ) : (
                 <div className="text-sm text-muted-foreground bg-muted/30 w-full p-4 rounded-lg border border-dashed border-border/50 text-center">
-                  You haven&apos;t added any {activeTab.toLowerCase()} skills yet.
+                  {activeTab === "OFFERING" ? t("noOfferingSkills") : t("noSeekingSkills")}
                 </div>
               )}
             </div>

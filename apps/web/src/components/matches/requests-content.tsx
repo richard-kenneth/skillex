@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Coins, Inbox, MessageSquare, Send } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface RequestUser {
   id: string;
@@ -74,6 +75,7 @@ export function RequestsContent({
   sent: initialSent,
   currentUserId,
 }: RequestsContentProps) {
+  const t = useTranslations("requests");
   const [tab, setTab] = useState<"received" | "sent">("received");
   const queryClient = useQueryClient();
 
@@ -111,13 +113,13 @@ export function RequestsContent({
   const tabs = [
     {
       key: "received" as const,
-      label: "Received",
+      label: t("received"),
       icon: Inbox,
       count: activeReceived.length,
     },
     {
       key: "sent" as const,
-      label: "Sent",
+      label: t("sent"),
       icon: Send,
       count: activeSent.length,
     },
@@ -164,11 +166,13 @@ export function RequestsContent({
               <Send className="h-8 w-8 text-muted-foreground opacity-50" />
             )}
           </div>
-          <h3 className="text-xl font-semibold mb-2">No {tab} requests</h3>
+          <h3 className="text-xl font-semibold mb-2">
+            {tab === "received" ? t("noReceivedRequests") : t("noSentRequests")}
+          </h3>
           <p className="text-muted-foreground max-w-sm mx-auto px-4">
             {tab === "received"
-              ? "You haven't received any exchange requests yet."
-              : "You haven't sent any exchange requests yet. Go find matches!"}
+              ? t("noReceivedRequestsDesc")
+              : t("noSentRequestsDesc")}
           </p>
         </div>
       ) : (
@@ -196,6 +200,8 @@ function RequestCard({
   tab: "received" | "sent";
   currentUserId: string;
 }) {
+  const t = useTranslations("requests");
+  const tc = useTranslations("common");
   const otherUser = tab === "received" ? request.sender : request.receiver;
 
   return (
@@ -209,7 +215,7 @@ function RequestCard({
               alt={otherUser?.name ?? "User"}
             />
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-              {otherUser?.name?.charAt(0) ?? "U"}
+              {otherUser?.name?.charAt(0) ?? "?"}
             </AvatarFallback>
           </Avatar>
 
@@ -217,7 +223,7 @@ function RequestCard({
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center flex-wrap gap-2">
               <span className="font-semibold">
-                {otherUser?.name ?? "Unknown User"}
+                {otherUser?.name ?? tc("unknownUser")}
               </span>
               <Badge
                 variant="outline"
@@ -229,21 +235,21 @@ function RequestCard({
 
             <div className="flex items-center flex-wrap gap-2 text-sm">
               <span className="text-muted-foreground">
-                {tab === "received" ? "Wants to learn:" : "Requested:"}
+                {tab === "received" ? t("wantsToLearn") : t("requested")}
               </span>
               <Badge variant="secondary" className="text-xs">
                 {request.requestedSkill.name}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                ({request.requestedSkillSessions} session
-                {request.requestedSkillSessions !== 1 ? "s" : ""},{" "}
+                ({request.requestedSkillSessions}{" "}
+                {request.requestedSkillSessions !== 1 ? tc("sessions") : tc("session")},{" "}
                 {request.requestedSkillDuration}m)
               </span>
 
               {request.offeredSkill && (
                 <>
                   <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground">Offering:</span>
+                  <span className="text-muted-foreground">{t("offering")}</span>
                   <Badge
                     variant="outline"
                     className="text-xs border-blue-500/30 text-blue-400"
@@ -251,8 +257,8 @@ function RequestCard({
                     {request.offeredSkill.name}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    ({request.offeredSkillSessions} session
-                    {request.offeredSkillSessions !== 1 ? "s" : ""},{" "}
+                    ({request.offeredSkillSessions}{" "}
+                    {request.offeredSkillSessions !== 1 ? tc("sessions") : tc("session")},{" "}
                     {request.offeredSkillDuration}m)
                   </span>
                 </>
@@ -263,26 +269,26 @@ function RequestCard({
             <div className="flex flex-col gap-0.5 text-[11px] font-medium bg-muted/40 p-2 rounded border border-border/30">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">
-                  {request.sender?.name ?? "Sender"}
+                  {request.sender?.name ?? t("sender")}
                 </span>
                 <span
                   className={
                     request.senderAgreed ? "text-green-500" : "text-amber-500"
                   }
                 >
-                  {request.senderAgreed ? "Agreed" : "Reviewing"}
+                  {request.senderAgreed ? t("agreed") : t("reviewing")}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">
-                  {request.receiver?.name ?? "Receiver"}
+                  {request.receiver?.name ?? t("receiver")}
                 </span>
                 <span
                   className={
                     request.receiverAgreed ? "text-green-500" : "text-amber-500"
                   }
                 >
-                  {request.receiverAgreed ? "Agreed" : "Reviewing"}
+                  {request.receiverAgreed ? t("agreed") : t("reviewing")}
                 </span>
               </div>
             </div>
@@ -292,13 +298,10 @@ function RequestCard({
               <div className="flex items-center gap-2 text-sm">
                 <Coins className="h-3.5 w-3.5 text-amber-400" />
                 <span className="text-amber-400 font-medium">
-                  {request.pointsProposal} pts
+                  {request.pointsProposal} {tc("pts")}
                 </span>
                 <span className="text-muted-foreground">
-                  paid by{" "}
-                  {request.pointsPayerId === currentUserId
-                    ? "you"
-                    : (otherUser?.name ?? "them")}
+                  {t("paidBy")} {request.pointsPayerId === currentUserId ? tc("you") : (otherUser?.name ?? tc("them"))}
                 </span>
               </div>
             )}
@@ -312,7 +315,7 @@ function RequestCard({
                   className="w-full gap-2 transition-colors hover:bg-primary/10 hover:text-primary hover:border-primary/30"
                 >
                   <MessageSquare className="h-4 w-4" />
-                  View Exchange & Negotiate
+                  {t("viewExchange")}
                 </Button>
               </Link>
             </div>

@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,18 +12,23 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LayoutDashboard, LogOut, Code, User, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link, usePathname } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
 const navItems = [
-  { label: "Home", href: "/" },
-  { label: "Matches", href: "/matches" },
-  { label: "Exchanges", href: "/exchanges" },
-  { label: "Points", href: "/points" },
-  { label: "Dashboard", href: "/dashboard" },
-];
+  { key: "home", href: "/" },
+  { key: "matches", href: "/matches" },
+  { key: "exchanges", href: "/exchanges" },
+  { key: "points", href: "/points" },
+  { key: "dashboard", href: "/dashboard" },
+] as const;
 
 export function Navbar() {
   const { data: session, isPending } = useSession();
   const pathname = usePathname();
+  const t = useTranslations("nav");
+  const tCommon = useTranslations("common");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/80 backdrop-blur-md">
@@ -34,7 +37,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center space-x-2 transition-opacity hover:opacity-80">
             <Code className="h-6 w-6 text-primary" />
             <span className="font-bold text-xl tracking-tight hidden sm:block">
-              Skill Exchange
+              {tCommon("appName")}
             </span>
           </Link>
 
@@ -51,13 +54,14 @@ export function Navbar() {
                     : "text-zinc-400"
                 )}
               >
-                {item.label}
+                {t(item.key)}
               </Link>
             ))}
           </nav>
         </div>
 
         <div className="flex items-center gap-4">
+          <LocaleSwitcher />
           {/* Auth Section */}
           <div className="flex items-center">
             {isPending ? (
@@ -71,7 +75,7 @@ export function Navbar() {
                   onClick={() => signOut()}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Log out
+                  {t("signOut")}
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger className="relative h-9 w-9 rounded-full outline-none ring-offset-background transition-all hover:ring-2 hover:ring-primary/20 cursor-pointer">
@@ -93,13 +97,13 @@ export function Navbar() {
                     <DropdownMenuItem className="p-0">
                       <Link href="/dashboard" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
                         <LayoutDashboard className="h-4 w-4" />
-                        <span>Dashboard</span>
+                        <span>{t("dashboard")}</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="p-0">
                       <Link href="/dashboard/profile" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
                         <User className="h-4 w-4" />
-                        <span>Profile Settings</span>
+                        <span>{t("profile")}</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-zinc-800" />
@@ -108,7 +112,7 @@ export function Navbar() {
                       onClick={() => signOut()}
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Log out</span>
+                      <span>{t("signOut")}</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -121,14 +125,14 @@ export function Navbar() {
                   asChild
                   className="hidden sm:flex text-zinc-400 hover:text-white"
                 >
-                  <Link href="/sign-in">Log in</Link>
+                  <Link href="/sign-in">{t("signIn")}</Link>
                 </Button>
                 <Button 
                   size="sm" 
                   className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-5"
                   asChild
                 >
-                  <Link href="/sign-up">Get Started</Link>
+                  <Link href="/sign-up">{t("signUp")}</Link>
                 </Button>
               </div>
             )}
@@ -151,7 +155,7 @@ export function Navbar() {
                         pathname === item.href ? "bg-zinc-900 text-white" : "text-zinc-400 hover:bg-zinc-900/50 hover:text-white"
                       )}
                     >
-                      {item.label}
+                      {t(item.key)}
                     </Link>
                   </DropdownMenuItem>
                 ))}
@@ -167,7 +171,7 @@ export function Navbar() {
                     <DropdownMenuItem className="p-0">
                       <Link href="/dashboard/profile" className="flex w-full items-center gap-2 p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">
                         <User className="h-4 w-4" />
-                        <span>Profile Settings</span>
+                        <span>{t("profile")}</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem 
@@ -175,16 +179,16 @@ export function Navbar() {
                       onClick={() => signOut()}
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Log out</span>
+                      <span>{t("signOut")}</span>
                     </DropdownMenuItem>
                   </>
                 ) : (
                   <>
                     <DropdownMenuItem className="p-0">
-                      <Link href="/sign-in" className="flex w-full items-center p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">Log in</Link>
+                      <Link href="/sign-in" className="flex w-full items-center p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">{t("signIn")}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="p-0">
-                      <Link href="/sign-up" className="flex w-full items-center p-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium">Get Started</Link>
+                      <Link href="/sign-up" className="flex w-full items-center p-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium">{t("signUp")}</Link>
                     </DropdownMenuItem>
                   </>
                 )}
@@ -196,4 +200,3 @@ export function Navbar() {
     </header>
   );
 }
-

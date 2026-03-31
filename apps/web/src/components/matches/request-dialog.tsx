@@ -13,6 +13,7 @@ import {
 import { Coins, Loader2, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface UserSkill {
   id: string;
@@ -42,6 +43,8 @@ export function RequestDialog({
   currentUserId,
 }: RequestDialogProps) {
   const router = useRouter();
+  const t = useTranslations("requestDialog");
+  const tc = useTranslations("common");
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const [pointsAmount, setPointsAmount] = useState(0);
@@ -83,7 +86,7 @@ export function RequestDialog({
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Failed to send request");
+        throw new Error(err.message || t("failedToSend"));
       }
 
       onOpenChange(false);
@@ -93,7 +96,7 @@ export function RequestDialog({
       setPayerIsMe(true);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      setError(e instanceof Error ? e.message : t("somethingWentWrong"));
     } finally {
       setLoading(false);
     }
@@ -103,12 +106,9 @@ export function RequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-zinc-950 border-zinc-800">
         <DialogHeader>
-          <DialogTitle>Request Exchange</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Send an exchange request to{" "}
-            <span className="font-semibold text-foreground">
-              {matchUser.name ?? "this user"}
-            </span>
+            {t("description", { name: matchUser.name ?? tc("thisUser") })}
           </DialogDescription>
         </DialogHeader>
 
@@ -116,7 +116,7 @@ export function RequestDialog({
           {/* Select skill to learn */}
           <div className="space-y-2">
             <p className="text-sm font-medium">
-              What do you want to learn from them?
+              {t("whatToLearn")}
             </p>
             <div className="flex flex-wrap gap-2">
               {theirOffering.map((s) => (
@@ -142,9 +142,9 @@ export function RequestDialog({
           {myOffering.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">
-                What can you teach in return?{" "}
+                {t("whatToOffer")}{" "}
                 <span className="text-muted-foreground font-normal">
-                  (optional)
+                  ({tc("optional")})
                 </span>
               </p>
               <div className="flex flex-wrap gap-2">
@@ -176,9 +176,9 @@ export function RequestDialog({
           <div className="space-y-3 rounded-lg border border-border/50 bg-muted/20 p-4">
             <div className="flex items-center gap-2">
               <Coins className="h-4 w-4 text-amber-400" />
-              <p className="text-sm font-medium">Points Proposal</p>
+              <p className="text-sm font-medium">{t("pointsProposal")}</p>
               <span className="text-xs text-muted-foreground">
-                (for uneven exchanges)
+                ({t("forUnevenExchanges")})
               </span>
             </div>
 
@@ -193,7 +193,7 @@ export function RequestDialog({
                 className="w-24 rounded-md border border-border/50 bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="0"
               />
-              <span className="text-sm text-muted-foreground">points</span>
+              <span className="text-sm text-muted-foreground">{tc("points")}</span>
             </div>
 
             {pointsAmount > 0 && (
@@ -207,7 +207,7 @@ export function RequestDialog({
                       : "bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted"
                   }`}
                 >
-                  I&apos;ll pay
+                  {t("illPay")}
                 </button>
                 <button
                   type="button"
@@ -218,7 +218,7 @@ export function RequestDialog({
                       : "bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted"
                   }`}
                 >
-                  They pay
+                  {t("theyPay")}
                 </button>
               </div>
             )}
@@ -237,7 +237,7 @@ export function RequestDialog({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -249,7 +249,7 @@ export function RequestDialog({
             ) : (
               <Send className="h-4 w-4" />
             )}
-            Send Request
+            {t("sendRequest")}
           </Button>
         </DialogFooter>
       </DialogContent>

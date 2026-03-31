@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface RequestActionsProps {
   requestId: string;
@@ -21,6 +22,8 @@ export function RequestActions({
   status,
 }: RequestActionsProps) {
   const router = useRouter();
+  const t = useTranslations("requests");
+  const tc = useTranslations("common");
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleAction = async (action: "reject" | "cancel") => {
@@ -64,7 +67,7 @@ export function RequestActions({
           ) : (
             <X className="h-3.5 w-3.5" />
           )}
-          Decline
+          {t("decline")}
         </Button>
       </div>
     );
@@ -83,7 +86,7 @@ export function RequestActions({
       ) : (
         <X className="h-3.5 w-3.5" />
       )}
-      Cancel
+      {tc("cancel")}
     </Button>
   );
 }

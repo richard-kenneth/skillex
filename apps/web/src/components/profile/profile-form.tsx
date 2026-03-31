@@ -28,6 +28,7 @@ import { Loader2, Upload } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { SkillManager } from "./skill-manager";
 
 interface ProfileFormProps {
@@ -44,6 +45,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { uploadFile, isUploading } = useR2Upload();
   const { refetch } = useSession();
+  const t = useTranslations("profile");
+  const tCommon = useTranslations("common");
 
   const form = useForm({
     resolver: valibotResolver(ProfileFormSchema),
@@ -77,12 +80,12 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       if (!response.ok) throw new Error("Failed to update bio");
 
-      toast.success("Profile updated successfully!");
+      toast.success(t("profileUpdated"));
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred";
       console.error("Profile update error:", errorMessage);
-      toast.error("Failed to update profile. Please try again.");
+      toast.error(t("profileUpdateError"));
     } finally {
       setIsSaving(false);
     }
@@ -99,7 +102,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       await refetch();
 
-      toast.success("Avatar uploaded successfully!");
+      toast.success(t("avatarUploaded"));
     } catch {
       // Error handled by hook
     }
@@ -142,17 +145,17 @@ export function ProfileForm({ user }: ProfileFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-semibold text-foreground/80">
-                        Display Name
+                        {t("displayName")}
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Your display name"
+                          placeholder={t("displayNamePlaceholder")}
                           {...field}
                           className="bg-background/50 focus:bg-background transition-colors"
                         />
                       </FormControl>
                       <FormDescription>
-                        This is your public display name.
+                        {t("displayNameDesc")}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -164,7 +167,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-semibold text-foreground/80">
-                        Profile Picture
+                        {t("profilePicture")}
                       </FormLabel>
                       <FormControl>
                         <div className="flex flex-col gap-4">
@@ -184,12 +187,12 @@ export function ProfileForm({ user }: ProfileFormProps) {
                               {isUploading ? (
                                 <>
                                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Uploading...
+                                  {t("uploading")}
                                 </>
                               ) : (
                                 <>
                                   <Upload className="mr-2 h-4 w-4" />
-                                  Upload New Avatar
+                                  {t("uploadNewAvatar")}
                                 </>
                               )}
                             </Button>
@@ -208,14 +211,14 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                 className="text-xs text-muted-foreground"
                                 onClick={() => form.setValue("image", "")}
                               >
-                                Remove
+                                {tCommon("remove")}
                               </Button>
                             )}
                           </div>
                         </div>
                       </FormControl>
                       <FormDescription>
-                        Directly upload an image to update your profile.
+                        {t("profilePictureDesc")}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -229,17 +232,17 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold text-foreground/80">
-                      Bio
+                      {t("bio")}
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Tell us a little bit about yourself, your skills, and what you're looking for..."
+                        placeholder={t("bioPlaceholder")}
                         className="resize-none min-h-[120px] bg-background/50 focus:bg-background transition-colors"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Brief description for your public profile.
+                      {t("bioDesc")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -252,7 +255,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                   disabled={isSaving || isUploading}
                   className="px-8 shadow-md hover:shadow-lg transition-all active:scale-95"
                 >
-                  {isSaving ? "Saving..." : "Save Changes"}
+                  {isSaving ? t("saving") : t("saveChanges")}
                 </Button>
               </div>
             </form>
@@ -264,9 +267,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       <Card className="border-destructive/20 bg-destructive/5 overflow-hidden border">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardTitle className="text-destructive">{t("dangerZone")}</CardTitle>
           <CardDescription>
-            Permanently delete your account and all associated data.
+            {t("dangerZoneDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -274,7 +277,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
             variant="destructive"
             className="hover:bg-destructive/90 shadow-sm transition-colors"
           >
-            Delete Account
+            {t("deleteAccount")}
           </Button>
         </CardContent>
       </Card>
