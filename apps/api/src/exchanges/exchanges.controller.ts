@@ -17,8 +17,12 @@ import {
   AcceptSlotsSchema,
   type CreateExchangeRequestDto,
   CreateExchangeRequestSchema,
+  type ExchangeChatUploadDto,
+  ExchangeChatUploadSchema,
   type ProposeTermsAndSlotsDto,
   ProposeTermsAndSlotsSchema,
+  type SendExchangeChatDto,
+  SendExchangeChatSchema,
   type SendMessageDto,
   SendMessageSchema,
   type UpdateAvailabilityDto,
@@ -199,5 +203,50 @@ export class ExchangesController {
     @Param('id') exchangeId: string,
   ) {
     return this.exchangesService.markExchangeComplete(req.user.id, exchangeId);
+  }
+
+  /* ─── Exchange Chat ──────────────────────────────────────── */
+
+  @Post(':id/chat')
+  @UseGuards(BetterAuthGuard)
+  sendChatMessage(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') exchangeId: string,
+    @Body(new ValibotValidationPipe(SendExchangeChatSchema))
+    data: SendExchangeChatDto,
+  ) {
+    return this.exchangesService.sendChatMessage(
+      req.user.id,
+      exchangeId,
+      data.content,
+      data.fileKey,
+      data.fileName,
+      data.fileType,
+    );
+  }
+
+  @Get(':id/chat')
+  @UseGuards(BetterAuthGuard)
+  getChatMessages(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') exchangeId: string,
+  ) {
+    return this.exchangesService.getChatMessages(req.user.id, exchangeId);
+  }
+
+  @Post(':id/chat/upload')
+  @UseGuards(BetterAuthGuard)
+  getChatUploadUrl(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') exchangeId: string,
+    @Body(new ValibotValidationPipe(ExchangeChatUploadSchema))
+    data: ExchangeChatUploadDto,
+  ) {
+    return this.exchangesService.getChatUploadUrl(
+      req.user.id,
+      exchangeId,
+      data.fileName,
+      data.contentType,
+    );
   }
 }

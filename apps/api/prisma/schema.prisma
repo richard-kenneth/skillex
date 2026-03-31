@@ -9,29 +9,32 @@ datasource db {
 }
 
 model User {
-  id                  String              @id @default(uuid())
-  name                String?
-  email               String              @unique
-  emailVerified       Boolean             @default(false)
-  image               String?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  bio                 String?
-  pointsBalance       Int                 @default(0)
-  accounts            Account[]
-  receivedRequests    ExchangeRequest[]   @relation("Receiver")
-  sentRequests        ExchangeRequest[]   @relation("Sender")
-  receivedReviews     Review[]            @relation("Reviewee")
-  givenReviews        Review[]            @relation("Reviewer")
-  sessions            Session[]
-  skills              UserSkill[]
-  exchangesAsSender   Exchange[]          @relation("ExchangeSender")
-  exchangesAsReceiver Exchange[]          @relation("ExchangeReceiver")
-  pointsTransactions  PointsTransaction[]
-  sentMessages        Message[]           @relation("MessageSender")
-  receivedMessages    Message[]           @relation("MessageReceiver")
-  proposedSlots       ProposedSlot[]      @relation("SlotProposer")
-  recordingConsents   RecordingConsent[]  @relation("ConsentUser")
+  id                    String               @id @default(uuid())
+  name                  String?
+  email                 String               @unique
+  emailVerified         Boolean              @default(false)
+  image                 String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  bio                   String?
+  pointsBalance         Int                  @default(0)
+  accounts              Account[]
+  receivedRequests      ExchangeRequest[]    @relation("Receiver")
+  sentRequests          ExchangeRequest[]    @relation("Sender")
+  receivedReviews       Review[]             @relation("Reviewee")
+  givenReviews          Review[]             @relation("Reviewer")
+  sessions              Session[]
+  skills                UserSkill[]
+  exchangesAsSender     Exchange[]           @relation("ExchangeSender")
+  exchangesAsReceiver   Exchange[]           @relation("ExchangeReceiver")
+  pointsTransactions    PointsTransaction[]
+  sentMessages          Message[]            @relation("MessageSender")
+  receivedMessages      Message[]            @relation("MessageReceiver")
+  proposedSlots         ProposedSlot[]       @relation("SlotProposer")
+  recordingConsents     RecordingConsent[]   @relation("ConsentUser")
+  sessionChatMessages   SessionChatMessage[] @relation("SessionChatSender")
+  exchangeChatMessages  ExchangeChatMessage[] @relation("ExchangeChatSender")
+  chatReadReceipts      SessionChatReadReceipt[] @relation("ChatReadUser")
 }
 
 model Session {
@@ -157,32 +160,45 @@ model Exchange {
   senderCompleted        Boolean        @default(false)
   receiverCompleted      Boolean        @default(false)
 
-  committedAt   DateTime          @default(now())
+  committedAt   DateTime              @default(now())
   completedAt   DateTime?
-  request       ExchangeRequest   @relation(fields: [requestId], references: [id])
-  sender        User              @relation("ExchangeSender", fields: [senderId], references: [id])
-  receiver      User              @relation("ExchangeReceiver", fields: [receiverId], references: [id])
-  taughtSkill   Skill             @relation("TaughtSkill", fields: [taughtSkillId], references: [id])
-  receivedSkill Skill?            @relation("ReceivedSkill", fields: [receivedSkillId], references: [id])
+  request       ExchangeRequest       @relation(fields: [requestId], references: [id])
+  sender        User                  @relation("ExchangeSender", fields: [senderId], references: [id])
+  receiver      User                  @relation("ExchangeReceiver", fields: [receiverId], references: [id])
+  taughtSkill   Skill                 @relation("TaughtSkill", fields: [taughtSkillId], references: [id])
+  receivedSkill Skill?                @relation("ReceivedSkill", fields: [receivedSkillId], references: [id])
   sessions      ExchangeSession[]
-  messages      Message[]         @relation("ExchangeMessages")
+  messages      Message[]             @relation("ExchangeMessages")
   reviews       Review[]
+  chatMessages  ExchangeChatMessage[]
 }
 
 model ExchangeSession {
-  id                String             @id @default(uuid())
-  exchangeId        String
-  skillId           String
-  scheduledAt       DateTime
-  completedAt       DateTime?
-  status            SessionStatus      @default(SCHEDULED)
-  recordingUrl      String?
-  recordingKey      String?
-  recordingEgressId String?
-  recordingStatus   RecordingStatus?
-  exchange          Exchange           @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
-  skill             Skill              @relation("SessionSkill", fields: [skillId], references: [id])
-  recordingConsents RecordingConsent[]
+  id                  String               @id @default(uuid())
+  exchangeId          String
+  skillId             String
+  scheduledAt         DateTime
+  completedAt         DateTime?
+  duration            Int                  @default(60) // agreed duration in minutes
+  status              SessionStatus        @default(SCHEDULED)
+  exchange            Exchange             @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  skill               Skill                @relation("SessionSkill", fields: [skillId], references: [id])
+  recordingConsents   RecordingConsent[]
+  chatMessages        SessionChatMessage[]
+  recordings          SessionRecording[]
+  chatReadReceipts    SessionChatReadReceipt[]
+}
+
+model SessionRecording {
+  id                 String           @id @default(uuid())
+  exchangeSessionId  String
+  recordingKey       String?
+  recordingEgressId  String?          @unique
+  recordingStatus    RecordingStatus  @default(RECORDING)
+  recordingExpiresAt DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  exchangeSession    ExchangeSession  @relation(fields: [exchangeSessionId], references: [id], onDelete: Cascade)
 }
 
 model RecordingConsent {
@@ -210,6 +226,40 @@ model ProposedSlot {
   request  ExchangeRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   proposer User            @relation("SlotProposer", fields: [proposerId], references: [id])
   skill    Skill           @relation("SlotSkill", fields: [skillId], references: [id])
+}
+
+model SessionChatMessage {
+  id                String          @id @default(uuid())
+  exchangeSessionId String
+  senderId          String
+  message           String
+  timestamp         DateTime        @default(now())
+  exchangeSession   ExchangeSession @relation(fields: [exchangeSessionId], references: [id], onDelete: Cascade)
+  sender            User            @relation("SessionChatSender", fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model SessionChatReadReceipt {
+  id                String          @id @default(uuid())
+  exchangeSessionId String
+  userId            String
+  lastReadAt        DateTime        @default(now())
+  exchangeSession   ExchangeSession @relation(fields: [exchangeSessionId], references: [id], onDelete: Cascade)
+  user              User            @relation("ChatReadUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([exchangeSessionId, userId])
+}
+
+model ExchangeChatMessage {
+  id         String   @id @default(uuid())
+  exchangeId String
+  senderId   String
+  content    String?  // text message
+  fileKey    String?  // R2 storage key
+  fileName   String?  // original file name
+  fileType   String?  // MIME type
+  createdAt  DateTime @default(now())
+  exchange   Exchange @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  sender     User     @relation("ExchangeChatSender", fields: [senderId], references: [id], onDelete: Cascade)
 }
 
 model PointsTransaction {

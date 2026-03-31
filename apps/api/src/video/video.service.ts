@@ -18,6 +18,10 @@ import {
   S3Upload,
 } from 'livekit-server-sdk';
 import { PrismaService } from '../prisma/prisma.service';
+import { R2Service } from '../uploads/r2.service';
+
+const RECORDING_TTL_DAYS = 30;
+const SESSION_GRACE_MINUTES = 5;
 
 @Injectable()
 export class VideoService {
@@ -26,6 +30,7 @@ export class VideoService {
   constructor(
     private config: ConfigService,
     private prisma: PrismaService,
+    private r2: R2Service,
   ) {}
 
   /* ─── Token Generation ──────────────────────────────────── */
@@ -46,6 +51,9 @@ export class VideoService {
       );
     }
 
+    // Validate session time window
+    await this.validateSessionTimeForRoom(room, identity);
+
     const at = new AccessToken(apiKey, apiSecret, { identity, name });
     at.addGrant({
       room,
@@ -57,6 +65,85 @@ export class VideoService {
 
     const token = await at.toJwt();
     return { token, url: wsUrl };
+  }
+
+  /* ─── Session Time Validation ────────────────────────────── */
+
+  private async validateSessionTimeForRoom(exchangeId: string, userId: string) {
+    const exchange = await this.prisma.exchange.findUnique({
+      where: { id: exchangeId },
+      include: { sessions: true },
+    });
+
+    if (!exchange) return;
+
+    if (exchange.senderId !== userId && exchange.receiverId !== userId) {
+      throw new ForbiddenException('Not a participant of this exchange');
+    }
+
+    const now = new Date();
+    const hasValidSession = exchange.sessions.some((session) => {
+      if (session.status === 'COMPLETED' || session.status === 'CANCELLED') {
+        return false;
+      }
+      const scheduledAt = new Date(session.scheduledAt);
+      const duration = session.duration || 60;
+      const windowStart = new Date(
+        scheduledAt.getTime() - SESSION_GRACE_MINUTES * 60 * 1000,
+      );
+      const windowEnd = new Date(
+        scheduledAt.getTime() + (duration + SESSION_GRACE_MINUTES) * 60 * 1000,
+      );
+      return now >= windowStart && now <= windowEnd;
+    });
+
+    if (!hasValidSession) {
+      throw new BadRequestException(
+        'No active session within the allowed time window. Sessions can only be joined within ±5 minutes of their scheduled time.',
+      );
+    }
+  }
+
+  async getSessionTimingInfo(exchangeId: string, userId: string) {
+    const exchange = await this.prisma.exchange.findUnique({
+      where: { id: exchangeId },
+      include: {
+        sessions: {
+          where: {
+            status: { in: ['SCHEDULED'] },
+          },
+          orderBy: { scheduledAt: 'asc' },
+        },
+      },
+    });
+
+    if (!exchange) throw new NotFoundException('Exchange not found');
+    if (exchange.senderId !== userId && exchange.receiverId !== userId) {
+      throw new ForbiddenException('Not a participant');
+    }
+
+    const now = new Date();
+    const activeSession = exchange.sessions.find((s) => {
+      const start = new Date(s.scheduledAt);
+      const end = new Date(start.getTime() + (s.duration || 60) * 60 * 1000);
+      return now <= end;
+    });
+
+    if (!activeSession) {
+      return { session: null };
+    }
+
+    return {
+      session: {
+        id: activeSession.id,
+        scheduledAt: activeSession.scheduledAt,
+        duration: activeSession.duration,
+        endsAt: new Date(
+          new Date(activeSession.scheduledAt).getTime() +
+            (activeSession.duration || 60) * 60 * 1000,
+        ),
+      },
+    };
   }
 
   /* ─── Recording Consent ─────────────────────────────────── */
@@ -73,7 +160,6 @@ export class VideoService {
 
     if (!session) throw new NotFoundException('Session not found');
 
-    // Verify user is a participant
     const { senderId, receiverId } = session.exchange;
     if (userId !== senderId && userId !== receiverId) {
       throw new ForbiddenException('Not a participant of this session');
@@ -87,7 +173,6 @@ export class VideoService {
       create: { exchangeSessionId, userId, consented },
     });
 
-    // Check if both participants have consented
     const allConsents = await this.prisma.recordingConsent.findMany({
       where: { exchangeSessionId },
     });
@@ -110,7 +195,13 @@ export class VideoService {
   async startRecording(exchangeSessionId: string, userId: string) {
     const session = await this.prisma.exchangeSession.findUnique({
       where: { id: exchangeSessionId },
-      include: { exchange: true, recordingConsents: true },
+      include: {
+        exchange: true,
+        recordingConsents: true,
+        recordings: {
+          where: { recordingStatus: 'RECORDING' },
+        },
+      },
     });
 
     if (!session) throw new NotFoundException('Session not found');
@@ -120,7 +211,6 @@ export class VideoService {
       throw new ForbiddenException('Not a participant of this session');
     }
 
-    // Verify both participants consented
     const bothConsented =
       session.recordingConsents.length === 2 &&
       session.recordingConsents.every((c) => c.consented);
@@ -131,12 +221,14 @@ export class VideoService {
       );
     }
 
-    if (session.recordingEgressId) {
-      throw new BadRequestException('Recording is already in progress');
+    if (session.recordings.length > 0) {
+      throw new BadRequestException(
+        'A recording is already in progress for this session.',
+      );
     }
 
     const egressClient = this.getEgressClient();
-    const roomName = session.exchangeId; // room name = exchange ID
+    const roomName = session.exchangeId;
 
     const fileOutput = new EncodedFileOutput({
       fileType: EncodedFileType.MP4,
@@ -157,21 +249,131 @@ export class VideoService {
       throw new InternalServerErrorException('Failed to start recording');
     }
 
-    const updatedSession = await this.prisma.exchangeSession.update({
-      where: { id: exchangeSessionId },
+    const recording = await this.prisma.sessionRecording.create({
       data: {
+        exchangeSessionId,
         recordingEgressId: egressInfo.egressId,
         recordingStatus: 'RECORDING',
       },
     });
 
     return {
+      recordingId: recording.id,
       egressId: egressInfo.egressId,
-      status: updatedSession.recordingStatus,
+      status: recording.recordingStatus,
     };
   }
 
   async stopRecording(exchangeSessionId: string, userId: string) {
+    const session = await this.prisma.exchangeSession.findUnique({
+      where: { id: exchangeSessionId },
+      include: {
+        exchange: true,
+        recordings: {
+          where: { recordingStatus: 'RECORDING' },
+        },
+      },
+    });
+
+    if (!session) throw new NotFoundException('Session not found');
+
+    const { senderId, receiverId } = session.exchange;
+    if (userId !== senderId && userId !== receiverId) {
+      throw new ForbiddenException('Not a participant of this session');
+    }
+
+    const activeRecording = session.recordings[0];
+    if (!activeRecording || !activeRecording.recordingEgressId) {
+      throw new BadRequestException('No active recording to stop');
+    }
+
+    const egressClient = this.getEgressClient();
+
+    try {
+      await egressClient.stopEgress(activeRecording.recordingEgressId);
+    } catch (error) {
+      this.logger.error('Failed to stop egress', error);
+      throw new InternalServerErrorException('Failed to stop recording');
+    }
+
+    const updatedRecording = await this.prisma.sessionRecording.update({
+      where: { id: activeRecording.id },
+      data: { recordingStatus: 'PROCESSING' },
+    });
+
+    return { status: updatedRecording.recordingStatus };
+  }
+
+  async getRecordingStatus(exchangeSessionId: string) {
+    const session = await this.prisma.exchangeSession.findUnique({
+      where: { id: exchangeSessionId },
+      select: {
+        recordings: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+        recordingConsents: {
+          select: { userId: true, consented: true },
+        },
+      },
+    });
+
+    if (!session) throw new NotFoundException('Session not found');
+    return {
+      latestRecording: session.recordings[0] || null,
+      recordingConsents: session.recordingConsents,
+    };
+  }
+
+  /* ─── Recording Playback ─────────────────────────────────── */
+
+  async getRecordingPlayback(recordingId: string, userId: string) {
+    const recording = await this.prisma.sessionRecording.findUnique({
+      where: { id: recordingId },
+      include: {
+        exchangeSession: {
+          include: { exchange: true },
+        },
+      },
+    });
+
+    if (!recording) throw new NotFoundException('Recording not found');
+
+    const { senderId, receiverId } = recording.exchangeSession.exchange;
+    if (userId !== senderId && userId !== receiverId) {
+      throw new ForbiddenException('Not a participant of this session');
+    }
+
+    if (recording.recordingStatus !== 'COMPLETED' || !recording.recordingKey) {
+      throw new NotFoundException('Recording is not completed or missing file');
+    }
+
+    if (
+      recording.recordingExpiresAt &&
+      new Date() > recording.recordingExpiresAt
+    ) {
+      throw new BadRequestException('Recording has expired.');
+    }
+
+    const playbackUrl = await this.r2.getPresignedDownloadUrl(
+      recording.recordingKey,
+      3600,
+    );
+
+    return {
+      url: playbackUrl,
+      expiresAt: recording.recordingExpiresAt,
+      recordingStatus: recording.recordingStatus,
+    };
+  }
+
+  /* ─── Session Chat Persistence ───────────────────────────── */
+
+  async saveSessionChatMessage(
+    exchangeSessionId: string,
+    userId: string,
+    message: string,
+  ) {
     const session = await this.prisma.exchangeSession.findUnique({
       where: { id: exchangeSessionId },
       include: { exchange: true },
@@ -184,57 +386,94 @@ export class VideoService {
       throw new ForbiddenException('Not a participant of this session');
     }
 
-    if (!session.recordingEgressId) {
-      throw new BadRequestException('No active recording to stop');
-    }
-
-    const egressClient = this.getEgressClient();
-
-    try {
-      await egressClient.stopEgress(session.recordingEgressId);
-    } catch (error) {
-      this.logger.error('Failed to stop egress', error);
-      throw new InternalServerErrorException('Failed to stop recording');
-    }
-
-    const updatedSession = await this.prisma.exchangeSession.update({
-      where: { id: exchangeSessionId },
-      data: { recordingStatus: 'PROCESSING' },
+    return this.prisma.sessionChatMessage.create({
+      data: {
+        exchangeSessionId,
+        senderId: userId,
+        message,
+      },
     });
-
-    return { status: updatedSession.recordingStatus };
   }
 
-  async getRecordingStatus(exchangeSessionId: string) {
+  async getSessionChat(exchangeSessionId: string, userId: string) {
     const session = await this.prisma.exchangeSession.findUnique({
       where: { id: exchangeSessionId },
-      select: {
-        recordingStatus: true,
-        recordingUrl: true,
-        recordingEgressId: true,
-        recordingConsents: {
-          select: { userId: true, consented: true },
+      include: { exchange: true },
+    });
+
+    if (!session) throw new NotFoundException('Session not found');
+
+    const { senderId, receiverId } = session.exchange;
+    if (userId !== senderId && userId !== receiverId) {
+      throw new ForbiddenException('Not a participant of this session');
+    }
+
+    // Get the user's last-read timestamp
+    const receipt = await this.prisma.sessionChatReadReceipt.findUnique({
+      where: {
+        exchangeSessionId_userId: { exchangeSessionId, userId },
+      },
+    });
+
+    const messages = await this.prisma.sessionChatMessage.findMany({
+      where: { exchangeSessionId },
+      orderBy: { timestamp: 'asc' },
+      include: {
+        sender: {
+          select: { id: true, name: true, image: true },
         },
       },
     });
 
+    // Count messages from OTHER users after last read
+    const unreadCount = messages.filter(
+      (m) =>
+        m.senderId !== userId &&
+        (!receipt || m.timestamp > receipt.lastReadAt),
+    ).length;
+
+    return { messages, unreadCount };
+  }
+
+  async markSessionChatRead(exchangeSessionId: string, userId: string) {
+    const session = await this.prisma.exchangeSession.findUnique({
+      where: { id: exchangeSessionId },
+      include: { exchange: true },
+    });
+
     if (!session) throw new NotFoundException('Session not found');
-    return session;
+
+    const { senderId, receiverId } = session.exchange;
+    if (userId !== senderId && userId !== receiverId) {
+      throw new ForbiddenException('Not a participant of this session');
+    }
+
+    await this.prisma.sessionChatReadReceipt.upsert({
+      where: {
+        exchangeSessionId_userId: { exchangeSessionId, userId },
+      },
+      update: { lastReadAt: new Date() },
+      create: { exchangeSessionId, userId },
+    });
+
+    return { ok: true };
   }
 
   /* ─── Webhook Processing ────────────────────────────────── */
 
   async handleEgressEnded(egressInfo: EgressInfo) {
-    const session = await this.prisma.exchangeSession.findFirst({
+    const recording = await this.prisma.sessionRecording.findUnique({
       where: { recordingEgressId: egressInfo.egressId },
+      include: { exchangeSession: true },
     });
 
-    if (!session) {
-      this.logger.warn(`No session found for egress ${egressInfo.egressId}`);
+    if (!recording) {
+      this.logger.warn(
+        `No recording record found for egress ${egressInfo.egressId}`,
+      );
       return;
     }
 
-    // Check for errors in file results
     const fileResult = egressInfo.fileResults?.[0];
     const hasError = egressInfo.error && egressInfo.error.length > 0;
 
@@ -242,16 +481,15 @@ export class VideoService {
       this.logger.error(
         `Egress ${egressInfo.egressId} failed: ${egressInfo.error}`,
       );
-      await this.prisma.exchangeSession.update({
-        where: { id: session.id },
+      await this.prisma.sessionRecording.update({
+        where: { id: recording.id },
         data: { recordingStatus: 'FAILED' },
       });
 
-      // Signal failure to UI
       try {
         const roomService = this.getRoomServiceClient();
         await roomService.sendData(
-          session.exchangeId,
+          recording.exchangeSession.exchangeId,
           new TextEncoder().encode(
             JSON.stringify({ type: 'recording_failed' }),
           ),
@@ -266,29 +504,27 @@ export class VideoService {
     }
 
     const recordingKey = fileResult.filename;
-    const publicUrl = this.config.get<string>('R2_PUBLIC_URL');
-    const recordingUrl = publicUrl
-      ? `${publicUrl}/${recordingKey}`
-      : recordingKey;
+    const recordingExpiresAt = new Date(
+      Date.now() + RECORDING_TTL_DAYS * 24 * 60 * 60 * 1000,
+    );
 
-    await this.prisma.exchangeSession.update({
-      where: { id: session.id },
+    await this.prisma.sessionRecording.update({
+      where: { id: recording.id },
       data: {
         recordingStatus: 'COMPLETED',
         recordingKey,
-        recordingUrl,
+        recordingExpiresAt,
       },
     });
 
     this.logger.log(
-      `Recording completed for session ${session.id}: ${recordingKey}`,
+      `Recording completed for session ${recording.exchangeSessionId}: ${recordingKey} (expires ${recordingExpiresAt.toISOString()})`,
     );
 
-    // Signal completion to UI
     try {
       const roomService = this.getRoomServiceClient();
       await roomService.sendData(
-        session.exchangeId,
+        recording.exchangeSession.exchangeId,
         new TextEncoder().encode(
           JSON.stringify({ type: 'recording_completed' }),
         ),
@@ -311,7 +547,6 @@ export class VideoService {
       );
     }
 
-    // Convert wss://... to https://... if it is a wss URL, because RoomServiceClient uses API endpoint
     const apiHost = wsUrl
       .replace('wss://', 'https://')
       .replace('ws://', 'http://');

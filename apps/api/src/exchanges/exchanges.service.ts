@@ -20,6 +20,7 @@ import {
 } from '../generated/prisma/client';
 import { PointsService } from '../points/points.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { R2Service } from '../uploads/r2.service';
 
 @Injectable()
 export class ExchangesService {
@@ -27,6 +28,7 @@ export class ExchangesService {
     private prisma: PrismaService,
     private pointsService: PointsService,
     private eventEmitter: EventEmitter2,
+    private r2: R2Service,
   ) {}
 
   /**
@@ -649,6 +651,10 @@ export class ExchangesService {
               return {
                 skillId: slot.skillId,
                 scheduledAt,
+                duration:
+                  slot.skillId === request.requestedSkillId
+                    ? request.requestedSkillDuration
+                    : request.offeredSkillDuration,
               };
             }),
           },
@@ -848,7 +854,12 @@ export class ExchangesService {
         receivedSkill: true,
         sessions: {
           orderBy: { scheduledAt: 'asc' },
-          include: { skill: true },
+          include: {
+            skill: true,
+            recordings: {
+              orderBy: { createdAt: 'desc' },
+            },
+          },
         },
         request: true,
       },
@@ -971,5 +982,110 @@ export class ExchangesService {
     }
 
     return await this.getExchangeById(userId, exchangeId);
+  }
+
+  /* ─── Exchange Chat ──────────────────────────────────────── */
+
+  async sendChatMessage(
+    userId: string,
+    exchangeId: string,
+    content?: string,
+    fileKey?: string,
+    fileName?: string,
+    fileType?: string,
+  ) {
+    const exchange = await this.prisma.exchange.findUnique({
+      where: { id: exchangeId },
+    });
+
+    if (!exchange) throw new NotFoundException('Exchange not found');
+    if (exchange.senderId !== userId && exchange.receiverId !== userId) {
+      throw new ForbiddenException('You are not part of this exchange');
+    }
+
+    if (!content && !fileKey) {
+      throw new BadRequestException(
+        'Either content or a file must be provided.',
+      );
+    }
+
+    const message = await this.prisma.exchangeChatMessage.create({
+      data: {
+        exchangeId,
+        senderId: userId,
+        content: content || null,
+        fileKey: fileKey || null,
+        fileName: fileName || null,
+        fileType: fileType || null,
+      },
+      include: {
+        sender: { select: { id: true, name: true, image: true } },
+      },
+    });
+
+    this.eventEmitter.emit('exchange.updated', {
+      userIds: [exchange.senderId, exchange.receiverId],
+      requestId: exchange.requestId,
+    });
+
+    return message;
+  }
+
+  async getChatMessages(userId: string, exchangeId: string) {
+    const exchange = await this.prisma.exchange.findUnique({
+      where: { id: exchangeId },
+    });
+
+    if (!exchange) throw new NotFoundException('Exchange not found');
+    if (exchange.senderId !== userId && exchange.receiverId !== userId) {
+      throw new ForbiddenException('You are not part of this exchange');
+    }
+
+    const messages = await this.prisma.exchangeChatMessage.findMany({
+      where: { exchangeId },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        sender: { select: { id: true, name: true, image: true } },
+      },
+    });
+
+    // If any message has a fileKey, generate a presigned download URL
+    return Promise.all(
+      messages.map(async (msg) => {
+        if (msg.fileKey) {
+          const fileUrl = await this.r2.getPresignedDownloadUrl(
+            msg.fileKey,
+            3600,
+          );
+          return { ...msg, fileUrl };
+        }
+        return { ...msg, fileUrl: null };
+      }),
+    );
+  }
+
+  async getChatUploadUrl(
+    userId: string,
+    exchangeId: string,
+    fileName: string,
+    contentType: string,
+  ) {
+    const exchange = await this.prisma.exchange.findUnique({
+      where: { id: exchangeId },
+    });
+
+    if (!exchange) throw new NotFoundException('Exchange not found');
+    if (exchange.senderId !== userId && exchange.receiverId !== userId) {
+      throw new ForbiddenException('You are not part of this exchange');
+    }
+
+    const key = `exchange-chat/${exchangeId}/${Date.now()}-${fileName}`;
+    const uploadUrl = await this.r2.getPresignedUploadUrl(
+      key,
+      contentType,
+      3600,
+    );
+
+    return { uploadUrl, key };
   }
 }
