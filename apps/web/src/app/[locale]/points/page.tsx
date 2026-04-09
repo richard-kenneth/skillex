@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,6 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  applyCurrencyPrecision,
+  getCurrencyDecimals,
+  POINT_TO_USD_RATE,
+} from "@skil-ex2/shared";
 import { closePaymentModal, useFlutterwave } from "flutterwave-react-v3";
 import {
   ArrowDownLeft,
@@ -17,13 +23,14 @@ import {
   Loader2,
   Lock,
   Plus,
+  TrendingUp,
   Unlock,
   Wallet,
   Zap,
 } from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
 
 interface PointsTransaction {
   id: string;
@@ -46,6 +53,22 @@ interface FeeConfig {
   withdrawalFeePercentage: number;
   withdrawalFeeFixed: number;
   minWithdrawalAmount: number;
+}
+
+interface FeeTier {
+  name: string;
+  minVolume: number;
+  maxVolume: number | null;
+  purchaseFeePercentage: number;
+  purchaseFeeFixed: number;
+  withdrawalFeePercentage: number;
+  withdrawalFeeFixed: number;
+  bonusPercentage: number;
+}
+
+interface UserTier {
+  tier: FeeTier;
+  volume: number;
 }
 
 const typeConfig: Record<
@@ -81,12 +104,18 @@ const typeConfig: Record<
 
 export default function PointsPage() {
   const router = useRouter();
+  const format = useFormatter();
+  const WITHDRAWAL_CURRENCY = "NGN";
   const t = useTranslations("points");
   const tCommon = useTranslations("common");
+  const tTiers = useTranslations("feeTiers");
+  const tRefs = useTranslations("referrals");
   const [balance, setBalance] = useState<number | null>(null);
   const [transactions, setTransactions] = useState<PointsTransaction[]>([]);
   const [banks, setBanks] = useState<Bank[]>([]);
   const [feeConfig, setFeeConfig] = useState<FeeConfig | null>(null);
+  const [feeTiers, setFeeTiers] = useState<FeeTier[]>([]);
+  const [myTier, setMyTier] = useState<UserTier | null>(null);
 
   const [purchaseAmount, setPurchaseAmount] = useState("");
   const [purchasing, setPurchasing] = useState(false);
@@ -104,26 +133,57 @@ export default function PointsPage() {
   );
 
   const [loadingData, setLoadingData] = useState(true);
+  const [rates, setRates] = useState<Record<string, number> | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const [currencyDetecting, setCurrencyDetecting] = useState(true);
+
+  // Auto-detect IP Currency
+  useEffect(() => {
+    const detectCurrency = async () => {
+      try {
+        const res = await fetch("https://ipapi.co/currency/");
+        if (res.ok) {
+          const currency = await res.text();
+          if (currency && currency.trim().length === 3) {
+            setSelectedCurrency(currency.trim().toUpperCase());
+          }
+        }
+      } catch (e) {
+        console.error("Currency detection failed, defaulting to USD.");
+      } finally {
+        setCurrencyDetecting(false);
+      }
+    };
+    detectCurrency();
+  }, []);
+
   const [paymentConfig, setPaymentConfig] = useState<{
     txRef: string;
     amount: number;
+    currency: string;
     customer: { email: string; name: string; phone_number: string };
   } | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
-      const [balRes, txRes, banksRes, feeRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/balance`, {
-          credentials: "include",
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/transactions`, {
-          credentials: "include",
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/banks`, {
-          credentials: "include",
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/fee-config`),
-      ]);
+      const [balRes, txRes, banksRes, feeRes, tiersRes, myTierRes, ratesRes] =
+        await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/balance`, {
+            credentials: "include",
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/transactions`, {
+            credentials: "include",
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/banks`, {
+            credentials: "include",
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/fee-config`),
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/fee-tiers`),
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/my-tier`, {
+            credentials: "include",
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/rates`),
+        ]);
 
       if (balRes.ok) {
         const data = await balRes.json();
@@ -138,6 +198,15 @@ export default function PointsPage() {
       if (feeRes.ok) {
         const config = await feeRes.json();
         setFeeConfig(config);
+      }
+      if (tiersRes.ok) {
+        setFeeTiers(await tiersRes.json());
+      }
+      if (myTierRes.ok) {
+        setMyTier(await myTierRes.json());
+      }
+      if (ratesRes.ok) {
+        setRates(await ratesRes.json());
       }
     } catch {
       console.error(t("errorLoading"));
@@ -187,28 +256,61 @@ export default function PointsPage() {
     }
   }, [accountNumber, bankCode, t]);
 
+  const pTier = myTier?.tier;
   const pAmount = parseInt(purchaseAmount) || 0;
-  const pFee = feeConfig
-    ? Math.ceil(
-        pAmount * feeConfig.purchaseFeePercentage + feeConfig.purchaseFeeFixed,
-      )
-    : 0;
-  const pTotal = pAmount + pFee;
+  const pBonus = pTier ? Math.floor(pAmount * (pTier.bonusPercentage ?? 0)) : 0;
 
+  // Fiat Estimation Calculations
+  const rate = rates ? rates[selectedCurrency] || 1 : 1;
+  const purchaseFeePercentage = pTier
+    ? (pTier.purchaseFeePercentage ?? 0)
+    : (feeConfig?.purchaseFeePercentage ?? 0);
+  const purchaseFeeFixed = pTier
+    ? (pTier.purchaseFeeFixed ?? 0)
+    : (feeConfig?.purchaseFeeFixed ?? 0);
+  const baseFiatRaw = pAmount * POINT_TO_USD_RATE * rate;
+  const pFeeFiatRaw =
+    baseFiatRaw * purchaseFeePercentage +
+    purchaseFeeFixed * POINT_TO_USD_RATE * rate;
+
+  const baseFiatRounded = applyCurrencyPrecision(
+    baseFiatRaw,
+    selectedCurrency,
+    rate,
+  );
+  const pFeeFiatRounded = applyCurrencyPrecision(
+    pFeeFiatRaw,
+    selectedCurrency,
+    rate,
+  );
+  const pTotalFiat = baseFiatRounded + pFeeFiatRounded;
+
+  const wTier = myTier?.tier;
   const wAmount = parseInt(withdrawAmount) || 0;
-  const wFee = feeConfig
+  const wFee = wTier
     ? Math.ceil(
-        wAmount * feeConfig.withdrawalFeePercentage +
-          feeConfig.withdrawalFeeFixed,
+        wAmount * (wTier.withdrawalFeePercentage ?? 0) +
+          (wTier.withdrawalFeeFixed ?? 0),
       )
-    : 0;
-  const wReceive = wAmount - wFee;
+    : feeConfig
+      ? Math.ceil(
+          wAmount * feeConfig.withdrawalFeePercentage +
+            feeConfig.withdrawalFeeFixed,
+        )
+      : 0;
+
+  const pointsToWithdraw = wAmount - wFee;
+
+  // Calculate NGN output based on stable point valuation
+  const ngnRate = rates ? rates["NGN"] || 1500 : 1500;
+  const wReceiveRaw = pointsToWithdraw * POINT_TO_USD_RATE * ngnRate;
+  const wReceive = applyCurrencyPrecision(wReceiveRaw, WITHDRAWAL_CURRENCY);
 
   const handleFlutterPayment = useFlutterwave({
-    public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY!,
+    public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY || "",
     tx_ref: paymentConfig?.txRef || "",
     amount: paymentConfig?.amount || 0,
-    currency: "NGN",
+    currency: paymentConfig?.currency || "USD",
     payment_options: "card,mobilemoney,ussd",
     customer: paymentConfig?.customer || {
       email: "user@skil-ex.com",
@@ -262,7 +364,7 @@ export default function PointsPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ amount: pAmount }),
+          body: JSON.stringify({ amount: pAmount, currency: selectedCurrency }),
         },
       );
 
@@ -273,11 +375,14 @@ export default function PointsPage() {
 
       setPaymentConfig({
         txRef: data.txRef,
-        amount: data.totalAmount,
+        amount: data.fiatAmount,
+        currency: data.fiatCurrency,
         customer: data.customer,
       });
     } catch (e) {
-      setPurchaseError(e instanceof Error ? e.message : t("somethingWentWrong"));
+      setPurchaseError(
+        e instanceof Error ? e.message : t("somethingWentWrong"),
+      );
       setPurchasing(false);
     }
   };
@@ -319,9 +424,11 @@ export default function PointsPage() {
       setAccountNumber("");
       await fetchData();
       router.refresh();
-      alert(t("withdrawalSuccess", { fallback: "Withdrawal successfully initiated!" }));
+      alert(t("withdrawalSuccess"));
     } catch (e) {
-      setWithdrawError(e instanceof Error ? e.message : t("somethingWentWrong"));
+      setWithdrawError(
+        e instanceof Error ? e.message : t("somethingWentWrong"),
+      );
     } finally {
       setWithdrawing(false);
     }
@@ -340,16 +447,14 @@ export default function PointsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-6">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground">
-            {t("description")}
-          </p>
+          <p className="text-muted-foreground">{t("description")}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Balance Card */}
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm relative overflow-hidden md:col-span-1 h-full flex flex-col justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-br from-amber-500/5 to-transparent" />
           <CardHeader className="relative">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Wallet className="h-5 w-5 text-amber-400" />
@@ -360,12 +465,16 @@ export default function PointsPage() {
           <CardContent className="relative">
             <div className="flex items-baseline gap-2">
               <span className="text-6xl font-bold text-amber-400">
-                {balance ?? 0}
+                {format.number(balance ?? 0)}
               </span>
-              <span className="text-lg text-muted-foreground">{tCommon("pts")}</span>
+              <span className="text-lg text-muted-foreground uppercase">
+                {tCommon("points_label", { count: balance ?? 0 })}
+              </span>
             </div>
             <div className="mt-4 text-xs text-muted-foreground bg-muted/30 p-3 rounded-md border border-border/50">
-              <span className="font-medium text-foreground">💡 {t("tip")}:</span>{" "}
+              <span className="font-medium text-foreground">
+                💡 {t("tip")}:
+              </span>{" "}
               {t("pointsExplanation")}
             </div>
           </CardContent>
@@ -379,16 +488,14 @@ export default function PointsPage() {
                 <Coins className="h-5 w-5 text-primary" />
                 {t("buyPoints")}
               </CardTitle>
-              <CardDescription>
-                {t("addPointsDesc")}
-              </CardDescription>
+              <CardDescription>{t("addPointsDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-3">
                 <input
                   type="number"
-                  min={1}
-                  max={10000}
+                  min={500}
+                  max={100000}
                   value={purchaseAmount}
                   onChange={(e) => setPurchaseAmount(e.target.value)}
                   placeholder={t("amountPlaceholder")}
@@ -397,18 +504,58 @@ export default function PointsPage() {
                 />
               </div>
 
-              {pAmount > 0 && (
-                <div className="text-xs text-muted-foreground bg-secondary/20 p-2 rounded flex justify-between">
-                  <span>{t("fee")}: {pFee} NGN</span>
-                  <span className="font-medium text-foreground">
-                    {t("total")}: {pTotal} NGN
-                  </span>
+              {pAmount > 0 && pAmount < 500 && (
+                <p className="text-xs text-red-500">
+                  {t("minPurchaseError", { amount: 500 })}
+                </p>
+              )}
+
+              {pAmount >= 500 && (
+                <div className="text-xs text-muted-foreground bg-secondary/20 p-3 rounded-xl border border-border/50 space-y-2">
+                  <div className="flex justify-between items-center text-foreground font-medium">
+                    <span className="flex items-center gap-1.5">
+                      {tCommon("points_count", { count: 1 })}{" "}
+                      <span className="text-muted-foreground font-normal">
+                        ≈
+                      </span>{" "}
+                      {format.number(POINT_TO_USD_RATE * rate, {
+                        style: "currency",
+                        currency: selectedCurrency,
+                        maximumFractionDigits: 4,
+                      })}
+                    </span>
+                    {pBonus > 0 && (
+                      <span className="text-emerald-500 font-bold flex items-center justify-end gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                        <Zap className="h-3 w-3" />+{format.number(pBonus)}{" "}
+                        {t("bonusPoints")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex justify-between border-t border-border/50 pt-2 text-sm text-foreground">
+                    <span>{t("totalCostInclFees")}:</span>
+                    <span className="font-bold text-primary">
+                      {rates
+                        ? format.number(pTotalFiat, {
+                            style: "currency",
+                            currency: selectedCurrency,
+                            maximumFractionDigits: getCurrencyDecimals(
+                              selectedCurrency,
+                              rate,
+                            ),
+                            minimumFractionDigits: getCurrencyDecimals(
+                              selectedCurrency,
+                              rate,
+                            ),
+                          })
+                        : tCommon("estimating")}
+                    </span>
+                  </div>
                 </div>
               )}
 
               {/* Quick buy options */}
               <div className="flex flex-wrap gap-2">
-                {[100, 500, 1000, 5000].map((amt) => (
+                {[500, 1000, 5000, 10000].map((amt) => (
                   <button
                     key={amt}
                     type="button"
@@ -420,7 +567,7 @@ export default function PointsPage() {
                         : "bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted"
                     }`}
                   >
-                    {amt}
+                    {format.number(amt)}
                   </button>
                 ))}
               </div>
@@ -430,17 +577,32 @@ export default function PointsPage() {
                 disabled={
                   purchasing ||
                   !pAmount ||
-                  pAmount < 1 ||
-                  paymentConfig !== null
+                  pAmount < 500 ||
+                  paymentConfig !== null ||
+                  currencyDetecting
                 }
                 className="w-full gap-2 shadow-sm"
               >
-                {purchasing || paymentConfig ? (
+                {purchasing || paymentConfig || currencyDetecting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                {t("pay")} {pAmount > 0 ? `${pTotal} NGN` : ""}
+                {t("pay")}{" "}
+                {pAmount >= 500 && rates
+                  ? format.number(pTotalFiat, {
+                      style: "currency",
+                      currency: selectedCurrency,
+                      maximumFractionDigits: getCurrencyDecimals(
+                        selectedCurrency,
+                        rate,
+                      ),
+                      minimumFractionDigits: getCurrencyDecimals(
+                        selectedCurrency,
+                        rate,
+                      ),
+                    })
+                  : ""}
               </Button>
 
               {purchaseError && (
@@ -458,9 +620,7 @@ export default function PointsPage() {
                 <Landmark className="h-5 w-5 text-primary" />
                 {t("withdraw")}
               </CardTitle>
-              <CardDescription>
-                {t("convertPointsDesc")}
-              </CardDescription>
+              <CardDescription>{t("convertPointsDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
@@ -475,16 +635,43 @@ export default function PointsPage() {
                   disabled={withdrawing}
                 />
                 <p className="text-[10px] text-muted-foreground px-1">
-                  {t("minTransferAfterFees")}: {feeConfig?.minWithdrawalAmount || 100} NGN
+                  {t("minTransferAfterFees")}:{" "}
+                  {format.number(feeConfig?.minWithdrawalAmount || 100, {
+                    style: "currency",
+                    currency: WITHDRAWAL_CURRENCY,
+                    maximumFractionDigits: getCurrencyDecimals(
+                      WITHDRAWAL_CURRENCY,
+                      ngnRate,
+                    ),
+                    minimumFractionDigits: getCurrencyDecimals(
+                      WITHDRAWAL_CURRENCY,
+                      ngnRate,
+                    ),
+                  })}
                 </p>
 
                 {wAmount > 0 && (
                   <div className="text-xs text-muted-foreground bg-secondary/20 p-2 rounded flex justify-between">
-                    <span>{t("fee")}: {wFee} pts</span>
+                    <span>
+                      {t("fee")}: {format.number(wFee)}{" "}
+                      {tCommon("points_label", { count: wFee })}
+                    </span>
                     <span
                       className={`font-medium ${wReceive >= (feeConfig?.minWithdrawalAmount || 100) ? "text-green-500" : "text-red-400"}`}
                     >
-                      {t("youReceive")}: {wReceive} NGN
+                      {t("youReceive")}:{" "}
+                      {format.number(wReceive, {
+                        style: "currency",
+                        currency: WITHDRAWAL_CURRENCY,
+                        maximumFractionDigits: getCurrencyDecimals(
+                          WITHDRAWAL_CURRENCY,
+                          ngnRate,
+                        ),
+                        minimumFractionDigits: getCurrencyDecimals(
+                          WITHDRAWAL_CURRENCY,
+                          ngnRate,
+                        ),
+                      })}
                     </span>
                   </div>
                 )}
@@ -523,7 +710,8 @@ export default function PointsPage() {
 
                 {resolvingAccount && (
                   <p className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
-                    <Loader2 className="h-3 w-3 animate-spin" /> {t("resolvingAccount")}
+                    <Loader2 className="h-3 w-3 animate-spin" />{" "}
+                    {t("resolvingAccount")}
                   </p>
                 )}
                 {resolvedAccountName && (
@@ -552,7 +740,14 @@ export default function PointsPage() {
                 ) : (
                   <ArrowUpRight className="h-4 w-4" />
                 )}
-                {t("withdraw")} {wReceive > 0 ? `${wReceive} NGN` : ""}
+                {t("withdraw")}{" "}
+                {wReceive > 0
+                  ? format.number(wReceive, {
+                      style: "currency",
+                      currency: WITHDRAWAL_CURRENCY,
+                      maximumFractionDigits: 0,
+                    })
+                  : ""}
               </Button>
 
               {withdrawError && (
@@ -565,7 +760,109 @@ export default function PointsPage() {
         </div>
       </div>
 
+      {/* Tier Info Card */}
+      {myTier && (
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden border-l-4 border-l-primary">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle className="flex items-center gap-2 text-lg text-primary">
+                  <TrendingUp className="h-5 w-5" />
+                  {tTiers("yourTier")}
+                </CardTitle>
+                <CardDescription>{tTiers("tierBenefits")}</CardDescription>
+              </div>
+              <Badge
+                variant="outline"
+                className="px-3 py-1 font-bold text-primary border-primary/50"
+              >
+                {myTier.tier.name}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">
+                    {tTiers("purchaseFee")}
+                  </p>
+                  <p className="text-xl font-semibold">
+                    {(myTier.tier.purchaseFeePercentage * 100).toFixed(1)}% +{" "}
+                    {format.number(
+                      myTier.tier.purchaseFeeFixed * POINT_TO_USD_RATE * rate,
+                      {
+                        style: "currency",
+                        currency: selectedCurrency,
+                        maximumFractionDigits: getCurrencyDecimals(
+                          selectedCurrency,
+                          rate,
+                        ),
+                        minimumFractionDigits: getCurrencyDecimals(
+                          selectedCurrency,
+                          rate,
+                        ),
+                      },
+                    )}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">
+                    {tTiers("withdrawFee")}
+                  </p>
+                  <p className="text-xl font-semibold">
+                    {(myTier.tier.withdrawalFeePercentage * 100).toFixed(1)}% +{" "}
+                    {format.number(myTier.tier.withdrawalFeeFixed, {
+                      style: "currency",
+                      currency: WITHDRAWAL_CURRENCY,
+                      maximumFractionDigits: 0,
+                    })}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">
+                    {tTiers("bonus")}
+                  </p>
+                  <p className="text-xl font-semibold text-emerald-400">
+                    {(myTier.tier.bonusPercentage * 100).toFixed(0)}%{" "}
+                    {tCommon("pts")} back
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              {myTier.tier.maxVolume && (
+                <div className="space-y-3 pt-4 border-t border-border/30">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {tTiers("volume")}:{" "}
+                      <span className="text-foreground font-medium">
+                        {format.number(myTier.volume)} pts
+                      </span>
+                    </span>
+                    <span className="text-primary font-medium">
+                      {tTiers("nextTier", {
+                        amount: format.number(myTier.tier.maxVolume + 1),
+                      })}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-1000 shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                      style={{
+                        width: `${Math.min(100, (myTier.volume / (myTier.tier.maxVolume + 1)) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Transactions */}
+
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -593,15 +890,29 @@ export default function PointsPage() {
                 };
                 const Icon = config.icon;
                 const isPositive = tx.amount > 0;
-                
+
                 const getLabel = (type: string, fallback: string) => {
-                  switch(type) {
-                    case "PURCHASE": return t("purchase");
-                    case "ESCROW_LOCK": return t("escrowHeld");
-                    case "ESCROW_RELEASE": return t("escrowReleased");
-                    case "PENALTY": return t("penalty", { fallback: "Penalty" });
-                    case "CONVERSION": return t("conversion", { fallback: "Conversion" });
-                    default: return fallback;
+                  try {
+                    switch (type) {
+                      case "PURCHASE":
+                        return t("purchase");
+                      case "ESCROW_LOCK":
+                        return t("escrowHeld");
+                      case "ESCROW_RELEASE":
+                        return t("escrowReleased");
+                      case "PENALTY":
+                        return t("penalty");
+                      case "CONVERSION":
+                        return t("conversion");
+                      case "REFERRAL_REWARD":
+                        return tRefs("rewardReceived");
+                      case "REFERRAL_BONUS":
+                        return tRefs("bonusReceived");
+                      default:
+                        return fallback;
+                    }
+                  } catch {
+                    return fallback;
                   }
                 };
 
@@ -617,7 +928,9 @@ export default function PointsPage() {
                       <Icon className={`h-4 w-4 ${config.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{getLabel(tx.type, config.label)}</p>
+                      <p className="text-sm font-medium">
+                        {getLabel(tx.type, config.label)}
+                      </p>
                       {tx.description && (
                         <p className="text-xs text-muted-foreground truncate">
                           {tx.description}
@@ -631,10 +944,10 @@ export default function PointsPage() {
                         }`}
                       >
                         {isPositive ? "+" : ""}
-                        {tx.amount}
+                        {format.number(tx.amount)}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        {new Date(tx.createdAt).toLocaleDateString("en-US", {
+                        {format.dateTime(new Date(tx.createdAt), {
                           month: "short",
                           day: "numeric",
                         })}

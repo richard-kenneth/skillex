@@ -13,6 +13,7 @@ import { headers } from "next/headers";
 import { Link } from "@/i18n/navigation";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { ReferralCard } from "@/components/referral-card";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export default async function DashboardPage() {
             className="px-3 py-1 text-sm font-medium flex items-center gap-2 bg-primary/10 border-primary/20 hover:bg-primary/20 transition-colors"
           >
             <Coins className="h-4 w-4 text-primary" />
-            <span>{fullUser.pointsBalance ?? 0} {tc("points")}</span>
+            <span>{tc("points_count", { count: fullUser.pointsBalance ?? 0 })}</span>
           </Badge>
           <Button
             variant="outline"
@@ -247,6 +248,10 @@ export default async function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8">
+        <ReferralCard />
       </div>
     </div>
   );

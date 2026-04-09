@@ -78,12 +78,12 @@ export function ProfileForm({ user }: ProfileFormProps) {
         },
       );
 
-      if (!response.ok) throw new Error("Failed to update bio");
+      if (!response.ok) throw new Error(t("failedUpdateBio"));
 
       toast.success(t("profileUpdated"));
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error ? error.message : "An unknown error occurred";
+        error instanceof Error ? error.message : tCommon("error");
       console.error("Profile update error:", errorMessage);
       toast.error(t("profileUpdateError"));
     } finally {
@@ -119,7 +119,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
             <Avatar className="h-24 w-24 border-4 border-background shadow-xl ring-2 ring-primary/20 transition-transform hover:scale-105">
               <AvatarImage
                 src={avatarUrl ?? ""}
-                alt={user.name ?? "User avatar"}
+                alt={t("avatarAlt", { name: displayName })}
               />
               <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
                 {displayName.charAt(0).toUpperCase()}

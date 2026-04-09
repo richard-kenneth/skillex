@@ -13,13 +13,10 @@ import {
   SendMessageDto,
   type UpdateAvailabilityDto,
 } from '@skil-ex2/shared';
-import {
-  ExchangeRequest,
-  SessionStatus,
-  ExchangeStatus,
-} from '../generated/prisma/client';
+import { ExchangeRequest, SessionStatus } from '../generated/prisma/client';
 import { PointsService } from '../points/points.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReferralsService } from '../referrals/referrals.service';
 import { R2Service } from '../uploads/r2.service';
 
 @Injectable()
@@ -29,6 +26,7 @@ export class ExchangesService {
     private pointsService: PointsService,
     private eventEmitter: EventEmitter2,
     private r2: R2Service,
+    private referralsService: ReferralsService,
   ) {}
 
   /**
@@ -979,6 +977,18 @@ export class ExchangesService {
         userIds: [exchange.senderId, exchange.receiverId],
         exchangeId,
       });
+
+      // Process referral rewards for both participants
+      await Promise.allSettled([
+        this.referralsService.processExchangeCompletion(
+          exchange.senderId,
+          exchangeId,
+        ),
+        this.referralsService.processExchangeCompletion(
+          exchange.receiverId,
+          exchangeId,
+        ),
+      ]);
     }
 
     return await this.getExchangeById(userId, exchangeId);

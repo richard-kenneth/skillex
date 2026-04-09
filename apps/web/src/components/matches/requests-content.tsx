@@ -86,7 +86,7 @@ export function RequestsContent({
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/requests`,
         { credentials: "include" },
       );
-      if (!res.ok) throw new Error("Failed to fetch requests");
+      if (!res.ok) throw new Error(t("failedFetchRequests"));
       return res.json();
     },
     initialData: { received: initialReceived, sent: initialSent },
@@ -298,7 +298,7 @@ function RequestCard({
               <div className="flex items-center gap-2 text-sm">
                 <Coins className="h-3.5 w-3.5 text-amber-400" />
                 <span className="text-amber-400 font-medium">
-                  {request.pointsProposal} {tc("pts")}
+                  {request.pointsProposal} {tc("points_label", { count: request.pointsProposal })}
                 </span>
                 <span className="text-muted-foreground">
                   {t("paidBy")} {request.pointsPayerId === currentUserId ? tc("you") : (otherUser?.name ?? tc("them"))}
@@ -324,7 +324,7 @@ function RequestCard({
           <div className="flex flex-col items-end justify-between h-full shrink-0">
             <div className="text-right space-y-2">
               <p className="text-xs text-muted-foreground/60">
-                {new Date(request.createdAt).toLocaleDateString("en-US", {
+                {new Date(request.createdAt).toLocaleDateString(undefined, {
                   month: "short",
                   day: "numeric",
                   year: "numeric",

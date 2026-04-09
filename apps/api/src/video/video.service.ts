@@ -428,8 +428,7 @@ export class VideoService {
     // Count messages from OTHER users after last read
     const unreadCount = messages.filter(
       (m) =>
-        m.senderId !== userId &&
-        (!receipt || m.timestamp > receipt.lastReadAt),
+        m.senderId !== userId && (!receipt || m.timestamp > receipt.lastReadAt),
     ).length;
 
     return { messages, unreadCount };

@@ -4,9 +4,10 @@ export const PurchasePointsSchema = v.strictObject({
   amount: v.pipe(
     v.number(),
     v.integer("Amount must be a whole number."),
-    v.minValue(1, "Must purchase at least 1 point."),
-    v.maxValue(10000, "Cannot purchase more than 10,000 points at once."),
+    v.minValue(500, "Must purchase at least 500 points."),
+    v.maxValue(100000, "Cannot purchase more than 100,000 points at once."),
   ),
+  currency: v.optional(v.string()),
 });
 
 export type PurchasePointsPayload = v.InferInput<typeof PurchasePointsSchema>;

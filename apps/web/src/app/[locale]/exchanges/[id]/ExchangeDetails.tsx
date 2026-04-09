@@ -194,7 +194,7 @@ export default function ExchangeDetails({
         },
       );
 
-      if (!res.ok) throw new Error("Failed to update session");
+      if (!res.ok) throw new Error(t("failedUpdateSession"));
       toast.success(t("sessionMarkedAs", { status: status.toLowerCase() }));
       router.refresh();
     } catch {
@@ -212,7 +212,7 @@ export default function ExchangeDetails({
         credentials: "include",
       });
 
-      if (!res.ok) throw new Error("Failed to complete exchange");
+      if (!res.ok) throw new Error(t("failedCompleteExchange"));
       toast.success(t("exchangeMarkedCompleted"));
 
       const data = await res.json();
@@ -330,14 +330,14 @@ export default function ExchangeDetails({
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="font-medium text-sm">
-                  {sessionDate.toLocaleDateString("en-US", {
+                  {sessionDate.toLocaleDateString(undefined, {
                     weekday: "short",
                     month: "short",
                     day: "numeric",
                   })}
                 </h4>
                 <span className="text-muted-foreground text-sm">
-                  {sessionDate.toLocaleTimeString("en-US", {
+                  {sessionDate.toLocaleTimeString(undefined, {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
@@ -346,7 +346,7 @@ export default function ExchangeDetails({
                   variant="outline"
                   className={`text-[10px] ${sessionStatusColors[session.status]}`}
                 >
-                  {session.status}
+                  {t(session.status.toLowerCase())}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -438,8 +438,8 @@ export default function ExchangeDetails({
                           <Play className="h-2 w-2" />
                         )}
                         {t("part", { num: recordings.length - idx })}
-                        {isProcessing && " (Processing...)"}
-                        {isExpired && " (Expired)"}
+                        {isProcessing && ` (${t("processing")})`}
+                        {isExpired && ` (${t("expired")})`}
                       </Button>
                     </div>
                   );
@@ -482,7 +482,7 @@ export default function ExchangeDetails({
                   variant="outline"
                   className={statusColors[exchange.status]}
                 >
-                  {exchange.status}
+                  {t(exchange.status.toLowerCase())}
                 </Badge>
               </p>
             </div>
@@ -499,7 +499,10 @@ export default function ExchangeDetails({
               <CardContent>
                 <div className="text-2xl font-bold">{progress}%</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {completedSessionsCount} of {totalSessions} {tc("sessions")}
+                  {tc("progressOf", {
+                    completed: completedSessionsCount,
+                    total: tc("sessions_count", { count: totalSessions }),
+                  })}
                 </p>
                 <div className="mt-2 h-2 bg-muted/30 rounded-full overflow-hidden">
                   <div
@@ -518,7 +521,7 @@ export default function ExchangeDetails({
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold flex items-center gap-2">
-                  {exchange.pointsAmount}{" "}
+                  {tc("points_count", { count: exchange.pointsAmount })}{" "}
                   <Coins className="h-5 w-5 text-amber-500" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -582,7 +585,7 @@ export default function ExchangeDetails({
                     {exchange.taughtSkill.name} ({taughtSessions.length})
                   </TabsTrigger>
                   <TabsTrigger value="received">
-                    {exchange.receivedSkill?.name || "Received Skill"} ({receivedSessions.length})
+                    {exchange.receivedSkill?.name || t("receivedSkill")} ({receivedSessions.length})
                   </TabsTrigger>
 
                 </>
@@ -720,7 +723,7 @@ export default function ExchangeDetails({
                           {t("teaches", { name: exchange.sender.name })}
                         </p>
                         <p className="font-medium">
-                          {exchange.receivedSkill?.name || "N/A"}
+                          {exchange.receivedSkill?.name || tc("optional")}
                         </p>
 
                         <p className="text-xs text-muted-foreground mt-1">
@@ -769,7 +772,7 @@ export default function ExchangeDetails({
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        {exchange.receivedSkill?.name || "Received Skill"}
+                        {exchange.receivedSkill?.name || t("receivedSkill")}
                       </span>
 
                       <span className="font-medium">
@@ -785,8 +788,8 @@ export default function ExchangeDetails({
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t("points")}</span>
-                  <span className="font-medium text-amber-500">
-                    {exchange.pointsAmount} {tc("pts")}
+                  <span className="font-medium text-amber-500 text-right">
+                    {tc("points_count", { count: exchange.pointsAmount })}
                   </span>
                 </div>
               </div>
@@ -857,7 +860,7 @@ export default function ExchangeDetails({
                       <span className="text-[10px] text-muted-foreground">
                         {new Date(
                           msg.timestamp || msg.createdAt || "",
-                        ).toLocaleTimeString([], {
+                        ).toLocaleTimeString(undefined, {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
@@ -1125,7 +1128,7 @@ function ExchangeChatTab({
                     {isMe ? (tc("you").charAt(0).toUpperCase() + tc("you").slice(1)) : msg.sender?.name}
                   </span>
                   <span className="text-[10px] text-muted-foreground/60">
-                    {new Date(msg.createdAt || "").toLocaleTimeString([], {
+                     {new Date(msg.createdAt || "").toLocaleTimeString(undefined, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}

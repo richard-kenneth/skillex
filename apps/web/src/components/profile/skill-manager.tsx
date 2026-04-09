@@ -44,7 +44,7 @@ export function SkillManager({}: SkillManagerProps) {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/skills/my`, {
         credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to fetch skills");
+      if (!response.ok) throw new Error(t("failedFetchSkills"));
       const data: UserSkill[] = await response.json();
       setOfferingSkills(data.filter((s) => s.type === "OFFERING"));
       setSeekingSkills(data.filter((s) => s.type === "SEEKING"));
@@ -65,7 +65,7 @@ export function SkillManager({}: SkillManagerProps) {
     setIsSearching(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/skills/search?q=${encodeURIComponent(query)}`);
-      if (!response.ok) throw new Error("Search failed");
+      if (!response.ok) throw new Error(t("failedSearchSkills"));
       const data = await response.json();
       setSearchResults(data);
     } catch (error) {
@@ -97,7 +97,7 @@ export function SkillManager({}: SkillManagerProps) {
         body: JSON.stringify({
           skillId,
           type: activeTab,
-          experienceLevel: "Intermediate",
+          experienceLevel: "Intermediate", // Logic uses this, but maybe I should localize the DISPLAY if needed. I'll leave as is for now as it's a backend value.
         }),
       });
 

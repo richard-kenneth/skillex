@@ -127,7 +127,7 @@ export default function RoomPage() {
           if (!resp.ok) {
             const data = await resp.json().catch(() => null);
             throw new Error(
-              data?.message || `Failed to get video token: ${resp.statusText}`,
+              data?.message || `${t("failedGetVideoToken")}: ${resp.statusText}`,
             );
           }
           const data = await resp.json();
@@ -135,7 +135,7 @@ export default function RoomPage() {
           setServerUrl(data.url);
         } catch (e: unknown) {
           console.error(e);
-          const message = e instanceof Error ? e.message : "Unknown error";
+          const message = e instanceof Error ? e.message : c("unknownError");
           setError(message);
         }
       };
@@ -280,6 +280,7 @@ function RoomContent({
   sessionTiming: SessionTiming | null;
 }) {
   const t = useTranslations("room");
+  const c = useTranslations("common");
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -341,9 +342,9 @@ function RoomContent({
       } else {
         const err = await resp
           .json()
-          .catch(() => ({ message: "Unknown error" }));
+          .catch(() => ({ message: c("unknownError") }));
         console.error("[Recording] Start API failed:", err);
-        toast.error(t("startRecordingFailed", { error: err.message || "Unknown error" }));
+        toast.error(t("startRecordingFailed", { error: err.message || c("unknownError") }));
         setRecordingState("idle");
         sendSignal({ type: "consent_error" });
       }
@@ -535,7 +536,7 @@ function RoomContent({
         const errorData = await resp.json().catch(() => ({}));
         console.error("[Recording] Stop API failed:", errorData);
         toast.error(
-          t("stopRecordingFailed", { error: (errorData as { message?: string }).message || "Unknown error" }),
+          t("stopRecordingFailed", { error: (errorData as { message?: string }).message || c("unknownError") }),
         );
       }
     } catch (err) {
@@ -795,7 +796,7 @@ function PersistentChatPanel({
                 {msg.from?.name || msg.from?.identity || c("unknown")}
               </span>
               <span className="text-[10px] text-zinc-600">
-                {new Date(msg.timestamp).toLocaleTimeString([], {
+                {new Date(msg.timestamp).toLocaleTimeString(undefined, {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
@@ -817,7 +818,7 @@ function PersistentChatPanel({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
+            placeholder={t("typeMessage")}
             className="flex-1 bg-zinc-800 text-white text-sm px-3 py-2 rounded-lg border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-zinc-500"
           />
           <Button
@@ -843,6 +844,7 @@ function SessionTimer({
   endsAt: string;
   duration: number;
 }) {
+  const t = useTranslations("room");
   const [remaining, setRemaining] = useState<string>("");
   const [isWarning, setIsWarning] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
@@ -859,7 +861,7 @@ function SessionTimer({
         setRemaining("0:00");
         setIsExpired(true);
         toast.error(
-          "Session time has ended. You will be disconnected shortly.",
+          t("sessionEndedDisconnect"),
         );
         // Auto-disconnect after 30 seconds grace
         setTimeout(() => {
@@ -875,7 +877,7 @@ function SessionTimer({
       // Warning when 5 minutes remain
       if (minutes <= 5 && !isWarning) {
         setIsWarning(true);
-        toast.warning(`Only ${minutes} minutes remaining in this session.`);
+        toast.warning(t("sessionWarning", { minutes }));
       }
     };
 
@@ -888,7 +890,7 @@ function SessionTimer({
     return (
       <div className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-red-400 text-sm font-medium animate-pulse">
         <Clock className="h-3 w-3" />
-        Session Ended
+        {t("sessionEnded")}
       </div>
     );
   }
@@ -920,12 +922,14 @@ function RecordingControls({
   onStopRecording: () => void;
   onCancelRecordingRequest: () => void;
 }) {
+  const t = useTranslations("room");
+  const c = useTranslations("common");
   if (recordingState === "recording") {
     return (
       <div className="flex items-center gap-2">
         <span className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-red-400 text-sm font-medium">
           <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
-          Recording
+          {t("recording")}
         </span>
         <Button
           variant="outline"
@@ -934,7 +938,7 @@ function RecordingControls({
           className="h-8 gap-1.5 border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300"
         >
           <Square className="h-3 w-3 fill-current" />
-          Stop
+          {t("stopBtn")}
         </Button>
       </div>
     );
@@ -944,14 +948,14 @@ function RecordingControls({
     return (
       <div className="flex items-center gap-2 bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full text-xs font-medium border border-amber-500/20 animate-pulse">
         <Loader2 className="w-3 h-3 animate-spin" />
-        Waiting for partner...
+        {t("waitingPartner")}
         <button
           onClick={() => {
             onCancelRecordingRequest(); // Call the new prop
           }}
           className="ml-2 underline hover:text-amber-400 cursor-pointer"
         >
-          Cancel
+          {c("cancel")}
         </button>
       </div>
     );
@@ -961,7 +965,7 @@ function RecordingControls({
     return (
       <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 text-sm font-medium">
         <Loader2 className="h-3 w-3 animate-spin" />
-        Waiting for consent
+        {t("waitingForConsent")}
       </span>
     );
   }
@@ -970,7 +974,7 @@ function RecordingControls({
     return (
       <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-blue-400 text-sm font-medium">
         <Loader2 className="h-3 w-3 animate-spin" />
-        {recordingState === "starting" ? "Starting..." : "Processing..."}
+        {recordingState === "starting" ? t("startingRecording") : t("processing")}
       </span>
     );
   }
@@ -983,7 +987,7 @@ function RecordingControls({
       className="h-8 gap-1.5 border-white/10 backdrop-blur bg-black/50 hover:bg-black/70 text-white hover:text-white"
     >
       <Video className="h-4 w-4" />
-      Record
+      {t("recordSession")}
     </Button>
   );
 }
@@ -997,33 +1001,31 @@ function ConsentDialog({
   open: boolean;
   onSubmit: (consented: boolean) => void;
 }) {
+  const t = useTranslations("room");
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onSubmit(false)}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Video className="h-5 w-5 text-red-400" />
-            Record This Session
+            {t("consentDialogTitle")}
           </DialogTitle>
           <DialogDescription className="text-left space-y-3 pt-2">
-            <p>
-              Your partner is requesting to record this session. The recording
-              will be saved as a video file and stored securely.
-            </p>
+              {t("consentDialogDesc")}
             <p className="text-sm text-amber-400">
-              ⚠️ Both participants must agree before recording begins.
+              {t("consentDialogWarning")}
             </p>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onSubmit(false)}>
-            Decline
+            {t("iDecline")}
           </Button>
           <Button
             onClick={() => onSubmit(true)}
             className="bg-red-500 hover:bg-red-600 text-white"
           >
-            I Consent to Recording
+            {t("iConsent")}
           </Button>
         </DialogFooter>
       </DialogContent>

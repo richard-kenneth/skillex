@@ -193,7 +193,9 @@ export function RequestDialog({
                 className="w-24 rounded-md border border-border/50 bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="0"
               />
-              <span className="text-sm text-muted-foreground">{tc("points")}</span>
+              <span className="text-sm text-foreground/80 font-medium">
+                {tc("points_count", { count: pointsAmount })}
+              </span>
             </div>
 
             {pointsAmount > 0 && (

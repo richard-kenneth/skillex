@@ -19,13 +19,35 @@ import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
 import { PointsService } from './points.service';
 
+import { RatesService } from '../rates/rates.service';
+
 @Controller('points')
 export class PointsController {
-  constructor(private readonly pointsService: PointsService) {}
+  constructor(
+    private readonly pointsService: PointsService,
+    private readonly ratesService: RatesService,
+  ) {}
+
+  @Get('rates')
+  getRates() {
+    return this.ratesService.getRates();
+  }
+
 
   @Get('fee-config')
   getFeeConfig() {
     return this.pointsService.getFeeConfig();
+  }
+
+  @Get('fee-tiers')
+  getFeeTiers() {
+    return this.pointsService.getFeeTiers();
+  }
+
+  @Get('my-tier')
+  @UseGuards(BetterAuthGuard)
+  getMyTier(@Req() req: Request & { user: { id: string } }) {
+    return this.pointsService.getUserFeeTier(req.user.id);
   }
 
   @Get('banks')

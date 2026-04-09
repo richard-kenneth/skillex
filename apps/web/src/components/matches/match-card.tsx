@@ -9,10 +9,22 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { RequestDialog } from "./request-dialog";
 
+interface Category {
+  id: string;
+  name: string;
+  sponsorName: string | null;
+  sponsorLogo: string | null;
+  sponsorUrl: string | null;
+}
+
 interface UserSkill {
   id: string;
   type: "OFFERING" | "SEEKING";
-  skill: { id: string; name: string };
+  skill: { 
+    id: string; 
+    name: string;
+    category?: Category;
+  };
 }
 
 interface MatchUser {
@@ -33,6 +45,7 @@ interface MatchCardProps {
 export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }: MatchCardProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const t = useTranslations("matches");
+  const tSponsors = useTranslations("sponsors");
 
   const offering = user.skills.filter((s) => s.type === "OFFERING");
   const seeking = user.skills.filter((s) => s.type === "SEEKING");
@@ -42,6 +55,27 @@ export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }:
   );
   const myOfferingIds = new Set(
     currentUserSkills.filter((s) => s.type === "OFFERING").map((s) => s.skill.id),
+  );
+
+  const getSponsor = (skill: UserSkill["skill"]) => {
+    return skill.category?.sponsorName ? skill.category : null;
+  };
+
+  const SponsorBadge = ({ category, tSponsors }: { category: Category; tSponsors: ReturnType<typeof useTranslations> }) => (
+    <a 
+      href={category.sponsorUrl ?? "#"} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors mt-2"
+    >
+      {category.sponsorLogo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={category.sponsorLogo} alt={category.sponsorName!} className="h-3.5 w-3.5 rounded-sm object-contain" />
+      )}
+      <span className="text-[10px] font-medium text-muted-foreground">
+        {tSponsors("sponsoredBy")} <span className="text-primary font-bold">{category.sponsorName}</span>
+      </span>
+    </a>
   );
 
   return (
@@ -82,20 +116,25 @@ export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }:
                 {t("canTeach")}
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {offering.map((s) => (
-                  <Badge
-                    key={s.id}
-                    variant={mySeekingIds.has(s.skill.id) ? "default" : "secondary"}
-                    className={
-                      mySeekingIds.has(s.skill.id)
-                        ? "bg-green-500/20 text-green-400 border-green-500/30 text-xs"
-                        : "text-xs"
-                    }
-                  >
-                    {s.skill.name}
-                    {mySeekingIds.has(s.skill.id) && " ✓"}
-                  </Badge>
-                ))}
+                {offering.map((s) => {
+                  const sponsor = getSponsor(s.skill);
+                  return (
+                    <div key={s.id} className="flex flex-col">
+                      <Badge
+                        variant={mySeekingIds.has(s.skill.id) ? "default" : "secondary"}
+                        className={
+                          mySeekingIds.has(s.skill.id)
+                            ? "bg-green-500/20 text-green-400 border-green-500/30 text-xs w-fit"
+                            : "text-xs w-fit"
+                        }
+                      >
+                        {s.skill.name}
+                        {mySeekingIds.has(s.skill.id) && " ✓"}
+                      </Badge>
+                      {sponsor && <SponsorBadge category={sponsor} tSponsors={tSponsors} />}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

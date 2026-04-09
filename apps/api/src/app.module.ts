@@ -14,6 +14,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { VideoModule } from './video/video.module';
+import { ReferralsModule } from './referrals/referrals.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { RatesModule } from './rates/rates.module';
 
 @Module({
   imports: [
@@ -54,8 +57,11 @@ import { VideoModule } from './video/video.module';
     PointsModule,
     UploadsModule,
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     ReviewsModule,
     VideoModule,
+    ReferralsModule,
+    RatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

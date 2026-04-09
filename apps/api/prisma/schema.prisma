@@ -18,6 +18,13 @@ model User {
   updatedAt             DateTime             @updatedAt
   bio                   String?
   pointsBalance         Int                  @default(0)
+  preferredCurrency     String?
+  referralCode          String?              @unique
+  referredById          String?
+  referredBy            User?                @relation("UserReferrals", fields: [referredById], references: [id])
+  referredUsers         User[]               @relation("UserReferrals")
+  referralsGiven        Referral[]           @relation("Referrer")
+  referralsReceived     Referral[]           @relation("Referee")
   accounts              Account[]
   receivedRequests      ExchangeRequest[]    @relation("Receiver")
   sentRequests          ExchangeRequest[]    @relation("Sender")
@@ -76,10 +83,13 @@ model Verification {
 }
 
 model Category {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  skills    Skill[]
+  id          String   @id @default(uuid())
+  name        String   @unique
+  createdAt   DateTime @default(now())
+  sponsorName String?
+  sponsorLogo String?
+  sponsorUrl  String?
+  skills      Skill[]
 }
 
 model Skill {
@@ -270,6 +280,9 @@ model PointsTransaction {
   status      TransactionStatus @default(PENDING)
   referenceId String?
   description String?
+  fiatAmount  Float?
+  fiatCurrency String?
+  flwRef      String?
   createdAt   DateTime          @default(now())
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -277,11 +290,45 @@ model PointsTransaction {
 model AppConfig {
   id                      String   @id @default("singleton")
   purchaseFeePercentage   Float    @default(0.05)
-  purchaseFeeFixed        Int      @default(100)
+  purchaseFeeFixed        Int      @default(30)
   withdrawalFeePercentage Float    @default(0.05)
   withdrawalFeeFixed      Int      @default(50)
   minWithdrawalAmount     Int      @default(100)
+  referralRewardReferrer  Int      @default(200)
+  referralRewardReferee   Int      @default(200)
+  referralBonusPerExchange Int     @default(50)
+  referralBonusCap        Int      @default(500)
+  referralMonthlyCap      Int      @default(5000)
   updatedAt               DateTime @updatedAt
+}
+
+model Referral {
+  id                String         @id @default(uuid())
+  referrerId        String
+  refereeId         String
+  status            ReferralStatus @default(PENDING)
+  referrerRewarded  Boolean        @default(false)
+  refereeRewarded   Boolean        @default(false)
+  bonusAwarded      Int            @default(0)
+  createdAt         DateTime       @default(now())
+  convertedAt       DateTime?
+  referrer          User           @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referee           User           @relation("Referee", fields: [refereeId], references: [id], onDelete: Cascade)
+
+  @@unique([referrerId, refereeId])
+}
+
+model FeeTier {
+  id                      String @id @default(uuid())
+  name                    String @unique
+  minVolume               Int    @default(0)
+  maxVolume               Int?
+  purchaseFeePercentage   Float
+  purchaseFeeFixed        Int
+  withdrawalFeePercentage Float
+  withdrawalFeeFixed      Int
+  bonusPercentage         Float  @default(0)
+  sortOrder               Int    @default(0)
 }
 
 
@@ -360,6 +407,13 @@ enum TransactionType {
   ESCROW_RELEASE
   PENALTY
   CONVERSION
+  REFERRAL_REWARD
+  REFERRAL_BONUS
+}
+
+enum ReferralStatus {
+  PENDING
+  CONVERTED
 }
 
 enum TransactionStatus {

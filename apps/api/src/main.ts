@@ -23,8 +23,8 @@ async function bootstrap() {
 
   // LiveKit sends webhooks with Content-Type: application/webhook+json
   // We need to support both application/json and application/webhook+json
-  app.useBodyParser("json", {
-    type: ["application/json", "application/webhook+json"],
+  app.useBodyParser('json', {
+    type: ['application/json', 'application/webhook+json'],
   });
 
   await app.listen(process.env.PORT ?? 3001);

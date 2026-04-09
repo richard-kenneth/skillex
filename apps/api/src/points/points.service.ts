@@ -1,12 +1,82 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { PurchasePointsDto, WithdrawPointsDto } from '@skil-ex2/shared';
+import {
+  applyCurrencyPrecision,
+  POINT_TO_USD_RATE,
+  PurchasePointsDto,
+  WithdrawPointsDto,
+} from '@skil-ex2/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { RatesService } from '../rates/rates.service';
 
 @Injectable()
 export class PointsService {
   private readonly logger = new Logger(PointsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ratesService: RatesService,
+  ) {}
+
+  /**
+   * Get all fee tiers for display.
+   */
+  async getFeeTiers() {
+    const tiers = await this.prisma.feeTier.findMany({
+      orderBy: { sortOrder: 'asc' },
+    });
+    return tiers;
+  }
+
+  /**
+   * Determine user's current fee tier based on rolling 30-day purchase volume.
+   */
+  async getUserFeeTier(userId: string) {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const volumeResult = await this.prisma.pointsTransaction.aggregate({
+      where: {
+        userId,
+        type: 'PURCHASE',
+        status: 'SUCCESS',
+        createdAt: { gte: thirtyDaysAgo },
+      },
+      _sum: { amount: true },
+    });
+
+    const volume = volumeResult._sum.amount ?? 0;
+
+    // Find the matching tier
+    const tiers = await this.prisma.feeTier.findMany({
+      orderBy: { sortOrder: 'desc' },
+    });
+
+    const matchedTier = tiers.find(
+      (t) =>
+        volume >= t.minVolume &&
+        (t.maxVolume === null || volume <= t.maxVolume),
+    );
+
+    if (matchedTier) {
+      return { tier: matchedTier, volume };
+    }
+
+    // Fallback to default config
+    const config = await this.getFeeConfig();
+    return {
+      tier: {
+        name: 'Standard',
+        purchaseFeePercentage: config.purchaseFeePercentage,
+        purchaseFeeFixed: config.purchaseFeeFixed,
+        withdrawalFeePercentage: config.withdrawalFeePercentage,
+        withdrawalFeeFixed: config.withdrawalFeeFixed,
+        bonusPercentage: 0,
+        minVolume: 0,
+        maxVolume: null,
+      },
+      volume,
+    };
+  }
 
   async getFeeConfig() {
     let config = await this.prisma.appConfig.findUnique({
@@ -17,7 +87,7 @@ export class PointsService {
         data: {
           id: 'singleton',
           purchaseFeePercentage: 0.05,
-          purchaseFeeFixed: 100,
+          purchaseFeeFixed: 30,
           withdrawalFeePercentage: 0.05,
           withdrawalFeeFixed: 50,
           minWithdrawalAmount: 100,
@@ -45,42 +115,66 @@ export class PointsService {
   }
 
   /**
-   * Initiate points purchase with Flutterwave
+   * Initiate points purchase with Flutterwave (dynamic fiat pricing)
    */
   async initiatePurchase(userId: string, data: PurchasePointsDto) {
+    if (data.amount < 500) {
+      throw new BadRequestException(
+        'Minimum purchase limit is 500 points to cover gateway flat fees.',
+      );
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, name: true },
+      select: { email: true, name: true, preferredCurrency: true },
     });
 
     if (!user) throw new BadRequestException('User not found');
 
-    const feeConfig = await this.getFeeConfig();
-    const baseAmount = data.amount;
-    const fee = Math.ceil(
-      baseAmount * feeConfig.purchaseFeePercentage + feeConfig.purchaseFeeFixed,
-    );
-    const totalAmount = baseAmount + fee;
+    const rates = await this.ratesService.getRates();
+    const currency = data.currency || user.preferredCurrency || 'USD';
+    const rate = rates[currency] || 1; // Default to USD if missing
+
+    const { tier } = await this.getUserFeeTier(userId);
+    const basePoints = data.amount;
+
+    // Convert Points to Target Fiat Currency using unified peg.
+    const baseFiatRaw = basePoints * POINT_TO_USD_RATE * rate;
+
+    // Apply fee logic in fiat. (purchaseFeeFixed is treated as base USD cents)
+    const feeFiatRaw =
+      baseFiatRaw * tier.purchaseFeePercentage +
+      tier.purchaseFeeFixed * POINT_TO_USD_RATE * rate;
+      
+    const bonusPoints = Math.floor(basePoints * tier.bonusPercentage);
+
+    // Apply smart rounding specific to the fiat currency separately to guarantee Total = Base + Fee
+    const baseFiatRounded = applyCurrencyPrecision(baseFiatRaw, currency, rate);
+    const feeFiatRounded = applyCurrencyPrecision(feeFiatRaw, currency, rate);
+    const totalFiatRounded = baseFiatRounded + feeFiatRounded;
 
     const txRef = `pts_buy_${userId}_${Date.now()}`;
 
-    // Create a pending transaction
     await this.prisma.pointsTransaction.create({
       data: {
         userId,
-        amount: data.amount,
+        amount: basePoints + bonusPoints, // Points intended
+        fiatAmount: totalFiatRounded,
+        fiatCurrency: currency,
         type: 'PURCHASE',
         status: 'PENDING',
-        description: `Pending purchase of ${data.amount} points`,
+        description: `Pending purchase of ${basePoints} points${bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : ''}`,
         referenceId: txRef,
       },
     });
 
     return {
       txRef,
-      baseAmount,
-      fee,
-      totalAmount,
+      fiatAmount: totalFiatRounded,
+      fiatCurrency: currency,
+      targetPoints: basePoints + bonusPoints,
+      feeFiat: feeFiatRounded,
+      tierName: tier.name,
       customer: {
         email: user.email,
         name: user.name || 'User',
@@ -90,10 +184,8 @@ export class PointsService {
 
   async verifyWebhook(signature: string, payload: any) {
     const secretHash =
-      process.env.FLUTTERWAVE_WEBHOOK_SECRET ||
-      process.env.FLUTTERWAVE_SECRET_KEY;
+      process.env.FLW_SECRET_HASH || process.env.FLUTTERWAVE_SECRET_KEY;
 
-    // Simple verification (in production, use stricter checking of the signature)
     if (!signature || signature !== secretHash) {
       this.logger.warn(
         `[Webhook] Invalid signature. Expected: ${secretHash}, Got: ${signature}`,
@@ -106,6 +198,7 @@ export class PointsService {
       payload.data?.status === 'successful'
     ) {
       const txRef = payload.data.tx_ref;
+      const flwRef = payload.data.flw_ref;
       if (!txRef?.startsWith('pts_buy_')) return;
 
       const transaction = await this.prisma.pointsTransaction.findFirst({
@@ -115,18 +208,20 @@ export class PointsService {
       if (!transaction) return;
       if (transaction.status !== 'PENDING') return; // Already processed
 
+      // Atomic update transaction
       await this.prisma.$transaction(async (tx) => {
-        await tx.user.update({
-          where: { id: transaction.userId },
-          data: { pointsBalance: { increment: transaction.amount } },
-        });
-
         await tx.pointsTransaction.update({
           where: { id: transaction.id },
           data: {
             status: 'SUCCESS',
-            description: `Purchased ${transaction.amount} points`,
+            flwRef: flwRef,
+            description: `Purchased ${transaction.amount} points via FW_REF: ${flwRef}`,
           },
+        });
+
+        await tx.user.update({
+          where: { id: transaction.userId },
+          data: { pointsBalance: { increment: transaction.amount } },
         });
       });
 
@@ -146,13 +241,24 @@ export class PointsService {
       throw new BadRequestException('Insufficient points balance');
     }
 
+    const { tier } = await this.getUserFeeTier(userId);
     const feeConfig = await this.getFeeConfig();
+
+    // We get the current NGN rate from Redis to output stable fiat value
+    const rates = await this.ratesService.getRates();
+    const ngnRate = rates['NGN'] || 1500;
+
     const baseAmount = data.amount;
-    const fee = Math.ceil(
-      baseAmount * feeConfig.withdrawalFeePercentage +
-        feeConfig.withdrawalFeeFixed,
+
+    // Fee is calculated entirely in points
+    const feeInPoints = Math.ceil(
+      baseAmount * tier.withdrawalFeePercentage + tier.withdrawalFeeFixed,
     );
-    const amountToTransfer = baseAmount - fee;
+    const pointsToWithdraw = baseAmount - feeInPoints;
+
+    // Convert final abstracted points to realistic NGN using the stable rate
+    const amountToTransferRaw = pointsToWithdraw * POINT_TO_USD_RATE * ngnRate;
+    const amountToTransfer = applyCurrencyPrecision(amountToTransferRaw, 'NGN', ngnRate);
 
     if (amountToTransfer < (feeConfig.minWithdrawalAmount || 100)) {
       throw new BadRequestException(

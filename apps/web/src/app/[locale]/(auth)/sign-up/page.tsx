@@ -41,6 +41,24 @@ export default function SignUpPage() {
       if (error) {
         toast.error(error.message || t("signUpFailed"));
       } else {
+        // Auto-apply referral code if one was captured from the URL
+        const storedRef = localStorage.getItem("skilex_ref");
+        if (storedRef) {
+          try {
+            await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/referrals/apply`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ referralCode: storedRef.trim() }),
+              }
+            );
+            localStorage.removeItem("skilex_ref");
+          } catch {
+            // Silently fail — the dashboard fallback will catch it
+          }
+        }
         setIsSuccess(true);
         toast.success(t("signUpSuccess"));
       }

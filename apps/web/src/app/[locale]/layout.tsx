@@ -1,10 +1,10 @@
 import { Navbar } from "@/components/navbar";
 import { QueryProvider } from "@/components/providers";
+import { ReferralTracking } from "@/components/referrals/referral-tracking";
+import { Toaster } from "@/components/ui/sonner";
 import { routing } from "@/i18n/routing";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
-import { notFound } from "next/navigation";
-import { Toaster } from "@/components/ui/sonner";
+import { getMessages, setRequestLocale } from "next-intl/server";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -19,15 +19,19 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
-  if (!hasLocale(routing.locales, locale)) {
-    notFound();
-  }
+  const isValidLocale = hasLocale(routing.locales, locale);
+  const displayLocale = isValidLocale ? locale : routing.defaultLocale;
 
-  setRequestLocale(locale);
+  setRequestLocale(displayLocale);
+
+  // Providing all messages to the client
+  // side is the easiest way to get started
+  const messages = await getMessages();
 
   return (
-    <NextIntlClientProvider>
+    <NextIntlClientProvider locale={displayLocale} messages={messages}>
       <QueryProvider>
+        <ReferralTracking />
         <Navbar />
         <main className="flex-1 flex flex-col">{children}</main>
         <Toaster position="bottom-right" richColors />
