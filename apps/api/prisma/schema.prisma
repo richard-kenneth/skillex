@@ -1,5 +1,5 @@
 generator client {
-  provider     = "prisma-client"
+  provider     = "prisma-client-js"
   output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
@@ -289,11 +289,10 @@ model PointsTransaction {
 
 model AppConfig {
   id                      String   @id @default("singleton")
-  purchaseFeePercentage   Float    @default(0.05)
-  purchaseFeeFixed        Int      @default(30)
-  withdrawalFeePercentage Float    @default(0.05)
-  withdrawalFeeFixed      Int      @default(50)
-  minWithdrawalAmount     Int      @default(100)
+  exchangeCommissionRate  Float    @default(0.10)
+  facilitationFee         Int      @default(5)
+  withdrawalSpread        Float    @default(0.06)
+  minWithdrawalPoints     Int      @default(200)
   referralRewardReferrer  Int      @default(200)
   referralRewardReferee   Int      @default(200)
   referralBonusPerExchange Int     @default(50)
@@ -318,18 +317,7 @@ model Referral {
   @@unique([referrerId, refereeId])
 }
 
-model FeeTier {
-  id                      String @id @default(uuid())
-  name                    String @unique
-  minVolume               Int    @default(0)
-  maxVolume               Int?
-  purchaseFeePercentage   Float
-  purchaseFeeFixed        Int
-  withdrawalFeePercentage Float
-  withdrawalFeeFixed      Int
-  bonusPercentage         Float  @default(0)
-  sortOrder               Int    @default(0)
-}
+
 
 
 model Message {
@@ -405,8 +393,11 @@ enum TransactionType {
   PURCHASE
   ESCROW_LOCK
   ESCROW_RELEASE
+  EXCHANGE_COMMISSION
+  FACILITATION_FEE
   PENALTY
   CONVERSION
+  WITHDRAWAL
   REFERRAL_REWARD
   REFERRAL_BONUS
 }

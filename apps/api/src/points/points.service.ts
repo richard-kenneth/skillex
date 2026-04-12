@@ -17,81 +17,13 @@ export class PointsService {
     private readonly ratesService: RatesService,
   ) {}
 
-  /**
-   * Get all fee tiers for display.
-   */
-  async getFeeTiers() {
-    const tiers = await this.prisma.feeTier.findMany({
-      orderBy: { sortOrder: 'asc' },
-    });
-    return tiers;
-  }
-
-  /**
-   * Determine user's current fee tier based on rolling 30-day purchase volume.
-   */
-  async getUserFeeTier(userId: string) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const volumeResult = await this.prisma.pointsTransaction.aggregate({
-      where: {
-        userId,
-        type: 'PURCHASE',
-        status: 'SUCCESS',
-        createdAt: { gte: thirtyDaysAgo },
-      },
-      _sum: { amount: true },
-    });
-
-    const volume = volumeResult._sum.amount ?? 0;
-
-    // Find the matching tier
-    const tiers = await this.prisma.feeTier.findMany({
-      orderBy: { sortOrder: 'desc' },
-    });
-
-    const matchedTier = tiers.find(
-      (t) =>
-        volume >= t.minVolume &&
-        (t.maxVolume === null || volume <= t.maxVolume),
-    );
-
-    if (matchedTier) {
-      return { tier: matchedTier, volume };
-    }
-
-    // Fallback to default config
-    const config = await this.getFeeConfig();
-    return {
-      tier: {
-        name: 'Standard',
-        purchaseFeePercentage: config.purchaseFeePercentage,
-        purchaseFeeFixed: config.purchaseFeeFixed,
-        withdrawalFeePercentage: config.withdrawalFeePercentage,
-        withdrawalFeeFixed: config.withdrawalFeeFixed,
-        bonusPercentage: 0,
-        minVolume: 0,
-        maxVolume: null,
-      },
-      volume,
-    };
-  }
-
   async getFeeConfig() {
     let config = await this.prisma.appConfig.findUnique({
       where: { id: 'singleton' },
     });
     if (!config) {
       config = await this.prisma.appConfig.create({
-        data: {
-          id: 'singleton',
-          purchaseFeePercentage: 0.05,
-          purchaseFeeFixed: 30,
-          withdrawalFeePercentage: 0.05,
-          withdrawalFeeFixed: 50,
-          minWithdrawalAmount: 100,
-        },
+        data: { id: 'singleton' },
       });
     }
     return config;
@@ -115,12 +47,14 @@ export class PointsService {
   }
 
   /**
-   * Initiate points purchase with Flutterwave (dynamic fiat pricing)
+   * Initiate points purchase with Flutterwave.
+   * The Inflow Rule: 100% Fee Absorption. No markup, no platform fee.
+   * User pays exactly: points × $0.01 × rate
    */
   async initiatePurchase(userId: string, data: PurchasePointsDto) {
     if (data.amount < 500) {
       throw new BadRequestException(
-        'Minimum purchase limit is 500 points to cover gateway flat fees.',
+        'Minimum purchase is 500 points ($5.00) to cover gateway flat fees.',
       );
     }
 
@@ -133,37 +67,25 @@ export class PointsService {
 
     const rates = await this.ratesService.getRates();
     const currency = data.currency || user.preferredCurrency || 'USD';
-    const rate = rates[currency] || 1; // Default to USD if missing
+    const rate = rates[currency] || 1;
 
-    const { tier } = await this.getUserFeeTier(userId);
     const basePoints = data.amount;
 
-    // Convert Points to Target Fiat Currency using unified peg.
+    // Pure conversion: Points → Fiat, zero markup
     const baseFiatRaw = basePoints * POINT_TO_USD_RATE * rate;
-
-    // Apply fee logic in fiat. (purchaseFeeFixed is treated as base USD cents)
-    const feeFiatRaw =
-      baseFiatRaw * tier.purchaseFeePercentage +
-      tier.purchaseFeeFixed * POINT_TO_USD_RATE * rate;
-      
-    const bonusPoints = Math.floor(basePoints * tier.bonusPercentage);
-
-    // Apply smart rounding specific to the fiat currency separately to guarantee Total = Base + Fee
-    const baseFiatRounded = applyCurrencyPrecision(baseFiatRaw, currency, rate);
-    const feeFiatRounded = applyCurrencyPrecision(feeFiatRaw, currency, rate);
-    const totalFiatRounded = baseFiatRounded + feeFiatRounded;
+    const totalFiatRounded = applyCurrencyPrecision(baseFiatRaw, currency, rate);
 
     const txRef = `pts_buy_${userId}_${Date.now()}`;
 
     await this.prisma.pointsTransaction.create({
       data: {
         userId,
-        amount: basePoints + bonusPoints, // Points intended
+        amount: basePoints,
         fiatAmount: totalFiatRounded,
         fiatCurrency: currency,
         type: 'PURCHASE',
         status: 'PENDING',
-        description: `Pending purchase of ${basePoints} points${bonusPoints > 0 ? ` (+${bonusPoints} bonus)` : ''}`,
+        description: `Pending purchase of ${basePoints} points`,
         referenceId: txRef,
       },
     });
@@ -172,9 +94,7 @@ export class PointsService {
       txRef,
       fiatAmount: totalFiatRounded,
       fiatCurrency: currency,
-      targetPoints: basePoints + bonusPoints,
-      feeFiat: feeFiatRounded,
-      tierName: tier.name,
+      targetPoints: basePoints,
       customer: {
         email: user.email,
         name: user.name || 'User',
@@ -231,6 +151,11 @@ export class PointsService {
     }
   }
 
+  /**
+   * Withdraw points to NGN bank account.
+   * The Outflow Rule: Structural Spread. Withdrawal rate is set lower than purchase rate.
+   * All points are deducted; the fiat payout applies a spread (5-7%) to recover costs.
+   */
   async withdrawPoints(userId: string, data: WithdrawPointsDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -241,34 +166,58 @@ export class PointsService {
       throw new BadRequestException('Insufficient points balance');
     }
 
-    const { tier } = await this.getUserFeeTier(userId);
     const feeConfig = await this.getFeeConfig();
 
-    // We get the current NGN rate from Redis to output stable fiat value
+    if (data.amount < feeConfig.minWithdrawalPoints) {
+      throw new BadRequestException(
+        `Minimum withdrawal is ${feeConfig.minWithdrawalPoints} points.`,
+      );
+    }
+
+    // Anti-Arbitrage Lock: Block withdrawals if international purchases were made within 72 hours
+    const seventyTwoHoursAgo = new Date();
+    seventyTwoHoursAgo.setHours(seventyTwoHoursAgo.getHours() - 72);
+
+    const recentIntlPurchase =
+      await this.prisma.pointsTransaction.findFirst({
+        where: {
+          userId,
+          type: 'PURCHASE',
+          status: 'SUCCESS',
+          fiatCurrency: { not: 'NGN' },
+          createdAt: { gte: seventyTwoHoursAgo },
+        },
+      });
+
+    if (recentIntlPurchase) {
+      throw new BadRequestException(
+        'Points purchased via international payment are locked for 72 hours before withdrawal. Please try again later.',
+      );
+    }
+
+    // Get the current NGN rate from Redis
     const rates = await this.ratesService.getRates();
     const ngnRate = rates['NGN'] || 1500;
 
-    const baseAmount = data.amount;
-
-    // Fee is calculated entirely in points
-    const feeInPoints = Math.ceil(
-      baseAmount * tier.withdrawalFeePercentage + tier.withdrawalFeeFixed,
+    // Apply the Structural Spread: user receives (1 - spread) of the nominal value
+    const nominalFiat = data.amount * POINT_TO_USD_RATE * ngnRate;
+    const amountToTransferRaw = nominalFiat * (1 - feeConfig.withdrawalSpread);
+    const amountToTransfer = applyCurrencyPrecision(
+      amountToTransferRaw,
+      'NGN',
+      ngnRate,
     );
-    const pointsToWithdraw = baseAmount - feeInPoints;
 
-    // Convert final abstracted points to realistic NGN using the stable rate
-    const amountToTransferRaw = pointsToWithdraw * POINT_TO_USD_RATE * ngnRate;
-    const amountToTransfer = applyCurrencyPrecision(amountToTransferRaw, 'NGN', ngnRate);
-
-    if (amountToTransfer < (feeConfig.minWithdrawalAmount || 100)) {
+    // Ensure the transfer amount meets Flutterwave minimums
+    if (amountToTransfer < 100) {
       throw new BadRequestException(
-        `Withdrawal amount after fees (${amountToTransfer} NGN) is below the minimum allowed (${feeConfig.minWithdrawalAmount || 100} NGN)`,
+        `Withdrawal amount after processing (${amountToTransfer} NGN) is below the minimum transfer threshold.`,
       );
     }
 
     const reference = `pts_wd_${userId}_${Date.now()}`;
 
-    // Deduct points immediately
+    // Deduct all points immediately
     const wt = await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
@@ -279,10 +228,12 @@ export class PointsService {
         data: {
           userId,
           amount: -data.amount,
-          type: 'CONVERSION',
+          type: 'WITHDRAWAL',
           status: 'PENDING',
           referenceId: reference,
           description: `Withdrawn ${data.amount} points to bank account`,
+          fiatAmount: amountToTransfer,
+          fiatCurrency: 'NGN',
         },
       });
     });
@@ -403,6 +354,7 @@ export class PointsService {
 
   /**
    * Release escrowed points to the teacher upon exchange completion.
+   * Applies the Exchange Commission: platform takes a percentage of the gap payment.
    */
   async releaseEscrow(
     payerId: string,
@@ -412,19 +364,83 @@ export class PointsService {
   ) {
     if (amount <= 0) return;
 
+    const config = await this.getFeeConfig();
+    const commission = Math.floor(amount * config.exchangeCommissionRate);
+    const teacherReceives = amount - commission;
+
     await this.prisma.$transaction(async (tx) => {
+      // Credit the teacher the net amount
       await tx.user.update({
         where: { id: recipientId },
-        data: { pointsBalance: { increment: amount } },
+        data: { pointsBalance: { increment: teacherReceives } },
+      });
+
+      // Record the escrow release for the teacher
+      await tx.pointsTransaction.create({
+        data: {
+          userId: recipientId,
+          amount: teacherReceives,
+          type: 'ESCROW_RELEASE',
+          referenceId: exchangeId,
+          description: `Received ${teacherReceives} points from completed exchange (${commission} pts platform service)`,
+        },
+      });
+
+      // Record the commission as platform revenue
+      if (commission > 0) {
+        await tx.pointsTransaction.create({
+          data: {
+            userId: payerId,
+            amount: -commission,
+            type: 'EXCHANGE_COMMISSION',
+            referenceId: exchangeId,
+            description: `Platform service: ${commission} points (${(config.exchangeCommissionRate * 100).toFixed(0)}% of ${amount})`,
+          },
+        });
+      }
+    });
+
+    this.logger.log(
+      `Released escrow for exchange ${exchangeId}: teacher=${teacherReceives}, commission=${commission}`,
+    );
+  }
+
+  /**
+   * Apply facilitation fee to both participants on exchange completion.
+   * This ensures the platform earns revenue even on pure barter trades.
+   */
+  async applyFacilitationFee(userId: string, exchangeId: string) {
+    const config = await this.getFeeConfig();
+    const facilitationFee = config.facilitationFee;
+    
+    if (facilitationFee <= 0) return;
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pointsBalance: true },
+    });
+
+    if (!user || user.pointsBalance < facilitationFee) {
+      // Skip if user can't afford it — the fee is tiny, don't block the exchange
+      this.logger.warn(
+        `Skipping facilitation fee for user ${userId} (balance: ${user?.pointsBalance ?? 0}, fee: ${facilitationFee})`,
+      );
+      return;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { pointsBalance: { decrement: facilitationFee } },
       });
 
       await tx.pointsTransaction.create({
         data: {
-          userId: recipientId,
-          amount: amount,
-          type: 'ESCROW_RELEASE',
+          userId,
+          amount: -facilitationFee,
+          type: 'FACILITATION_FEE',
           referenceId: exchangeId,
-          description: `Received ${amount} points from completed exchange`,
+          description: `Exchange facilitation fee: ${facilitationFee} points`,
         },
       });
     });

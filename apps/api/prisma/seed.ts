@@ -15,9 +15,26 @@ async function main() {
   console.log('Initializing AppConfig...');
   await prisma.appConfig.upsert({
     where: { id: 'singleton' },
-    update: {},
-    create: { id: 'singleton' },
+    update: {
+      exchangeCommissionRate: 0.1,
+      facilitationFee: 5,
+      withdrawalSpread: 0.06,
+      minWithdrawalPoints: 200,
+    },
+    create: {
+      id: 'singleton',
+      exchangeCommissionRate: 0.1,
+      facilitationFee: 5,
+      withdrawalSpread: 0.06,
+      minWithdrawalPoints: 200,
+      referralRewardReferrer: 200,
+      referralRewardReferee: 200,
+      referralBonusPerExchange: 50,
+      referralBonusCap: 500,
+      referralMonthlyCap: 5000,
+    },
   });
+
 
   const categories = [
     {
@@ -108,67 +125,6 @@ async function main() {
   }
 
   console.log('Seeding finished.');
-
-  // Seed FeeTiers
-  console.log('Seeding fee tiers...');
-
-  const feeTiers = [
-    {
-      name: 'Standard',
-      minVolume: 0,
-      maxVolume: 5000,
-      purchaseFeePercentage: 0.05,
-      purchaseFeeFixed: 30, // $0.30
-      withdrawalFeePercentage: 0.05,
-      withdrawalFeeFixed: 50, // 50 NGN
-      bonusPercentage: 0,
-      sortOrder: 0,
-    },
-    {
-      name: 'Silver',
-      minVolume: 5001,
-      maxVolume: 20000,
-      purchaseFeePercentage: 0.035,
-      purchaseFeeFixed: 20, // $0.20
-      withdrawalFeePercentage: 0.035,
-      withdrawalFeeFixed: 40,
-      bonusPercentage: 0.02,
-      sortOrder: 1,
-    },
-    {
-      name: 'Gold',
-      minVolume: 20001,
-      maxVolume: 50000,
-      purchaseFeePercentage: 0.025,
-      purchaseFeeFixed: 15, // $0.15
-      withdrawalFeePercentage: 0.025,
-      withdrawalFeeFixed: 30,
-      bonusPercentage: 0.03,
-      sortOrder: 2,
-    },
-    {
-      name: 'Platinum',
-      minVolume: 50001,
-      maxVolume: null,
-      purchaseFeePercentage: 0.015,
-      purchaseFeeFixed: 10, // $0.10
-      withdrawalFeePercentage: 0.015,
-      withdrawalFeeFixed: 20,
-      bonusPercentage: 0.05,
-      sortOrder: 3,
-    },
-  ];
-
-  for (const tier of feeTiers) {
-    await prisma.feeTier.upsert({
-      where: { name: tier.name },
-      update: tier,
-      create: tier,
-    });
-    console.log(
-      `  - Fee Tier: ${tier.name} (${tier.purchaseFeePercentage * 100}% + ${tier.purchaseFeeFixed} cents base)`,
-    );
-  }
 
   // Add sponsor data to select categories
   console.log('Adding sponsor data to categories...');

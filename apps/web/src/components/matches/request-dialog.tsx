@@ -13,7 +13,16 @@ import {
 import { Coins, Loader2, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
+import { calculatePointsBreakdown } from "@skil-ex2/shared";
+
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface UserSkill {
   id: string;
@@ -45,6 +54,7 @@ export function RequestDialog({
   const router = useRouter();
   const t = useTranslations("requestDialog");
   const tc = useTranslations("common");
+  const format = useFormatter();
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const [pointsAmount, setPointsAmount] = useState(0);
@@ -222,6 +232,46 @@ export function RequestDialog({
                 >
                   {t("theyPay")}
                 </button>
+              </div>
+            )}
+            
+            {pointsAmount > 0 && (
+              <div className="pt-2 border-t border-border/50 flex items-center justify-between">
+                <div className="text-sm font-medium">
+                  {payerIsMe ? (
+                    <span className="text-red-500">{tc("youPay")}: {format.number(calculatePointsBreakdown(pointsAmount).gross)} {tc("points")}</span>
+                  ) : (
+                    <span className="text-emerald-500">{tc("youReceive")}: {format.number(calculatePointsBreakdown(pointsAmount).net)} {tc("points")}</span>
+                  )}
+                </div>
+                <TooltipProvider>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center" className="w-72 p-4 z-[100] shadow-md border bg-popover text-popover-foreground">
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm">
+                          {tc("pointsBreakdown")}
+                        </h4>
+                        <div className="text-sm space-y-1 text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>{tc("grossAmount")}:</span>
+                            <span className="text-foreground font-medium">{format.number(calculatePointsBreakdown(pointsAmount).gross)} {tc("points")}</span>
+                          </div>
+                          <div className="flex justify-between text-red-500/80">
+                            <span>{tc("platformFee")}:</span>
+                            <span>-{format.number(calculatePointsBreakdown(pointsAmount).fee)} {tc("points")}</span>
+                          </div>
+                          <div className="flex justify-between font-medium text-emerald-500 pt-1 border-t border-border/40">
+                            <span>{tc("netGain")}:</span>
+                            <span>{format.number(calculatePointsBreakdown(pointsAmount).net)} {tc("points")}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
           </div>

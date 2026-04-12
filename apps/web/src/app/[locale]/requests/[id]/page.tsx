@@ -15,7 +15,16 @@ import {
   Coins,
   Loader2,
   Send,
+  Info,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { calculatePointsBreakdown } from "@skil-ex2/shared";
+
 import { useFormatter, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -479,21 +488,47 @@ export default function NegotiationPage() {
                                   </p>
                                 )}
                               {(msg.pointsProposal ?? 0) > 0 && (
-                                <p className="mt-1 flex items-center gap-1 font-semibold text-amber-300">
-                                  <Coins className="w-3 h-3" />{" "}
-                                  {format.number(msg.pointsProposal || 0)}{" "}
-                                  {c("points_label", {
-                                    count: msg.pointsProposal || 0,
-                                  })}{" "}
-                                  (
-                                  {c("paidBy", {
-                                    payer:
-                                      msg.pointsPayerId === currentUserId
-                                        ? c("you")
-                                        : c("them"),
-                                  })}
-                                  )
-                                </p>
+                                <div className="flex flex-col gap-0.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <Coins className="w-3.5 h-3.5 text-amber-400" />
+                                    <span className="font-bold text-sm">
+                                      {format.number(msg.pointsProposal || 0)} {c("points_label", { count: msg.pointsProposal || 0 })}
+                                    </span>
+                                  </div>
+                                    <TooltipProvider>
+                                      <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                          <div className="text-[10px] opacity-75 font-medium pl-5 flex items-center gap-1 cursor-help hover:text-foreground transition-colors">
+                                            <Info className="h-3 w-3 shrink-0" />
+                                            <span>{c("viewCommissionBreakdown")}</span>
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" align="center" className="w-64 p-3 z-[100] shadow-md border bg-popover text-popover-foreground">
+                                          <div className="space-y-2">
+                                            <h4 className="font-medium text-xs border-b pb-1">
+                                              {c("pointsBreakdown")}
+                                            </h4>
+                                            <div className="text-[11px] space-y-1 text-muted-foreground">
+                                              <div className="flex justify-between">
+                                                <span>{c("grossAmount")}:</span>
+                                                <span className="text-foreground">{format.number(calculatePointsBreakdown(msg.pointsProposal || 0).gross)} {c("points")}</span>
+                                              </div>
+                                              <div className="flex justify-between text-red-500/80">
+                                                <span>{c("platformFee")}:</span>
+                                                <span>-{format.number(calculatePointsBreakdown(msg.pointsProposal || 0).fee)} {c("points")}</span>
+                                              </div>
+                                              <div className="flex justify-between font-medium text-emerald-500 pt-1 border-t border-border/40">
+                                                <span>{c("netGain")}:</span>
+                                                <span className="font-bold">
+                                                  {format.number(calculatePointsBreakdown(msg.pointsProposal || 0).net)} {c("points")}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -962,32 +997,79 @@ export default function NegotiationPage() {
                       {c("points")}{" "}
                       <span className="opacity-50">({c("optional")})</span>
                     </p>
-                    <div className="flex items-center gap-2">
-                      <Coins className="h-4 w-4 text-amber-400 shrink-0" />
-                      <input
-                        type="number"
-                        min={0}
-                        value={counterPoints}
-                        onChange={(e) => setCounterPoints(e.target.value)}
-                        placeholder={c("pointsPlaceholder")}
-                        className="w-[80px] rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary"
-                      />
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <Coins className="h-4 w-4 text-amber-400 shrink-0" />
+                        <input
+                          type="number"
+                          min={0}
+                          value={counterPoints}
+                          onChange={(e) => setCounterPoints(e.target.value)}
+                          placeholder={c("pointsPlaceholder")}
+                          className="w-[80px] rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary"
+                        />
+                        {parseInt(counterPoints) > 0 && (
+                          <div className="flex gap-1 ml-auto">
+                            <button
+                              type="button"
+                              onClick={() => setCounterPayerIsMe(true)}
+                              className={`rounded px-2 py-1.5 text-[10px] font-medium transition-colors ${counterPayerIsMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+                            >
+                              {t("iPay")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCounterPayerIsMe(false)}
+                              className={`rounded px-2 py-1.5 text-[10px] font-medium transition-colors ${!counterPayerIsMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+                            >
+                              {t("theyPay")}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      
                       {parseInt(counterPoints) > 0 && (
-                        <div className="flex gap-1 ml-auto">
-                          <button
-                            type="button"
-                            onClick={() => setCounterPayerIsMe(true)}
-                            className={`rounded px-2 py-1.5 text-[10px] font-medium transition-colors ${counterPayerIsMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
-                          >
-                            {t("iPay")}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCounterPayerIsMe(false)}
-                            className={`rounded px-2 py-1.5 text-[10px] font-medium transition-colors ${!counterPayerIsMe ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
-                          >
-                            {t("theyPay")}
-                          </button>
+                        <div className="pt-2 border-t border-border/50 space-y-2">
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-muted-foreground font-medium">
+                              {counterPayerIsMe ? c("youPay") : c("youReceive")}:
+                            </span>
+                            <span className={`font-bold ${counterPayerIsMe ? "text-red-400" : "text-emerald-500"}`}>
+                              {format.number(counterPayerIsMe ? calculatePointsBreakdown(counterPoints).gross : calculatePointsBreakdown(counterPoints).net)} {c("points")}
+                            </span>
+                          </div>
+                          
+                          <TooltipProvider>
+                            <Tooltip delayDuration={300}>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 text-[10px] mt-2 cursor-help text-muted-foreground hover:text-foreground transition-colors">
+                                  <Info className="h-3 w-3 shrink-0" />
+                                  <span>{c("viewCommissionBreakdown")}</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" align="end" className="w-64 p-3 z-[100] shadow-md border bg-popover text-popover-foreground">
+                                <div className="space-y-2">
+                                  <h4 className="font-medium text-xs border-b pb-1">
+                                    {c("pointsBreakdown")}
+                                  </h4>
+                                  <div className="text-[11px] space-y-1 text-muted-foreground">
+                                    <div className="flex justify-between">
+                                      <span>{c("grossAmount")}:</span>
+                                      <span className="text-foreground">{format.number(calculatePointsBreakdown(counterPoints).gross)} {c("points")}</span>
+                                    </div>
+                                    <div className="flex justify-between text-red-500/80">
+                                      <span>{c("platformFee")}:</span>
+                                      <span>-{format.number(calculatePointsBreakdown(counterPoints).fee)} {c("points")}</span>
+                                    </div>
+                                    <div className="flex justify-between font-medium text-emerald-500 pt-1 border-t border-border/40">
+                                      <span>{c("netGain")}:</span>
+                                      <span>{format.number(calculatePointsBreakdown(counterPoints).net)} {c("points")}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       )}
                     </div>

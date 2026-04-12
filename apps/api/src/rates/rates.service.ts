@@ -54,24 +54,13 @@ export class RatesService implements OnModuleInit {
         this.logger.warn('OER_APP_ID not set, relying on fallback rates.');
       }
 
-      // Add a 5% markup buffer to protect revenue against gateway settlement slippage
-      const bufferMultiplier = 1.05;
-
-      const bufferedRates: ExchangeRates = {};
-      for (const [currency, rate] of Object.entries(oerRates)) {
-        if (currency === 'USD') {
-          bufferedRates[currency] = 1.0;
-        } else {
-          bufferedRates[currency] = rate * bufferMultiplier;
-        }
-      }
-
+      // Transparent rates — no buffer. Revenue captured via exchange commission & withdrawal spread.
       const combinedRates: ExchangeRates = {
         USD: 1.0, // Base
-        NGN: 1500 * bufferMultiplier, // Fallback base before buffer
-        GBP: 0.78 * bufferMultiplier,
-        EUR: 0.92 * bufferMultiplier,
-        ...bufferedRates,
+        NGN: 1500, // Fallback
+        GBP: 0.78,
+        EUR: 0.92,
+        ...oerRates,
       };
 
       // Store in Redis
@@ -90,7 +79,7 @@ export class RatesService implements OnModuleInit {
     if (raw) {
       return JSON.parse(raw);
     }
-    // Fallback if Redis is totally empty
-    return { USD: 1.0, NGN: 1575, GBP: 0.819, EUR: 0.966 }; // Pre-buffered fallbacks
+    // Fallback if Redis is totally empty — transparent rates
+    return { USD: 1.0, NGN: 1500, GBP: 0.78, EUR: 0.92 };
   }
 }

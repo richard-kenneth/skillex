@@ -37,7 +37,10 @@ import {
   FileText,
   Download,
   Loader2,
+  Info,
 } from "lucide-react";
+import { calculatePointsBreakdown } from "@skil-ex2/shared";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -123,6 +126,7 @@ export default function ExchangeDetails({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [rating, setRating] = useState(5);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [showPointsBreakdown, setShowPointsBreakdown] = useState(false);
 
   // Recording playback
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
@@ -515,23 +519,67 @@ export default function ExchangeDetails({
 
             <Card className="bg-card/50 backdrop-blur-sm shadow-none">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
                   {t("points")}
+                  {exchange.pointsAmount > 0 && (
+                    <TooltipProvider>
+                      <Tooltip delayDuration={300}>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center" className="w-72 p-4 z-[100] shadow-md border bg-popover text-popover-foreground">
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm">
+                              {tc("pointsBreakdown")}
+                            </h4>
+                            <div className="text-sm space-y-1 text-muted-foreground">
+                              <div className="flex justify-between">
+                                <span>{tc("grossAmount")}:</span>
+                                <span className="text-foreground font-medium">{calculatePointsBreakdown(exchange.pointsAmount).gross} {tc("points")}</span>
+                              </div>
+                              <div className="flex justify-between text-red-500/80">
+                                <span>{tc("platformFee")}:</span>
+                                <span>-{calculatePointsBreakdown(exchange.pointsAmount).fee} {tc("points")}</span>
+                              </div>
+                              <div className="flex justify-between font-medium text-emerald-500 pt-1 border-t border-border/40">
+                                <span>{tc("netGain")}:</span>
+                                <span>{calculatePointsBreakdown(exchange.pointsAmount).net} {tc("points")}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold flex items-center gap-2">
-                  {tc("points_count", { count: exchange.pointsAmount })}{" "}
-                  <Coins className="h-5 w-5 text-amber-500" />
+                  {exchange.pointsPayerId === currentUser.id ? (
+                    <>
+                      {tc("points_count", { count: calculatePointsBreakdown(exchange.pointsAmount).gross })}
+                      <Coins className="h-5 w-5 text-amber-500" />
+                    </>
+                  ) : (
+                    <>
+                      {tc("points_count", { count: calculatePointsBreakdown(exchange.pointsAmount).net })}
+                      <Coins className="h-5 w-5 text-amber-500" />
+                    </>
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {exchange.pointsAmount === 0
-                    ? t("evenExchange")
-                    : exchange.pointsPayerId === currentUser.id
-                      ? t("youPaid")
-                      : t("theyPaid")}
-                  {exchange.escrowLocked && ` • ${t("escrowed")}`}
-                </p>
+                <div className="text-xs text-muted-foreground mt-1 flex flex-col gap-0.5">
+                  <div className="flex items-center gap-1">
+                    {exchange.pointsAmount === 0
+                      ? t("evenExchange")
+                      : exchange.pointsPayerId === currentUser.id
+                        ? tc("totalCost")
+                        : tc("netGain")}
+                    {exchange.escrowLocked && ` • ${t("escrowed")}`}
+                  </div>
+                  {exchange.pointsAmount > 0 && exchange.pointsPayerId !== currentUser.id && (
+                    <span className="opacity-70 text-[10px]">{tc("afterPlatformFee", { amount: calculatePointsBreakdown(exchange.pointsAmount).net })}</span>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -786,11 +834,24 @@ export default function ExchangeDetails({
                     </div>
                   </>
                 )}
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm items-start">
                   <span className="text-muted-foreground">{t("points")}</span>
-                  <span className="font-medium text-amber-500 text-right">
-                    {tc("points_count", { count: exchange.pointsAmount })}
-                  </span>
+                  <div className="text-right">
+                    <div className="font-medium text-amber-500 flex items-center justify-end gap-1">
+                      {exchange.pointsPayerId === currentUser.id 
+                        ? tc("points_count", { count: calculatePointsBreakdown(exchange.pointsAmount).gross })
+                        : tc("points_count", { count: calculatePointsBreakdown(exchange.pointsAmount).net })
+                      }
+                      <Coins className="h-4 w-4" />
+                    </div>
+                    <div className="text-[10px] opacity-70">
+                      {exchange.pointsAmount === 0
+                        ? t("evenExchange")
+                        : exchange.pointsPayerId === currentUser.id
+                          ? tc("totalCost")
+                          : tc("netGain")}
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>

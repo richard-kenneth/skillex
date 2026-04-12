@@ -7,18 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getSession } from "@/lib/auth-server";
-import {
-  ArrowRightLeft,
-  Coins,
-  Clock,
-  Users,
-  ArrowRight,
-} from "lucide-react";
-import { headers } from "next/headers";
 import { Link } from "@/i18n/navigation";
+import { getSession } from "@/lib/auth-server";
+import { ArrowRight, ArrowRightLeft, Clock, Coins, Users } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getTranslations, getLocale } from "next-intl/server";
+import { calculatePointsBreakdown } from "@skil-ex2/shared";
 
 export const dynamic = "force-dynamic";
 
@@ -73,10 +68,9 @@ export default async function ExchangesPage() {
   }
 
   const reqHeaders = await headers();
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges`,
-    { headers: reqHeaders },
-  );
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges`, {
+    headers: reqHeaders,
+  });
 
   const exchanges: Exchange[] = res.ok ? await res.json() : [];
 
@@ -85,9 +79,7 @@ export default async function ExchangesPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-6">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground">
-            {t("description")}
-          </p>
+          <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <Button
           variant="outline"
@@ -106,7 +98,9 @@ export default async function ExchangesPage() {
           <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-6">
             <ArrowRightLeft className="h-8 w-8 text-muted-foreground opacity-50" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">{t("noExchangesTitle")}</h3>
+          <h3 className="text-xl font-semibold mb-2">
+            {t("noExchangesTitle")}
+          </h3>
           <p className="text-muted-foreground max-w-sm mx-auto px-4">
             {t("noExchangesDesc")}
           </p>
@@ -119,15 +113,16 @@ export default async function ExchangesPage() {
           {exchanges.map((exchange) => {
             const isSender = exchange.senderId === session.user.id;
             const otherUser = isSender ? exchange.receiver : exchange.sender;
-            
+
             // For taughtSkill, receiver is teacher, sender is learner
             // For receivedSkill, sender is teacher, receiver is learner
-            const totalSessions = exchange.requestedSkillSessions + (exchange.receivedSkill ? exchange.offeredSkillSessions : 0);
-            
-            const progress = totalSessions > 0
-                ? Math.round(
-                    (exchange.completedSessions / totalSessions) * 100,
-                  )
+            const totalSessions =
+              exchange.requestedSkillSessions +
+              (exchange.receivedSkill ? exchange.offeredSkillSessions : 0);
+
+            const progress =
+              totalSessions > 0
+                ? Math.round((exchange.completedSessions / totalSessions) * 100)
                 : 0;
 
             return (
@@ -138,22 +133,22 @@ export default async function ExchangesPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="p-2 rounded-full bg-primary/10"
-                      >
+                      <div className="p-2 rounded-full bg-primary/10">
                         <ArrowRightLeft className="h-4 w-4 text-primary" />
                       </div>
                       <div>
                         <CardTitle className="text-base">
                           {exchange.taughtSkill.name}
-                          {exchange.receivedSkill && ` ↔ ${exchange.receivedSkill.name}`}
+                          {exchange.receivedSkill &&
+                            ` ↔ ${exchange.receivedSkill.name}`}
                         </CardTitle>
                         <CardDescription className="text-xs">
-                          {isSender ? t("learningFrom") : t("teaching")} {otherUser.name ?? tc("unknownUser")}
+                          {isSender ? t("learningFrom") : t("teaching")}{" "}
+                          {otherUser.name ?? tc("unknownUser")}
                         </CardDescription>
                       </div>
                     </div>
-                      <Badge
+                    <Badge
                       variant="outline"
                       className={statusColors[exchange.status] || ""}
                     >
@@ -174,7 +169,10 @@ export default async function ExchangesPage() {
 
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>
-                        {exchange.requestedSkillDuration}m{exchange.receivedSkill ? ` / ${exchange.offeredSkillDuration}m` : ""}
+                        {exchange.requestedSkillDuration}m
+                        {exchange.receivedSkill
+                          ? ` / ${exchange.offeredSkillDuration}m`
+                          : ""}
                       </span>
                     </div>
 
@@ -182,12 +180,15 @@ export default async function ExchangesPage() {
                     {exchange.pointsAmount > 0 && (
                       <div className="flex items-center gap-2 text-sm">
                         <Coins className="h-4 w-4 text-amber-400" />
-                        <span className="text-amber-400">
-                          {exchange.pointsAmount} {tc("pts")}
+                        <span className="text-amber-400 font-medium">
+                          {exchange.pointsPayerId === session.user.id 
+                            ? calculatePointsBreakdown(exchange.pointsAmount).gross
+                            : calculatePointsBreakdown(exchange.pointsAmount).net}{" "}
+                          {tc("points")}
                         </span>
                         {exchange.escrowLocked && (
-                          <span className="text-xs text-muted-foreground">
-                            ({t("escrowed")})
+                          <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">
+                            {t("escrowed")}
                           </span>
                         )}
                       </div>
@@ -223,14 +224,14 @@ export default async function ExchangesPage() {
                       {new Intl.DateTimeFormat(locale, {
                         month: "short",
                         day: "numeric",
-                        year: "numeric"
+                        year: "numeric",
                       }).format(new Date(exchange.committedAt))}
                     </p>
                     <Button size="sm" asChild className="gap-2">
-                       <Link href={`/exchanges/${exchange.id}`}>
-                         {t("viewDetails")}
-                         <ArrowRight className="h-3 w-3" />
-                       </Link>
+                      <Link href={`/exchanges/${exchange.id}`}>
+                        {t("viewDetails")}
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
                     </Button>
                   </div>
                 </CardContent>

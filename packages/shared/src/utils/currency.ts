@@ -9,6 +9,13 @@ Decimal.set({
 // Platform standard rating: 1 Point = $0.01 USD
 export const POINT_TO_USD_RATE = 0.01;
 
+// Structural Split economic constants (display defaults)
+export const DEFAULT_EXCHANGE_COMMISSION_RATE = 0.10;
+export const DEFAULT_FACILITATION_FEE = 5;
+export const DEFAULT_WITHDRAWAL_SPREAD = 0.06;
+export const MIN_PURCHASE_POINTS = 500;
+export const MIN_WITHDRAWAL_POINTS = 200;
+
 // Internal fallback for zero-decimal currencies (used only if Intl logic fails)
 const FALLBACK_ZERO_DECIMAL_CURRENCIES = [
   "NGN",
@@ -70,4 +77,16 @@ export const applyCurrencyPrecision = (
 
   // Rely solely on decimal.js arithmetic for precise banking standard rounding
   return new Decimal(amount).toDecimalPlaces(decimals).toNumber();
+};
+
+/**
+ * Calculates the breakdown of a points transaction for structural transparency.
+ * Standardizes the derivation of the gross amount, platform fee, and net gain.
+ */
+export const calculatePointsBreakdown = (pointsAmount: number | string) => {
+  const gross = Math.max(0, typeof pointsAmount === "number" ? pointsAmount : parseInt(pointsAmount, 10) || 0);
+  const fee = Math.floor(gross * DEFAULT_EXCHANGE_COMMISSION_RATE);
+  const net = gross - fee;
+
+  return { gross, fee, net };
 };

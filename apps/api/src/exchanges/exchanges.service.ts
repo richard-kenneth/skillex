@@ -978,6 +978,18 @@ export class ExchangesService {
         exchangeId,
       });
 
+      // Apply facilitation fee to both participants (platform revenue on every swap)
+      await Promise.allSettled([
+        this.pointsService.applyFacilitationFee(
+          exchange.senderId,
+          exchangeId,
+        ),
+        this.pointsService.applyFacilitationFee(
+          exchange.receiverId,
+          exchangeId,
+        ),
+      ]);
+
       // Process referral rewards for both participants
       await Promise.allSettled([
         this.referralsService.processExchangeCompletion(

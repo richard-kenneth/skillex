@@ -33,21 +33,9 @@ export class PointsController {
     return this.ratesService.getRates();
   }
 
-
   @Get('fee-config')
   getFeeConfig() {
     return this.pointsService.getFeeConfig();
-  }
-
-  @Get('fee-tiers')
-  getFeeTiers() {
-    return this.pointsService.getFeeTiers();
-  }
-
-  @Get('my-tier')
-  @UseGuards(BetterAuthGuard)
-  getMyTier(@Req() req: Request & { user: { id: string } }) {
-    return this.pointsService.getUserFeeTier(req.user.id);
   }
 
   @Get('banks')
