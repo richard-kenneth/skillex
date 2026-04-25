@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { UpdateProfileDto } from '@skil-ex2/shared';
 import { IncomingHttpHeaders } from 'http';
-import { AuthService } from 'src/auth/auth.service';
+import { AuthService } from '../auth/auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()

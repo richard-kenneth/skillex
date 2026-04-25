@@ -1,13 +1,18 @@
 {
   "name": "skil-ex2",
   "private": true,
-  "packageManager": "pnpm@9.12.3",
+  "packageManager": "pnpm@10.33.2",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "turbo": "^2.9.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "chokidar": "^5.0.0"
+    }
   }
 }
