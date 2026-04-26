@@ -50,7 +50,10 @@
     "youPay": "Você paga",
     "youReceive": "Você recebe",
     "viewCommissionBreakdown": "Ver detalhamento da taxa",
-    "afterPlatformFee": "após taxas da plataforma"
+    "afterPlatformFee": "após taxas da plataforma",
+    "yourBalance": "Seu saldo",
+    "insufficientPoints": "Saldo de pontos insuficiente",
+    "insufficientPointsForAgreement": "Você não tem pontos suficientes para aceitar estes termos"
   },
   "nav": {
     "home": "Início",
@@ -317,7 +320,8 @@
     "at": "às"
   },
   "negotiation": {
-    "initializingNegotiation": "Inicializando negociação...",
+    "at": "às",
+    "initializingNegotiation": "Initialização de negociação...",
     "failedToLoad": "Falha ao carregar a solicitação.",
     "backToRequests": "Voltar às solicitações",
     "negotiatingExchange": "Negociando troca: {skill}",
@@ -386,7 +390,8 @@
     "failedFetchRequest": "Falha ao buscar a solicitação",
     "failedPropose": "Falha ao propor novos termos",
     "failedAccept": "Falha ao aceitar os termos",
-    "failedUpdateAvail": "Falha ao atualizar a disponibilidade"
+    "failedUpdateAvail": "Falha ao atualizar a disponibilidade",
+    "failedSendMessage": "Falha ao enviar a mensagem"
   },
   "points": {
     "title": "Pontos",

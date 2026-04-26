@@ -31,7 +31,7 @@ import {
   UpdateSessionStatusSchema,
 } from '@skil-ex2/shared';
 import { Request } from 'express';
-import { Observable, fromEvent } from 'rxjs';
+import { Observable, fromEvent, merge } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
@@ -49,21 +49,31 @@ export class ExchangesController {
   streamEvents(
     @Req() req: Request & { user: { id: string } },
   ): Observable<MessageEvent> {
-    return (
-      fromEvent(this.eventEmitter, 'exchange.updated') as Observable<{
-        userIds: string[];
-        requestId: string;
-        message: string;
-      }>
+    const exchangeUpdates = fromEvent(
+      this.eventEmitter,
+      'exchange.updated',
     ).pipe(
-      filter((payload) => payload.userIds?.includes(req.user.id)),
-      map((payload) => ({
+      filter((payload: any) => payload.userIds?.includes(req.user.id)),
+      map((payload: any) => ({
         data: {
           requestId: payload.requestId,
           message: payload.message,
         },
       })),
     );
+
+    const sessionUpdates = fromEvent(this.eventEmitter, 'session.updated').pipe(
+      filter((payload: any) => payload.userIds?.includes(req.user.id)),
+      map((payload: any) => ({
+        data: {
+          exchangeId: payload.exchangeId,
+          sessionId: payload.sessionId,
+          type: 'SESSION_UPDATED',
+        },
+      })),
+    );
+
+    return merge(exchangeUpdates, sessionUpdates) as Observable<MessageEvent>;
   }
 
   @Get('matches')

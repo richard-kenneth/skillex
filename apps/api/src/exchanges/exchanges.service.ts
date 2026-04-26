@@ -152,6 +152,19 @@ export class ExchangesService {
       );
     }
 
+    const pointsProposal = data.pointsProposal ?? 0;
+
+    // Validate balance if the sender is the payer
+    if (pointsProposal > 0 && data.pointsPayerId === senderId) {
+      const sender = await this.prisma.user.findUnique({
+        where: { id: senderId },
+        select: { pointsBalance: true },
+      });
+      if (sender && sender.pointsBalance < pointsProposal) {
+        throw new BadRequestException('Insufficient points balance');
+      }
+    }
+
     const request = await this.prisma.exchangeRequest.create({
       data: {
         senderId,
@@ -315,6 +328,18 @@ export class ExchangesService {
           'pointsPayerId is required when proposing points.',
         );
       }
+      // Early validation: if the proposer is the payer, check their balance now
+      if ((data.pointsProposal ?? 0) > 0 && data.pointsPayerId === userId) {
+        const payer = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { pointsBalance: true },
+        });
+        if (!payer || payer.pointsBalance < (data.pointsProposal ?? 0)) {
+          throw new BadRequestException(
+            `Insufficient points. You have ${payer?.pointsBalance ?? 0} but proposed ${data.pointsProposal}.`,
+          );
+        }
+      }
       if (userId === request.senderId) {
         newSenderAgreed = true;
         newReceiverAgreed = false;
@@ -328,7 +353,26 @@ export class ExchangesService {
       } else {
         newReceiverAgreed = true;
       }
+      // Early validation: if the agreeing user is the payer, check their balance now
+      if (request.pointsProposal > 0 && request.pointsPayerId === userId) {
+        const payer = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { pointsBalance: true },
+        });
+        if (!payer || payer.pointsBalance < request.pointsProposal) {
+          throw new BadRequestException(
+            `Insufficient points to agree. You have ${payer?.pointsBalance ?? 0} but ${request.pointsProposal} are needed.`,
+          );
+        }
+      }
     }
+
+    // Pre-validate: if auto-commit would trigger, ensure payer has enough points
+    await this.validateEscrowPreConditions(
+      request,
+      newSenderAgreed,
+      newReceiverAgreed,
+    );
 
     const [message] = await this.prisma.$transaction([
       this.prisma.message.create({
@@ -419,6 +463,19 @@ export class ExchangesService {
       if (!validSkillIds.includes(slot.skillId)) {
         throw new BadRequestException(
           `Skill ${slot.skillId} is not part of this exchange.`,
+        );
+      }
+    }
+
+    // Early validation: if the proposer is the payer, check their balance now
+    if ((data.pointsProposal ?? 0) > 0 && data.pointsPayerId === userId) {
+      const payer = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { pointsBalance: true },
+      });
+      if (!payer || payer.pointsBalance < (data.pointsProposal ?? 0)) {
+        throw new BadRequestException(
+          `Insufficient points. You have ${payer?.pointsBalance ?? 0} but proposed ${data.pointsProposal}.`,
         );
       }
     }
@@ -531,6 +588,19 @@ export class ExchangesService {
       );
     }
 
+    // Early validation: if the acceptor is the payer, check their balance now
+    if (request.pointsProposal > 0 && request.pointsPayerId === userId) {
+      const payer = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { pointsBalance: true },
+      });
+      if (!payer || payer.pointsBalance < request.pointsProposal) {
+        throw new BadRequestException(
+          `Insufficient points to accept. You have ${payer?.pointsBalance ?? 0} but ${request.pointsProposal} are needed.`,
+        );
+      }
+    }
+
     const otherUserId =
       userId === request.senderId ? request.receiverId : request.senderId;
 
@@ -541,6 +611,14 @@ export class ExchangesService {
     } else {
       newReceiverAgreed = true;
     }
+
+    // Pre-validate: if auto-commit would trigger, ensure payer has enough points
+    await this.validateEscrowPreConditions(
+      request,
+      newSenderAgreed,
+      newReceiverAgreed,
+      data.slotIds.length,
+    );
 
     const [, message] = await this.prisma.$transaction([
       this.prisma.proposedSlot.updateMany({
@@ -574,6 +652,50 @@ export class ExchangesService {
     });
 
     return message;
+  }
+
+  /**
+   * Pre-validate escrow conditions BEFORE committing accept/agree state.
+   * This prevents the request from getting stuck in a corrupted state
+   * (both users agreed, but exchange not created due to insufficient funds).
+   *
+   * @param request - The current exchange request
+   * @param projectedSenderAgreed - What senderAgreed would be after the pending operation
+   * @param projectedReceiverAgreed - What receiverAgreed would be after the pending operation
+   * @param additionalAcceptedSlots - Number of slots about to be accepted (0 for sendMessage)
+   */
+  private async validateEscrowPreConditions(
+    request: ExchangeRequest,
+    projectedSenderAgreed: boolean,
+    projectedReceiverAgreed: boolean,
+    additionalAcceptedSlots: number = 0,
+  ) {
+    // Auto-commit only triggers when both users agree
+    if (!projectedSenderAgreed || !projectedReceiverAgreed) return;
+
+    const totalRequired =
+      request.requestedSkillSessions + request.offeredSkillSessions;
+
+    const currentAccepted = await this.prisma.proposedSlot.count({
+      where: { requestId: request.id, status: 'ACCEPTED' },
+    });
+
+    // Check if auto-commit would trigger
+    if (currentAccepted + additionalAcceptedSlots < totalRequired) return;
+
+    // Auto-commit would trigger — validate escrow if points are involved
+    if (request.pointsProposal > 0 && request.pointsPayerId) {
+      const payer = await this.prisma.user.findUnique({
+        where: { id: request.pointsPayerId },
+        select: { pointsBalance: true },
+      });
+
+      if (!payer || payer.pointsBalance < request.pointsProposal) {
+        throw new BadRequestException(
+          `Insufficient points to commit exchange. Balance: ${payer?.pointsBalance ?? 0}, required: ${request.pointsProposal}.`,
+        );
+      }
+    }
   }
 
   /**
@@ -896,6 +1018,17 @@ export class ExchangesService {
     const session = exchange.sessions.find((s) => s.id === sessionId);
     if (!session) {
       throw new NotFoundException('Session not found');
+    }
+
+    if (status === 'COMPLETED') {
+      const isTaughtSkill = session.skillId === exchange.taughtSkillId;
+      const learnerId = isTaughtSkill ? exchange.senderId : exchange.receiverId;
+
+      if (userId !== learnerId) {
+        throw new ForbiddenException(
+          'Only the learner can mark a session as completed',
+        );
+      }
     }
 
     const updatedSession = await this.prisma.exchangeSession.update({

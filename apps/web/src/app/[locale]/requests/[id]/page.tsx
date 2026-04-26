@@ -4,8 +4,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useSession } from "@/lib/auth-client";
+import { calculatePointsBreakdown } from "@skil-ex2/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -13,17 +20,11 @@ import {
   Calendar,
   Clock,
   Coins,
+  Info,
   Loader2,
   Send,
-  Info,
 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { calculatePointsBreakdown } from "@skil-ex2/shared";
+import { toast } from "sonner";
 
 import { useFormatter, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -41,6 +42,22 @@ export default function NegotiationPage() {
   const format = useFormatter();
 
   const { data: session, isPending: isSessionLoading } = useSession();
+
+  const { data: balanceData } = useQuery({
+    queryKey: ["points-balance"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/points/balance`,
+        {
+          credentials: "include",
+        },
+      );
+      if (!res.ok) throw new Error("Failed to fetch balance");
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+  const pointsBalance = balanceData?.balance ?? 0;
 
   const {
     data: request,
@@ -96,9 +113,6 @@ export default function NegotiationPage() {
     };
   }, [id, session, queryClient]);
 
-  const currentUserId = session?.user?.id;
-  const isPending = request?.status === "PENDING";
-
   // Propose form state
   const [reqSessions, setReqSessions] = useState("1");
   const [reqDuration, setReqDuration] = useState("60");
@@ -121,6 +135,24 @@ export default function NegotiationPage() {
   const [availDays, setAvailDays] = useState<string[]>([]);
   const [availTimes, setAvailTimes] = useState<string[]>([]);
   const [isUpdatingAvail, setIsUpdatingAvail] = useState(false);
+
+  const currentUserId = session?.user?.id;
+  const isPending = request?.status === "PENDING";
+  const counterPointsNum = parseInt(counterPoints) || 0;
+  const isPayerInCurrentProposal = request?.pointsPayerId === currentUserId;
+  const hasInsufficientPointsToAccept =
+    isPayerInCurrentProposal && pointsBalance < (request?.pointsProposal || 0);
+  const hasInsufficientPointsToPropose =
+    counterPayerIsMe && pointsBalance < counterPointsNum;
+
+  const isFormMatchingActiveProposal =
+    counterPointsNum === (request?.pointsProposal || 0) &&
+    counterPayerIsMe === (request?.pointsPayerId === currentUserId);
+
+  const showAcceptWarning =
+    hasInsufficientPointsToAccept && isFormMatchingActiveProposal;
+  const showProposeWarning =
+    hasInsufficientPointsToPropose && !isFormMatchingActiveProposal;
 
   // Initialize input values to match the current DB state if available
   useEffect(() => {
@@ -200,13 +232,23 @@ export default function NegotiationPage() {
   if (isError) {
     return (
       <div className="flex flex-col justify-center items-center h-screen gap-4">
-        <p className="text-red-400 font-medium">{t("failedToLoad")}</p>
-        <Button asChild variant="outline">
-          <Link href="/matches/requests">{t("backToRequests")}</Link>
-        </Button>
+        <p className="text-red-400">{t("failedToLoad")}</p>
+        <Link href="/matches/requests" className="text-sm underline">
+          {t("backToRequests")}
+        </Link>
       </div>
     );
   }
+
+  const handleError = async (res: Response, fallbackKey: string) => {
+    try {
+      const errorData = await res.json();
+      const message = errorData.message || t(fallbackKey);
+      toast.error(message);
+    } catch {
+      toast.error(t(fallbackKey));
+    }
+  };
 
   if (!session) {
     router.push("/sign-in");
@@ -267,7 +309,10 @@ export default function NegotiationPage() {
         },
       );
 
-      if (!res.ok) throw new Error(t("failedPropose"));
+      if (!res.ok) {
+        await handleError(res, "failedPropose");
+        return;
+      }
 
       setReqDays([]);
       setReqTime("");
@@ -276,6 +321,7 @@ export default function NegotiationPage() {
       queryClient.invalidateQueries({ queryKey: ["request", id] });
     } catch (err) {
       console.error(err);
+      toast.error(t("failedPropose"));
     } finally {
       setSendingProposal(false);
     }
@@ -298,10 +344,15 @@ export default function NegotiationPage() {
         },
       );
 
-      if (!res.ok) throw new Error(t("failedAccept"));
+      if (!res.ok) {
+        await handleError(res, "failedAccept");
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ["request", id] });
+      queryClient.invalidateQueries({ queryKey: ["points-balance"] });
     } catch (err) {
       console.error(err);
+      toast.error(t("failedAccept"));
     } finally {
       setSendingAccept(false);
     }
@@ -319,10 +370,14 @@ export default function NegotiationPage() {
           body: JSON.stringify({ messageKey }),
         },
       );
-      if (!res.ok) throw new Error(t("failedSendMessage"));
+      if (!res.ok) {
+        await handleError(res, "failedSendMessage");
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ["request", id] });
     } catch (err) {
       console.error(err);
+      toast.error(t("failedSendMessage"));
     } finally {
       setSendingMessage(false);
     }
@@ -345,10 +400,14 @@ export default function NegotiationPage() {
         },
       );
 
-      if (!res.ok) throw new Error(t("failedUpdateAvail"));
+      if (!res.ok) {
+        await handleError(res, "failedUpdateAvail");
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ["request", id] });
     } catch (err) {
       console.error(err);
+      toast.error(t("failedUpdateAvail"));
     } finally {
       setIsUpdatingAvail(false);
     }
@@ -492,42 +551,71 @@ export default function NegotiationPage() {
                                   <div className="flex items-center gap-1.5">
                                     <Coins className="w-3.5 h-3.5 text-amber-400" />
                                     <span className="font-bold text-sm">
-                                      {format.number(msg.pointsProposal || 0)} {c("points_label", { count: msg.pointsProposal || 0 })}
+                                      {format.number(msg.pointsProposal || 0)}{" "}
+                                      {c("points_label", {
+                                        count: msg.pointsProposal || 0,
+                                      })}
                                     </span>
                                   </div>
-                                    <TooltipProvider>
-                                      <Tooltip delayDuration={300}>
-                                        <TooltipTrigger asChild>
-                                          <div className="text-[10px] opacity-75 font-medium pl-5 flex items-center gap-1 cursor-help hover:text-foreground transition-colors">
-                                            <Info className="h-3 w-3 shrink-0" />
-                                            <span>{c("viewCommissionBreakdown")}</span>
-                                          </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" align="center" className="w-64 p-3 z-[100] shadow-md border bg-popover text-popover-foreground">
-                                          <div className="space-y-2">
-                                            <h4 className="font-medium text-xs border-b pb-1">
-                                              {c("pointsBreakdown")}
-                                            </h4>
-                                            <div className="text-[11px] space-y-1 text-muted-foreground">
-                                              <div className="flex justify-between">
-                                                <span>{c("grossAmount")}:</span>
-                                                <span className="text-foreground">{format.number(calculatePointsBreakdown(msg.pointsProposal || 0).gross)} {c("points")}</span>
-                                              </div>
-                                              <div className="flex justify-between text-red-500/80">
-                                                <span>{c("platformFee")}:</span>
-                                                <span>-{format.number(calculatePointsBreakdown(msg.pointsProposal || 0).fee)} {c("points")}</span>
-                                              </div>
-                                              <div className="flex justify-between font-medium text-emerald-500 pt-1 border-t border-border/40">
-                                                <span>{c("netGain")}:</span>
-                                                <span className="font-bold">
-                                                  {format.number(calculatePointsBreakdown(msg.pointsProposal || 0).net)} {c("points")}
-                                                </span>
-                                              </div>
+                                  <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                      <TooltipTrigger asChild>
+                                        <div className="text-[10px] opacity-75 font-medium pl-5 flex items-center gap-1 cursor-help hover:text-foreground transition-colors">
+                                          <Info className="h-3 w-3 shrink-0" />
+                                          <span>
+                                            {c("viewCommissionBreakdown")}
+                                          </span>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent
+                                        side="top"
+                                        align="center"
+                                        className="w-64 p-3 z-[100] shadow-md border bg-popover text-popover-foreground"
+                                      >
+                                        <div className="space-y-2">
+                                          <h4 className="font-medium text-xs border-b pb-1">
+                                            {c("pointsBreakdown")}
+                                          </h4>
+                                          <div className="text-[11px] space-y-1 text-muted-foreground">
+                                            <div className="flex justify-between">
+                                              <span>{c("grossAmount")}:</span>
+                                              <span className="text-foreground">
+                                                {format.number(
+                                                  calculatePointsBreakdown(
+                                                    msg.pointsProposal || 0,
+                                                  ).gross,
+                                                )}{" "}
+                                                {c("points")}
+                                              </span>
+                                            </div>
+                                            <div className="flex justify-between text-red-500/80">
+                                              <span>{c("platformFee")}:</span>
+                                              <span>
+                                                -
+                                                {format.number(
+                                                  calculatePointsBreakdown(
+                                                    msg.pointsProposal || 0,
+                                                  ).fee,
+                                                )}{" "}
+                                                {c("points")}
+                                              </span>
+                                            </div>
+                                            <div className="flex justify-between font-medium text-emerald-500 pt-1 border-t border-border/40">
+                                              <span>{c("netGain")}:</span>
+                                              <span className="font-bold">
+                                                {format.number(
+                                                  calculatePointsBreakdown(
+                                                    msg.pointsProposal || 0,
+                                                  ).net,
+                                                )}{" "}
+                                                {c("points")}
+                                              </span>
                                             </div>
                                           </div>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               )}
                             </div>
@@ -537,10 +625,13 @@ export default function NegotiationPage() {
                         )}
 
                         <span className="text-[10px] text-muted-foreground/60">
-                          {new Date(msg.createdAt || "").toLocaleTimeString(undefined, {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {new Date(msg.createdAt || "").toLocaleTimeString(
+                            undefined,
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
                         </span>
                       </div>
                     </div>
@@ -807,8 +898,8 @@ export default function NegotiationPage() {
                                 </Badge>
                               </div>
                               <span className="text-muted-foreground">
-                                {daysOfWeek[slot.dayOfWeek]} {t("at")} {slot.startTime}{" "}
-                                (
+                                {daysOfWeek[slot.dayOfWeek]} {t("at")}{" "}
+                                {slot.startTime} (
                                 {t("proposedBy", {
                                   name: isMeProposer
                                     ? c("you")
@@ -1027,18 +1118,27 @@ export default function NegotiationPage() {
                           </div>
                         )}
                       </div>
-                      
+
                       {parseInt(counterPoints) > 0 && (
                         <div className="pt-2 border-t border-border/50 space-y-2">
                           <div className="flex items-center gap-1.5 text-xs">
                             <span className="text-muted-foreground font-medium">
-                              {counterPayerIsMe ? c("youPay") : c("youReceive")}:
+                              {counterPayerIsMe ? c("youPay") : c("youReceive")}
+                              :
                             </span>
-                            <span className={`font-bold ${counterPayerIsMe ? "text-red-400" : "text-emerald-500"}`}>
-                              {format.number(counterPayerIsMe ? calculatePointsBreakdown(counterPoints).gross : calculatePointsBreakdown(counterPoints).net)} {c("points")}
+                            <span
+                              className={`font-bold ${counterPayerIsMe ? "text-red-400" : "text-emerald-500"}`}
+                            >
+                              {format.number(
+                                counterPayerIsMe
+                                  ? calculatePointsBreakdown(counterPoints)
+                                      .gross
+                                  : calculatePointsBreakdown(counterPoints).net,
+                              )}{" "}
+                              {c("points")}
                             </span>
                           </div>
-                          
+
                           <TooltipProvider>
                             <Tooltip delayDuration={300}>
                               <TooltipTrigger asChild>
@@ -1047,7 +1147,11 @@ export default function NegotiationPage() {
                                   <span>{c("viewCommissionBreakdown")}</span>
                                 </div>
                               </TooltipTrigger>
-                              <TooltipContent side="top" align="end" className="w-64 p-3 z-[100] shadow-md border bg-popover text-popover-foreground">
+                              <TooltipContent
+                                side="top"
+                                align="end"
+                                className="w-64 p-3 z-[100] shadow-md border bg-popover text-popover-foreground"
+                              >
                                 <div className="space-y-2">
                                   <h4 className="font-medium text-xs border-b pb-1">
                                     {c("pointsBreakdown")}
@@ -1055,15 +1159,37 @@ export default function NegotiationPage() {
                                   <div className="text-[11px] space-y-1 text-muted-foreground">
                                     <div className="flex justify-between">
                                       <span>{c("grossAmount")}:</span>
-                                      <span className="text-foreground">{format.number(calculatePointsBreakdown(counterPoints).gross)} {c("points")}</span>
+                                      <span className="text-foreground">
+                                        {format.number(
+                                          calculatePointsBreakdown(
+                                            counterPoints,
+                                          ).gross,
+                                        )}{" "}
+                                        {c("points")}
+                                      </span>
                                     </div>
                                     <div className="flex justify-between text-red-500/80">
                                       <span>{c("platformFee")}:</span>
-                                      <span>-{format.number(calculatePointsBreakdown(counterPoints).fee)} {c("points")}</span>
+                                      <span>
+                                        -
+                                        {format.number(
+                                          calculatePointsBreakdown(
+                                            counterPoints,
+                                          ).fee,
+                                        )}{" "}
+                                        {c("points")}
+                                      </span>
                                     </div>
                                     <div className="flex justify-between font-medium text-emerald-500 pt-1 border-t border-border/40">
                                       <span>{c("netGain")}:</span>
-                                      <span>{format.number(calculatePointsBreakdown(counterPoints).net)} {c("points")}</span>
+                                      <span>
+                                        {format.number(
+                                          calculatePointsBreakdown(
+                                            counterPoints,
+                                          ).net,
+                                        )}{" "}
+                                        {c("points")}
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
@@ -1076,9 +1202,20 @@ export default function NegotiationPage() {
                   </div>
 
                   <div className="pt-4 space-y-2">
+                    {showProposeWarning && (
+                      <div className="flex items-center gap-2 p-2 rounded-md bg-red-500/10 text-red-500 text-[11px] mb-2 border border-red-500/20 animate-pulse">
+                        <Info className="w-3.5 h-3.5" />
+                        <span>
+                          {c("insufficientPoints")} ({c("yourBalance")}:{" "}
+                          {pointsBalance})
+                        </span>
+                      </div>
+                    )}
                     <Button
                       onClick={handlePropose}
-                      disabled={sendingProposal}
+                      disabled={
+                        sendingProposal || hasInsufficientPointsToPropose
+                      }
                       className="w-full gap-2"
                     >
                       {sendingProposal ? (
@@ -1090,19 +1227,32 @@ export default function NegotiationPage() {
                     </Button>
 
                     {!amIAgreed && (
-                      <Button
-                        onClick={handleAccept}
-                        disabled={
-                          sendingAccept || request.proposedSlots?.length === 0
-                        }
-                        variant="secondary"
-                        className="w-full gap-2 bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20 shadow-none"
-                      >
-                        {sendingAccept && (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                      <div className="space-y-2">
+                        {showAcceptWarning && (
+                          <div className="flex items-center gap-2 p-2 rounded-md bg-red-500/10 text-red-500 text-[11px] border border-red-500/20 animate-pulse">
+                            <Info className="w-3.5 h-3.5" />
+                            <span>
+                              {c("insufficientPointsForAgreement")} (
+                              {c("yourBalance")}: {pointsBalance})
+                            </span>
+                          </div>
                         )}
-                        {t("acceptCurrentTerms")}
-                      </Button>
+                        <Button
+                          onClick={handleAccept}
+                          disabled={
+                            sendingAccept ||
+                            request.proposedSlots?.length === 0 ||
+                            hasInsufficientPointsToAccept
+                          }
+                          variant="secondary"
+                          className="w-full gap-2 bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20 shadow-none"
+                        >
+                          {sendingAccept && (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          )}
+                          {t("acceptCurrentTerms")}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>

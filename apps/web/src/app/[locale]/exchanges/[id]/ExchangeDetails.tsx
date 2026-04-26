@@ -1,17 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -20,27 +12,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useRouter } from "@/i18n/navigation";
+import { calculatePointsBreakdown } from "@skil-ex2/shared";
 import {
   ArrowRightLeft,
-  Coins,
-  CheckCircle2,
-  Video,
-  XCircle,
-  Star,
   BookOpen,
+  CheckCircle2,
+  Coins,
+  Download,
+  FileText,
+  Info,
+  Loader2,
   MessageSquare,
+  Paperclip,
   Play,
   Send,
-  Paperclip,
-  FileText,
-  Download,
-  Loader2,
-  Info,
+  Star,
+  Video,
+  XCircle,
 } from "lucide-react";
-import { calculatePointsBreakdown } from "@skil-ex2/shared";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -117,7 +117,6 @@ export default function ExchangeDetails({
   };
   currentUser: { id: string; name: string; image: string | null };
 }) {
-
   const router = useRouter();
   const t = useTranslations("exchanges");
   const tc = useTranslations("common");
@@ -132,9 +131,9 @@ export default function ExchangeDetails({
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
 
   // Session chat viewer
-  const [sessionChatMessages, setSessionChatMessages] = useState<
-    ChatMessage[]
-  >([]);
+  const [sessionChatMessages, setSessionChatMessages] = useState<ChatMessage[]>(
+    [],
+  );
   const [sessionChatOpen, setSessionChatOpen] = useState(false);
 
   const isSender = exchange.senderId === currentUser.id;
@@ -159,9 +158,12 @@ export default function ExchangeDetails({
   };
 
   const getDurationForSession = (session: ExchangeSession) => {
-    return session.duration || (session.skillId === exchange.taughtSkillId
-      ? exchange.requestedSkillDuration
-      : exchange.offeredSkillDuration);
+    return (
+      session.duration ||
+      (session.skillId === exchange.taughtSkillId
+        ? exchange.requestedSkillDuration
+        : exchange.offeredSkillDuration)
+    );
   };
 
   // Group sessions by skill for two-way exchanges
@@ -184,6 +186,32 @@ export default function ExchangeDetails({
     totalSessions > 0
       ? Math.round((completedSessionsCount / totalSessions) * 100)
       : 0;
+
+  useEffect(() => {
+    const eventSource = new EventSource(`${API}/exchanges/stream`, {
+      withCredentials: true,
+    });
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        // Refresh if it's a general update for this exchange or a session update within it
+        if (data.exchangeId === exchange.id || data.requestId === exchange.requestId) {
+          router.refresh();
+        }
+      } catch (err) {
+        console.error("SSE parse error:", err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("SSE connection error:", err);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [exchange.id, exchange.requestId, router]);
 
   const updateSessionStatus = async (sessionId: string, status: string) => {
     try {
@@ -360,7 +388,9 @@ export default function ExchangeDetails({
                 <span>{duration}m</span>
                 <span>•</span>
                 <span>
-                  {isTeacher ? t("youTeach") : t("teaches", { name: teacher.name })}
+                  {isTeacher
+                    ? t("youTeach")
+                    : t("teaches", { name: teacher.name })}
                 </span>
               </p>
             </div>
@@ -392,15 +422,19 @@ export default function ExchangeDetails({
 
               {session.status === "SCHEDULED" && (
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 text-green-500 hover:text-green-600 border-green-500/30 hover:bg-green-500/10"
-                    onClick={() => updateSessionStatus(session.id, "COMPLETED")}
-                    disabled={updating === session.id}
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                  </Button>
+                  {!isTeacher && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-green-500 hover:text-green-600 border-green-500/30 hover:bg-green-500/10"
+                      onClick={() =>
+                        updateSessionStatus(session.id, "COMPLETED")
+                      }
+                      disabled={updating === session.id}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="icon"
@@ -423,16 +457,22 @@ export default function ExchangeDetails({
               </p>
               <div className="flex flex-wrap gap-2">
                 {recordings.map((rec, idx) => {
-                  const isExpired = rec.recordingExpiresAt && new Date() > new Date(rec.recordingExpiresAt);
-                  const isCompleted = rec.recordingStatus === 'COMPLETED';
-                  const isProcessing = rec.recordingStatus === 'PROCESSING';
+                  const isExpired =
+                    rec.recordingExpiresAt &&
+                    new Date() > new Date(rec.recordingExpiresAt);
+                  const isCompleted = rec.recordingStatus === "COMPLETED";
+                  const isProcessing = rec.recordingStatus === "PROCESSING";
 
                   return (
                     <div key={rec.id} className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        disabled={!isCompleted || isExpired || updating === `playback-${rec.id}`}
+                        disabled={
+                          !isCompleted ||
+                          isExpired ||
+                          updating === `playback-${rec.id}`
+                        }
                         onClick={() => handleWatchRecording(rec.id)}
                         className="h-7 px-2 text-[10px] gap-1"
                       >
@@ -477,8 +517,6 @@ export default function ExchangeDetails({
                     ↔ {exchange.receivedSkill?.name}
                   </span>
                 )}
-
-
               </h1>
               <p className="text-muted-foreground mt-1 flex items-center gap-2">
                 <span>{tc("with", { name: otherUser.name })}</span>
@@ -527,7 +565,11 @@ export default function ExchangeDetails({
                         <TooltipTrigger asChild>
                           <Info className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
                         </TooltipTrigger>
-                        <TooltipContent side="top" align="center" className="w-72 p-4 z-[100] shadow-md border bg-popover text-popover-foreground">
+                        <TooltipContent
+                          side="top"
+                          align="center"
+                          className="w-72 p-4 z-100 shadow-md border bg-popover text-popover-foreground"
+                        >
                           <div className="space-y-2">
                             <h4 className="font-medium text-sm">
                               {tc("pointsBreakdown")}
@@ -535,15 +577,37 @@ export default function ExchangeDetails({
                             <div className="text-sm space-y-1 text-muted-foreground">
                               <div className="flex justify-between">
                                 <span>{tc("grossAmount")}:</span>
-                                <span className="text-foreground font-medium">{calculatePointsBreakdown(exchange.pointsAmount).gross} {tc("points")}</span>
+                                <span className="text-foreground font-medium">
+                                  {
+                                    calculatePointsBreakdown(
+                                      exchange.pointsAmount,
+                                    ).gross
+                                  }{" "}
+                                  {tc("points")}
+                                </span>
                               </div>
                               <div className="flex justify-between text-red-500/80">
                                 <span>{tc("platformFee")}:</span>
-                                <span>-{calculatePointsBreakdown(exchange.pointsAmount).fee} {tc("points")}</span>
+                                <span>
+                                  -
+                                  {
+                                    calculatePointsBreakdown(
+                                      exchange.pointsAmount,
+                                    ).fee
+                                  }{" "}
+                                  {tc("points")}
+                                </span>
                               </div>
                               <div className="flex justify-between font-medium text-emerald-500 pt-1 border-t border-border/40">
                                 <span>{tc("netGain")}:</span>
-                                <span>{calculatePointsBreakdown(exchange.pointsAmount).net} {tc("points")}</span>
+                                <span>
+                                  {
+                                    calculatePointsBreakdown(
+                                      exchange.pointsAmount,
+                                    ).net
+                                  }{" "}
+                                  {tc("points")}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -557,12 +621,18 @@ export default function ExchangeDetails({
                 <div className="text-2xl font-bold flex items-center gap-2">
                   {exchange.pointsPayerId === currentUser.id ? (
                     <>
-                      {tc("points_count", { count: calculatePointsBreakdown(exchange.pointsAmount).gross })}
+                      {tc("points_count", {
+                        count: calculatePointsBreakdown(exchange.pointsAmount)
+                          .gross,
+                      })}
                       <Coins className="h-5 w-5 text-amber-500" />
                     </>
                   ) : (
                     <>
-                      {tc("points_count", { count: calculatePointsBreakdown(exchange.pointsAmount).net })}
+                      {tc("points_count", {
+                        count: calculatePointsBreakdown(exchange.pointsAmount)
+                          .net,
+                      })}
                       <Coins className="h-5 w-5 text-amber-500" />
                     </>
                   )}
@@ -576,9 +646,16 @@ export default function ExchangeDetails({
                         : tc("netGain")}
                     {exchange.escrowLocked && ` • ${t("escrowed")}`}
                   </div>
-                  {exchange.pointsAmount > 0 && exchange.pointsPayerId !== currentUser.id && (
-                    <span className="opacity-70 text-[10px]">{tc("afterPlatformFee", { amount: calculatePointsBreakdown(exchange.pointsAmount).net })}</span>
-                  )}
+                  {exchange.pointsAmount > 0 &&
+                    exchange.pointsPayerId !== currentUser.id && (
+                      <span className="opacity-70 text-[10px]">
+                        {tc("afterPlatformFee", {
+                          amount: calculatePointsBreakdown(
+                            exchange.pointsAmount,
+                          ).net,
+                        })}
+                      </span>
+                    )}
                 </div>
               </CardContent>
             </Card>
@@ -633,9 +710,9 @@ export default function ExchangeDetails({
                     {exchange.taughtSkill.name} ({taughtSessions.length})
                   </TabsTrigger>
                   <TabsTrigger value="received">
-                    {exchange.receivedSkill?.name || t("receivedSkill")} ({receivedSessions.length})
+                    {exchange.receivedSkill?.name || t("receivedSkill")} (
+                    {receivedSessions.length})
                   </TabsTrigger>
-
                 </>
               )}
               <TabsTrigger value="chat">
@@ -648,9 +725,7 @@ export default function ExchangeDetails({
             <TabsContent value="sessions" className="space-y-3">
               {!exchange.sessions || exchange.sessions.length === 0 ? (
                 <div className="py-12 text-center border rounded-lg bg-card/20">
-                  <p className="text-muted-foreground">
-                    {t("noSessions")}
-                  </p>
+                  <p className="text-muted-foreground">{t("noSessions")}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -667,7 +742,9 @@ export default function ExchangeDetails({
                   {taughtSessions.length === 0 ? (
                     <div className="py-12 text-center border rounded-lg bg-card/20">
                       <p className="text-muted-foreground">
-                        {t("noSkillSessionsYet", { skill: exchange.taughtSkill.name })}
+                        {t("noSkillSessionsYet", {
+                          skill: exchange.taughtSkill.name,
+                        })}
                       </p>
                     </div>
                   ) : (
@@ -683,9 +760,11 @@ export default function ExchangeDetails({
                   {receivedSessions.length === 0 ? (
                     <div className="py-12 text-center border rounded-lg bg-card/20">
                       <p className="text-muted-foreground">
-                        {t("noSkillSessionsYet", { skill: exchange.receivedSkill?.name || t("receivedSkill") })}
+                        {t("noSkillSessionsYet", {
+                          skill:
+                            exchange.receivedSkill?.name || t("receivedSkill"),
+                        })}
                       </p>
-
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -796,11 +875,15 @@ export default function ExchangeDetails({
             <CardContent className="pt-4 space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t("totalSessions")}</span>
+                  <span className="text-muted-foreground">
+                    {t("totalSessions")}
+                  </span>
                   <span className="font-medium">{totalSessions}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t("completed")}</span>
+                  <span className="text-muted-foreground">
+                    {t("completed")}
+                  </span>
                   <span className="font-medium">{completedSessionsCount}</span>
                 </div>
                 {isTwoWay && (
@@ -838,10 +921,17 @@ export default function ExchangeDetails({
                   <span className="text-muted-foreground">{t("points")}</span>
                   <div className="text-right">
                     <div className="font-medium text-amber-500 flex items-center justify-end gap-1">
-                      {exchange.pointsPayerId === currentUser.id 
-                        ? tc("points_count", { count: calculatePointsBreakdown(exchange.pointsAmount).gross })
-                        : tc("points_count", { count: calculatePointsBreakdown(exchange.pointsAmount).net })
-                      }
+                      {exchange.pointsPayerId === currentUser.id
+                        ? tc("points_count", {
+                            count: calculatePointsBreakdown(
+                              exchange.pointsAmount,
+                            ).gross,
+                          })
+                        : tc("points_count", {
+                            count: calculatePointsBreakdown(
+                              exchange.pointsAmount,
+                            ).net,
+                          })}
                       <Coins className="h-4 w-4" />
                     </div>
                     <div className="text-[10px] opacity-70">
@@ -915,7 +1005,8 @@ export default function ExchangeDetails({
                     <div className="flex items-baseline gap-2">
                       <span className="text-xs font-medium">
                         {msg.sender.id === currentUser.id
-                          ? (tc("you").charAt(0).toUpperCase() + tc("you").slice(1))
+                          ? tc("you").charAt(0).toUpperCase() +
+                            tc("you").slice(1)
                           : msg.sender.name}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
@@ -963,7 +1054,9 @@ export default function ExchangeDetails({
                 </button>
               ))}
             </div>
-            <p className="text-sm font-medium">{tr("starsOutOf5", { rating })}</p>
+            <p className="text-sm font-medium">
+              {tr("starsOutOf5", { rating })}
+            </p>
 
             <div className="w-full space-y-2">
               <p className="text-sm font-medium text-muted-foreground">
@@ -1157,7 +1250,10 @@ function ExchangeChatTab({
   }
 
   return (
-    <div className="border rounded-xl bg-card/30 flex flex-col" style={{ height: "500px" }}>
+    <div
+      className="border rounded-xl bg-card/30 flex flex-col"
+      style={{ height: "500px" }}
+    >
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         {messages.length === 0 && (
@@ -1186,13 +1282,18 @@ function ExchangeChatTab({
               >
                 <div className="flex items-baseline gap-2 mb-0.5">
                   <span className="text-xs font-medium text-muted-foreground">
-                    {isMe ? (tc("you").charAt(0).toUpperCase() + tc("you").slice(1)) : msg.sender?.name}
+                    {isMe
+                      ? tc("you").charAt(0).toUpperCase() + tc("you").slice(1)
+                      : msg.sender?.name}
                   </span>
                   <span className="text-[10px] text-muted-foreground/60">
-                     {new Date(msg.createdAt || "").toLocaleTimeString(undefined, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {new Date(msg.createdAt || "").toLocaleTimeString(
+                      undefined,
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
+                    )}
                   </span>
                 </div>
                 {msg.content && (

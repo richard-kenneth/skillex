@@ -50,7 +50,10 @@
     "youPay": "Vous payez",
     "youReceive": "Vous recevez",
     "viewCommissionBreakdown": "Voir le détail des frais",
-    "afterPlatformFee": "après frais de plateforme"
+    "afterPlatformFee": "après frais de plateforme",
+    "yourBalance": "Votre solde",
+    "insufficientPoints": "Solde de points insuffisant",
+    "insufficientPointsForAgreement": "Vous n'avez pas assez de points pour accepter ces conditions"
   },
   "nav": {
     "home": "Accueil",
@@ -317,6 +320,7 @@
     "at": "à"
   },
   "negotiation": {
+    "at": "à",
     "initializingNegotiation": "Initialisation de la négociation...",
     "failedToLoad": "Échec du chargement de la demande. Elle a peut-être été supprimée ou déplacée.",
     "backToRequests": "Retour aux demandes",
@@ -386,7 +390,8 @@
     "failedFetchRequest": "Échec de la récupération de la demande",
     "failedPropose": "Échec de la proposition de nouveaux termes",
     "failedAccept": "Échec de l'acceptation des termes",
-    "failedUpdateAvail": "Échec de la mise à jour de la disponibilité"
+    "failedUpdateAvail": "Échec de la mise à jour de la disponibilité",
+    "failedSendMessage": "Échec de l'envoi du message"
   },
   "points": {
     "title": "Points",

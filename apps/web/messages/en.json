@@ -45,7 +45,10 @@
     "youPay": "You Pay",
     "youReceive": "You Receive",
     "viewCommissionBreakdown": "View commission breakdown",
-    "afterPlatformFee": "after platform fee"
+    "afterPlatformFee": "after platform fee",
+    "yourBalance": "Your balance",
+    "insufficientPoints": "Insufficient points balance",
+    "insufficientPointsForAgreement": "You don't have enough points to accept these terms"
   },
   "nav": {
     "home": "Home",
@@ -311,6 +314,7 @@
     "at": "at"
   },
   "negotiation": {
+    "at": "at",
     "initializingNegotiation": "Initializing negotiation...",
     "failedToLoad": "Failed to load request. It might have been deleted or moved.",
     "backToRequests": "Back to Requests",
@@ -380,7 +384,8 @@
     "failedFetchRequest": "Failed to fetch request",
     "failedPropose": "Failed to propose new terms",
     "failedAccept": "Failed to accept terms",
-    "failedUpdateAvail": "Failed to update availability"
+    "failedUpdateAvail": "Failed to update availability",
+    "failedSendMessage": "Failed to send message"
   },
   "points": {
     "title": "Points",

@@ -44,7 +44,10 @@
     "youPay": "Tú pagas",
     "youReceive": "Recibes",
     "viewCommissionBreakdown": "Ver desglose de comisión",
-    "afterPlatformFee": "después de los cargos de la plataforma"
+    "afterPlatformFee": "después de los cargos de la plataforma",
+    "yourBalance": "Tu saldo",
+    "insufficientPoints": "Saldo de puntos insuficiente",
+    "insufficientPointsForAgreement": "No tienes suficientes puntos para aceptar estos términos"
   },
   "nav": {
     "home": "Inicio",
@@ -311,6 +314,7 @@
     "at": "a las"
   },
   "negotiation": {
+    "at": "a las",
     "initializingNegotiation": "Inicializando negociación...",
     "failedToLoad": "Error al cargar la solicitud.",
     "backToRequests": "Volver a solicitudes",
@@ -380,7 +384,8 @@
     "failedFetchRequest": "Error al obtener la solicitud",
     "failedPropose": "Error al proponer nuevos términos",
     "failedAccept": "Error al aceptar los términos",
-    "failedUpdateAvail": "Error al actualizar la disponibilidad"
+    "failedUpdateAvail": "Error al actualizar la disponibilidad",
+    "failedSendMessage": "Error al enviar el mensaje"
   },
   "points": {
     "title": "Puntos",
