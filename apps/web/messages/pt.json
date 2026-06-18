@@ -492,7 +492,18 @@
     "failedGetVideoToken": "Falha ao obter o token de vídeo",
     "stopBtn": "Parar",
     "waitingPartner": "Aguardando parceiro...",
-    "unknown": "Desconhecido"
+    "unknown": "Desconhecido",
+    "failedGetEstimate": "Falha ao verificar a estimativa de gravação.",
+    "billingEstimateTitle": "Preço de gravação",
+    "billingEstimateDesc": "A gravação das sessões custa {rate} pontos por minuto.",
+    "yourBalance": "Seu saldo:",
+    "estimateHealthyTitle": "Saldo suficiente",
+    "estimateHealthyDesc": "A gravação custa {rate} pts/min. Você tem saldo suficiente para o restante da sessão ({minutes} min). Requer {cost} pts.",
+    "estimatePartialTitle": "Cobertura parcial",
+    "estimatePartialDesc": "Seu saldo cobre {minutes} minutos de gravação. A gravação será interrompida automaticamente quando seus pontos acabarem.",
+    "estimateInsufficientTitle": "Saldo insuficiente",
+    "estimateInsufficientDesc": "Você precisa de pelo menos {minRequired} pontos para gravar por 1 minuto. Por favor recarregue seu saldo.",
+    "proceed": "Continuar"
   },
   "profile": {
     "title": "Perfil",

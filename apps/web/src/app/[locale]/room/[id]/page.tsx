@@ -72,10 +72,17 @@ type RecordingSignal =
   | { type: "consent_accept" }
   | { type: "consent_decline" }
   | { type: "consent_error" }
-  | { type: "recording_started" }
+  | { type: "recording_started"; approvedMinutes?: number; stopAt?: number }
   | { type: "recording_stopped" }
   | { type: "recording_completed" }
   | { type: "recording_failed" };
+
+interface RecordingEstimate {
+  rate: number;
+  userBalance: number;
+  maxAffordableMinutes: number;
+  remainingSessionMinutes: number;
+}
 
 interface SessionTiming {
   session: {
@@ -95,7 +102,7 @@ export default function RoomPage() {
   const c = useTranslations("common");
 
   const params = useParams();
-  const roomName = params.id as string;
+  const roomNameOrId = params.id as string;
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
@@ -103,111 +110,70 @@ export default function RoomPage() {
   const [serverUrl, setServerUrl] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  // Fetch exchange session ID for recording API calls
   const [exchangeSessionId, setExchangeSessionId] = useState<string>("");
+  const [exchangeId, setExchangeId] = useState<string>("");
 
-  // Session timing for countdown
   const [sessionTiming, setSessionTiming] = useState<SessionTiming | null>(
     null,
   );
 
   useEffect(() => {
-    if (!isPending && !session) {
+    if (isPending) return;
+    if (!session) {
       router.push("/");
       return;
     }
 
-    if (session?.user) {
-      const setupRoom = async () => {
-        try {
-          const resp = await fetch(
-            `${API}/video/token?room=${encodeURIComponent(roomName)}`,
-            { credentials: "include" },
-          );
-          if (!resp.ok) {
-            const data = await resp.json().catch(() => null);
-            throw new Error(
-              data?.message || `${t("failedGetVideoToken")}: ${resp.statusText}`,
-            );
-          }
-          const data = await resp.json();
-          setToken(data.token);
-          setServerUrl(data.url);
-        } catch (e: unknown) {
-          console.error(e);
-          const message = e instanceof Error ? e.message : c("unknownError");
-          setError(message);
-        }
-      };
-      setupRoom();
-    }
-  }, [roomName, session, isPending, router]);
+    if (!roomNameOrId) return;
 
-  const searchParams = useSearchParams();
-  const querySessionId = searchParams.get("sessionId");
-
-  // Fetch exchange session ID
-  useEffect(() => {
-    if (!roomName) return;
-
-    if (querySessionId) {
-      setExchangeSessionId(querySessionId);
-      return;
-    }
-
-    const fetchSession = async () => {
+    const setupRoom = async () => {
       try {
-        const resp = await fetch(`${API}/exchanges/${roomName}`, {
-          credentials: "include",
-        });
-        if (resp.ok) {
-          const exchange = await resp.json();
-          const sessions = exchange?.sessions;
-          if (sessions?.length > 0) {
-            // Find the best session: 
-            // 1. One that is currently IN_PROGRESS
-            // 2. Otherwise, the one closest to "now" (scheduledAt)
-            const now = Date.now();
-            const sorted = [...sessions].sort((a: { status: string; scheduledAt: string }, b: { status: string; scheduledAt: string }) => {
-              // Priority 1: IN_PROGRESS
-              if (a.status === "IN_PROGRESS" && b.status !== "IN_PROGRESS") return -1;
-              if (b.status === "IN_PROGRESS" && a.status !== "IN_PROGRESS") return 1;
-
-              // Priority 2: Absolute distance to "now"
-              const distA = Math.abs(new Date(a.scheduledAt).getTime() - now);
-              const distB = Math.abs(new Date(b.scheduledAt).getTime() - now);
-              return distA - distB;
-            });
-            
-            setExchangeSessionId(sorted[0].id);
-          }
-        }
-      } catch {
-        // Non-critical — recording just won't be available
-      }
-    };
-    fetchSession();
-  }, [roomName, querySessionId]);
-
-  // Fetch session timing info
-  useEffect(() => {
-    if (!roomName) return;
-    const fetchTiming = async () => {
-      try {
-        const resp = await fetch(
-          `${API}/video/timing?room=${encodeURIComponent(roomName)}`,
+        // Resolve session details first
+        const sessionResp = await fetch(
+          `${API}/video/session/${encodeURIComponent(roomNameOrId)}`,
           { credentials: "include" },
         );
-        if (resp.ok) {
-          const data: SessionTiming = await resp.json();
-          setSessionTiming(data);
+        if (!sessionResp.ok) {
+          const sessionData = await sessionResp.json().catch(() => null);
+          throw new Error(
+            sessionData?.message || `${t("failedGetVideoToken")}: ${sessionResp.statusText}`,
+          );
         }
-      } catch {
-        // Non-critical
+        const sessionDetails = await sessionResp.json();
+        setExchangeSessionId(sessionDetails.sessionId);
+        setExchangeId(sessionDetails.exchangeId);
+        setSessionTiming({
+          session: {
+            id: sessionDetails.sessionId,
+            scheduledAt: sessionDetails.scheduledAt,
+            duration: sessionDetails.duration,
+            endsAt: sessionDetails.endsAt,
+          },
+        });
+
+        // Now request video token for the resolved sessionId
+        const tokenResp = await fetch(
+          `${API}/video/token?room=${encodeURIComponent(sessionDetails.sessionId)}`,
+          { credentials: "include" },
+        );
+        if (!tokenResp.ok) {
+          const tokenData = await tokenResp.json().catch(() => null);
+          throw new Error(
+            tokenData?.message || `${t("failedGetVideoToken")}: ${tokenResp.statusText}`,
+          );
+        }
+        const tokenData = await tokenResp.json();
+        setToken(tokenData.token);
+        setServerUrl(tokenData.url);
+      } catch (e: unknown) {
+        console.error(e);
+        const message = e instanceof Error ? e.message : c("unknownError");
+        setError(message);
       }
     };
-    fetchTiming();
-  }, [roomName]);
+
+    setupRoom();
+  }, [roomNameOrId, session, isPending, router, t, c]);
 
   if (isPending) {
     return (
@@ -228,7 +194,13 @@ export default function RoomPage() {
           </AlertDescription>
         </Alert>
         <Button
-          onClick={() => router.back()}
+          onClick={() => {
+            if (exchangeId) {
+              router.push(`/exchanges/${exchangeId}`);
+            } else {
+              router.back();
+            }
+          }}
           className="mt-4"
           variant="outline"
         >
@@ -257,12 +229,13 @@ export default function RoomPage() {
       serverUrl={serverUrl}
       data-lk-theme="default"
       style={{ height: "calc(100vh - 3.5rem)" }}
-      onDisconnected={() => router.push(`/exchanges`)}
+      onDisconnected={() => router.push(`/exchanges/${exchangeId}`)}
     >
       <RoomContent
-        roomName={roomName}
+        roomName={roomNameOrId}
         exchangeSessionId={exchangeSessionId}
         sessionTiming={sessionTiming}
+        exchangeId={exchangeId}
       />
     </LiveKitRoom>
   );
@@ -274,10 +247,12 @@ function RoomContent({
   roomName,
   exchangeSessionId,
   sessionTiming,
+  exchangeId,
 }: {
   roomName: string;
   exchangeSessionId: string;
   sessionTiming: SessionTiming | null;
+  exchangeId: string;
 }) {
   const t = useTranslations("room");
   const c = useTranslations("common");
@@ -286,6 +261,11 @@ function RoomContent({
   const [unreadCount, setUnreadCount] = useState(0);
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [showConsentDialog, setShowConsentDialog] = useState(false);
+
+  const [showEstimateDialog, setShowEstimateDialog] = useState(false);
+  const [estimate, setEstimate] = useState<RecordingEstimate | null>(null);
+  const [isCheckingEstimate, setIsCheckingEstimate] = useState(false);
+  const [recordingStopAt, setRecordingStopAt] = useState<number | null>(null);
 
   const isChatOpenRef = useRef(isChatOpen);
   useEffect(() => {
@@ -306,6 +286,8 @@ function RoomContent({
       return () => clearTimeout(timer);
     }
   }, [recordingState, t]);
+
+
 
   /* ─── Data channel for recording consent signaling ──── */
   const encoder = useRef(new TextEncoder());
@@ -335,10 +317,16 @@ function RoomContent({
         body: JSON.stringify(body),
       });
       if (resp.ok) {
-        console.log("[Recording] Start API succeeded");
+        const data = await resp.json();
+        console.log("[Recording] Start API succeeded", data);
         setRecordingState("recording");
         setShowConsentDialog(false);
-        sendSignal({ type: "recording_started" });
+        const approvedMinutes = data.approvedMinutes || 0;
+        const stopAt = approvedMinutes ? Date.now() + approvedMinutes * 60 * 1000 : undefined;
+        sendSignal({ type: "recording_started", approvedMinutes, stopAt });
+        if (stopAt) {
+          setRecordingStopAt(stopAt);
+        }
       } else {
         const err = await resp
           .json()
@@ -353,7 +341,7 @@ function RoomContent({
       setRecordingState("idle");
       sendSignal({ type: "consent_error" });
     }
-  }, [exchangeSessionId, sendSignal, t]);
+  }, [exchangeSessionId, sendSignal, t, c]);
 
   const onRecordingMessage = useCallback(
     (msg: { payload: Uint8Array }) => {
@@ -387,24 +375,30 @@ function RoomContent({
             toast.error(t("partnerConsentFailed"));
             break;
           case "recording_started":
-            console.log("[Recording] Recording is now active");
+            console.log("[Recording] Recording is now active", signal);
             setRecordingState("recording");
             setShowConsentDialog(false);
+            if (signal.stopAt) {
+              setRecordingStopAt(signal.stopAt);
+            }
             break;
           case "recording_stopped":
             console.log("[Recording] Recording stopped, processing...");
             setRecordingState("processing");
+            setRecordingStopAt(null);
             break;
 
           case "recording_completed":
             console.log("[Recording] Recording completed!");
             setRecordingState("idle");
+            setRecordingStopAt(null);
             toast.success(t("recordingSuccess"));
             break;
 
           case "recording_failed":
             console.error("[Recording] Recording failed during processing");
             setRecordingState("idle");
+            setRecordingStopAt(null);
             toast.error(t("recordingFailed"));
             break;
         }
@@ -417,6 +411,28 @@ function RoomContent({
 
   // Listen to ALL data packets (including those from backend which have no topic)
   useDataChannel(onRecordingMessage);
+
+  const handleCheckEstimate = useCallback(async () => {
+    if (!exchangeSessionId) return;
+    setIsCheckingEstimate(true);
+    try {
+      const resp = await fetch(
+        `${API}/video/recording/estimate?room=${encodeURIComponent(exchangeSessionId)}`,
+        { credentials: "include" },
+      );
+      if (!resp.ok) {
+        throw new Error("Failed to get recording estimate");
+      }
+      const data = await resp.json();
+      setEstimate(data);
+      setShowEstimateDialog(true);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(t("failedGetEstimate") || "Failed to check recording estimate.");
+    } finally {
+      setIsCheckingEstimate(false);
+    }
+  }, [exchangeSessionId, t]);
 
   /* ─── Recording actions ─────────────────────────────── */
 
@@ -531,6 +547,7 @@ function RoomContent({
       if (resp.ok) {
         console.log("[Recording] Stop API succeeded");
         setRecordingState("processing");
+        setRecordingStopAt(null);
         sendSignal({ type: "recording_stopped" });
       } else {
         const errorData = await resp.json().catch(() => ({}));
@@ -542,7 +559,7 @@ function RoomContent({
     } catch (err) {
       console.error("[Recording] Stop API exception:", err);
     }
-  }, [exchangeSessionId, sendSignal, t]);
+  }, [exchangeSessionId, sendSignal, t, c]);
 
   return (
     <div className="h-full w-full bg-zinc-950 flex flex-col relative">
@@ -588,9 +605,11 @@ function RoomContent({
         {exchangeSessionId && (
           <RecordingControls
             recordingState={recordingState}
-            onRequestRecording={handleRequestRecording}
+            onCheckEstimate={handleCheckEstimate}
             onStopRecording={handleStopRecording}
             onCancelRecordingRequest={handleCancelRecordingRequest}
+            isCheckingEstimate={isCheckingEstimate}
+            recordingStopAt={recordingStopAt}
           />
         )}
 
@@ -599,6 +618,7 @@ function RoomContent({
           <SessionTimer
             endsAt={sessionTiming.session.endsAt}
             duration={sessionTiming.session.duration}
+            exchangeId={exchangeId}
           />
         )}
       </div>
@@ -629,6 +649,12 @@ function RoomContent({
       </div>
 
       <ConsentDialog open={showConsentDialog} onSubmit={handleConsentSubmit} />
+      <EstimateDialog
+        open={showEstimateDialog}
+        estimate={estimate}
+        onClose={() => setShowEstimateDialog(false)}
+        onConfirm={handleRequestRecording}
+      />
     </div>
   );
 }
@@ -840,9 +866,11 @@ function PersistentChatPanel({
 function SessionTimer({
   endsAt,
   duration,
+  exchangeId,
 }: {
   endsAt: string;
   duration: number;
+  exchangeId: string;
 }) {
   const t = useTranslations("room");
   const [remaining, setRemaining] = useState<string>("");
@@ -865,7 +893,7 @@ function SessionTimer({
         );
         // Auto-disconnect after 30 seconds grace
         setTimeout(() => {
-          router.push("/exchanges");
+          router.push(`/exchanges/${exchangeId}`);
         }, 30000);
         return;
       }
@@ -884,7 +912,7 @@ function SessionTimer({
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [endsAt, duration, isWarning, router]);
+  }, [endsAt, duration, isWarning, router, exchangeId]);
 
   if (isExpired) {
     return (
@@ -913,14 +941,18 @@ function SessionTimer({
 
 function RecordingControls({
   recordingState,
-  onRequestRecording,
+  onCheckEstimate,
   onStopRecording,
   onCancelRecordingRequest,
+  isCheckingEstimate,
+  recordingStopAt,
 }: {
   recordingState: RecordingState;
-  onRequestRecording: () => void;
+  onCheckEstimate: () => void;
   onStopRecording: () => void;
   onCancelRecordingRequest: () => void;
+  isCheckingEstimate: boolean;
+  recordingStopAt: number | null;
 }) {
   const t = useTranslations("room");
   const c = useTranslations("common");
@@ -930,6 +962,7 @@ function RecordingControls({
         <span className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-red-400 text-sm font-medium">
           <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
           {t("recording")}
+          {recordingStopAt && <RecordingTimer stopAt={recordingStopAt} />}
         </span>
         <Button
           variant="outline"
@@ -951,7 +984,7 @@ function RecordingControls({
         {t("waitingPartner")}
         <button
           onClick={() => {
-            onCancelRecordingRequest(); // Call the new prop
+            onCancelRecordingRequest();
           }}
           className="ml-2 underline hover:text-amber-400 cursor-pointer"
         >
@@ -983,12 +1016,154 @@ function RecordingControls({
     <Button
       variant="outline"
       size="sm"
-      onClick={onRequestRecording}
+      disabled={isCheckingEstimate}
+      onClick={onCheckEstimate}
       className="h-8 gap-1.5 border-white/10 backdrop-blur bg-black/50 hover:bg-black/70 text-white hover:text-white"
     >
-      <Video className="h-4 w-4" />
+      {isCheckingEstimate ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Video className="h-4 w-4" />
+      )}
       {t("recordSession")}
     </Button>
+  );
+}
+
+function RecordingTimer({ stopAt }: { stopAt: number }) {
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [colorClass, setColorClass] = useState<string>("text-white");
+
+  useEffect(() => {
+    const update = () => {
+      const remainingMs = stopAt - Date.now();
+      if (remainingMs <= 0) {
+        setTimeLeft("0:00");
+        setColorClass("text-red-500 font-bold");
+        return;
+      }
+
+      const totalSeconds = Math.floor(remainingMs / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      setTimeLeft(`${minutes}:${seconds.toString().padStart(2, "0")}`);
+
+      if (minutes < 1) {
+        setColorClass("text-red-500 font-semibold animate-pulse");
+      } else if (minutes < 2) {
+        setColorClass("text-amber-500 font-semibold");
+      } else {
+        setColorClass("text-emerald-400 font-medium");
+      }
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [stopAt]);
+
+  return <span className={`ml-1.5 ${colorClass}`}>{timeLeft}</span>;
+}
+
+function EstimateDialog({
+  open,
+  estimate,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean;
+  estimate: RecordingEstimate | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const t = useTranslations("room");
+  const c = useTranslations("common");
+
+  if (!estimate) return null;
+
+  const { rate, userBalance, maxAffordableMinutes, remainingSessionMinutes } = estimate;
+  const fullSessionCost = remainingSessionMinutes * rate;
+  const isInsufficient = maxAffordableMinutes < 1;
+  const isPartial = maxAffordableMinutes < remainingSessionMinutes && maxAffordableMinutes >= 1;
+  const isHealthy = maxAffordableMinutes >= remainingSessionMinutes;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-md bg-zinc-900 text-white border-white/10">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <Video className="h-5 w-5 text-primary" />
+            {t("billingEstimateTitle")}
+          </DialogTitle>
+          <DialogDescription className="text-zinc-400">
+            {t("billingEstimateDesc", { rate })}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-3 text-sm">
+          <div className="flex justify-between border-b border-white/10 pb-2">
+            <span className="text-zinc-400">{t("yourBalance")}</span>
+            <span className="font-semibold text-white">{userBalance} pts</span>
+          </div>
+
+          {isHealthy && (
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-emerald-400">
+              <p className="font-medium text-emerald-300">
+                {t("estimateHealthyTitle")}
+              </p>
+              <p className="text-xs mt-1 leading-relaxed text-emerald-400/90">
+                {t("estimateHealthyDesc", {
+                  rate,
+                  minutes: remainingSessionMinutes,
+                  cost: fullSessionCost,
+                })}
+              </p>
+            </div>
+          )}
+
+          {isPartial && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-amber-400">
+              <p className="font-medium text-amber-300">
+                ⚠️ {t("estimatePartialTitle")}
+              </p>
+              <p className="text-xs mt-1 leading-relaxed text-amber-400/90">
+                {t("estimatePartialDesc", {
+                  minutes: maxAffordableMinutes,
+                })}
+              </p>
+            </div>
+          )}
+
+          {isInsufficient && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400">
+              <p className="font-medium text-red-300">
+                🚫 {t("estimateInsufficientTitle")}
+              </p>
+              <p className="text-xs mt-1 leading-relaxed text-red-400/90">
+                {t("estimateInsufficientDesc", { minRequired: rate })}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex gap-2 sm:gap-2 pt-2 border-t border-white/10">
+          <Button variant="outline" onClick={onClose} className="border-white/10 hover:bg-zinc-800 hover:text-white text-zinc-300 bg-transparent">
+            {c("cancel")}
+          </Button>
+          {!isInsufficient && (
+            <Button
+              onClick={() => {
+                onClose();
+                onConfirm();
+              }}
+              className="bg-primary hover:bg-primary/95 text-white"
+            >
+              {t("proceed")}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

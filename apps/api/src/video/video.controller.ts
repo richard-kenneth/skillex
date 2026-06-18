@@ -59,6 +59,20 @@ export class VideoController {
     return this.videoService.getSessionTimingInfo(room, req.user.id);
   }
 
+  /**
+   * GET /video/session/:id
+   * Resolves session details by session ID or exchange ID (fallback).
+   */
+  @Get('session/:id')
+  @UseGuards(BetterAuthGuard)
+  async getSessionDetails(
+    @Param('id') id: string,
+    @Req() req: Request & { user: { id: string } },
+  ) {
+    return this.videoService.getSessionDetails(id, req.user.id);
+  }
+
+
   /* ─── Recording Consent ─────────────────────────────────── */
 
   /**
@@ -80,6 +94,19 @@ export class VideoController {
   }
 
   /* ─── Recording Lifecycle ───────────────────────────────── */
+
+  /**
+   * GET /video/recording/estimate?room=<exchangeSessionId>
+   * Returns recording pricing estimation and balance checks.
+   */
+  @Get('recording/estimate')
+  @UseGuards(BetterAuthGuard)
+  async getRecordingEstimate(
+    @Req() req: Request & { user: { id: string } },
+    @Query('room') room: string,
+  ) {
+    return this.videoService.getRecordingEstimate(room, req.user.id);
+  }
 
   /**
    * POST /video/recording/start

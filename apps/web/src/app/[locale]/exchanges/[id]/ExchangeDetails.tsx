@@ -96,6 +96,7 @@ export default function ExchangeDetails({
 }: {
   exchange: {
     id: string;
+    requestId: string;
     status: string;
     senderId: string;
     senderCompleted: boolean;
@@ -127,6 +128,43 @@ export default function ExchangeDetails({
   const [updating, setUpdating] = useState<string | null>(null);
   const [showPointsBreakdown, setShowPointsBreakdown] = useState(false);
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    confirmText: "",
+    onConfirm: () => {},
+  });
+
+  const handleSessionStatusClick = (sessionId: string, status: string) => {
+    const isCompleted = status === "COMPLETED";
+    setConfirmModal({
+      isOpen: true,
+      title: isCompleted ? tc("confirm") : t("missed"),
+      description: isCompleted 
+        ? "Are you sure you want to mark this session as completed?" 
+        : "Are you sure you want to mark this session as missed?",
+      confirmText: isCompleted ? "Mark Completed" : "Mark Missed",
+      onConfirm: () => updateSessionStatus(sessionId, status),
+    });
+  };
+
+  const handleCompleteExchangeClick = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: t("markComplete"),
+      description: "Are you sure you want to mark the entire exchange as complete? This action is irreversible.",
+      confirmText: t("markComplete"),
+      onConfirm: completeExchange,
+    });
+  };
+
   // Recording playback
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
 
@@ -141,6 +179,10 @@ export default function ExchangeDetails({
   const iAmCompleted = isSender
     ? exchange.senderCompleted
     : exchange.receiverCompleted;
+
+  const partnerCompleted = isSender
+    ? exchange.receiverCompleted
+    : exchange.senderCompleted;
 
   const isTwoWay = !!exchange.receivedSkill;
 
@@ -413,7 +455,7 @@ export default function ExchangeDetails({
                   variant="secondary"
                   size="sm"
                   onClick={() =>
-                    router.push(`/room/${exchange.id}?sessionId=${session.id}`)
+                    router.push(`/room/${session.id}`)
                   }
                 >
                   <Video className="h-4 w-4 mr-2" /> {t("joinRoom")}
@@ -428,7 +470,7 @@ export default function ExchangeDetails({
                       size="icon"
                       className="h-8 w-8 text-green-500 hover:text-green-600 border-green-500/30 hover:bg-green-500/10"
                       onClick={() =>
-                        updateSessionStatus(session.id, "COMPLETED")
+                        handleSessionStatusClick(session.id, "COMPLETED")
                       }
                       disabled={updating === session.id}
                     >
@@ -439,7 +481,7 @@ export default function ExchangeDetails({
                     variant="outline"
                     size="icon"
                     className="h-8 w-8 text-red-500 hover:text-red-600 border-red-500/30 hover:bg-red-500/10"
-                    onClick={() => updateSessionStatus(session.id, "MISSED")}
+                    onClick={() => handleSessionStatusClick(session.id, "MISSED")}
                     disabled={updating === session.id}
                   >
                     <XCircle className="h-4 w-4" />
@@ -560,9 +602,9 @@ export default function ExchangeDetails({
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
                   {t("points")}
                   {exchange.pointsAmount > 0 && (
-                    <TooltipProvider>
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
+                    <TooltipProvider delay={300}>
+                      <Tooltip>
+                        <TooltipTrigger>
                           <Info className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent
@@ -667,18 +709,26 @@ export default function ExchangeDetails({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold flex items-center gap-2">
-                  {exchange.status === "COMPLETED"
-                    ? t("finished")
-                    : iAmCompleted
-                      ? t("awaitingPartner")
-                      : t("active")}
+                <div className="text-xl font-bold flex flex-col gap-2">
+                  <span>
+                    {exchange.status === "COMPLETED"
+                      ? t("finished")
+                      : iAmCompleted
+                        ? t("awaitingPartner")
+                        : t("active")}
+                  </span>
+                  {exchange.status !== "COMPLETED" && partnerCompleted && (
+                    <span className="text-xs font-normal text-emerald-500 flex items-center gap-1 mt-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-md">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      {tc("with", { name: otherUser.name })} has marked this exchange as complete.
+                    </span>
+                  )}
                 </div>
                 {exchange.status !== "COMPLETED" && (
                   <Button
                     size="sm"
                     className="mt-2 w-full"
-                    onClick={completeExchange}
+                    onClick={handleCompleteExchangeClick}
                     disabled={iAmCompleted || updating === "exchange"}
                   >
                     {iAmCompleted ? t("markedComplete") : t("markComplete")}
@@ -1090,6 +1140,38 @@ export default function ExchangeDetails({
             </Button>
             <Button onClick={submitReview} disabled={updating === "review"}>
               {tr("submitReview")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmModal.isOpen}
+        onOpenChange={(open) => setConfirmModal((prev) => ({ ...prev, isOpen: open }))}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirmModal.title}</DialogTitle>
+            <DialogDescription className="text-left pt-2">
+              {confirmModal.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+            >
+              {tc("cancel")}
+            </Button>
+            <Button
+              onClick={() => {
+                confirmModal.onConfirm();
+                setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+              }}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {confirmModal.confirmText}
             </Button>
           </DialogFooter>
         </DialogContent>

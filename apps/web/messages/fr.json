@@ -491,7 +491,18 @@
     "failedGetVideoToken": "Échec de l'obtention du jeton vidéo",
     "stopBtn": "Arrêter",
     "waitingPartner": "En attente du partenaire...",
-    "unknown": "Inconnu"
+    "unknown": "Inconnu",
+    "failedGetEstimate": "Échec de la vérification de l'estimation de l'enregistrement.",
+    "billingEstimateTitle": "Tarification de l'enregistrement",
+    "billingEstimateDesc": "L'enregistrement des sessions coûte {rate} points par minute.",
+    "yourBalance": "Votre solde :",
+    "estimateHealthyTitle": "Solde suffisant",
+    "estimateHealthyDesc": "L'enregistrement coûte {rate} pts/min. Vous avez assez pour le reste de la session ({minutes} min). Nécessite {cost} pts.",
+    "estimatePartialTitle": "Couverture partielle",
+    "estimatePartialDesc": "Votre solde couvre {minutes} minutes d'enregistrement. L'enregistrement s'arrêtera automatiquement lorsque vos points seront épuisés.",
+    "estimateInsufficientTitle": "Solde insuffisant",
+    "estimateInsufficientDesc": "Vous devez avoir au moins {minRequired} points pour enregistrer pendant 1 minute. Veuillez recharger votre solde.",
+    "proceed": "Continuer"
   },
   "profile": {
     "title": "Profil",

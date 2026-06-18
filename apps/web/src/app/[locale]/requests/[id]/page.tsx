@@ -472,7 +472,7 @@ export default function NegotiationPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Chat and Timeline */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="flex flex-col h-[600px] border-border/50">
+          <Card className="flex flex-col h-150 border-border/50">
             <CardHeader className="border-b border-border/50 pb-4 bg-muted/10">
               <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10 border border-border/50">
@@ -557,9 +557,9 @@ export default function NegotiationPage() {
                                       })}
                                     </span>
                                   </div>
-                                  <TooltipProvider>
-                                    <Tooltip delayDuration={300}>
-                                      <TooltipTrigger asChild>
+                                  <TooltipProvider delay={300}>
+                                    <Tooltip>
+                                      <TooltipTrigger>
                                         <div className="text-[10px] opacity-75 font-medium pl-5 flex items-center gap-1 cursor-help hover:text-foreground transition-colors">
                                           <Info className="h-3 w-3 shrink-0" />
                                           <span>
@@ -570,7 +570,7 @@ export default function NegotiationPage() {
                                       <TooltipContent
                                         side="top"
                                         align="center"
-                                        className="w-64 p-3 z-[100] shadow-md border bg-popover text-popover-foreground"
+                                        className="w-64 p-3 z-100 shadow-md border bg-popover text-popover-foreground"
                                       >
                                         <div className="space-y-2">
                                           <h4 className="font-medium text-xs border-b pb-1">
@@ -951,7 +951,7 @@ export default function NegotiationPage() {
                         value={reqSessions}
                         onChange={(e) => setReqSessions(e.target.value)}
                         placeholder={t("sessions")}
-                        className="w-[80px] rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary"
+                        className="w-20 rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary"
                       />
                       <input
                         type="number"
@@ -965,7 +965,7 @@ export default function NegotiationPage() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <div className="flex gap-2 items-center">
-                        <span className="text-[10px] uppercase font-semibold text-muted-foreground shrink-0 w-[50px]">
+                        <span className="text-[10px] uppercase font-semibold text-muted-foreground shrink-0 w-12.5">
                           {t("days")}
                         </span>
                         <div className="flex flex-wrap gap-1">
@@ -996,14 +996,14 @@ export default function NegotiationPage() {
                         </div>
                       </div>
                       <div className="flex gap-2 items-center">
-                        <span className="text-[10px] uppercase font-semibold text-muted-foreground shrink-0 w-[50px]">
+                        <span className="text-[10px] uppercase font-semibold text-muted-foreground shrink-0 w-12.5">
                           {t("time")}
                         </span>
                         <input
                           type="time"
                           value={reqTime}
                           onChange={(e) => setReqTime(e.target.value)}
-                          className="w-[120px] rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary h-[30px]"
+                          className="w-30 rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary h-7.5"
                         />
                       </div>
                     </div>
@@ -1022,7 +1022,7 @@ export default function NegotiationPage() {
                           value={offSessions}
                           onChange={(e) => setOffSessions(e.target.value)}
                           placeholder={t("sessions")}
-                          className="w-[80px] rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary"
+                          className="w-20 rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary"
                         />
                         <input
                           type="number"
@@ -1036,7 +1036,7 @@ export default function NegotiationPage() {
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2 items-center">
-                          <span className="text-[10px] uppercase font-semibold text-muted-foreground shrink-0 w-[50px]">
+                          <span className="text-[10px] uppercase font-semibold text-muted-foreground shrink-0 w-12.5">
                             {t("days")}
                           </span>
                           <div className="flex flex-wrap gap-1">
@@ -1069,14 +1069,14 @@ export default function NegotiationPage() {
                           </div>
                         </div>
                         <div className="flex gap-2 items-center">
-                          <span className="text-[10px] uppercase font-semibold text-muted-foreground shrink-0 w-[50px]">
+                          <span className="text-[10px] uppercase font-semibold text-muted-foreground shrink-0 w-12.5">
                             {t("time")}
                           </span>
                           <input
                             type="time"
                             value={offTime}
                             onChange={(e) => setOffTime(e.target.value)}
-                            className="w-[120px] rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary h-[30px]"
+                            className="w-30 rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary h-7.5"
                           />
                         </div>
                       </div>
@@ -1097,7 +1097,7 @@ export default function NegotiationPage() {
                           value={counterPoints}
                           onChange={(e) => setCounterPoints(e.target.value)}
                           placeholder={c("pointsPlaceholder")}
-                          className="w-[80px] rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary"
+                          className="w-20 rounded-md border border-border/50 bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary"
                         />
                         {parseInt(counterPoints) > 0 && (
                           <div className="flex gap-1 ml-auto">
@@ -1139,9 +1139,9 @@ export default function NegotiationPage() {
                             </span>
                           </div>
 
-                          <TooltipProvider>
-                            <Tooltip delayDuration={300}>
-                              <TooltipTrigger asChild>
+                          <TooltipProvider delay={300}>
+                            <Tooltip>
+                              <TooltipTrigger>
                                 <div className="flex items-center gap-1 text-[10px] mt-2 cursor-help text-muted-foreground hover:text-foreground transition-colors">
                                   <Info className="h-3 w-3 shrink-0" />
                                   <span>{c("viewCommissionBreakdown")}</span>
@@ -1150,7 +1150,7 @@ export default function NegotiationPage() {
                               <TooltipContent
                                 side="top"
                                 align="end"
-                                className="w-64 p-3 z-[100] shadow-md border bg-popover text-popover-foreground"
+                                className="w-64 p-3 z-100 shadow-md border bg-popover text-popover-foreground"
                               >
                                 <div className="space-y-2">
                                   <h4 className="font-medium text-xs border-b pb-1">

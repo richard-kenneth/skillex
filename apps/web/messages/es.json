@@ -486,7 +486,18 @@
     "failedGetVideoToken": "Error al obtener el token de video",
     "stopBtn": "Detener",
     "waitingPartner": "Esperando al compañero...",
-    "unknown": "Desconocido"
+    "unknown": "Desconocido",
+    "failedGetEstimate": "Error al verificar la estimación de la grabación.",
+    "billingEstimateTitle": "Precio de grabación",
+    "billingEstimateDesc": "Las sesiones de grabación cuestan {rate} puntos por minuto.",
+    "yourBalance": "Tu saldo:",
+    "estimateHealthyTitle": "Saldo suficiente",
+    "estimateHealthyDesc": "La grabación cuesta {rate} pts/min. Tienes suficiente para el resto de la sesión ({minutes} min). Requiere {cost} pts.",
+    "estimatePartialTitle": "Cobertura parcial",
+    "estimatePartialDesc": "Tu saldo cubre {minutes} minutos de grabación. La grabación se detendrá automáticamente cuando se agoten tus puntos.",
+    "estimateInsufficientTitle": "Saldo insuficiente",
+    "estimateInsufficientDesc": "Necesitas al menos {minRequired} puntos para grabar durante 1 minuto. Por favor recarga tu saldo.",
+    "proceed": "Proceder"
   },
   "profile": {
     "title": "Perfil",

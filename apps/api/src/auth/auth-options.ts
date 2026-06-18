@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client';
 import type { BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { Resend } from 'resend';
+import { PrismaClient } from '../generated/prisma/client';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

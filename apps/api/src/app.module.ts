@@ -17,10 +17,37 @@ import { VideoModule } from './video/video.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RatesModule } from './rates/rates.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    BullModule.forRootAsync({
+      useFactory: () => {
+        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+        try {
+          const parsed = new URL(redisUrl);
+          return {
+            connection: {
+              host: parsed.hostname,
+              port: parsed.port ? parseInt(parsed.port, 10) : 6379,
+              username: parsed.username,
+              password: parsed.password,
+              ...(parsed.protocol === 'rediss:' && { tls: {} } ),
+              maxRetriesPerRequest: null,
+            },
+          };
+        } catch {
+          return {
+            connection: {
+              host: 'localhost',
+              port: 6379,
+              maxRetriesPerRequest: null,
+            },
+          };
+        }
+      },
+    }),
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',

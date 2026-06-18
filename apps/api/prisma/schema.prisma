@@ -1,5 +1,5 @@
 generator client {
-  provider     = "prisma-client-js"
+  provider     = "prisma-client"
   output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
@@ -9,39 +9,40 @@ datasource db {
 }
 
 model User {
-  id                    String               @id @default(uuid())
-  name                  String?
-  email                 String               @unique
-  emailVerified         Boolean              @default(false)
-  image                 String?
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  bio                   String?
-  pointsBalance         Int                  @default(0)
-  preferredCurrency     String?
-  referralCode          String?              @unique
-  referredById          String?
-  referredBy            User?                @relation("UserReferrals", fields: [referredById], references: [id])
-  referredUsers         User[]               @relation("UserReferrals")
-  referralsGiven        Referral[]           @relation("Referrer")
-  referralsReceived     Referral[]           @relation("Referee")
-  accounts              Account[]
-  receivedRequests      ExchangeRequest[]    @relation("Receiver")
-  sentRequests          ExchangeRequest[]    @relation("Sender")
-  receivedReviews       Review[]             @relation("Reviewee")
-  givenReviews          Review[]             @relation("Reviewer")
-  sessions              Session[]
-  skills                UserSkill[]
-  exchangesAsSender     Exchange[]           @relation("ExchangeSender")
-  exchangesAsReceiver   Exchange[]           @relation("ExchangeReceiver")
-  pointsTransactions    PointsTransaction[]
-  sentMessages          Message[]            @relation("MessageSender")
-  receivedMessages      Message[]            @relation("MessageReceiver")
-  proposedSlots         ProposedSlot[]       @relation("SlotProposer")
-  recordingConsents     RecordingConsent[]   @relation("ConsentUser")
-  sessionChatMessages   SessionChatMessage[] @relation("SessionChatSender")
-  exchangeChatMessages  ExchangeChatMessage[] @relation("ExchangeChatSender")
-  chatReadReceipts      SessionChatReadReceipt[] @relation("ChatReadUser")
+  id                   String                   @id @default(uuid())
+  name                 String?
+  email                String                   @unique
+  emailVerified        Boolean                  @default(false)
+  image                String?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  bio                  String?
+  pointsBalance        Int                      @default(0)
+  preferredCurrency    String?
+  referralCode         String?                  @unique
+  referredById         String?
+  referredBy           User?                    @relation("UserReferrals", fields: [referredById], references: [id])
+  referredUsers        User[]                   @relation("UserReferrals")
+  referralsGiven       Referral[]               @relation("Referrer")
+  referralsReceived    Referral[]               @relation("Referee")
+  accounts             Account[]
+  receivedRequests     ExchangeRequest[]        @relation("Receiver")
+  sentRequests         ExchangeRequest[]        @relation("Sender")
+  receivedReviews      Review[]                 @relation("Reviewee")
+  givenReviews         Review[]                 @relation("Reviewer")
+  sessions             Session[]
+  skills               UserSkill[]
+  exchangesAsSender    Exchange[]               @relation("ExchangeSender")
+  exchangesAsReceiver  Exchange[]               @relation("ExchangeReceiver")
+  pointsTransactions   PointsTransaction[]
+  sentMessages         Message[]                @relation("MessageSender")
+  receivedMessages     Message[]                @relation("MessageReceiver")
+  proposedSlots        ProposedSlot[]           @relation("SlotProposer")
+  recordingConsents    RecordingConsent[]       @relation("ConsentUser")
+  sessionChatMessages  SessionChatMessage[]     @relation("SessionChatSender")
+  exchangeChatMessages ExchangeChatMessage[]    @relation("ExchangeChatSender")
+  chatReadReceipts     SessionChatReadReceipt[] @relation("ChatReadUser")
+  recordingsPaid       SessionRecording[]       @relation("RecordingBilling")
 }
 
 model Session {
@@ -184,31 +185,36 @@ model Exchange {
 }
 
 model ExchangeSession {
-  id                  String               @id @default(uuid())
-  exchangeId          String
-  skillId             String
-  scheduledAt         DateTime
-  completedAt         DateTime?
-  duration            Int                  @default(60) // agreed duration in minutes
-  status              SessionStatus        @default(SCHEDULED)
-  exchange            Exchange             @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
-  skill               Skill                @relation("SessionSkill", fields: [skillId], references: [id])
-  recordingConsents   RecordingConsent[]
-  chatMessages        SessionChatMessage[]
-  recordings          SessionRecording[]
-  chatReadReceipts    SessionChatReadReceipt[]
+  id                String                   @id @default(uuid())
+  exchangeId        String
+  skillId           String
+  scheduledAt       DateTime
+  completedAt       DateTime?
+  duration          Int                      @default(60) // agreed duration in minutes
+  status            SessionStatus            @default(SCHEDULED)
+  exchange          Exchange                 @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  skill             Skill                    @relation("SessionSkill", fields: [skillId], references: [id])
+  recordingConsents RecordingConsent[]
+  chatMessages      SessionChatMessage[]
+  recordings        SessionRecording[]
+  chatReadReceipts  SessionChatReadReceipt[]
 }
 
 model SessionRecording {
-  id                 String           @id @default(uuid())
+  id                 String          @id @default(uuid())
   exchangeSessionId  String
   recordingKey       String?
-  recordingEgressId  String?          @unique
-  recordingStatus    RecordingStatus  @default(RECORDING)
+  recordingEgressId  String?         @unique
+  recordingStatus    RecordingStatus @default(RECORDING)
   recordingExpiresAt DateTime?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  exchangeSession    ExchangeSession  @relation(fields: [exchangeSessionId], references: [id], onDelete: Cascade)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  exchangeSession    ExchangeSession @relation(fields: [exchangeSessionId], references: [id], onDelete: Cascade)
+  billingUserId      String?
+  billingUser        User?           @relation("RecordingBilling", fields: [billingUserId], references: [id])
+  totalLockedPoints  Int             @default(0)
+  totalChargedPoints Int             @default(0)
+  recordingStartedAt DateTime?
 }
 
 model RecordingConsent {
@@ -263,62 +269,60 @@ model ExchangeChatMessage {
   id         String   @id @default(uuid())
   exchangeId String
   senderId   String
-  content    String?  // text message
-  fileKey    String?  // R2 storage key
-  fileName   String?  // original file name
-  fileType   String?  // MIME type
+  content    String? // text message
+  fileKey    String? // R2 storage key
+  fileName   String? // original file name
+  fileType   String? // MIME type
   createdAt  DateTime @default(now())
   exchange   Exchange @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
   sender     User     @relation("ExchangeChatSender", fields: [senderId], references: [id], onDelete: Cascade)
 }
 
 model PointsTransaction {
-  id          String            @id @default(uuid())
-  userId      String
-  amount      Int
-  type        TransactionType
-  status      TransactionStatus @default(PENDING)
-  referenceId String?
-  description String?
-  fiatAmount  Float?
+  id           String            @id @default(uuid())
+  userId       String
+  amount       Int
+  type         TransactionType
+  status       TransactionStatus @default(PENDING)
+  referenceId  String?
+  description  String?
+  fiatAmount   Float?
   fiatCurrency String?
-  flwRef      String?
-  createdAt   DateTime          @default(now())
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flwRef       String?
+  createdAt    DateTime          @default(now())
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AppConfig {
-  id                      String   @id @default("singleton")
-  exchangeCommissionRate  Float    @default(0.10)
-  facilitationFee         Int      @default(5)
-  withdrawalSpread        Float    @default(0.06)
-  minWithdrawalPoints     Int      @default(200)
-  referralRewardReferrer  Int      @default(200)
-  referralRewardReferee   Int      @default(200)
-  referralBonusPerExchange Int     @default(50)
-  referralBonusCap        Int      @default(500)
-  referralMonthlyCap      Int      @default(5000)
-  updatedAt               DateTime @updatedAt
+  id                       String   @id @default("singleton")
+  exchangeCommissionRate   Float    @default(0.10)
+  facilitationFee          Int      @default(5)
+  withdrawalSpread         Float    @default(0.06)
+  minWithdrawalPoints      Int      @default(200)
+  referralRewardReferrer   Int      @default(200)
+  referralRewardReferee    Int      @default(200)
+  referralBonusPerExchange Int      @default(50)
+  referralBonusCap         Int      @default(500)
+  referralMonthlyCap       Int      @default(5000)
+  recordingPointsPerMinute Int      @default(4)
+  updatedAt                DateTime @updatedAt
 }
 
 model Referral {
-  id                String         @id @default(uuid())
-  referrerId        String
-  refereeId         String
-  status            ReferralStatus @default(PENDING)
-  referrerRewarded  Boolean        @default(false)
-  refereeRewarded   Boolean        @default(false)
-  bonusAwarded      Int            @default(0)
-  createdAt         DateTime       @default(now())
-  convertedAt       DateTime?
-  referrer          User           @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
-  referee           User           @relation("Referee", fields: [refereeId], references: [id], onDelete: Cascade)
+  id               String         @id @default(uuid())
+  referrerId       String
+  refereeId        String
+  status           ReferralStatus @default(PENDING)
+  referrerRewarded Boolean        @default(false)
+  refereeRewarded  Boolean        @default(false)
+  bonusAwarded     Int            @default(0)
+  createdAt        DateTime       @default(now())
+  convertedAt      DateTime?
+  referrer         User           @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referee          User           @relation("Referee", fields: [refereeId], references: [id], onDelete: Cascade)
 
   @@unique([referrerId, refereeId])
 }
-
-
-
 
 model Message {
   id                     String           @id @default(uuid())
@@ -400,6 +404,8 @@ enum TransactionType {
   WITHDRAWAL
   REFERRAL_REWARD
   REFERRAL_BONUS
+  RECORDING_FEE
+  RECORDING_REFUND
 }
 
 enum ReferralStatus {
@@ -412,7 +418,6 @@ enum TransactionStatus {
   SUCCESS
   FAILED
 }
-
 
 enum MessageKey {
   INTERESTED_IN_EXCHANGE

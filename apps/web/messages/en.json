@@ -485,7 +485,18 @@
     "failedGetVideoToken": "Failed to get video token",
     "stopBtn": "Stop",
     "waitingPartner": "Waiting for partner...",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "failedGetEstimate": "Failed to check recording estimate.",
+    "billingEstimateTitle": "Recording Pricing",
+    "billingEstimateDesc": "Recording sessions costs {rate} points per minute.",
+    "yourBalance": "Your Balance:",
+    "estimateHealthyTitle": "Sufficient Balance",
+    "estimateHealthyDesc": "Recording costs {rate} pts/min. You have enough for the full remaining session ({minutes} min). Requires {cost} pts.",
+    "estimatePartialTitle": "Partial Coverage",
+    "estimatePartialDesc": "Your balance covers {minutes} minutes of recording. The recording will stop automatically when your points run out.",
+    "estimateInsufficientTitle": "Insufficient Balance",
+    "estimateInsufficientDesc": "You need at least {minRequired} points to record for 1 minute. Please top up your points balance.",
+    "proceed": "Proceed"
   },
   "profile": {
     "title": "Profile",
