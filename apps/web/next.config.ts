@@ -5,6 +5,14 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/:path*`,
+      },
+    ]
+  },
 };
 
 export default withNextIntl(nextConfig);

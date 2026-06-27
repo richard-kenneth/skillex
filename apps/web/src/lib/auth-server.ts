@@ -5,7 +5,7 @@ import { headers } from "next/headers";
  * This avoids needing BETTER_AUTH_SECRET or Prisma in the web app.
  */
 export async function getSession() {
-  const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001"}/api/auth/get-session`;
+  const url = `${process.env.NEXT_PUBLIC_AUTH_API_BASE_URL || "http://localhost:3001"}/api/auth/get-session`;
   
   try {
     const response = await fetch(url, {
