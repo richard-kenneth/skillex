@@ -9,13 +9,11 @@ services:
     healthCheckPath: /health
     envVars:
       - key: PORT
-        value: 8000
+        value: 3001
       # API URLs
       - key: API_BASE_URL
         sync: false
       - key: CLIENT_BASE_URL
-        sync: false
-      - key: BETTER_AUTH_URL
         sync: false
       
       # Secrets & Keys

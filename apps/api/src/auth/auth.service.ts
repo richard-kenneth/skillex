@@ -9,10 +9,6 @@ export class AuthService {
   public auth;
 
   constructor(private prisma: PrismaService) {
-    console.log('AuthService initializing...');
-    console.log('Base URL:', process.env.BETTER_AUTH_URL);
-    console.log('Secret Loaded:', !!process.env.BETTER_AUTH_SECRET);
-
     this.auth = betterAuth(
       getAuthConfig(this.prisma as unknown as PrismaClient),
     );
