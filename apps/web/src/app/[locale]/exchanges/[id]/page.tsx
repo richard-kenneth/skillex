@@ -26,7 +26,7 @@ export default async function ExchangePage({
   }
 
   const { id } = await params;
-  const reqHeaders = await headers();
+  const reqHeaders = new Headers(await headers());
   
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/${id}`,

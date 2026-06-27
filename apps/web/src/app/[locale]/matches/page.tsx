@@ -18,7 +18,7 @@ export default async function MatchesPage() {
   }
 
   // Fetch matches and current user skills in parallel
-  const reqHeaders = await headers();
+  const reqHeaders = new Headers(await headers());
   const [matchesRes, userRes] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/matches`, {
       headers: reqHeaders,

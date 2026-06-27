@@ -17,7 +17,7 @@ export default async function ProfilePage() {
 
   // Re-fetch user from API to get the latest bio (since it's not in the base session)
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/me`, {
-    headers: await headers(),
+    headers: new Headers(await headers()),
   });
   
   const fullUser = response.ok ? await response.json() : user;
