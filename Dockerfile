@@ -33,16 +33,6 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install system certificates utility
-RUN apk add --no-cache ca-certificates
-
-# Copy the DB CA certificate from the builder stage straight to the system store
-# NOTE: It MUST have a .crt extension for update-ca-certificates to recognize it.
-COPY --from=builder /app/apps/api/prisma/ca.pem /usr/local/share/ca-certificates/db-ca.crt
-
-# Update the global OS trust store
-RUN update-ca-certificates
-
 # Copy node_modules containing production dependencies
 COPY --from=builder /app/node_modules ./node_modules
 # Copy shared package
