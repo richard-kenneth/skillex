@@ -322,7 +322,11 @@ function RoomContent({
         setRecordingState("recording");
         setShowConsentDialog(false);
         const approvedMinutes = data.approvedMinutes || 0;
-        const stopAt = approvedMinutes ? Date.now() + approvedMinutes * 60 * 1000 : undefined;
+        let stopAt = approvedMinutes ? Date.now() + approvedMinutes * 60 * 1000 : undefined;
+        if (stopAt && sessionTiming?.session?.endsAt) {
+          const sessionEndTime = new Date(sessionTiming.session.endsAt).getTime();
+          stopAt = Math.min(stopAt, sessionEndTime);
+        }
         sendSignal({ type: "recording_started", approvedMinutes, stopAt });
         if (stopAt) {
           setRecordingStopAt(stopAt);
@@ -341,7 +345,7 @@ function RoomContent({
       setRecordingState("idle");
       sendSignal({ type: "consent_error" });
     }
-  }, [exchangeSessionId, sendSignal, t, c]);
+  }, [exchangeSessionId, sendSignal, sessionTiming, t, c]);
 
   const onRecordingMessage = useCallback(
     (msg: { payload: Uint8Array }) => {
@@ -379,7 +383,12 @@ function RoomContent({
             setRecordingState("recording");
             setShowConsentDialog(false);
             if (signal.stopAt) {
-              setRecordingStopAt(signal.stopAt);
+              let stopAt = signal.stopAt;
+              if (sessionTiming?.session?.endsAt) {
+                const sessionEndTime = new Date(sessionTiming.session.endsAt).getTime();
+                stopAt = Math.min(stopAt, sessionEndTime);
+              }
+              setRecordingStopAt(stopAt);
             }
             break;
           case "recording_stopped":
@@ -406,7 +415,7 @@ function RoomContent({
         console.error("[Recording] Failed to parse message:", err);
       }
     },
-    [decoder, handleStartRecording, t],
+    [decoder, handleStartRecording, sessionTiming, t],
   );
 
   // Listen to ALL data packets (including those from backend which have no topic)
@@ -426,7 +435,7 @@ function RoomContent({
       const data = await resp.json();
       setEstimate(data);
       setShowEstimateDialog(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       toast.error(t("failedGetEstimate") || "Failed to check recording estimate.");
     } finally {

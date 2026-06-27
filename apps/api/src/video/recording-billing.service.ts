@@ -153,19 +153,21 @@ export class RecordingBillingService {
         },
       });
 
-      // Charge transaction
-      await tx.pointsTransaction.create({
-        data: {
-          userId: billingUserId,
-          amount: -actualCost,
-          type: 'RECORDING_FEE',
-          status: 'SUCCESS',
-          referenceId: sessionRecordingId,
-          description: `Session recording fee (${actualMinutes} min)`,
-        },
-      });
+      // Charge transaction if actual cost > 0
+      if (actualCost > 0) {
+        await tx.pointsTransaction.create({
+          data: {
+            userId: billingUserId,
+            amount: -actualCost,
+            type: 'RECORDING_FEE',
+            status: 'SUCCESS',
+            referenceId: sessionRecordingId,
+            description: `Session recording fee (${actualMinutes} min)`,
+          },
+        });
+      }
 
-      // Refund if user ended early
+      // Refund points if user ended early (no transaction log required)
       if (refundAmount > 0) {
         await tx.user.update({
           where: { id: billingUserId },
@@ -173,17 +175,6 @@ export class RecordingBillingService {
             pointsBalance: {
               increment: refundAmount,
             },
-          },
-        });
-
-        await tx.pointsTransaction.create({
-          data: {
-            userId: billingUserId,
-            amount: refundAmount,
-            type: 'RECORDING_REFUND',
-            status: 'SUCCESS',
-            referenceId: sessionRecordingId,
-            description: `Refund for unused session recording time`,
           },
         });
       }

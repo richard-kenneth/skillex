@@ -1,6 +1,7 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import Redis from 'ioredis';
+import { REDIS_CLIENT } from '../redis/redis.module';
 
 // Type for the rates structure stored in Redis
 export type ExchangeRates = Record<string, number>;
@@ -8,13 +9,8 @@ export type ExchangeRates = Record<string, number>;
 @Injectable()
 export class RatesService implements OnModuleInit {
   private readonly logger = new Logger(RatesService.name);
-  private readonly redis: Redis;
 
-  constructor() {
-    // Connect to Redis. In production, pass the URL from env vars
-    // Using default localhost:6379 for this environment
-    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-  }
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   async onModuleInit() {
     // Optionally fetch immediately on startup if none exist

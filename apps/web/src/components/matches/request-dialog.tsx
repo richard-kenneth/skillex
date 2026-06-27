@@ -245,7 +245,7 @@ export function RequestDialog({
                   )}
                 </div>
                 <TooltipProvider>
-                  <Tooltip delayDuration={300}>
+                  <Tooltip>
                     <TooltipTrigger asChild>
                       <Info className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
                     </TooltipTrigger>

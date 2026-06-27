@@ -405,7 +405,6 @@ enum TransactionType {
   REFERRAL_REWARD
   REFERRAL_BONUS
   RECORDING_FEE
-  RECORDING_REFUND
 }
 
 enum ReferralStatus {

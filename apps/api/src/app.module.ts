@@ -18,35 +18,18 @@ import { ReferralsModule } from './referrals/referrals.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RatesModule } from './rates/rates.module';
 import { BullModule } from '@nestjs/bullmq';
+import { RedisModule, REDIS_CONFIG } from './redis/redis.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    RedisModule,
     BullModule.forRootAsync({
-      useFactory: () => {
-        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-        try {
-          const parsed = new URL(redisUrl);
-          return {
-            connection: {
-              host: parsed.hostname,
-              port: parsed.port ? parseInt(parsed.port, 10) : 6379,
-              username: parsed.username,
-              password: parsed.password,
-              ...(parsed.protocol === 'rediss:' && { tls: {} } ),
-              maxRetriesPerRequest: null,
-            },
-          };
-        } catch {
-          return {
-            connection: {
-              host: 'localhost',
-              port: 6379,
-              maxRetriesPerRequest: null,
-            },
-          };
-        }
-      },
+      imports: [RedisModule],
+      useFactory: (redisConfig) => ({
+        connection: redisConfig,
+      }),
+      inject: [REDIS_CONFIG],
     }),
     LoggerModule.forRoot({
       pinoHttp: {
