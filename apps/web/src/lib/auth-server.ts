@@ -12,11 +12,16 @@ export async function getSession() {
       headers: await headers(),
     });
 
+    console.log(response);
+    
+    
     if (!response.ok) {
       return null;
     }
-
-    return await response.json();
+    
+    const res = await response.json();
+    console.log(res);
+    return res;
   } catch (error) {
     console.error("Failed to fetch session from API:", error);
     return null;
