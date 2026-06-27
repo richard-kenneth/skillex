@@ -27,7 +27,7 @@ RUN pnpm --filter @skil-ex2/shared build
 RUN pnpm --filter api build
 
 # Prune devDependencies to reduce image size
-RUN pnpm prune --prod
+RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile
 
 FROM node:22-alpine AS runner
 WORKDIR /app
