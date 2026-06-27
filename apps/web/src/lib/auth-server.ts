@@ -6,10 +6,12 @@ import { headers } from "next/headers";
  */
 export async function getSession() {
   const url = `${process.env.NEXT_PUBLIC_AUTH_API_BASE_URL || "http://localhost:3001"}/api/auth/get-session`;
-  
+  const cookie = (await headers()).get('cookie')
+
   try {
     const response = await fetch(url, {
-      headers: await headers(),
+      headers: { cookie: cookie! },
+      cache: 'no-store'
     });
 
     console.log(response);
