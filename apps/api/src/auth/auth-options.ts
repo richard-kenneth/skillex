@@ -95,5 +95,6 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
     },
   },
   baseURL: process.env.API_BASE_URL!,
+  advanced: { trustedProxyHeaders: true },
   trustedOrigins: [process.env.CLIENT_BASE_URL!],
 });
