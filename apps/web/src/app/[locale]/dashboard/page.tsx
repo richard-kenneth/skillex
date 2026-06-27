@@ -32,9 +32,11 @@ export default async function DashboardPage() {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/me`,
     {
-      headers: await headers(),
+      headers: new Headers(await headers()),
     },
   );
+  console.log('his');
+  
 
   const fullUser = response.ok ? await response.json() : user;
   const userSkills = fullUser.skills || [];
