@@ -3,7 +3,9 @@ set -e
 
 # Run migrations
 echo "Running database migrations..."
-npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
+cd apps/api
+npx prisma migrate deploy
+cd ../..
 
 # Start the application
 echo "Starting application..."

@@ -246,9 +246,7 @@ export function RequestDialog({
                 </div>
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
-                    </TooltipTrigger>
+                    <TooltipTrigger render={<Info className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-help" />} />
                     <TooltipContent side="top" align="center" className="w-72 p-4 z-[100] shadow-md border bg-popover text-popover-foreground">
                       <div className="space-y-2">
                         <h4 className="font-medium text-sm">
