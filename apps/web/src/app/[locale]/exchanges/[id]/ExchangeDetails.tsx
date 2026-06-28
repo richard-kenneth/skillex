@@ -42,7 +42,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-const API = process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL;
+const API = `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api`;
 
 const statusColors: Record<string, string> = {
   COMMITTED: "bg-blue-500/20 text-blue-400 border-blue-500/30",

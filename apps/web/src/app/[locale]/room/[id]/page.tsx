@@ -93,7 +93,7 @@ interface SessionTiming {
   } | null;
 }
 
-const API = process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL;
+const API = `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api`;
 
 /* ─── Main Page ─────────────────────────────────────── */
 
