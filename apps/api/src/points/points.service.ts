@@ -103,8 +103,7 @@ export class PointsService {
   }
 
   async verifyWebhook(signature: string, payload: any) {
-    const secretHash =
-      process.env.FLW_SECRET_HASH || process.env.FLUTTERWAVE_SECRET_KEY;
+    const secretHash = process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH;
 
     if (!signature || signature !== secretHash) {
       this.logger.warn(
