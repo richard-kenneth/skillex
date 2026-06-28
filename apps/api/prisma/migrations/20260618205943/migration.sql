@@ -7,7 +7,6 @@
 
 
 ALTER TYPE "TransactionType" ADD VALUE 'RECORDING_FEE';
-ALTER TYPE "TransactionType" ADD VALUE 'RECORDING_REFUND';
 
 -- AlterTable
 ALTER TABLE "AppConfig" ADD COLUMN     "recordingPointsPerMinute" INTEGER NOT NULL DEFAULT 4;
