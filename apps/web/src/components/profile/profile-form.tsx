@@ -67,7 +67,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       if (authError) throw authError;
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/profile`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/users/profile`,
         {
           method: "PATCH",
           headers: {

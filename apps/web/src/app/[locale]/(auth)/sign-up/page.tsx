@@ -46,7 +46,7 @@ export default function SignUpPage() {
         if (storedRef) {
           try {
             await fetch(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}/referrals/apply`,
+              `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/referrals/apply`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

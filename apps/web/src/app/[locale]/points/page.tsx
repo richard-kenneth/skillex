@@ -162,17 +162,17 @@ export default function PointsPage() {
     try {
       const [balRes, txRes, banksRes, feeRes, ratesRes] =
         await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/balance`, {
+          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/points/balance`, {
             credentials: "include",
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/transactions`, {
+          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/points/transactions`, {
             credentials: "include",
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/banks`, {
+          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/points/banks`, {
             credentials: "include",
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/fee-config`),
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/points/rates`),
+          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/points/fee-config`),
+          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/points/rates`),
         ]);
 
       if (balRes.ok) {
@@ -212,7 +212,7 @@ export default function PointsPage() {
       const resolve = async () => {
         try {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/points/resolve-account`,
+            `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/points/resolve-account`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -313,7 +313,7 @@ export default function PointsPage() {
     setPurchaseError(null);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/points/purchase`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/points/purchase`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -356,7 +356,7 @@ export default function PointsPage() {
     setWithdrawError(null);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/points/withdraw`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/points/withdraw`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

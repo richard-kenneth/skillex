@@ -34,9 +34,7 @@ export default async function DashboardPage() {
     {
       headers: new Headers(await headers()),
     },
-  );
-  console.log('his');
-  
+  );  
 
   const fullUser = response.ok ? await response.json() : user;
   const userSkills = fullUser.skills || [];

@@ -47,7 +47,7 @@ export default function NegotiationPage() {
     queryKey: ["points-balance"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/points/balance`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/points/balance`,
         {
           credentials: "include",
         },
@@ -67,7 +67,7 @@ export default function NegotiationPage() {
     queryKey: ["request", id],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/requests/${id}`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/requests/${id}`,
         {
           credentials: "include",
         },
@@ -88,7 +88,7 @@ export default function NegotiationPage() {
     if (!id || !session) return;
 
     const eventSource = new EventSource(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/stream`,
+      `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/stream`,
       { withCredentials: true },
     );
 
@@ -300,7 +300,7 @@ export default function NegotiationPage() {
       };
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/requests/${id}/propose`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/requests/${id}/propose`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -335,7 +335,7 @@ export default function NegotiationPage() {
       );
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/requests/${id}/accept-slots`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/requests/${id}/accept-slots`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -362,7 +362,7 @@ export default function NegotiationPage() {
     setSendingMessage(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/requests/${id}/messages`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/requests/${id}/messages`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -391,7 +391,7 @@ export default function NegotiationPage() {
         timeSlots: availTimes,
       };
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/requests/${id}/availability`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/requests/${id}/availability`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
