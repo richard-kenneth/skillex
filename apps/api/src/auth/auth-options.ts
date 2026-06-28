@@ -94,6 +94,5 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
     },
   },
-  baseURL: process.env.API_BASE_URL!,
   trustedOrigins: [process.env.CLIENT_BASE_URL!],
 });
