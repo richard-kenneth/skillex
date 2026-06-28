@@ -30,7 +30,7 @@ export function RequestActions({
     setLoading(action);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/requests/${requestId}/${action}`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/exchanges/requests/${requestId}/${action}`,
         {
           method: "PATCH",
           credentials: "include",

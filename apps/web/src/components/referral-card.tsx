@@ -48,10 +48,10 @@ export function ReferralCard() {
   const fetchData = useCallback(async () => {
     try {
       const [codeRes, statsRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/referrals/my-code`, {
+        fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/referrals/my-code`, {
           credentials: "include",
         }),
-        fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/referrals/stats`, {
+        fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/referrals/stats`, {
           credentials: "include",
         }),
       ]);
@@ -76,7 +76,7 @@ export function ReferralCard() {
     setApplying(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/referrals/apply`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/referrals/apply`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

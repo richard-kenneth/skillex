@@ -68,7 +68,7 @@ export default async function ExchangesPage() {
   }
 
   const reqHeaders = new Headers(await headers());
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/exchanges`, {
     headers: reqHeaders,
   });
 

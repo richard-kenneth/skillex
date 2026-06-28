@@ -41,7 +41,7 @@ export function SkillManager({}: SkillManagerProps) {
 
   const fetchUserSkills = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/skills/my`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/my`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error(t("failedFetchSkills"));
@@ -64,7 +64,7 @@ export function SkillManager({}: SkillManagerProps) {
     }
     setIsSearching(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/skills/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/search?q=${encodeURIComponent(query)}`);
       if (!response.ok) throw new Error(t("failedSearchSkills"));
       const data = await response.json();
       setSearchResults(data);
@@ -90,7 +90,7 @@ export function SkillManager({}: SkillManagerProps) {
 
   const addSkill = async (skillId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/skills/my`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/my`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -118,7 +118,7 @@ export function SkillManager({}: SkillManagerProps) {
 
   const removeSkill = async (userSkillId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/skills/my/${userSkillId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/my/${userSkillId}`, {
         method: "DELETE",
         credentials: "include",
       });

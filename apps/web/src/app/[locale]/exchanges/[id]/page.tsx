@@ -29,7 +29,7 @@ export default async function ExchangePage({
   const reqHeaders = new Headers(await headers());
   
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/exchanges/${id}`,
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/exchanges/${id}`,
     { headers: reqHeaders },
   );
 

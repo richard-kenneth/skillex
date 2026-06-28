@@ -83,7 +83,7 @@ export function RequestsContent({
     queryKey: ["requests"],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/requests`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/exchanges/requests`,
         { credentials: "include" },
       );
       if (!res.ok) throw new Error(t("failedFetchRequests"));
@@ -94,7 +94,7 @@ export function RequestsContent({
 
   useEffect(() => {
     const eventSource = new EventSource(
-      `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/stream`,
+      `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/exchanges/stream`,
       { withCredentials: true },
     );
 

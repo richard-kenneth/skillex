@@ -27,6 +27,8 @@ async function bootstrap() {
     type: ['application/json', 'application/webhook+json'],
   });
 
+  app.setGlobalPrefix('api');
+
   await app.listen(process.env.PORT ?? 3001, '0.0.0.0');
 }
 void bootstrap();

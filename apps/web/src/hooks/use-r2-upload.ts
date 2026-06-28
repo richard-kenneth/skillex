@@ -26,7 +26,7 @@ export function useR2Upload(options?: UseR2UploadOptions) {
       });
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/uploads/presigned-url?${params.toString()}`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/uploads/presigned-url?${params.toString()}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -57,7 +57,7 @@ export function useR2Upload(options?: UseR2UploadOptions) {
       // 3. Confirm upload with backend
       if (type === "avatar") {
         const confirmResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/uploads/confirm-avatar`,
+          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/uploads/confirm-avatar`,
           {
             method: "POST",
             headers: {

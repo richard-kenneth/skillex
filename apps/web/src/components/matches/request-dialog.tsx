@@ -85,7 +85,7 @@ export function RequestDialog({
       }
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/exchanges/request`,
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/exchanges/request`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

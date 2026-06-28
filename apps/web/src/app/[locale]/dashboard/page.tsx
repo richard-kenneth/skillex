@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
   // Re-fetch user from API to get the latest bio, pointsBalance and skills
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/me`,
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/me`,
     {
       headers: new Headers(await headers()),
     },
