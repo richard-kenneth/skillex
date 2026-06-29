@@ -5,6 +5,17 @@ import { redirect } from "next/navigation";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { User as UserIcon } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  return {
+    title: t("profileTitle"),
+    robots: "noindex, nofollow",
+  };
+}
+
 export default async function ProfilePage() {
   const t = await getTranslations("profile");
   const session = await getSession();

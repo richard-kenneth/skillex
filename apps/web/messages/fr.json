@@ -55,6 +55,30 @@
     "insufficientPoints": "Solde de points insuffisant",
     "insufficientPointsForAgreement": "Vous n'avez pas assez de points pour accepter ces conditions"
   },
+  "pwa": {
+    "offlineTitle": "Vous êtes hors ligne",
+    "offlineDescription": "Veuillez vérifier votre connexion Internet. Vous pouvez toujours accéder aux pages déjà mises en cache en revenant en arrière ou en rechargeant une fois reconnecté.",
+    "offlineRetryButton": "Réessayer",
+    "offlineBack": "Retourner",
+    "onlineToast": "Connexion restaurée! Rechargement...",
+    "offlineToast": "Toujours hors ligne. Réessai..."
+  },
+  "metadata": {
+    "homeTitle": "Échange de compétences | Apprendre, enseigner, grandir",
+    "homeDescription": "Connectez-vous avec des professionnels pour échanger des compétences et des connaissances en toute sécurité.",
+    "matchesTitle": "Mes correspondances | Échange de compétences",
+    "matchesDescription": "Affichez vos correspondances de compétences, vos correspondances partielles et connectez-vous avec des partenaires d'apprentissage potentiels.",
+    "exchangesTitle": "Mes échanges | Échange de compétences",
+    "pointsTitle": "Solde de points et transactions | Échange de compétences",
+    "dashboardTitle": "Tableau de bord | Échange de compétences",
+    "profileTitle": "Paramètres du profil | Échange de compétences",
+    "signinTitle": "Se connecter | Échange de compétences",
+    "signupTitle": "S'inscrire | Échange de compétences",
+    "forgotPasswordTitle": "Mot de passe oublié | Échange de compétences",
+    "resetPasswordTitle": "Réinitialiser le mot de passe | Échange de compétences",
+    "roomTitle": "Session vidéo en direct | Échange de compétences",
+    "offlineTitlePage": "Vous êtes hors ligne | Échange de compétences"
+  },
   "nav": {
     "home": "Accueil",
     "dashboard": "Tableau de bord",

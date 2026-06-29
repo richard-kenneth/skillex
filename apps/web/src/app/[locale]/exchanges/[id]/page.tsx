@@ -11,6 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const t = await getTranslations({ locale, namespace: "exchanges" });
   return {
     title: t("detailsPageTitle"),
+    robots: "noindex, nofollow",
   };
 }
 

@@ -17,6 +17,15 @@ import { calculatePointsBreakdown } from "@skil-ex2/shared";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  return {
+    title: t("exchangesTitle"),
+    robots: "noindex, nofollow",
+  };
+}
+
 interface ExchangeUser {
   id: string;
   name: string | null;

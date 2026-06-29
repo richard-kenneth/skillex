@@ -55,6 +55,30 @@
     "insufficientPoints": "Saldo de pontos insuficiente",
     "insufficientPointsForAgreement": "Você não tem pontos suficientes para aceitar estes termos"
   },
+  "pwa": {
+    "offlineTitle": "Você está offline",
+    "offlineDescription": "Por favor, verifique sua conexão com a internet. Você ainda pode acessar páginas já salvas no cache voltando ou recarregando quando estiver conectado.",
+    "offlineRetryButton": "Tentar Novamente",
+    "offlineBack": "Voltar",
+    "onlineToast": "Conexão restaurada! Recarregando...",
+    "offlineToast": "Ainda offline. Tentando novamente..."
+  },
+  "metadata": {
+    "homeTitle": "Troca de Habilidades | Aprenda, Ensine, Cresça",
+    "homeDescription": "Conecte-se com profissionais para trocar habilidades e conhecimentos com segurança.",
+    "matchesTitle": "Minhas Correspondências | Troca de Habilidades",
+    "matchesDescription": "Visualize suas correspondências de habilidades, correspondências parciais e conecte-se com parceiros de aprendizado potenciais.",
+    "exchangesTitle": "Minhas Trocas | Troca de Habilidades",
+    "pointsTitle": "Saldo de Pontos e Transações | Troca de Habilidades",
+    "dashboardTitle": "Painel de Controle | Troca de Habilidades",
+    "profileTitle": "Configurações do Perfil | Troca de Habilidades",
+    "signinTitle": "Entrar | Troca de Habilidades",
+    "signupTitle": "Cadastrar-se | Troca de Habilidades",
+    "forgotPasswordTitle": "Esqueci Minha Senha | Troca de Habilidades",
+    "resetPasswordTitle": "Redefinir Senha | Troca de Habilidades",
+    "roomTitle": "Sessão de Vídeo ao Vivo | Troca de Habilidades",
+    "offlineTitlePage": "Você está offline | Troca de Habilidades"
+  },
   "nav": {
     "home": "Início",
     "dashboard": "Painel",

@@ -50,6 +50,30 @@
     "insufficientPoints": "Insufficient points balance",
     "insufficientPointsForAgreement": "You don't have enough points to accept these terms"
   },
+  "pwa": {
+    "offlineTitle": "You're Offline",
+    "offlineDescription": "Please check your internet connection. You can still access already-cached views by going back or hitting reload once reconnected.",
+    "offlineRetryButton": "Try Again",
+    "offlineBack": "Go Back",
+    "onlineToast": "Connection restored! Reloading...",
+    "offlineToast": "Still offline. Retrying..."
+  },
+  "metadata": {
+    "homeTitle": "Skill Exchange | Learn, Teach, Grow",
+    "homeDescription": "Connect with professionals to swap skills and knowledge securely.",
+    "matchesTitle": "My Matches | Skill Exchange",
+    "matchesDescription": "View your skill matches, partial matches, and connect with potential learning partners.",
+    "exchangesTitle": "My Exchanges | Skill Exchange",
+    "pointsTitle": "Points Balance & Transactions | Skill Exchange",
+    "dashboardTitle": "Dashboard | Skill Exchange",
+    "profileTitle": "Profile Settings | Skill Exchange",
+    "signinTitle": "Sign In | Skill Exchange",
+    "signupTitle": "Sign Up | Skill Exchange",
+    "forgotPasswordTitle": "Forgot Password | Skill Exchange",
+    "resetPasswordTitle": "Reset Password | Skill Exchange",
+    "roomTitle": "Live Video Session | Skill Exchange",
+    "offlineTitlePage": "You're Offline | Skill Exchange"
+  },
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",

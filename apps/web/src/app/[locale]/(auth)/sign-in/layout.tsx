@@ -1,0 +1,19 @@
+import { getTranslations } from "next-intl/server";
+
+interface Props {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  return {
+    title: t("signinTitle"),
+    robots: "noindex, nofollow",
+  };
+}
+
+export default function SignInLayout({ children }: Props) {
+  return <>{children}</>;
+}

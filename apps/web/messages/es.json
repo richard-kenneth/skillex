@@ -49,6 +49,30 @@
     "insufficientPoints": "Saldo de puntos insuficiente",
     "insufficientPointsForAgreement": "No tienes suficientes puntos para aceptar estos términos"
   },
+  "pwa": {
+    "offlineTitle": "Estás sin conexión",
+    "offlineDescription": "Por favor, comprueba tu conexión a Internet. Aún puedes acceder a las vistas ya guardadas en caché volviendo atrás o recargando una vez conectado.",
+    "offlineRetryButton": "Intentar de nuevo",
+    "offlineBack": "Volver atrás",
+    "onlineToast": "¡Conexión restaurada! Recargando...",
+    "offlineToast": "Sigues sin conexión. Reintentando..."
+  },
+  "metadata": {
+    "homeTitle": "Intercambio de habilidades | Aprende, enseña, crece",
+    "homeDescription": "Conéctate con profesionales para intercambiar habilidades y conocimientos de forma segura.",
+    "matchesTitle": "Mis coincidencias | Intercambio de habilidades",
+    "matchesDescription": "Ver sus coincidencias de habilidades, coincidencias parciales y conectarse con socios de aprendizaje potenciales.",
+    "exchangesTitle": "Mis intercambios | Intercambio de habilidades",
+    "pointsTitle": "Saldo de puntos y transacciones | Intercambio de habilidades",
+    "dashboardTitle": "Panel de control | Intercambio de habilidades",
+    "profileTitle": "Configuración del perfil | Intercambio de habilidades",
+    "signinTitle": "Iniciar sesión | Intercambio de habilidades",
+    "signupTitle": "Registrarse | Intercambio de habilidades",
+    "forgotPasswordTitle": "Olvidé mi contraseña | Intercambio de habilidades",
+    "resetPasswordTitle": "Restablecer contraseña | Intercambio de habilidades",
+    "roomTitle": "Sesión de video en vivo | Intercambio de habilidades",
+    "offlineTitlePage": "Estás sin conexión | Intercambio de habilidades"
+  },
   "nav": {
     "home": "Inicio",
     "dashboard": "Panel",

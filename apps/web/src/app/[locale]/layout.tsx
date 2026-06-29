@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { routing } from "@/i18n/routing";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
+import { PWARegistration } from "@/components/pwa-registration";
+import { MobileNav } from "@/components/mobile-nav";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -32,8 +34,10 @@ export default async function LocaleLayout({
     <NextIntlClientProvider locale={displayLocale} messages={messages}>
       <QueryProvider>
         <ReferralTracking />
+        <PWARegistration />
         <Navbar />
-        <main className="flex-1 flex flex-col">{children}</main>
+        <main className="flex-1 flex flex-col pb-16 md:pb-0">{children}</main>
+        <MobileNav />
         <Toaster position="bottom-right" richColors />
       </QueryProvider>
     </NextIntlClientProvider>

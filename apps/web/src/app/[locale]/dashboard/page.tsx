@@ -17,6 +17,15 @@ import { ReferralCard } from "@/components/referral-card";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  return {
+    title: t("dashboardTitle"),
+    robots: "noindex, nofollow",
+  };
+}
+
 export default async function DashboardPage() {
   const t = await getTranslations("dashboard");
   const tc = await getTranslations("common");

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>You're Offline | Skill Exchange</title>
+  <style>
+    :root {
+      --background: #09090b;
+      --foreground: #fafafa;
+      --card: #18181b;
+      --card-foreground: #fafafa;
+      --primary: #fafafa;
+      --primary-foreground: #18181b;
+      --muted: #27272a;
+      --muted-foreground: #a1a1aa;
+      --border: rgba(255, 255, 255, 0.1);
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Premium Glow Background */
+    .glow {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(250, 250, 250, 0.08) 0%, rgba(9, 9, 9, 0) 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 420px;
+      width: 100%;
+      background-color: rgba(24, 24, 27, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 32px;
+      text-align: center;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .icon-container {
+      width: 80px;
+      height: 80px;
+      background-color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.05);
+    }
+
+    .icon-container svg {
+      width: 38px;
+      height: 38px;
+      color: var(--muted-foreground);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 0.6;
+        transform: scale(0.98);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.02);
+      }
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+
+    p {
+      font-size: 14px;
+      color: var(--muted-foreground);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 14px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+      outline: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      border: none;
+      box-shadow: 0 4px 12px rgba(250, 250, 250, 0.15);
+    }
+
+    .btn-primary:hover {
+      background-color: #e4e4e7;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--muted-foreground);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+    }
+
+    .status-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background-color: #0f172a;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  
+  <div class="container">
+    <div class="icon-container">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z" />
+      </svg>
+    </div>
+    
+    <h1 id="title-text">You're Offline</h1>
+    <p id="desc-text">Please check your internet connection. You can still access already-cached views by going back or hitting reload once reconnected.</p>
+    
+    <div class="button-group">
+      <button class="btn-primary" onclick="retryConnection()" id="retry-btn">Try Again</button>
+      <button class="btn-secondary" onclick="window.history.back()" id="back-btn">Go Back</button>
+    </div>
+  </div>
+
+  <div class="status-toast" id="connection-toast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    <span id="toast-text">Checking connection...</span>
+  </div>
+
+  <script>
+    // Detect and translate dynamically based on navigator language (fallback)
+    const translations = {
+      en: {
+        title: "You're Offline",
+        desc: "Please check your internet connection. You can still access already-cached views by going back or hitting reload once reconnected.",
+        retry: "Try Again",
+        back: "Go Back",
+        reconnecting: "Still offline. Retrying...",
+        online: "Connection restored! Reloading..."
+      },
+      fr: {
+        title: "Vous êtes hors ligne",
+        desc: "Veuillez vérifier votre connexion Internet. Vous pouvez toujours accéder aux pages déjà mises en cache en revenant en arrière ou en rechargeant une fois reconnecté.",
+        retry: "Réessayer",
+        back: "Retourner",
+        reconnecting: "Toujours hors ligne. Réessai...",
+        online: "Connexion restaurée! Rechargement..."
+      },
+      es: {
+        title: "Estás sin conexión",
+        desc: "Por favor, comprueba tu conexión a Internet. Aún puedes acceder a las vistas ya guardadas en caché volviendo atrás o recargando una vez conectado.",
+        retry: "Intentar de nuevo",
+        back: "Volver atrás",
+        reconnecting: "Sigues sin conexión. Reintentando...",
+        online: "¡Conexión restaurada! Recargando..."
+      },
+      pt: {
+        title: "Você está offline",
+        desc: "Por favor, verifique sua conexão com a internet. Você ainda pode acessar páginas já salvas no cache voltando ou recarregando quando estiver conectado.",
+        retry: "Tentar Novamente",
+        back: "Voltar",
+        reconnecting: "Ainda offline. Tentando novamente...",
+        online: "Conexão restaurada! Recarregando..."
+      }
+    };
+
+    // Get client language
+    const lang = (navigator.language || navigator.userLanguage || "en").substring(0, 2);
+    const t = translations[lang] || translations.en;
+
+    // Apply translations
+    document.getElementById("title-text").textContent = t.title;
+    document.getElementById("desc-text").textContent = t.desc;
+    document.getElementById("retry-btn").textContent = t.retry;
+    document.getElementById("back-btn").textContent = t.back;
+
+    function showToast(text, duration = 3000) {
+      const toast = document.getElementById("connection-toast");
+      document.getElementById("toast-text").textContent = text;
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, duration);
+    }
+
+    function retryConnection() {
+      if (navigator.onLine) {
+        showToast(t.online, 2000);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        showToast(t.reconnecting, 3000);
+      }
+    }
+
+    // Monitor online event directly
+    window.addEventListener("online", () => {
+      showToast(t.online, 2000);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

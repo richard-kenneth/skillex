@@ -9,6 +9,15 @@ import { Inbox } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  return {
+    title: t("matchesTitle"),
+    description: t("matchesDescription"),
+  };
+}
+
 export default async function MatchesPage() {
   const t = await getTranslations("matches");
   const session = await getSession();
