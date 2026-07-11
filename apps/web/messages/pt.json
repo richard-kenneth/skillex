@@ -42,6 +42,7 @@
     "intermediate": "Intermediário",
     "advanced": "Avançado",
     "unknownError": "Ocorreu um erro desconhecido",
+    "grossValue": "Valor bruto",
     "pointsBreakdown": "Detalhamento de pontos",
     "grossAmount": "Valor bruto",
     "platformFee": "Taxa da plataforma",
@@ -639,5 +640,46 @@
   "sponsors": {
     "sponsoredBy": "Patrocinado por",
     "learnMore": "Saiba mais"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "subtitle": "Gerencie seus alertas, preferências e histórico de comunicações.",
+    "markAllRead": "Marcar todas como lidas",
+    "markedAllReadSuccess": "Todas as notificações foram marcadas como lidas",
+    "deletedSuccess": "Notificação excluída",
+    "preferencesSaved": "Configurações de notificação salvas",
+    "pushDenied": "A permissão para notificações foi negada.",
+    "pushEnabledSuccess": "Notificações push Web ativadas com sucesso!",
+    "pushEnableError": "Não foi possível configurar as notificações push.",
+    "loading": "Carregando...",
+    "viewAll": "Ver todas as notificações",
+    "actionLink": "Ver detalhes",
+    "markRead": "Marcar como lida",
+    "delete": "Excluir notificação",
+    "noNotifications": "Nada para ver aqui",
+    "noNotificationsDesc": "Nós avisaremos você quando algo importante acontecer.",
+    "preferencesTitle": "Preferências",
+    "preferencesDesc": "Controle como nos comunicamos com você.",
+    "nativePushTitle": "Notificações do Navegador",
+    "nativePushDesc": "Receba alertas em tempo real mesmo quando o seu navegador estiver fechado. Clique em ativar para configurar a permissão.",
+    "enableNativePush": "Ativar Notificações Push",
+    "tabs": {
+      "all": "Tudo",
+      "exchanges": "Trocas",
+      "points": "Pontos e Carteira",
+      "system": "Sistema"
+    },
+    "pref": {
+      "inApp": "Alertas no Aplicativo",
+      "inAppDesc": "Toasts em tempo real e ícones de sino no cabeçalho",
+      "email": "Resumos por E-mail",
+      "emailDesc": "Atualizações críticas na sua caixa de entrada",
+      "push": "Notificações Push",
+      "pushDesc": "Alertas push em segundo plano sem conexão"
+    },
+    "promoTitle": "Ativar Notificações Push",
+    "promoDesc": "Receba alertas em tempo real sobre trocas, novas mensagens e lembretes mesmo offline.",
+    "promoEnable": "Ativar",
+    "promoLater": "Mais tarde"
   }
 }

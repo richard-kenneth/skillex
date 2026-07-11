@@ -922,7 +922,7 @@ export default function NegotiationPage() {
                     asChild
                     className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-900/20 py-6 text-lg font-bold"
                   >
-                    <Link href={`/room/${request.exchange.id}`}>
+                    <Link href={`/exchanges/${request.exchange.id}`}>
                       {t("goToExchangeRoom")}
                       <ArrowRight className="w-5 h-5" />
                     </Link>

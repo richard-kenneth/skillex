@@ -4,12 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { type CreateReviewDto } from '@skil-ex2/shared';
 
 @Injectable()
 export class ReviewsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async createReview(userId: string, data: CreateReviewDto) {
     const exchange = await this.prisma.exchange.findUnique({
@@ -44,7 +48,7 @@ export class ReviewsService {
       throw new BadRequestException('You have already reviewed this exchange');
     }
 
-    return this.prisma.review.create({
+    const review = await this.prisma.review.create({
       data: {
         reviewerId: userId,
         revieweeId,
@@ -53,5 +57,14 @@ export class ReviewsService {
         tags: data.tags as any[], // Casting to match ReviewTag[]
       },
     });
+
+    this.eventEmitter.emit('review.created', {
+      reviewerId: userId,
+      revieweeId,
+      exchangeId: data.exchangeId,
+      rating: data.rating,
+    });
+
+    return review;
   }
 }

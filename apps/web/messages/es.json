@@ -36,6 +36,7 @@
     "intermediate": "Intermedio",
     "advanced": "Avanzado",
     "unknownError": "Ocurrió un error desconocido",
+    "grossValue": "Valor bruto",
     "pointsBreakdown": "Desglose de puntos",
     "grossAmount": "Monto bruto",
     "platformFee": "Tarifa de plataforma",
@@ -633,5 +634,46 @@
   "sponsors": {
     "sponsoredBy": "Patrocinado por",
     "learnMore": "Saber más"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "subtitle": "Administra tus alertas, preferencias e historial de comunicaciones.",
+    "markAllRead": "Marcar todo como leído",
+    "markedAllReadSuccess": "Todas las notificaciones marcadas como leídas",
+    "deletedSuccess": "Notificación eliminada",
+    "preferencesSaved": "Configuración de notificaciones guardada",
+    "pushDenied": "Se denegó el permiso para las notificaciones.",
+    "pushEnabledSuccess": "¡Notificaciones push web activadas con éxito!",
+    "pushEnableError": "No se pudieron configurar las notificaciones push.",
+    "loading": "Cargando...",
+    "viewAll": "Ver todas las notificaciones",
+    "actionLink": "Ver detalles",
+    "markRead": "Marcar como leído",
+    "delete": "Eliminar notificación",
+    "noNotifications": "Nada que ver por aquí",
+    "noNotificationsDesc": "Te avisaremos cuando ocurra algo importante.",
+    "preferencesTitle": "Preferencias",
+    "preferencesDesc": "Controla cómo nos comunicamos contigo.",
+    "nativePushTitle": "Notificaciones del Navegador",
+    "nativePushDesc": "Recibe alertas en tiempo real incluso cuando tu navegador esté cerrado. Haz clic en activar para configurar el permiso.",
+    "enableNativePush": "Activar Notificaciones Push",
+    "tabs": {
+      "all": "Todo",
+      "exchanges": "Intercambios",
+      "points": "Puntos y Billetera",
+      "system": "Sistema"
+    },
+    "pref": {
+      "inApp": "Alertas en la Aplicación",
+      "inAppDesc": "Toasts en vivo y alertas en la campana de navegación",
+      "email": "Resúmenes por Correo",
+      "emailDesc": "Actualizaciones críticas en tu bandeja de entrada",
+      "push": "Notificaciones Push",
+      "pushDesc": "Alertas push en segundo plano sin conexión"
+    },
+    "promoTitle": "Activar Notificaciones Push",
+    "promoDesc": "Recibe alertas en tiempo real sobre intercambios, mensajes y recordatorios incluso sin conexión.",
+    "promoEnable": "Activar",
+    "promoLater": "Más tarde"
   }
 }

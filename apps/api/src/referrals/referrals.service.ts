@@ -4,6 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 
 const REFERRAL_CODE_LENGTH = 8;
@@ -12,7 +13,10 @@ const REFERRAL_CODE_LENGTH = 8;
 export class ReferralsService {
   private readonly logger = new Logger(ReferralsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   /**
    * Get or generate a referral code for the current user.
@@ -150,6 +154,11 @@ export class ReferralsService {
       }),
     ]);
 
+    this.eventEmitter.emit('referral.created', {
+      referrerId: referrer.id,
+      refereeId: userId,
+    });
+
     return {
       success: true,
       referrerName: referrer.name,
@@ -255,6 +264,22 @@ export class ReferralsService {
     this.logger.log(
       `Referral ${referralId} converted. Referrer: +${referrerReward}, Referee: +${config.referralRewardReferee}`,
     );
+
+    if (referrerReward > 0) {
+      this.eventEmitter.emit('referral.rewarded', {
+        userId: referrerId,
+        amount: referrerReward,
+        type: 'REWARD',
+      });
+    }
+
+    if (config.referralRewardReferee > 0) {
+      this.eventEmitter.emit('referral.rewarded', {
+        userId: refereeId,
+        amount: config.referralRewardReferee,
+        type: 'REWARD',
+      });
+    }
   }
 
   private async awardReferralBonus(
@@ -319,6 +344,12 @@ export class ReferralsService {
     this.logger.log(
       `Referral bonus: +${bonusAmount} pts to referrer ${referrerId} for exchange ${exchangeId}`,
     );
+
+    this.eventEmitter.emit('referral.rewarded', {
+      userId: referrerId,
+      amount: bonusAmount,
+      type: 'BONUS',
+    });
   }
 
   private async getMonthlyReferralEarnings(userId: string): Promise<number> {

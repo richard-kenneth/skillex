@@ -1178,9 +1178,12 @@ export class ExchangesService {
       },
     });
 
-    this.eventEmitter.emit('exchange.updated', {
-      userIds: [exchange.senderId, exchange.receiverId],
-      requestId: exchange.requestId,
+    this.eventEmitter.emit('chat.message.sent', {
+      exchangeId: exchange.id,
+      messageId: message.id,
+      senderId: userId,
+      receiverId: userId === exchange.senderId ? exchange.receiverId : exchange.senderId,
+      content: content || (fileKey ? 'Sent an attachment' : ''),
     });
 
     return message;

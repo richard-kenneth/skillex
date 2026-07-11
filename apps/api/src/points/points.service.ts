@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   applyCurrencyPrecision,
   POINT_TO_USD_RATE,
@@ -15,6 +16,7 @@ export class PointsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ratesService: RatesService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getFeeConfig() {
@@ -147,6 +149,11 @@ export class PointsService {
       this.logger.log(
         `Successfully credited ${transaction.amount} points for txRef ${txRef}`,
       );
+
+      this.eventEmitter.emit('points.purchased', {
+        userId: transaction.userId,
+        amount: transaction.amount,
+      });
     }
   }
 
@@ -269,6 +276,12 @@ export class PointsService {
         data: { status: 'SUCCESS' },
       });
 
+      this.eventEmitter.emit('points.withdrawn', {
+        userId,
+        amount: data.amount,
+        status: 'SUCCESS',
+      });
+
       return {
         success: true,
         message: 'Withdrawal initiated successfully',
@@ -291,6 +304,13 @@ export class PointsService {
           },
         });
       });
+
+      this.eventEmitter.emit('points.withdrawn', {
+        userId,
+        amount: data.amount,
+        status: 'FAILED',
+      });
+
       // Throw the actual error message back to the frontend
       throw new BadRequestException(
         error instanceof Error

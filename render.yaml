@@ -77,3 +77,11 @@ services:
       # Exchange Rates
       - key: OER_APP_ID
         sync: false
+        
+      # Web Push
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_EMAIL
+        sync: false

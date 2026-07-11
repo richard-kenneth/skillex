@@ -42,6 +42,7 @@
     "intermediate": "Intermédiaire",
     "advanced": "Avancé",
     "unknownError": "Une erreur inconnue est survenue",
+    "grossValue": "Valeur brute",
     "pointsBreakdown": "Détail des points",
     "grossAmount": "Montant brut",
     "platformFee": "Frais de plateforme",
@@ -638,5 +639,46 @@
   "sponsors": {
     "sponsoredBy": "Sponsorisé par",
     "learnMore": "En savoir plus"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Gérez vos alertes, préférences et historique des communications.",
+    "markAllRead": "Tout marquer comme lu",
+    "markedAllReadSuccess": "Toutes les notifications ont été marquées comme lues",
+    "deletedSuccess": "Notification supprimée",
+    "preferencesSaved": "Paramètres de notification enregistrés",
+    "pushDenied": "L'autorisation pour les notifications a été refusée.",
+    "pushEnabledSuccess": "Notifications push Web activées avec succès !",
+    "pushEnableError": "Impossible de configurer les notifications push.",
+    "loading": "Chargement...",
+    "viewAll": "Voir toutes les notifications",
+    "actionLink": "Voir les détails",
+    "markRead": "Marquer comme lu",
+    "delete": "Supprimer la notification",
+    "noNotifications": "Rien à voir ici",
+    "noNotificationsDesc": "Nous vous informerons dès que quelque chose d'important se produira.",
+    "preferencesTitle": "Préférences",
+    "preferencesDesc": "Contrôlez la façon dont nous communiquons avec vous.",
+    "nativePushTitle": "Notifications du Navigateur",
+    "nativePushDesc": "Recevez des alertes en temps réel même lorsque votre navigateur est fermé. Cliquez sur activer pour configurer l'autorisation.",
+    "enableNativePush": "Activer les Notifications Push",
+    "tabs": {
+      "all": "Tout",
+      "exchanges": "Échanges",
+      "points": "Points et Portefeuille",
+      "system": "Système"
+    },
+    "pref": {
+      "inApp": "Alertes dans l'Application",
+      "inAppDesc": "Toasts en direct et badges de cloche d'en-tête",
+      "email": "Résumés par E-mail",
+      "emailDesc": "Mises à jour critiques dans votre boîte de réception",
+      "push": "Notifications Push",
+      "pushDesc": "Alertes push en arrière-plan hors ligne"
+    },
+    "promoTitle": "Activer les Notifications Push",
+    "promoDesc": "Recevez des alertes en temps réel pour les échanges, messages et rappels, même hors ligne.",
+    "promoEnable": "Activer",
+    "promoLater": "Plus tard"
   }
 }

@@ -19,6 +19,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { RatesModule } from './rates/rates.module';
 import { BullModule } from '@nestjs/bullmq';
 import { RedisModule, REDIS_CONFIG } from './redis/redis.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -72,8 +73,10 @@ import { RedisModule, REDIS_CONFIG } from './redis/redis.module';
     VideoModule,
     ReferralsModule,
     RatesModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+

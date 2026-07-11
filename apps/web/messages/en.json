@@ -632,5 +632,46 @@
   "sponsors": {
     "sponsoredBy": "Sponsored by",
     "learnMore": "Learn more"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Manage your alerts, preferences, and communications history.",
+    "markAllRead": "Mark all as read",
+    "markedAllReadSuccess": "All notifications marked as read",
+    "deletedSuccess": "Notification deleted",
+    "preferencesSaved": "Notification settings saved",
+    "pushDenied": "Permission for notifications was denied.",
+    "pushEnabledSuccess": "Web Push notifications enabled successfully!",
+    "pushEnableError": "Could not configure push notifications.",
+    "loading": "Loading...",
+    "viewAll": "View All Notifications",
+    "actionLink": "View details",
+    "markRead": "Mark as read",
+    "delete": "Delete notification",
+    "noNotifications": "Nothing to see here",
+    "noNotificationsDesc": "We'll let you know when something important happens.",
+    "preferencesTitle": "Preferences",
+    "preferencesDesc": "Control how we communicate with you.",
+    "nativePushTitle": "Browser Push",
+    "nativePushDesc": "Receive real-time alerts even when your browser is closed. Click enable to configure permission.",
+    "enableNativePush": "Enable Push Notifications",
+    "tabs": {
+      "all": "All",
+      "exchanges": "Exchanges",
+      "points": "Points & Wallet",
+      "system": "System"
+    },
+    "pref": {
+      "inApp": "In-App Alerts",
+      "inAppDesc": "Live toasts and header bell badges",
+      "email": "Email Digests",
+      "emailDesc": "Critical updates to your mailbox",
+      "push": "Push Notifications",
+      "pushDesc": "Offline background push alerts"
+    },
+    "promoTitle": "Enable Push Notifications",
+    "promoDesc": "Receive real-time alerts for exchanges, new messages, and reminders even when you're offline.",
+    "promoEnable": "Enable",
+    "promoLater": "Later"
   }
 }

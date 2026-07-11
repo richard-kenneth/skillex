@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 const navItems = [
   { key: "home", href: "/" },
@@ -61,6 +62,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          {session?.user && <NotificationBell />}
           <LocaleSwitcher />
           {/* Auth Section */}
           <div className="flex items-center">

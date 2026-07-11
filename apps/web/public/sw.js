@@ -118,3 +118,53 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Handle background Web Push notifications
+self.addEventListener('push', (event) => {
+  if (!event.data) {
+    console.log('[Service Worker] Push event received with no data');
+    return;
+  }
+
+  try {
+    const data = event.data.json();
+    const notification = data.notification;
+    const title = notification.title || 'Skill Exchange';
+    const options = {
+      body: notification.body || '',
+      icon: notification.icon || '/icon-192.png',
+      badge: notification.badge || '/icon-192.png',
+      data: notification.data || { url: '/' },
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(title, options)
+    );
+  } catch (err) {
+    console.error('[Service Worker] Error displaying push notification:', err);
+  }
+});
+
+// Handle notification click (redirect to app pages)
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if there is already a window open with this app
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus().then(() => client.navigate(urlToOpen));
+        }
+      }
+      // If not, open a new window
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
