@@ -955,6 +955,8 @@ export class ExchangesService {
     this.eventEmitter.emit('exchange.updated', {
       userIds: [request.senderId, request.receiverId],
       requestId: request.id,
+      updatedByUserId: userId,
+      messageKeyOverride: 'AVAILABILITY_UPDATED',
     });
 
     return updatedRequest;

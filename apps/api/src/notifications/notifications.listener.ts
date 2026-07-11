@@ -17,7 +17,9 @@ export class NotificationsListener {
   async handleExchangeUpdated(payload: {
     userIds: string[];
     requestId: string;
-    message?: any; // Message model payload or status text
+    message?: any;
+    messageKeyOverride?: string;   // bypass last-message lookup
+    updatedByUserId?: string;      // who triggered the update
   }) {
     try {
       const request = await this.prisma.exchangeRequest.findUnique({
@@ -39,6 +41,23 @@ export class NotificationsListener {
 
       const otherUser = (userId: string) =>
         userId === request.senderId ? request.receiver : request.sender;
+
+      // Override: availability updated (no DB message is created for this action)
+      if (payload.messageKeyOverride === 'AVAILABILITY_UPDATED' && payload.updatedByUserId) {
+        const updater =
+          payload.updatedByUserId === request.senderId ? request.sender : request.receiver;
+        const recipientId =
+          payload.updatedByUserId === request.senderId ? request.receiverId : request.senderId;
+
+        await this.notificationsService.createNotification({
+          userId: recipientId,
+          title: 'Availability Updated 📅',
+          message: `${updater.name || 'Partner'} updated their availability.`,
+          type: 'EXCHANGE_NEGOTIATION_UPDATE',
+          link: `/requests/${request.id}`,
+        });
+        return;
+      }
 
       // Case 1: Request is pending
       if (request.status === 'PENDING') {
