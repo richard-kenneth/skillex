@@ -14,6 +14,7 @@ import { Link } from "@/i18n/navigation";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ReferralCard } from "@/components/referral-card";
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,11 @@ export default async function DashboardPage() {
   const seekingSkills = userSkills.filter(
     (s: { type: string }) => s.type === "SEEKING",
   );
+
+  // ── Onboarding completion flags (server-derived, cross-device by design) ──
+  const hasCompletedProfile = !!(fullUser.name && (fullUser.bio || fullUser.image));
+  const hasOfferingSkills = offeringSkills.length > 0;
+  const hasSeekingSkills = seekingSkills.length > 0;
 
   return (
     <div className="container py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-in fade-in duration-500">
@@ -262,6 +268,14 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-8">
         <ReferralCard />
       </div>
+
+      {/* Onboarding wizard — shown only when setup is incomplete; state derived from real user data */}
+      <OnboardingWizard
+        userName={fullUser.name || "there"}
+        hasCompletedProfile={hasCompletedProfile}
+        hasOfferingSkills={hasOfferingSkills}
+        hasSeekingSkills={hasSeekingSkills}
+      />
     </div>
   );
 }
