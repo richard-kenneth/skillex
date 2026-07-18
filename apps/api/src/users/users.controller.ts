@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   Req,
   UseGuards,
@@ -22,6 +23,11 @@ export class UsersController {
   getMe(@Req() req: Request & { user: { id: string } }) {
     // BetterAuthGuard attaches the user to the request
     return this.usersService.findOne(req.user.id);
+  }
+
+  @Get(':id')
+  getUser(@Param('id') id: string) {
+    return this.usersService.getProfile(id);
   }
 
   @Patch('profile')

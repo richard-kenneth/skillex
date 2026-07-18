@@ -57,7 +57,7 @@ export default async function DashboardPage() {
   );
 
   // ── Onboarding completion flags (server-derived, cross-device by design) ──
-  const hasCompletedProfile = !!(fullUser.name && (fullUser.bio || fullUser.image));
+  const hasCompletedProfile = !!(fullUser.name && fullUser.bio && fullUser.image);
   const hasOfferingSkills = offeringSkills.length > 0;
   const hasSeekingSkills = seekingSkills.length > 0;
 
@@ -272,7 +272,9 @@ export default async function DashboardPage() {
       {/* Onboarding wizard — shown only when setup is incomplete; state derived from real user data */}
       <OnboardingWizard
         userName={fullUser.name || "there"}
-        hasCompletedProfile={hasCompletedProfile}
+        hasName={!!fullUser.name}
+        hasBio={!!fullUser.bio}
+        hasImage={!!fullUser.image}
         hasOfferingSkills={hasOfferingSkills}
         hasSeekingSkills={hasSeekingSkills}
       />

@@ -568,7 +568,15 @@
     "skillAdded": "Compétence ajoutée !",
     "skillRemoved": "Compétence supprimée",
     "failedToAddSkill": "Échec de l'ajout de la compétence",
-    "failedToRemoveSkill": "Échec de la suppression de la compétence"
+    "failedToRemoveSkill": "Échec de la suppression de la compétence",
+    "onboardingProfileTitle": "Étape d'intégration: complétez votre profil",
+    "onboardingProfileDesc": "Veuillez remplir votre nom d'affichage, télécharger une photo de profil et rédiger une courte biographie. Une fois terminé, cliquez sur Enregistrer les modifications ci-dessous pour passer à l'étape suivante.",
+    "onboardingProfileIncompleteToast": "Profil mis à jour! Veuillez remplir tous les champs (nom, photo et biographie) pour passer à l'étape suivante de l'intégration.",
+    "onboardingSkillsTitle": "Étape d'intégration: gérez vos compétences",
+    "onboardingSkillsDesc": "Pour commencer à faire correspondre, ajoutez au moins une compétence que vous pouvez enseigner (sous Compétences offertes) et une compétence que vous souhaitez apprendre (sous Compétences recherchées).",
+    "onboardingSkillsCompleteTitle": "Configuration des compétences terminée!",
+    "onboardingSkillsCompleteDesc": "Vous avez ajouté des compétences à proposer et à rechercher. Vous êtes prêt à trouver des correspondances!",
+    "continueToDashboard": "Continuer vers le tableau de bord"
   },
   "review": {
     "title": "Évaluez votre expérience",
@@ -613,7 +621,8 @@
     "copyCode": "Copier le Code",
     "copied": "Copié !",
     "shareTitle": "Partager et Gagner",
-    "shareDesc": "Partagez votre code. Vous gagnez tous les deux {reward} points après leur premier échange.",
+    "points_count": "{count, plural, =1 {1 Point} other {# Points}}",
+    "shareDesc": "Partagez votre code. Vous gagnez tous les deux {reward} après leur premier échange.",
     "stats": "Stats de Parrainage",
     "totalReferred": "Total Parrainés",
     "converted": "Convertis",
@@ -718,6 +727,17 @@
     "doneItem2": "Ajouter une compétence que vous offrez",
     "doneItem3": "Ajouter une compétence que vous voulez apprendre",
     "doneItem4": "Trouver votre première correspondance",
-    "doneCtaLabel": "Aller au tableau de bord"
+    "doneCtaLabel": "Trouver des correspondances"
+  },
+  "userProfile": {
+    "title": "Profil de l'utilisateur",
+    "backToMatches": "Retour aux correspondances",
+    "canTeach": "Peut enseigner",
+    "wantsToLearn": "Veut apprendre",
+    "noOffering": "Cet utilisateur n'a pas encore répertorié de compétences à proposer.",
+    "noSeeking": "Cet utilisateur n'a pas encore répertorié de compétences qu'il souhaite apprendre.",
+    "requestExchange": "Demander un échange",
+    "viewProfile": "Voir le profil",
+    "pointsBalance": "Solde de points"
   }
 }

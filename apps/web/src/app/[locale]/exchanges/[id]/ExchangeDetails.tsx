@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { calculatePointsBreakdown } from "@skil-ex2/shared";
 import {
   ArrowRightLeft,
@@ -861,14 +861,18 @@ export default function ExchangeDetails({
                     </div>
                     <ArrowRightLeft className="text-muted-foreground h-5 w-5" />
                     <div className="flex items-center gap-3">
-                      <Avatar>
+                      <Avatar previewable src={otherUser.image || ""}>
                         <AvatarImage src={otherUser.image || ""} />
                         <AvatarFallback>
                           {otherUser.name?.[0] || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium">{otherUser.name}</p>
+                        <p className="text-sm font-medium hover:underline hover:text-primary transition-colors">
+                          <Link href={`/users/${otherUser.id}`}>
+                            {otherUser.name}
+                          </Link>
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {isSender ? t("receiver") : t("sender")}
                         </p>

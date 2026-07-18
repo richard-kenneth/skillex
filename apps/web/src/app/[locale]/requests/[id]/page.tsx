@@ -475,14 +475,22 @@ export default function NegotiationPage() {
           <Card className="flex flex-col h-150 border-border/50">
             <CardHeader className="border-b border-border/50 pb-4 bg-muted/10">
               <div className="flex items-center gap-4">
-                <Avatar className="h-10 w-10 border border-border/50">
+                <Avatar
+                  previewable
+                  src={otherUser?.image ?? ""}
+                  className="h-10 w-10 border border-border/50"
+                >
                   <AvatarImage src={otherUser?.image ?? ""} />
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {otherUser?.name?.charAt(0) ?? "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle className="text-lg">{otherUser?.name}</CardTitle>
+                  <CardTitle className="text-lg hover:underline hover:text-primary transition-colors">
+                    <Link href={`/users/${otherUser?.id}`}>
+                      {otherUser?.name}
+                    </Link>
+                  </CardTitle>
                   <p className="text-xs text-muted-foreground truncate">
                     {t("negotiatingExchange", {
                       skill: request.requestedSkill.name,

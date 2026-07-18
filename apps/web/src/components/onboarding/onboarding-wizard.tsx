@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
@@ -30,7 +30,9 @@ import {
 
 interface OnboardingWizardProps {
   userName: string;
-  hasCompletedProfile: boolean; // name && (bio || image)
+  hasName: boolean;
+  hasBio: boolean;
+  hasImage: boolean;
   hasOfferingSkills: boolean;
   hasSeekingSkills: boolean;
 }
@@ -120,7 +122,25 @@ function WelcomeStep({ userName, t }: { userName: string; t: ReturnType<typeof u
   );
 }
 
-function ProfileStep({ t, onNavigate }: { t: ReturnType<typeof useTranslations>; onNavigate: () => void }) {
+function ProfileStep({
+  t,
+  onNavigate,
+  hasName,
+  hasBio,
+  hasImage,
+}: {
+  t: ReturnType<typeof useTranslations>;
+  onNavigate: () => void;
+  hasName: boolean;
+  hasBio: boolean;
+  hasImage: boolean;
+}) {
+  const items = [
+    { label: t("profileItem1"), done: hasName },
+    { label: t("profileItem2"), done: hasImage },
+    { label: t("profileItem3"), done: hasBio },
+  ];
+
   return (
     <div className="flex flex-col items-center text-center space-y-5 py-2">
       <motion.div
@@ -141,10 +161,20 @@ function ProfileStep({ t, onNavigate }: { t: ReturnType<typeof useTranslations>;
 
       {/* Checklist */}
       <div className="w-full rounded-xl border border-border/50 bg-muted/30 divide-y divide-border/40 text-left overflow-hidden">
-        {(["profileItem1", "profileItem2", "profileItem3"] as const).map((key) => (
-          <div key={key} className="flex items-center gap-3 px-4 py-3">
-            <div className="h-5 w-5 rounded-full border-2 border-blue-400/60 flex-shrink-0" />
-            <span className="text-sm text-foreground/80">{t(key)}</span>
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center gap-3 px-4 py-3">
+            <div
+              className={`h-5 w-5 rounded-full flex-shrink-0 flex items-center justify-center ${
+                item.done ? "bg-green-500/20 text-green-500 border-0" : "border-2 border-blue-400/60"
+              }`}
+            >
+              {item.done ? (
+                <CheckCircle2 className="h-4 w-4" />
+              ) : null}
+            </div>
+            <span className={`text-sm ${item.done ? "line-through text-muted-foreground/60" : "text-foreground/80"}`}>
+              {item.label}
+            </span>
           </div>
         ))}
       </div>
@@ -344,32 +374,45 @@ function ProgressDots({ total, current }: { total: number; current: number }) {
 
 export function OnboardingWizard({
   userName,
-  hasCompletedProfile,
+  hasName,
+  hasBio,
+  hasImage,
   hasOfferingSkills,
   hasSeekingSkills,
 }: OnboardingWizardProps) {
   const t = useTranslations("onboarding");
   const router = useRouter();
 
-  // Build the list of steps that are relevant to this user
+  // Profile is complete only when all three are complete
+  const isProfileComplete = hasName && hasBio && hasImage;
+
+  // Build the list of steps - now constant (5 steps)
   const allSteps: Step[] = [
     { id: "welcome" },
-    { id: "profile", showWhen: !hasCompletedProfile },
-    { id: "skills", showWhen: !hasOfferingSkills || !hasSeekingSkills },
+    { id: "profile" },
+    { id: "skills" },
     { id: "matches" },
     { id: "done" },
   ];
 
-  const activeSteps = allSteps.filter(
-    (s) => s.showWhen === undefined || s.showWhen === true
-  );
+  const activeSteps = allSteps;
 
-  // If every real setup step is done, don't show the wizard at all
-  const everythingDone = hasCompletedProfile && hasOfferingSkills && hasSeekingSkills;
+  const isStepComplete = (id: StepId) => {
+    if (id === "welcome") return true;
+    if (id === "profile") return isProfileComplete;
+    if (id === "skills") return hasOfferingSkills && hasSeekingSkills;
+    return false;
+  };
 
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [direction, setDirection] = useState(1);
+  const isClosingProgrammatically = useRef(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // For any authenticated user, session.session.token is always present.
   // Keying on it means each new login gets a fresh sessionStorage key, so the
@@ -378,16 +421,49 @@ export function OnboardingWizard({
   const { data: sessionData } = useSession();
   const sessionToken = sessionData?.session?.token;
   const SESSION_KEY = `onboarding-dismissed-${sessionToken ?? "pending"}`;
+  const STEP_KEY = `onboarding-step-${sessionToken ?? "pending"}`;
+
+  // Hydrate stepIndex from sessionStorage on mount/token load, handling auto-advancing logic.
+  useEffect(() => {
+    if (!sessionToken) return;
+    const storedStepId = sessionStorage.getItem(STEP_KEY) as StepId | null;
+    if (storedStepId) {
+      const storedIdx = allSteps.findIndex((s) => s.id === storedStepId);
+      if (storedIdx !== -1) {
+        // If the stored step is complete, find the next incomplete step
+        let targetIdx = storedIdx;
+        while (targetIdx < allSteps.length - 1 && isStepComplete(allSteps[targetIdx].id)) {
+          targetIdx++;
+        }
+        setStepIndex(targetIdx);
+      }
+    } else {
+      // First time opening, start at welcome
+      setStepIndex(0);
+    }
+  }, [sessionToken, isProfileComplete, hasOfferingSkills, hasSeekingSkills]);
+
+  const currentStep = activeSteps[stepIndex];
+
+  // Keep sessionStorage step value in sync with changes
+  useEffect(() => {
+    if (currentStep?.id && sessionToken) {
+      sessionStorage.setItem(STEP_KEY, currentStep.id);
+    }
+  }, [currentStep?.id, sessionToken, STEP_KEY]);
 
   useEffect(() => {
     // Don't open until the session is hydrated and we have a real token.
-    if (everythingDone || !sessionToken) return;
+    if (!sessionToken || !mounted) return;
+    // Only suppress if the user explicitly dismissed or finalized the wizard
     if (sessionStorage.getItem(SESSION_KEY)) return;
     const timer = setTimeout(() => setOpen(true), 600);
     return () => clearTimeout(timer);
-  }, [everythingDone, sessionToken, SESSION_KEY]);
+  }, [mounted, sessionToken, SESSION_KEY]);
 
-  const currentStep = activeSteps[stepIndex];
+  // Only permanently hide the wizard if the user has explicitly dismissed/finalized it.
+  // We check mounted to avoid SSR flash issues.
+  if (mounted && sessionToken && sessionStorage.getItem(SESSION_KEY)) return null;
 
   const goNext = () => {
     if (stepIndex < activeSteps.length - 1) {
@@ -409,25 +485,39 @@ export function OnboardingWizard({
   };
 
   const handleClose = () => {
+    isClosingProgrammatically.current = true;
+    if (sessionToken) {
+      sessionStorage.removeItem(STEP_KEY);
+      sessionStorage.setItem(SESSION_KEY, "1");
+    }
     setOpen(false);
+    router.push("/matches");
   };
 
   const navigateTo = (path: string) => {
     // Silently close — this is intent to complete the action, NOT a dismissal.
-    // The wizard will re-appear on the next dashboard load if setup is still incomplete.
+    // The wizard will re-appear on the next dashboard load if setup is still incomplete,
+    // and will pick up at the next incomplete step thanks to our auto-advance logic.
+    isClosingProgrammatically.current = true;
     setOpen(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     router.push(path as any);
   };
-
-  if (everythingDone) return null;
 
   const isFirst = stepIndex === 0;
   const isLast = currentStep?.id === "done";
   const isWelcome = currentStep?.id === "welcome";
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) handleDismiss(); }}>
+    <Dialog open={open} onOpenChange={(o) => {
+      if (!o) {
+        if (isClosingProgrammatically.current) {
+          isClosingProgrammatically.current = false;
+        } else {
+          handleDismiss();
+        }
+      }
+    }}>
       <DialogContent
         showCloseButton={false}
         className="sm:max-w-md p-0 overflow-hidden border border-border/60 shadow-2xl bg-background"
@@ -464,16 +554,22 @@ export function OnboardingWizard({
             >
               {currentStep?.id === "welcome" && <WelcomeStep userName={userName} t={t} />}
               {currentStep?.id === "profile" && (
-                <ProfileStep t={t} onNavigate={() => navigateTo("/dashboard/profile")} />
+                <ProfileStep
+                  t={t}
+                  onNavigate={() => navigateTo("/dashboard/profile?step=profile")}
+                  hasName={hasName}
+                  hasBio={hasBio}
+                  hasImage={hasImage}
+                />
               )}
               {currentStep?.id === "skills" && (
-                <SkillsStep t={t} onNavigate={() => navigateTo("/dashboard/profile")} />
+                <SkillsStep t={t} onNavigate={() => navigateTo("/dashboard/profile?step=skills")} />
               )}
               {currentStep?.id === "matches" && <MatchesStep t={t} />}
               {currentStep?.id === "done" && (
                 <DoneStep
                   t={t}
-                  hasProfile={hasCompletedProfile}
+                  hasProfile={isProfileComplete}
                   hasOffering={hasOfferingSkills}
                   hasSeeking={hasSeekingSkills}
                   onClose={handleClose}

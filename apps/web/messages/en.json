@@ -561,7 +561,15 @@
     "skillAdded": "Skill added!",
     "skillRemoved": "Skill removed",
     "failedToAddSkill": "Failed to add skill",
-    "failedToRemoveSkill": "Failed to remove skill"
+    "failedToRemoveSkill": "Failed to remove skill",
+    "onboardingProfileTitle": "Onboarding Step: Complete Your Profile",
+    "onboardingProfileDesc": "Please fill in your public display name, upload a profile photo, and write a short bio about yourself. Once completed, click Save Changes below to proceed to the next step.",
+    "onboardingProfileIncompleteToast": "Profile updated! Please complete all fields (display name, photo, and bio) to proceed to the onboarding step.",
+    "onboardingSkillsTitle": "Onboarding Step: Manage Your Skills",
+    "onboardingSkillsDesc": "To start matching, add at least one skill you can teach (under Skills I Offer) and one skill you want to learn (under Skills I Seek).",
+    "onboardingSkillsCompleteTitle": "Skills Setup Complete!",
+    "onboardingSkillsCompleteDesc": "You've added both offering and seeking skills. You're ready to find matches and trade skills!",
+    "continueToDashboard": "Continue to Dashboard"
   },
   "review": {
     "title": "Rate Your Experience",
@@ -606,7 +614,8 @@
     "copyCode": "Copy Code",
     "copied": "Copied!",
     "shareTitle": "Share & Earn",
-    "shareDesc": "Share your code with friends. You both earn {reward} points when they complete their first exchange.",
+    "points_count": "{count, plural, =1 {1 Point} other {# Points}}",
+    "shareDesc": "Share your code with friends. You both earn {reward} when they complete their first exchange.",
     "stats": "Referral Stats",
     "totalReferred": "Total Referred",
     "converted": "Converted",
@@ -711,6 +720,17 @@
     "doneItem2": "Add a skill you can offer",
     "doneItem3": "Add a skill you want to learn",
     "doneItem4": "Find your first match",
-    "doneCtaLabel": "Go to Dashboard"
+    "doneCtaLabel": "Find Matches"
+  },
+  "userProfile": {
+    "title": "User Profile",
+    "backToMatches": "Back to Matches",
+    "canTeach": "Can Teach",
+    "wantsToLearn": "Wants to Learn",
+    "noOffering": "This user hasn't listed any skills they can offer yet.",
+    "noSeeking": "This user hasn't listed any skills they want to learn yet.",
+    "requestExchange": "Request Exchange",
+    "viewProfile": "View Profile",
+    "pointsBalance": "Points Balance"
   }
 }

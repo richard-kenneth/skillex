@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, ArrowRightLeft } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { RequestDialog } from "./request-dialog";
 
 interface Category {
@@ -92,7 +93,11 @@ export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }:
 
         <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-4">
-            <Avatar className="h-14 w-14 border-2 border-border/50 group-hover:border-primary/30 transition-colors">
+            <Avatar
+              previewable
+              src={user.image ?? ""}
+              className="h-14 w-14 border-2 border-border/50 group-hover:border-primary/30 transition-colors"
+            >
               <AvatarImage src={user.image ?? ""} alt={user.name ?? t("anonymous")} />
               <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
                 {user.name?.charAt(0) ?? "U"}
@@ -100,7 +105,9 @@ export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }:
             </Avatar>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-lg truncate">
-                {user.name ?? t("anonymous")}
+                <Link href={`/users/${user.id}`} className="hover:underline hover:text-primary transition-colors">
+                  {user.name ?? t("anonymous")}
+                </Link>
               </h3>
               {user.bio && (
                 <p className="text-sm text-muted-foreground line-clamp-2 mt-0.5">

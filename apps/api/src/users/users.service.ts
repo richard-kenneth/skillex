@@ -18,7 +18,13 @@ export class UsersService {
       where: { id: userId },
       include: {
         skills: {
-          include: { skill: true },
+          include: {
+            skill: {
+              include: {
+                category: true,
+              },
+            },
+          },
         },
       },
     });

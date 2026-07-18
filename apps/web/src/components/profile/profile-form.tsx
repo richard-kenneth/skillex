@@ -24,11 +24,13 @@ import { useR2Upload } from "@/hooks/use-r2-upload";
 import { authClient, useSession } from "@/lib/auth-client";
 import { valibotResolver } from "@hookform/resolvers/valibot";
 import { ProfileFormPayload, ProfileFormSchema } from "@skil-ex2/shared";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, User, Award, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { SkillManager } from "./skill-manager";
 
 interface ProfileFormProps {
@@ -47,6 +49,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const { refetch } = useSession();
   const t = useTranslations("profile");
   const tCommon = useTranslations("common");
+  const searchParams = useSearchParams();
+  const step = searchParams.get("step");
+  const router = useRouter();
 
   const form = useForm({
     resolver: valibotResolver(ProfileFormSchema),
@@ -80,7 +85,20 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       if (!response.ok) throw new Error(t("failedUpdateBio"));
 
+      const isProfileCompleteNow = !!(
+        values.name?.trim() &&
+        values.bio?.trim() &&
+        values.image?.trim()
+      );
+
       toast.success(t("profileUpdated"));
+      if (step === "profile") {
+        if (isProfileCompleteNow) {
+          router.push("/dashboard/profile?step=skills");
+        } else {
+          toast.info(t("onboardingProfileIncompleteToast"));
+        }
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : tCommon("error");
@@ -116,7 +134,11 @@ export function ProfileForm({ user }: ProfileFormProps) {
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden border-none shadow-lg">
         <CardHeader className="bg-primary/5 pb-8">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <Avatar className="h-24 w-24 border-4 border-background shadow-xl ring-2 ring-primary/20 transition-transform hover:scale-105">
+            <Avatar
+              previewable
+              src={avatarUrl ?? ""}
+              className="h-24 w-24 border-4 border-background shadow-xl ring-2 ring-primary/20 transition-transform hover:scale-105"
+            >
               <AvatarImage
                 src={avatarUrl ?? ""}
                 alt={t("avatarAlt", { name: displayName })}
@@ -136,6 +158,19 @@ export function ProfileForm({ user }: ProfileFormProps) {
           </div>
         </CardHeader>
         <CardContent className="pt-6">
+          {step === "profile" && (
+            <div className="p-4 mb-6 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-start gap-3 animate-in slide-in-from-top-2 duration-300">
+              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500 flex-shrink-0">
+                <User className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-semibold text-sm text-blue-500">{t("onboardingProfileTitle")}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {t("onboardingProfileDesc")}
+                </p>
+              </div>
+            </div>
+          )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -563,7 +563,15 @@
     "skillAdded": "¡Habilidad agregada!",
     "skillRemoved": "Habilidad eliminada",
     "failedToAddSkill": "Error al agregar habilidad",
-    "failedToRemoveSkill": "Error al eliminar habilidad"
+    "failedToRemoveSkill": "Error al eliminar habilidad",
+    "onboardingProfileTitle": "Paso de incorporación: completa tu perfil",
+    "onboardingProfileDesc": "Por favor, ingresa tu nombre de usuario, sube una foto de perfil y escribe una breve biografía sobre ti. Una vez completado, haz clic en Guardar cambios abajo para proceder al siguiente paso.",
+    "onboardingProfileIncompleteToast": "¡Perfil actualizado! Por favor completa todos los campos (nombre, foto y biografía) para continuar con la incorporación.",
+    "onboardingSkillsTitle": "Paso de incorporación: administra tus habilidades",
+    "onboardingSkillsDesc": "Para comenzar a coincidir, agrega al menos una habilidad que puedas enseñar (bajo Habilidades que ofrezco) y una habilidad que quieras aprender (bajo Habilidades que busco).",
+    "onboardingSkillsCompleteTitle": "¡Configuración de habilidades completa!",
+    "onboardingSkillsCompleteDesc": "Has agregado habilidades para ofrecer y buscar. ¡Ya estás listo para encontrar coincidencias!",
+    "continueToDashboard": "Continuar al panel de control"
   },
   "review": {
     "title": "Califica tu experiencia",
@@ -608,7 +616,8 @@
     "copyCode": "Copiar Código",
     "copied": "¡Copiado!",
     "shareTitle": "Comparte y Gana",
-    "shareDesc": "Comparte tu código con amigos. Ambos ganarán {reward} puntos cuando completen su primer intercambio.",
+    "points_count": "{count, plural, =1 {1 Punto} other {# Puntos}}",
+    "shareDesc": "Comparte tu código con amigos. Ambos ganarán {reward} cuando completen su primer intercambio.",
     "stats": "Estadísticas de Referidos",
     "totalReferred": "Total Referidos",
     "converted": "Convertidos",
@@ -713,6 +722,17 @@
     "doneItem2": "Agrega una habilidad que puedas ofrecer",
     "doneItem3": "Agrega una habilidad que quieras aprender",
     "doneItem4": "Encuentra tu primera coincidencia",
-    "doneCtaLabel": "Ir al panel de control"
+    "doneCtaLabel": "Buscar coincidencias"
+  },
+  "userProfile": {
+    "title": "Perfil de usuario",
+    "backToMatches": "Volver a coincidencias",
+    "canTeach": "Puede enseñar",
+    "wantsToLearn": "Quiere aprender",
+    "noOffering": "Este usuario no ha listado habilidades para ofrecer aún.",
+    "noSeeking": "Este usuario no ha listado habilidades que quiere aprender aún.",
+    "requestExchange": "Solicitar intercambio",
+    "viewProfile": "Ver perfil",
+    "pointsBalance": "Balance de puntos"
   }
 }

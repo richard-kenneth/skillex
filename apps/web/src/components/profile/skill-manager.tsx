@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, X, Search, Award, Briefcase, GraduationCap } from "lucide-react";
+import { Plus, X, Search, Award, Briefcase, GraduationCap, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { useSession } from "@/lib/auth-client";
 
 interface Skill {
   id: string;
@@ -38,6 +41,11 @@ export function SkillManager({}: SkillManagerProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<"OFFERING" | "SEEKING">("OFFERING");
   const t = useTranslations("profile");
+  const searchParams = useSearchParams();
+  const step = searchParams.get("step");
+  const router = useRouter();
+  const { data: sessionData } = useSession();
+  const sessionToken = sessionData?.session?.token;
 
   const fetchUserSkills = useCallback(async () => {
     try {
@@ -143,6 +151,50 @@ export function SkillManager({}: SkillManagerProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {step === "skills" && (
+          <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-300 ${
+            offeringSkills.length > 0 && seekingSkills.length > 0
+              ? "border-green-500/20 bg-green-500/5 text-green-500"
+              : "border-amber-500/20 bg-amber-500/5 text-amber-500"
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className={`p-2 rounded-lg flex-shrink-0 ${
+                offeringSkills.length > 0 && seekingSkills.length > 0
+                  ? "bg-green-500/10 text-green-500"
+                  : "bg-amber-500/10 text-amber-500"
+              }`}>
+                {offeringSkills.length > 0 && seekingSkills.length > 0 ? (
+                  <CheckCircle2 className="h-5 w-5" />
+                ) : (
+                  <Award className="h-5 w-5" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <p className="font-semibold text-sm">
+                  {offeringSkills.length > 0 && seekingSkills.length > 0
+                    ? t("onboardingSkillsCompleteTitle")
+                    : t("onboardingSkillsTitle")}
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed font-normal">
+                  {offeringSkills.length > 0 && seekingSkills.length > 0
+                    ? t("onboardingSkillsCompleteDesc")
+                    : t("onboardingSkillsDesc")}
+                </p>
+              </div>
+            </div>
+            {offeringSkills.length > 0 && seekingSkills.length > 0 && (
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-500 text-white font-medium shadow-md w-full sm:w-auto"
+                onClick={() => {
+                  router.push("/dashboard");
+                }}
+              >
+                {t("continueToDashboard")}
+              </Button>
+            )}
+          </div>
+        )}
         <div className="flex p-1 bg-muted/50 rounded-lg w-fit">
           <Button
             variant={activeTab === "OFFERING" ? "default" : "ghost"}
