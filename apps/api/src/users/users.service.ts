@@ -26,6 +26,20 @@ export class UsersService {
             },
           },
         },
+        receivedReviews: {
+          include: {
+            reviewer: {
+              select: { id: true, name: true, image: true },
+            },
+            exchange: {
+              include: {
+                taughtSkill: true,
+                receivedSkill: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
       },
     });
   }

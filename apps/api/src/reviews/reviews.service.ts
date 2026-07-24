@@ -67,4 +67,33 @@ export class ReviewsService {
 
     return review;
   }
+
+  async getReviewsForUser(userId: string) {
+    return this.prisma.review.findMany({
+      where: { revieweeId: userId },
+      include: {
+        reviewer: {
+          select: { id: true, name: true, image: true },
+        },
+        exchange: {
+          include: {
+            taughtSkill: true,
+            receivedSkill: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getReviewsForExchange(exchangeId: string) {
+    return this.prisma.review.findMany({
+      where: { exchangeId },
+      include: {
+        reviewer: {
+          select: { id: true, name: true, image: true },
+        },
+      },
+    });
+  }
 }

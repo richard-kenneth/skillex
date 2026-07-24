@@ -83,6 +83,7 @@
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "profile": "Profile",
+    "reviews": "Reviews",
     "signOut": "Sign Out"
   },
   "localeSwitcher": {
@@ -196,7 +197,7 @@
     "skillsShared": "Skills Shared",
     "acrossCategories": "Across 0 categories",
     "averageRating": "Average Rating",
-    "basedOnReviews": "Based on 0 reviews",
+    "basedOnReviews": "Based on {count} {count, plural, =1 {review} other {reviews}}",
     "totalImpact": "Total Impact",
     "communityScore": "Community score",
     "fromLastWeek": "+0 from last week",
@@ -589,7 +590,8 @@
     "submitting": "Submitting...",
     "later": "Later",
     "submitReview": "Submit Review",
-    "reviewSubmitted": "Review submitted successfully!"
+    "reviewSubmitted": "Review submitted successfully!",
+    "failedSubmitReview": "Failed to submit review. Please try again."
   },
   "days": {
     "sunday": "Sunday",

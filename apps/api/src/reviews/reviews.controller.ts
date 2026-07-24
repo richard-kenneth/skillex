@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Get,
+  Param,
   Post,
   Req,
   UseGuards,
@@ -24,5 +26,21 @@ export class ReviewsController {
     @Body() data: CreateReviewDto,
   ) {
     return this.reviewsService.createReview(req.user.id, data);
+  }
+
+  @Get('user/:userId')
+  @UseGuards(BetterAuthGuard)
+  getReviewsForUser(
+    @Req() req: Request & { user: { id: string } },
+    @Param('userId') userId: string,
+  ) {
+    const targetUserId = userId === 'me' ? req.user.id : userId;
+    return this.reviewsService.getReviewsForUser(targetUserId);
+  }
+
+  @Get('exchange/:exchangeId')
+  @UseGuards(BetterAuthGuard)
+  getReviewsForExchange(@Param('exchangeId') exchangeId: string) {
+    return this.reviewsService.getReviewsForExchange(exchangeId);
   }
 }

@@ -56,6 +56,18 @@ export default async function DashboardPage() {
     (s: { type: string }) => s.type === "SEEKING",
   );
 
+  const userReviews = fullUser.receivedReviews || [];
+  const userReviewsCount = userReviews.length;
+  const avgRating =
+    userReviewsCount > 0
+      ? (
+          userReviews.reduce(
+            (sum: number, r: { rating: number }) => sum + r.rating,
+            0,
+          ) / userReviewsCount
+        ).toFixed(1)
+      : "0.0";
+
   // ── Onboarding completion flags (server-derived, cross-device by design) ──
   const hasCompletedProfile = !!(fullUser.name && fullUser.bio && fullUser.image);
   const hasOfferingSkills = offeringSkills.length > 0;
@@ -138,9 +150,9 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0.0</div>
+            <div className="text-2xl font-bold">{avgRating}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {t("basedOnReviews")}
+              {t("basedOnReviews", { count: userReviewsCount })}
             </p>
           </CardContent>
         </Card>

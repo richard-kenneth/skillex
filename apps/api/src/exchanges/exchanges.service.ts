@@ -984,6 +984,7 @@ export class ExchangesService {
           },
         },
         request: true,
+        reviews: true,
       },
     });
 

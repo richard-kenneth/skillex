@@ -89,6 +89,7 @@
     "signIn": "Connexion",
     "signUp": "Inscription",
     "profile": "Profil",
+    "reviews": "Avis",
     "signOut": "Déconnexion"
   },
   "localeSwitcher": {
@@ -202,7 +203,7 @@
     "skillsShared": "Compétences partagées",
     "acrossCategories": "Dans 0 catégories",
     "averageRating": "Note moyenne",
-    "basedOnReviews": "Basé sur 0 avis",
+    "basedOnReviews": "Basé sur {count} {count, plural, =1 {avis} other {avis}}",
     "totalImpact": "Impact total",
     "communityScore": "Score de la communauté",
     "fromLastWeek": "+0 depuis la semaine dernière",
@@ -596,7 +597,8 @@
     "submitting": "Envoi en cours...",
     "later": "Plus tard",
     "submitReview": "Soumettre l'avis",
-    "reviewSubmitted": "Avis soumis avec succès !"
+    "reviewSubmitted": "Avis soumis avec succès !",
+    "failedSubmitReview": "Échec de l'envoi de l'avis. Veuillez réessayer."
   },
   "days": {
     "sunday": "Dimanche",

@@ -89,6 +89,7 @@
     "signIn": "Entrar",
     "signUp": "Cadastrar",
     "profile": "Perfil",
+    "reviews": "Avaliações",
     "signOut": "Sair"
   },
   "localeSwitcher": {
@@ -202,7 +203,7 @@
     "skillsShared": "Habilidades compartilhadas",
     "acrossCategories": "Em 0 categorias",
     "averageRating": "Avaliação média",
-    "basedOnReviews": "Baseado em 0 avaliações",
+    "basedOnReviews": "Baseado em {count} {count, plural, =1 {avaliação} other {avaliações}}",
     "totalImpact": "Impacto total",
     "communityScore": "Pontuação da comunidade",
     "fromLastWeek": "+0 desde a semana passada",
@@ -596,6 +597,7 @@
     "submitting": "Enviando...",
     "submitReview": "Enviar avaliação",
     "reviewSubmitted": "Avaliação enviada!",
+    "failedSubmitReview": "Falha ao enviar avaliação. Tente novamente.",
     "starsOutOf5": "{rating} de 5 estrelas",
     "later": "Depois"
   },

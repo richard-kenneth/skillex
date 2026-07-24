@@ -115,6 +115,7 @@ export default function ExchangeDetails({
     sender: { id: string; name: string; image: string | null };
     receiver: { id: string; name: string; image: string | null };
     sessions: ExchangeSession[];
+    reviews?: { id: string; reviewerId: string }[];
   };
   currentUser: { id: string; name: string; image: string | null };
 }) {
@@ -127,6 +128,8 @@ export default function ExchangeDetails({
   const [rating, setRating] = useState(5);
   const [updating, setUpdating] = useState<string | null>(null);
   const [showPointsBreakdown, setShowPointsBreakdown] = useState(false);
+
+  const hasReviewed = exchange.reviews?.some((r) => r.reviewerId === currentUser.id);
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -310,7 +313,7 @@ export default function ExchangeDetails({
   const submitReview = async () => {
     try {
       setUpdating("review");
-      await fetch(`${API}/reviews`, {
+      const res = await fetch(`${API}/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -322,11 +325,16 @@ export default function ExchangeDetails({
         }),
       });
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.message || tr("failedSubmitReview"));
+      }
+
       toast.success(tr("reviewSubmitted"));
       setIsReviewModalOpen(false);
       router.refresh();
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : t("failedUpdateSession");
+      const message = e instanceof Error ? e.message : tc("errorOccurred");
       toast.error(message);
     } finally {
       setUpdating(null);
@@ -737,11 +745,13 @@ export default function ExchangeDetails({
                 {exchange.status === "COMPLETED" && (
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant={hasReviewed ? "secondary" : "outline"}
                     className="mt-2 w-full gap-2"
-                    onClick={() => setIsReviewModalOpen(true)}
+                    onClick={() => !hasReviewed && setIsReviewModalOpen(true)}
+                    disabled={hasReviewed}
                   >
-                    <Star className="h-4 w-4" /> {t("leaveReview")}
+                    <Star className={`h-4 w-4 ${hasReviewed ? "fill-amber-400 text-amber-400" : ""}`} />
+                    {hasReviewed ? tr("reviewSubmitted") : t("leaveReview")}
                   </Button>
                 )}
               </CardContent>

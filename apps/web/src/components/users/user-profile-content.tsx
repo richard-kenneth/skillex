@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowRightLeft, Sparkles, Coins } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, Sparkles, Coins, Star } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -29,6 +29,22 @@ interface UserSkill {
   };
 }
 
+interface ReviewItem {
+  id: string;
+  rating: number;
+  tags: string[];
+  createdAt: string;
+  reviewer: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+  exchange?: {
+    taughtSkill?: { name: string };
+    receivedSkill?: { name: string } | null;
+  };
+}
+
 interface MatchUser {
   id: string;
   name: string | null;
@@ -36,6 +52,7 @@ interface MatchUser {
   image: string | null;
   skills: UserSkill[];
   pointsBalance?: number;
+  receivedReviews?: ReviewItem[];
 }
 
 interface UserProfileContentProps {
@@ -91,6 +108,15 @@ export function UserProfileContent({
     </a>
   );
 
+  const tr = useTranslations("review");
+
+  const reviews = user.receivedReviews || [];
+  const reviewsCount = reviews.length;
+  const avgRating =
+    reviewsCount > 0
+      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount).toFixed(1)
+      : null;
+
   return (
     <div className="container py-8 max-w-4xl mx-auto px-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Back navigation */}
@@ -126,8 +152,17 @@ export function UserProfileContent({
                 <h1 className="text-3xl font-extrabold tracking-tight">
                   {user.name ?? tMatches("anonymous")}
                 </h1>
+                {avgRating && (
+                  <div className="flex items-center justify-center md:justify-start gap-1.5 text-xs text-amber-400 font-semibold">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    <span>{avgRating}</span>
+                    <span className="text-muted-foreground font-normal">
+                      ({reviewsCount} {reviewsCount === 1 ? "review" : "reviews"})
+                    </span>
+                  </div>
+                )}
                 {user.bio && (
-                  <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
+                  <p className="text-muted-foreground max-w-xl text-sm leading-relaxed mt-1">
                     {user.bio}
                   </p>
                 )}
@@ -222,6 +257,64 @@ export function UserProfileContent({
             </div>
           </div>
         </CardContent>
+      </Card>
+
+      {/* Reviews Card */}
+      <Card className="border-border/50 bg-card/40 backdrop-blur-sm p-6 space-y-4">
+        <h2 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
+          <Star className="h-5 w-5 text-amber-400 fill-amber-400" />
+          Reviews ({reviewsCount})
+        </h2>
+        {reviews.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {reviews.map((rev) => (
+              <div
+                key={rev.id}
+                className="p-4 rounded-xl border border-border/40 bg-muted/20 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={rev.reviewer.image || ""} />
+                      <AvatarFallback className="text-xs font-bold">
+                        {rev.reviewer.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-xs font-medium">{rev.reviewer.name || tMatches("anonymous")}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {new Date(rev.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-0.5 text-amber-400">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-3.5 w-3.5 ${
+                          rev.rating >= star ? "fill-amber-400" : "text-zinc-700 fill-none"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {rev.tags && rev.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {rev.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-[10px] px-2 py-0.5">
+                        {tag.replace(/_/g, " ")}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground italic">
+            No reviews yet for this user.
+          </p>
+        )}
       </Card>
 
       {!isMe && (

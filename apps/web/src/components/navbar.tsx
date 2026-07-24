@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LayoutDashboard, LogOut, Code, User, Menu } from "lucide-react";
+import { LayoutDashboard, LogOut, Code, User, Menu, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -106,6 +106,12 @@ export function Navbar() {
                       <Link href="/dashboard/profile" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
                         <User className="h-4 w-4" />
                         <span>{t("profile")}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="p-0">
+                      <Link href="/reviews" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
+                        <Star className="h-4 w-4 text-amber-400" />
+                        <span>{t("reviews")}</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-zinc-800" />
