@@ -2,7 +2,9 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "lib": ["esnext"],
+    "lib": [
+      "esnext"
+    ],
     "allowJs": true,
     "jsx": "react-native",
     "noEmit": true,
@@ -15,9 +17,15 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/assets/*": ["./assets/*"],
-      "@skil-ex2/shared": ["../../packages/shared/index.ts"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/assets/*": [
+        "./assets/*"
+      ],
+      "@skil-ex2/shared": [
+        "../../packages/shared/index.ts"
+      ]
     }
   },
   "include": [
@@ -26,6 +34,9 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "lib/**/*.ts",
-    "lib/**/*.tsx"
-  ]
+    "lib/**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "extends": "expo/tsconfig.base"
 }
