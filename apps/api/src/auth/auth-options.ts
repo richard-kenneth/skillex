@@ -4,7 +4,7 @@ import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { Resend } from 'resend';
 import { PrismaClient } from '../generated/prisma/client';
 import { expo } from '@better-auth/expo';
-import { bearer } from 'better-auth/plugins';
+import { bearer, emailOTP } from 'better-auth/plugins';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -13,7 +13,58 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
     provider: 'postgresql',
   }),
   experimental: { joins: true },
-  plugins: [expo(), bearer()],
+  plugins: [
+    expo(),
+    bearer(),
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        const fromEmail =
+          process.env.ONBOARDING_EMAIL_FROM || 'onboarding@richardkenneth.com';
+
+        if (type === 'email-verification') {
+          await resend.emails.send({
+            from: fromEmail,
+            to: email,
+            subject: 'Verify your email address',
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h2 style="color: #1a202c; margin-bottom: 16px;">Welcome to SkilEx!</h2>
+                <p style="color: #4a5568; line-height: 1.6; margin-bottom: 24px;">
+                  Please verify your email address using the code below. This code will expire in 10 minutes.
+                </p>
+                <div style="background-color: #f7fafc; border: 2px dashed #3182ce; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
+                  <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #3182ce;">${otp}</span>
+                </div>
+                <p style="color: #718096; font-size: 14px; margin-top: 32px;">
+                  If you didn't create an account, you can safely ignore this email.
+                </p>
+              </div>
+            `,
+          });
+        } else if (type === 'forget-password') {
+          await resend.emails.send({
+            from: fromEmail,
+            to: email,
+            subject: 'Reset your password',
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h2 style="color: #1a202c; margin-bottom: 16px;">Reset your password</h2>
+                <p style="color: #4a5568; line-height: 1.6; margin-bottom: 24px;">
+                  You requested to reset your password. Use the code below to proceed. This code will expire in 10 minutes.
+                </p>
+                <div style="background-color: #f7fafc; border: 2px dashed #3182ce; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
+                  <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #3182ce;">${otp}</span>
+                </div>
+                <p style="color: #718096; font-size: 14px; margin-top: 32px;">
+                  If you didn't request a password reset, you can safely ignore this email.
+                </p>
+              </div>
+            `,
+          });
+        }
+      },
+    }),
+  ],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       // 1. Listen specifically for the update user endpoint
