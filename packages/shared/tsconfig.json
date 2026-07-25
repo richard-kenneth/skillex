@@ -1,13 +1,17 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "target": "ES2023",
     "skipLibCheck": true,
     "strict": true,
     "esModuleInterop": true,
     "declaration": true,
-    "outDir": "./dist"
+    "declarationMap": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "sourceMap": false
   },
-  "include": ["src/**/*", "index.ts"]
+  "include": ["src/**/*", "index.ts"],
+  "exclude": ["dist", "node_modules"]
 }

@@ -92,7 +92,7 @@ import {
   Zap,
 } from 'lucide-react-native';
 import { cn } from '@/lib/style-utils';
-
+// import { LiveKitRoom, useRoomContext, useParticipants, useDataChannel } from "@livekit/react-native";
 /*
  * ─── LiveKit integration note ─────────────────────────────────────────
  * When ready, install the native package:
@@ -471,6 +471,13 @@ export default function RoomScreen() {
             />
 
             {tab === 'room' ? (
+              // <LiveKitRoom
+              //   token={token}
+              //   serverUrl={serverUrl}
+              //   audio={audioOn}
+              //   video={videoOn}
+              //   onDisconnected={handleLeave}
+              // >
               <RoomBody
                 audioOn={audioOn}
                 videoOn={videoOn}
@@ -479,6 +486,7 @@ export default function RoomScreen() {
                 me={currentUser}
                 onLeave={() => handleLeave(true)}
               />
+              // </LiveKitRoom>
             ) : (
               <ChatBody
                 messages={(chatMsgsQ.data ?? []) as any[]}

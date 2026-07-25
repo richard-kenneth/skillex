@@ -101,7 +101,7 @@ export default function VerifyEmailScreen() {
         <Text style={styles.label}>Verification Code</Text>
         <TextInput
           style={styles.otpInput}
-          placeholder="000000"
+          placeholder="******"
           placeholderTextColor="#666"
           value={otp}
           onChangeText={setOtp}

@@ -31,6 +31,7 @@ import type {
   SendMessageDto,
   WithdrawPointsDto,
 } from "../schemas";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 export interface CreateApiHooksOptions {
   client: ApiClient;
@@ -59,7 +60,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useCurrentUser<T = any>(
     options?: Omit<UseQueryOptions<T, Error, T>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<T, Error>({
       queryKey: QUERY_KEYS.users.me,
       queryFn: () => client.users.me(),
@@ -71,7 +71,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     id: string,
     options?: Omit<UseQueryOptions<T, Error, T>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<T, Error>({
       queryKey: QUERY_KEYS.users.byId(id),
       queryFn: () => client.users.byId(id),
@@ -86,7 +85,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<any, Error, UpdateProfileDto>({
       mutationFn: (payload) => client.users.updateProfile(payload),
       onSuccess: (...args) => {
@@ -100,7 +98,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useUploadImage(
     options?: Omit<UseMutationOptions<any, Error, FormData>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<any, Error, FormData>({
       mutationFn: (fd) => client.users.uploadImage(fd),
       onSuccess: (...args) => {
@@ -118,7 +115,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     params?: { search?: string; categoryId?: string },
     options?: Omit<UseQueryOptions<Skill[], Error, Skill[]>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<Skill[], Error>({
       queryKey: [QUERY_KEYS.skills.list, params?.search, params?.categoryId],
       queryFn: () => client.skills.list(params?.search, params?.categoryId),
@@ -132,7 +128,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "queryKey" | "queryFn"
     >
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<SkillCategory[], Error>({
       queryKey: QUERY_KEYS.skills.categories,
       queryFn: () => client.skills.categories(),
@@ -150,7 +145,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<UserSkill, Error, any>({
       mutationFn: (payload) => client.skills.addUserSkill(payload),
       onSuccess: (...args) => {
@@ -164,7 +158,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useRemoveUserSkill(
     options?: Omit<UseMutationOptions<void, Error, string>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, string>({
       mutationFn: (id) => client.skills.removeUserSkill(id),
       onSuccess: (...args) => {
@@ -181,7 +174,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useExchanges(
     options?: Omit<UseQueryOptions<Exchange[], Error, Exchange[]>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<Exchange[], Error>({
       queryKey: QUERY_KEYS.exchanges.list,
       queryFn: () => client.exchanges.list(),
@@ -193,7 +185,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     id: string,
     options?: Omit<UseQueryOptions<Exchange, Error, Exchange>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<Exchange, Error>({
       queryKey: QUERY_KEYS.exchanges.byId(id),
       queryFn: () => client.exchanges.byId(id),
@@ -208,7 +199,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "queryKey" | "queryFn"
     >
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<MatchesResponse, Error>({
       queryKey: QUERY_KEYS.exchanges.matches,
       queryFn: () => client.exchanges.matches(),
@@ -222,7 +212,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "queryKey" | "queryFn"
     >
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<any[], Error>({
       queryKey: QUERY_KEYS.exchanges.requests,
       queryFn: () => client.exchanges.requests(),
@@ -234,7 +223,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     id: string,
     options?: Omit<UseQueryOptions<any, Error, any>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<any, Error>({
       queryKey: QUERY_KEYS.exchanges.requestById(id),
       queryFn: () => client.exchanges.requestById(id),
@@ -249,7 +237,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<any, Error, CreateExchangeRequestPayload>({
       mutationFn: (p) => client.exchanges.createRequest(p),
       onSuccess: (...args) => {
@@ -264,7 +251,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useAcceptRequest(
     options?: Omit<UseMutationOptions<Exchange, Error, string>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<Exchange, Error, string>({
       mutationFn: (id) => client.exchanges.acceptRequest(id),
       onSuccess: (...args) => {
@@ -279,7 +265,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useRejectRequest(
     options?: Omit<UseMutationOptions<void, Error, string>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, string>({
       mutationFn: (id) => client.exchanges.rejectRequest(id),
       onSuccess: (...args) => {
@@ -293,7 +278,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useCancelRequest(
     options?: Omit<UseMutationOptions<void, Error, string>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, string>({
       mutationFn: (id) => client.exchanges.cancelRequest(id),
       onSuccess: (...args) => {
@@ -310,7 +294,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, { requestId: string; payload: SendMessageDto }>({
       mutationFn: ({ requestId, payload }) =>
         client.exchanges.sendMessage(requestId, payload),
@@ -325,7 +308,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useProposeSlots(
     options?: Omit<UseMutationOptions<void, Error, ProposeSlotsDto>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, ProposeSlotsDto>({
       mutationFn: (p) => client.exchanges.proposeSlots(p),
       ...options,
@@ -335,7 +317,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useMarkExchangeComplete(
     options?: Omit<UseMutationOptions<void, Error, string>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, string>({
       mutationFn: (id) => client.exchanges.markComplete(id),
       onSuccess: (...args) => {
@@ -352,7 +333,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function usePointsBalance(
     options?: Omit<UseQueryOptions<number, Error, number>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<number, Error>({
       queryKey: QUERY_KEYS.points.balance,
       queryFn: () => client.points.balance() as Promise<number>,
@@ -366,7 +346,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "queryKey" | "queryFn"
     >
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<PointsTransaction[], Error>({
       queryKey: QUERY_KEYS.points.transactions,
       queryFn: () => client.points.transactions(),
@@ -377,7 +356,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useBanks(
     options?: Omit<UseQueryOptions<Bank[], Error, Bank[]>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<Bank[], Error>({
       queryKey: QUERY_KEYS.points.banks,
       queryFn: () => client.points.banks(),
@@ -388,7 +366,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useFeeConfig(
     options?: Omit<UseQueryOptions<FeeConfig, Error, FeeConfig>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<FeeConfig, Error>({
       queryKey: QUERY_KEYS.points.feeConfig,
       queryFn: () => client.points.feeConfig(),
@@ -402,7 +379,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "queryKey" | "queryFn"
     >
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<Record<string, number>, Error>({
       queryKey: QUERY_KEYS.points.rates,
       queryFn: () => client.points.rates(),
@@ -416,7 +392,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<any, Error, PurchasePointsDto>({
       mutationFn: (p) => client.points.purchase(p),
       ...options,
@@ -429,7 +404,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, WithdrawPointsDto>({
       mutationFn: (p) => client.points.withdraw(p),
       onSuccess: (...args) => {
@@ -447,7 +421,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<any, Error, { accountNumber: string; bankCode: string }>({
       mutationFn: (p) => client.points.resolveAccount(p),
       ...options,
@@ -463,7 +436,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "queryKey" | "queryFn"
     >
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<Notification[], Error>({
       queryKey: QUERY_KEYS.notifications.list,
       queryFn: () => client.notifications.list(),
@@ -474,7 +446,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useMarkNotificationRead(
     options?: Omit<UseMutationOptions<void, Error, string>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, string>({
       mutationFn: (id) => client.notifications.markRead(id),
       onSuccess: (...args) => {
@@ -489,7 +460,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useMarkAllNotificationsRead(
     options?: Omit<UseMutationOptions<void, Error, void>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, void>({
       mutationFn: () => client.notifications.markAllRead(),
       onSuccess: (...args) => {
@@ -504,7 +474,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useDeleteNotification(
     options?: Omit<UseMutationOptions<void, Error, string>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, string>({
       mutationFn: (id) => client.notifications.delete(id),
       onSuccess: (...args) => {
@@ -522,7 +491,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "queryKey" | "queryFn"
     >
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<NotificationPreferences, Error>({
       queryKey: QUERY_KEYS.notifications.preferences,
       queryFn: () => client.notifications.preferences(),
@@ -536,7 +504,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<NotificationPreferences, Error, Partial<NotificationPreferences>>({
       mutationFn: (p) => client.notifications.updatePreferences(p),
       onSuccess: (...args) => {
@@ -553,7 +520,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useMyReviews(
     options?: Omit<UseQueryOptions<Review[], Error, Review[]>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<Review[], Error>({
       queryKey: QUERY_KEYS.reviews.mine,
       queryFn: () => client.reviews.mine(),
@@ -565,7 +531,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     userId: string,
     options?: Omit<UseQueryOptions<Review[], Error, Review[]>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<Review[], Error>({
       queryKey: QUERY_KEYS.reviews.byUserId(userId),
       queryFn: () => client.reviews.byUserId(userId),
@@ -580,7 +545,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<Review, Error, CreateReviewPayload>({
       mutationFn: (p) => client.reviews.create(p),
       onSuccess: (...args) => {
@@ -598,7 +562,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useReferralTracking(
     options?: Omit<UseQueryOptions<any, Error, any>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<any, Error>({
       queryKey: QUERY_KEYS.referrals.tracking,
       queryFn: () => client.referrals.tracking(),
@@ -609,7 +572,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useApplyReferralCode(
     options?: Omit<UseMutationOptions<void, Error, string>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, string>({
       mutationFn: (code) => client.referrals.apply(code),
       onSuccess: (...args) => {
@@ -628,7 +590,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     roomId: string,
     options?: Omit<UseQueryOptions<any, Error, any>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<any, Error>({
       queryKey: QUERY_KEYS.video.session(roomId),
       queryFn: () => client.video.sessionDetails(roomId),
@@ -641,7 +602,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     room: string,
     options?: Omit<UseQueryOptions<any, Error, any>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<any, Error>({
       queryKey: QUERY_KEYS.video.token(room),
       queryFn: () => client.video.token(room),
@@ -654,7 +614,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     room: string,
     options?: Omit<UseQueryOptions<RecordingEstimate, Error, RecordingEstimate>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<RecordingEstimate, Error>({
       queryKey: QUERY_KEYS.video.estimate(room),
       queryFn: () => client.video.record.estimate(room),
@@ -669,7 +628,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, RecordingConsentPayload>({
       mutationFn: (p) => client.video.record.consent(p),
       ...options,
@@ -682,7 +640,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<{ approvedMinutes?: number }, Error, StartRecordingPayload>({
       mutationFn: (p) => client.video.record.start(p),
       ...options,
@@ -692,7 +649,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useStopRecording(
     options?: Omit<UseMutationOptions<void, Error, StopRecordingPayload>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, StopRecordingPayload>({
       mutationFn: (p) => client.video.record.stop(p),
       onSuccess: (...args) => {
@@ -708,7 +664,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     exchangeSessionId: string,
     options?: Omit<UseQueryOptions<any, Error, any>, "queryKey" | "queryFn">
   ) {
-    const { useQuery } = require("@tanstack/react-query");
     return useQuery<any, Error>({
       queryKey: QUERY_KEYS.video.chat(exchangeSessionId),
       queryFn: () => client.video.chat.list(exchangeSessionId),
@@ -723,7 +678,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       "mutationFn"
     >
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<any, Error, { exchangeSessionId: string; message: string }>({
       mutationFn: ({ exchangeSessionId, message }) =>
         client.video.chat.send(exchangeSessionId, message),
@@ -741,7 +695,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   function useMarkSessionChatRead(
     options?: Omit<UseMutationOptions<void, Error, string>, "mutationFn">
   ) {
-    const { useMutation } = require("@tanstack/react-query");
     return useMutation<void, Error, string>({
       mutationFn: (exchangeSessionId) =>
         client.video.chat.read(exchangeSessionId),

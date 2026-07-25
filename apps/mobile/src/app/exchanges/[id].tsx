@@ -52,7 +52,7 @@ import {
   calculateAverageRating,
 } from '@skil-ex2/shared';
 import * as v from 'valibot';
-import { CreateReviewSchema } from '@skil-ex2/shared/dist/schemas/exchange.schema.js';
+import { CreateReviewSchema } from '@skil-ex2/shared';
 import {
   ArrowLeft,
   ArrowRightLeft,

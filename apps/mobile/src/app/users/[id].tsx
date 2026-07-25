@@ -48,7 +48,7 @@ import {
   getExchangeStatusColor,
 } from '@skil-ex2/shared';
 import * as v from 'valibot';
-import { CreateExchangeRequestSchema } from '@skil-ex2/shared/dist/schemas/exchange.schema.js';
+import { CreateExchangeRequestSchema } from '@skil-ex2/shared';
 import {
   GraduationCap,
   BookOpen,

@@ -44,15 +44,12 @@ import {
   useAcceptRequest,
   useRejectRequest,
   useCancelRequest,
-  useCreateRequest,
 } from '@/lib/api-hooks';
 import {
   getRequestStatusColor,
   formatDateShort,
   calculateAverageRating,
 } from '@skil-ex2/shared';
-import * as v from 'valibot';
-import { CreateExchangeRequestSchema } from '@skil-ex2/shared/dist/schemas/exchange.schema.js';
 import {
   Users,
   Sparkles,

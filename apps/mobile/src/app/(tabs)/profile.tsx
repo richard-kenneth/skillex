@@ -47,7 +47,7 @@ import {
   useUpdateProfile,
   useUploadImage,
 } from "@/lib/api-hooks";
-import { authClient } from "@/lib/auth";
+import { authClient } from "../../../lib/auth";
 import {
   calculateAverageRating,
   EXCHANGE_NOTIFICATION_TYPES,
@@ -55,7 +55,7 @@ import {
   REVIEW_TAG_LABELS,
   SkillType,
 } from "@skil-ex2/shared";
-import { ProfileFormSchema } from "@skil-ex2/shared/dist/schemas/profile.schema.js";
+import { ProfileFormSchema } from "@skil-ex2/shared";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import {
@@ -65,17 +65,22 @@ import {
   Camera,
   Copy,
   Gift,
+  Globe2,
   GraduationCap,
   HandCoins,
   LogOut,
   Mail,
   MapPin,
+  Monitor,
+  Moon,
   Plus,
   Share2,
   Star,
+  Sun,
   Trash2,
   TrendingUp,
   UserRound,
+  Users,
 } from "lucide-react-native";
 import React from "react";
 import {
@@ -91,6 +96,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import * as v from "valibot";
+import { Locale, LOCALE_LABELS, SUPPORTED_LOCALES, useI18n } from "lib/i18n";
 
 type ProfileTab = "edit" | "skills" | "reviews" | "referrals" | "notifications";
 
@@ -579,46 +585,48 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Profile information</CardTitle>
-        <CardDescription>
-          This information will be visible to other users.
-        </CardDescription>
-      </CardHeader>
-      <CardContent style={{ gap: SPACING[4] }}>
-        <Input
-          label="Display name"
-          value={name}
-          onChangeText={setName}
-          placeholder="Your name"
-          error={errors.name}
-          leftSlot={<UserRound size={16} color={theme.mutedForeground} />}
-        />
-        <Textarea
-          label="Bio"
-          value={bio}
-          onChangeText={setBio}
-          placeholder="Tell others a bit about yourself…"
-          numberOfLines={5}
-          error={errors.bio}
-          description={`${bio.length}/500`}
-        />
-        <Input
-          label="Location"
-          value={location}
-          onChangeText={setLocation}
-          placeholder="City, Country"
-          error={errors.location}
-          leftSlot={<MapPin size={16} color={theme.mutedForeground} />}
-        />
-        <Button onPress={save} loading={updateUser.isPending || loading}>
-          Save changes
-        </Button>
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile information</CardTitle>
+          <CardDescription>
+            This information will be visible to other users.
+          </CardDescription>
+        </CardHeader>
+        <CardContent style={{ gap: SPACING[4] }}>
+          <Input
+            label="Display name"
+            value={name}
+            onChangeText={setName}
+            placeholder="Your name"
+            error={errors.name}
+            leftSlot={<UserRound size={16} color={theme.mutedForeground} />}
+          />
+          <Textarea
+            label="Bio"
+            value={bio}
+            onChangeText={setBio}
+            placeholder="Tell others a bit about yourself…"
+            numberOfLines={5}
+            error={errors.bio}
+            description={`${bio.length}/500`}
+          />
+          <Input
+            label="Location"
+            value={location}
+            onChangeText={setLocation}
+            placeholder="City, Country"
+            error={errors.location}
+            leftSlot={<MapPin size={16} color={theme.mutedForeground} />}
+          />
+          <Button onPress={save} loading={updateUser.isPending || loading}>
+            Save changes
+          </Button>
+        </CardContent>
+      </Card>
 
-    <AppPreferencesCard />
+      <AppPreferencesCard />
+    </>
   );
 }
 
