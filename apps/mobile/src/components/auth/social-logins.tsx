@@ -1,21 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { signIn } from '../../../lib/auth';
+import { signIn, useSession } from '../../../lib/auth';
 import { Globe, Briefcase } from 'lucide-react-native';
 import { getAuthCallbackUrl } from '../../../lib/utils';
 import { router } from 'expo-router';
 
 export function SocialLogins() {
+  const { data: session, refetch } = useSession();
+
+  useEffect(()=>{
+    if(session?.user){
+      router.replace("/(tabs)");
+    }
+  }, [session])
+
   const handleSocialSignIn = async (provider: 'google' | 'linkedin') => {
     try {
       const { error } = await signIn.social({
         provider,
         callbackURL: getAuthCallbackUrl(),
       });
+      
       if (error) {
         throw new Error(error.message)
       }
-      router.replace("/(tabs)");
+      await refetch();
     } catch (err: any) {
       Alert.alert('Sign In Failed', err.message || `Could not sign in with ${provider}`);
     }

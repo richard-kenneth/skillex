@@ -4,6 +4,7 @@ import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { Resend } from 'resend';
 import { PrismaClient } from '../generated/prisma/client';
 import { expo } from '@better-auth/expo';
+import { bearer } from 'better-auth/plugins';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -12,7 +13,7 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
     provider: 'postgresql',
   }),
   experimental: { joins: true },
-  plugins: [expo()],
+  plugins: [expo(), bearer()],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       // 1. Listen specifically for the update user endpoint
@@ -97,7 +98,7 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
     },
   },
   //todo: confirm if this is safe
-  account: { skipStateCookieCheck: true },
+  // account: { skipStateCookieCheck: true },
   trustedOrigins: [
     process.env.CLIENT_BASE_URL!,
     `${process.env.EXPO_SCHEME!}://`,

@@ -20,7 +20,11 @@ async function bootstrap() {
     origin: [
       process.env.CLIENT_BASE_URL!,
       ...(process.env.NODE_ENV === 'development'
-        ? [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/]
+        ? [
+            /^http:\/\/localhost:\d+$/,
+            /^http:\/\/127\.0\.0\.1:\d+$/,
+            'https://decimeter-astute-antennae.ngrok-free.dev',
+          ]
         : []),
     ],
     credentials: true,
