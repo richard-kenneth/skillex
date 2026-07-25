@@ -17,7 +17,12 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggerErrorInterceptor());
 
   app.enableCors({
-    origin: process.env.CLIENT_BASE_URL,
+    origin: [
+      process.env.CLIENT_BASE_URL!,
+      ...(process.env.NODE_ENV === 'development'
+        ? [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/]
+        : []),
+    ],
     credentials: true,
   });
 

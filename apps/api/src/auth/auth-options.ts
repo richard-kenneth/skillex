@@ -3,6 +3,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { Resend } from 'resend';
 import { PrismaClient } from '../generated/prisma/client';
+import { expo } from '@better-auth/expo';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -11,6 +12,7 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
     provider: 'postgresql',
   }),
   experimental: { joins: true },
+  plugins: [expo()],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       // 1. Listen specifically for the update user endpoint
@@ -94,5 +96,21 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
     },
   },
-  trustedOrigins: [process.env.CLIENT_BASE_URL!],
+  //todo: confirm if this is safe
+  account: { skipStateCookieCheck: true },
+  trustedOrigins: [
+    process.env.CLIENT_BASE_URL!,
+    `${process.env.EXPO_SCHEME!}://`,
+
+    ...(process.env.NODE_ENV === 'development'
+      ? [
+          'http://localhost:*',
+          'http://127.0.0.1:*',
+          'exp://', // Trust all Expo URLs (prefix matching)
+          'exp://**', // Trust all Expo URLs (wildcard matching)
+          'exp://192.168.*.*:*/**', // Trust 192.168.x.x IP range with any port and path
+          'exp://172.20.*.*:*/**', // Trust 172.20.x.x IP range with any port and path
+        ]
+      : []),
+  ],
 });

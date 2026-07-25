@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { signIn } from '../../../lib/auth';
+import { signIn, authClient } from '../../../lib/auth';
+import { SocialLogins } from '../../components/auth/social-logins';
+import { getAuthCallbackUrl } from '../../../lib/utils';
 
 export default function SignInScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -23,14 +27,47 @@ export default function SignInScreen() {
       });
 
       if (error) {
-        Alert.alert('Sign In Failed', error.message || 'Invalid credentials');
+        if (error.code === 'EMAIL_NOT_VERIFIED') {
+          setUnverifiedEmail(email);
+          Alert.alert(
+            'Email Not Verified',
+            'Your email address is not verified yet. Would you like us to send another verification link?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Resend Email', onPress: handleResendVerification },
+            ]
+          );
+        } else {
+          Alert.alert('Sign In Failed', error.message || 'Invalid credentials');
+        }
       } else {
-        router.replace('/');
+        router.replace('/(tabs)');
       }
     } catch (err: any) {
       Alert.alert('Error', err.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    setIsResending(true);
+    try {
+      const { error } = await authClient.sendVerificationEmail({
+        email: unverifiedEmail,
+        callbackURL: getAuthCallbackUrl(),
+      });
+      if (error) {
+        Alert.alert('Error', error.message || 'Failed to resend verification email.');
+      } else {
+        Alert.alert('Success', 'Verification email sent! Please check your inbox.');
+        setUnverifiedEmail(null);
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to resend verification email.');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -40,6 +77,14 @@ export default function SignInScreen() {
       <Text style={styles.subtitle}>Welcome back to Skill Exchange</Text>
 
       <View style={styles.form}>
+        <SocialLogins />
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR CONTINUE WITH EMAIL</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
@@ -51,7 +96,15 @@ export default function SignInScreen() {
           keyboardType="email-address"
         />
 
-        <Text style={styles.label}>Password</Text>
+        <View style={styles.passwordHeader}>
+          <Text style={styles.label}>Password</Text>
+          <Link href="/(auth)/forgot-password" asChild>
+            <TouchableOpacity>
+              <Text style={styles.forgotText}>Forgot password?</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+
         <TextInput
           style={styles.input}
           placeholder="••••••••"
@@ -102,16 +155,41 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#a1a1aa',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   form: {
-    gap: 16,
+    gap: 14,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#27272a',
+  },
+  dividerText: {
+    color: '#71717a',
+    fontSize: 11,
+    fontWeight: '600',
+    marginHorizontal: 12,
+  },
+  passwordHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  forgotText: {
+    color: '#6366f1',
+    fontSize: 13,
+    fontWeight: '500',
   },
   label: {
     fontSize: 14,
     fontWeight: '500',
     color: '#e4e4e7',
-    marginBottom: 4,
   },
   input: {
     height: 48,

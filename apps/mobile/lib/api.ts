@@ -1,6 +1,6 @@
 import { authClient } from './auth';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export async function apiFetch<T = any>(
   endpoint: string,
