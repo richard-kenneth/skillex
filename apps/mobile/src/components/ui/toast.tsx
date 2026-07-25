@@ -22,7 +22,7 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { ThemedText } from '@/components/themed-text';
 import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
-import { cn } from '../../../lib/style-utils';
+import { cn } from '@/lib/style-utils';
 import { CheckCircle2, AlertTriangle, Info, XCircle, X } from 'lucide-react-native';
 
 export type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info';

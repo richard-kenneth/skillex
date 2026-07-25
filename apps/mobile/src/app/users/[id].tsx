@@ -45,7 +45,6 @@ import {
 import {
   calculateAverageRating,
   REVIEW_TAG_LABELS,
-  getExchangeStatusColor,
 } from '@skil-ex2/shared';
 import * as v from 'valibot';
 import { CreateExchangeRequestSchema } from '@skil-ex2/shared';

@@ -69,15 +69,15 @@ export default function ExchangesListScreen() {
 
   const filtered = React.useMemo(() => {
     if (filter === 'active')
-      return all.filter((e: any) => ['ACCEPTED', 'IN_PROGRESS', 'SCHEDULED'].includes(e.status));
+      return all.filter((e: any) => ['COMMITTED', 'IN_PROGRESS'].includes(e.status));
     if (filter === 'completed') return all.filter((e: any) => e.status === 'COMPLETED');
     if (filter === 'cancelled')
-      return all.filter((e: any) => ['CANCELLED', 'REJECTED', 'EXPIRED'].includes(e.status));
+      return all.filter((e: any) => ['CANCELLED'].includes(e.status));
     return all;
   }, [all, filter]);
 
   const activeCount = all.filter((e: any) =>
-    ['ACCEPTED', 'IN_PROGRESS', 'SCHEDULED'].includes(e.status)
+    ['COMMITTED', 'IN_PROGRESS'].includes(e.status)
   ).length;
   const completedCount = all.filter((e: any) => e.status === 'COMPLETED').length;
 

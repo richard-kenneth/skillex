@@ -104,7 +104,7 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
     },
   },
-  //todo: confirm if this is safe
+  //todo: confirm if this is safe if at any time you need to uncomment
   // account: { skipStateCookieCheck: true },
   trustedOrigins: [
     process.env.CLIENT_BASE_URL!,

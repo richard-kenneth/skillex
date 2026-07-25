@@ -97,12 +97,12 @@ import {
 } from "react-native-safe-area-context";
 import * as v from "valibot";
 import { Locale, LOCALE_LABELS, SUPPORTED_LOCALES, useI18n } from "lib/i18n";
+import { router } from 'expo-router'
 
 type ProfileTab = "edit" | "skills" | "reviews" | "referrals" | "notifications";
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
 
@@ -125,6 +125,7 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           await authClient.signOut();
+          router.replace('/(auth)/sign-in')
         },
       },
     ]);
@@ -710,6 +711,7 @@ function AppearanceChip({ icon, label, active, onPress }: any) {
 /* ---------------------------- Skills Pane ---------------------------- */
 
 function SkillsPane({ user }: { user: any }) {
+  const theme = useTheme();
   const skillsQ = useSkills();
   const catsQ = useSkillCategories();
   const addQ = useAddUserSkill();
@@ -865,14 +867,17 @@ function SkillsPane({ user }: { user: any }) {
                 {
                   value: "SEEKING",
                   label: "I learn",
-                  icon: (
+                  _icon: (
                     <BookOpen
                       size={14}
-                      color={
-                        type === "SEEKING" ? "#fff" : theme.mutedForeground
-                      }
-                    />
+                      color={type === "SEEKING" ? "#fff" : theme.mutedForeground} />
                   ),
+                  get icon() {
+                    return this._icon;
+                  },
+                  set icon(value) {
+                    this._icon = value;
+                  },
                 },
               ]}
             />
@@ -1069,6 +1074,7 @@ function SkillGroup({
 /* ---------------------------- Reviews Pane ---------------------------- */
 
 function ReviewsPane() {
+  const theme = useTheme();
   const reviewsQ = useMyReviews();
   const loading = reviewsQ.isLoading;
   const reviews = reviewsQ.data ?? [];
@@ -1644,6 +1650,7 @@ function MiniStat({
 /* ---------------------------- Notifications Prefs Pane ---------------------------- */
 
 function NotificationsPrefsPane() {
+  const theme = useTheme();
   const prefsQ = useNotificationPreferences();
   const updateQ = useUpdateNotificationPreferences();
   const loading = prefsQ.isLoading || updateQ.isPending;

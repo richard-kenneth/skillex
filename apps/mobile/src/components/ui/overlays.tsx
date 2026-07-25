@@ -1,14 +1,20 @@
-import { ThemedText } from "@/components/themed-text";
-import { FONT_SIZE, RADIUS, SPACING } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { cn } from "@/lib/style-utils";
-import React from "react";
-import { Animated, Modal, Pressable, StyleSheet, View } from "react-native";
+import React from 'react';
+import {
+  Animated,
+  Modal,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { ThemedText } from '@/components/themed-text';
+import { useTheme } from '@/hooks/use-theme';
+import { RADIUS, SPACING, FONT_SIZE, MAX_CONTENT_WIDTH } from '@/constants/theme';
+import { cn } from '@/lib/style-utils';
 
 // Skeleton shimmer
 
 export function Skeleton({
-  width = "100%",
+  width = '100%',
   height = 16,
   style,
   rounded,
@@ -35,7 +41,7 @@ export function Skeleton({
           useNativeDriver: true,
         }),
       ]),
-      { iterations: -1 },
+      { iterations: -1 }
     );
     anim.start();
     return () => anim.stop();
@@ -51,7 +57,7 @@ export function Skeleton({
           borderRadius: rounded ? RADIUS.pill : RADIUS.sm,
           opacity: pulse as any,
         },
-        style,
+        style
       )}
     />
   );
@@ -60,9 +66,7 @@ export function Skeleton({
 export function SkeletonCard({ style }: { style?: any }) {
   return (
     <View style={cn({ padding: SPACING[5], gap: SPACING[3] }, style)}>
-      <View
-        style={{ flexDirection: "row", alignItems: "center", gap: SPACING[3] }}
-      >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
         <Skeleton width={40} height={40} rounded />
         <View style={{ flex: 1, gap: SPACING[1.5] }}>
           <Skeleton width="60%" height={FONT_SIZE.lg} rounded />
@@ -75,19 +79,13 @@ export function SkeletonCard({ style }: { style?: any }) {
   );
 }
 
-export function SkeletonText({
-  lines = 3,
-  style,
-}: {
-  lines?: number;
-  style?: any;
-}) {
+export function SkeletonText({ lines = 3, style }: { lines?: number; style?: any }) {
   return (
     <View style={cn({ gap: SPACING[2] }, style)}>
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
           key={i}
-          width={i === lines - 1 ? "60%" : "100%"}
+          width={i === lines - 1 ? '60%' : '100%'}
           height={FONT_SIZE.base}
           rounded
         />
@@ -110,27 +108,27 @@ export function Tabs<T extends string>({
   onChange,
   items,
   style,
-  variant = "pills",
+  variant = 'pills',
 }: {
   value: T;
   onChange: (v: T) => void;
   items: TabItem<T>[];
   style?: any;
-  variant?: "pills" | "underline" | "scroll";
+  variant?: 'pills' | 'underline' | 'scroll';
 }) {
   const theme = useTheme();
   const baseWrap =
-    variant === "pills"
+    variant === 'pills'
       ? {
-          flexDirection: "row" as const,
+          flexDirection: 'row' as const,
           gap: SPACING[1],
           padding: SPACING[1],
           backgroundColor: theme.backgroundElement,
           borderRadius: RADIUS.xl,
         }
-      : variant === "underline"
-        ? { flexDirection: "row" as const, gap: SPACING[4] }
-        : { flexDirection: "row" as const, gap: SPACING[2] };
+      : variant === 'underline'
+      ? { flexDirection: 'row' as const, gap: SPACING[4] }
+      : { flexDirection: 'row' as const, gap: SPACING[2] };
 
   return (
     <View style={cn(baseWrap, style)}>
@@ -142,30 +140,30 @@ export function Tabs<T extends string>({
             onPress={() => onChange(it.value)}
             android_ripple={{ color: `${theme.primary}33`, borderless: false }}
             style={{
-              flex: variant === "pills" ? 1 : undefined,
+              flex: variant === 'pills' ? 1 : undefined,
             }}
           >
-            {variant === "underline" ? (
+            {variant === 'underline' ? (
               <View
                 style={{
                   borderBottomWidth: 2,
-                  borderBottomColor: active ? theme.primary : "transparent",
+                  borderBottomColor: active ? theme.primary : 'transparent',
                 }}
               >
                 <TabLabel it={it} active={active} variant={variant} />
               </View>
-            ) : variant === "scroll" ? (
+            ) : variant === 'scroll' ? (
               <View
                 style={[
                   {
                     paddingHorizontal: SPACING[3],
                     paddingVertical: SPACING[2],
                     borderRadius: RADIUS.pill,
-                    backgroundColor: active ? theme.primary : "transparent",
+                    backgroundColor: active ? theme.primary : 'transparent',
                     borderWidth: 1,
                     borderColor: active ? theme.primary : theme.border,
-                    alignItems: "center",
-                    flexDirection: "row",
+                    alignItems: 'center',
+                    flexDirection: 'row',
                     gap: SPACING[1.5],
                   },
                 ]}
@@ -178,11 +176,11 @@ export function Tabs<T extends string>({
                   paddingHorizontal: SPACING[3],
                   paddingVertical: SPACING[2],
                   borderRadius: RADIUS.lg,
-                  backgroundColor: active ? theme.primary : "transparent",
-                  alignItems: "center",
-                  flexDirection: "row",
+                  backgroundColor: active ? theme.primary : 'transparent',
+                  alignItems: 'center',
+                  flexDirection: 'row',
                   gap: SPACING[1.5],
-                  justifyContent: "center",
+                  justifyContent: 'center',
                 }}
               >
                 <TabText it={it} active={active} variant={variant} />
@@ -208,8 +206,8 @@ function TabLabel<T extends string>({
     <View
       style={{
         paddingVertical: SPACING[2.5],
-        alignItems: "center",
-        flexDirection: "row",
+        alignItems: 'center',
+        flexDirection: 'row',
         gap: SPACING[1.5],
       }}
     >
@@ -219,7 +217,7 @@ function TabLabel<T extends string>({
         style={{
           color: active ? theme.foreground : theme.mutedForeground,
           fontSize: FONT_SIZE.sm,
-          fontWeight: active ? "700" : "500",
+          fontWeight: active ? '700' : '500',
         }}
       >
         {it.label}
@@ -232,8 +230,8 @@ function TabLabel<T extends string>({
             paddingHorizontal: 5,
             borderRadius: 9999,
             backgroundColor: active ? theme.primary : theme.muted,
-            alignItems: "center",
-            justifyContent: "center",
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <ThemedText
@@ -261,7 +259,7 @@ function TabText<T extends string>({
   variant: string;
 }) {
   const theme = useTheme();
-  const isPill = variant === "scroll";
+  const isPill = variant === 'scroll';
   return (
     <>
       {it.icon}
@@ -273,10 +271,10 @@ function TabText<T extends string>({
               ? theme.primaryForeground
               : theme.primaryForeground
             : isPill
-              ? theme.foreground
-              : theme.mutedForeground,
+            ? theme.foreground
+            : theme.mutedForeground,
           fontSize: FONT_SIZE.sm,
-          fontWeight: active ? "700" : "500",
+          fontWeight: active ? '700' : '500',
         }}
       >
         {it.label}
@@ -288,17 +286,15 @@ function TabText<T extends string>({
             height: 18,
             paddingHorizontal: 5,
             borderRadius: 9999,
-            backgroundColor: active
-              ? "rgba(255,255,255,0.25)"
-              : theme.destructive,
-            alignItems: "center",
-            justifyContent: "center",
+            backgroundColor: active ? 'rgba(255,255,255,0.25)' : theme.destructive,
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <ThemedText
             type="smallBold"
             style={{
-              color: "#fff",
+              color: '#fff',
               fontSize: 10,
             }}
           >
@@ -327,7 +323,7 @@ export function ActionSheet({
   title,
   description,
   options,
-  cancelLabel = "Cancel",
+  cancelLabel = 'Cancel',
 }: {
   open: boolean;
   onClose: () => void;
@@ -346,8 +342,11 @@ export function ActionSheet({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose}>
-        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+      <Pressable
+        style={StyleSheet.absoluteFillObject}
+        onPress={onClose}
+      >
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Pressable onPress={() => {}}>
             <View
               style={{
@@ -363,7 +362,7 @@ export function ActionSheet({
             >
               <View
                 style={{
-                  alignSelf: "center",
+                  alignSelf: 'center',
                   width: 36,
                   height: 4,
                   borderRadius: 9999,
@@ -372,28 +371,12 @@ export function ActionSheet({
                 }}
               />
               {title ? (
-                <View
-                  style={{
-                    padding: SPACING[2],
-                    alignItems: "center",
-                    gap: SPACING[1],
-                  }}
-                >
-                  <ThemedText
-                    type="default"
-                    style={{ fontSize: FONT_SIZE.md, fontWeight: "700" }}
-                  >
+                <View style={{ padding: SPACING[2], alignItems: 'center', gap: SPACING[1] }}>
+                  <ThemedText type="default" style={{ fontSize: FONT_SIZE.md, fontWeight: '700' }}>
                     {title}
                   </ThemedText>
                   {description ? (
-                    <ThemedText
-                      type="small"
-                      style={{
-                        color: theme.mutedForeground,
-                        fontSize: FONT_SIZE.sm,
-                        textAlign: "center",
-                      }}
-                    >
+                    <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm, textAlign: 'center' }}>
                       {description}
                     </ThemedText>
                   ) : null}
@@ -412,15 +395,13 @@ export function ActionSheet({
                       padding: SPACING[4],
                       backgroundColor: theme.backgroundElement,
                       borderRadius: RADIUS.lg,
-                      flexDirection: "row",
-                      alignItems: "center",
+                      flexDirection: 'row',
+                      alignItems: 'center',
                       gap: SPACING[3],
                     }}
                   >
                     {o.icon ? (
-                      <View style={{ opacity: o.disabled ? 0.4 : 1 }}>
-                        {o.icon}
-                      </View>
+                      <View style={{ opacity: o.disabled ? 0.4 : 1 }}>{o.icon}</View>
                     ) : null}
                     <View style={{ flex: 1 }}>
                       <ThemedText
@@ -428,24 +409,17 @@ export function ActionSheet({
                         style={{
                           fontSize: FONT_SIZE.md,
                           color: o.destructive
-                            ? "#ef4444"
+                            ? '#ef4444'
                             : o.disabled
-                              ? theme.mutedForeground
-                              : theme.foreground,
-                          fontWeight: "500",
+                            ? theme.mutedForeground
+                            : theme.foreground,
+                          fontWeight: '500',
                         }}
                       >
                         {o.label}
                       </ThemedText>
                       {o.subtitle ? (
-                        <ThemedText
-                          type="small"
-                          style={{
-                            color: theme.mutedForeground,
-                            fontSize: FONT_SIZE.sm,
-                            marginTop: 2,
-                          }}
-                        >
+                        <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm, marginTop: 2 }}>
                           {o.subtitle}
                         </ThemedText>
                       ) : null}
@@ -460,15 +434,12 @@ export function ActionSheet({
                   padding: SPACING[4],
                   backgroundColor: theme.backgroundElement,
                   borderRadius: RADIUS.lg,
-                  alignItems: "center",
+                  alignItems: 'center',
                   borderWidth: 1,
                   borderColor: theme.border,
                 }}
               >
-                <ThemedText
-                  type="default"
-                  style={{ fontSize: FONT_SIZE.md, fontWeight: "600" }}
-                >
+                <ThemedText type="default" style={{ fontSize: FONT_SIZE.md, fontWeight: '600' }}>
                   {cancelLabel}
                 </ThemedText>
               </Pressable>
@@ -482,14 +453,10 @@ export function ActionSheet({
 
 // Dropdown / Select (wrapper around ActionSheet)
 
-export type SelectOption<T extends string> = {
-  label: string;
-  value: T;
-  icon?: React.ReactNode;
-};
+export type SelectOption<T extends string> = { label: string; value: T; icon?: React.ReactNode };
 export function SelectField<T extends string>({
   label,
-  placeholder = "Select…",
+  placeholder = 'Select…',
   value,
   onChange,
   options,
@@ -512,11 +479,7 @@ export function SelectField<T extends string>({
       {label ? (
         <ThemedText
           type="smallBold"
-          style={{
-            fontSize: FONT_SIZE.sm,
-            color: theme.foreground,
-            marginLeft: SPACING[0.5],
-          }}
+          style={{ fontSize: FONT_SIZE.sm, color: theme.foreground, marginLeft: SPACING[0.5] }}
         >
           {label}
         </ThemedText>
@@ -527,25 +490,18 @@ export function SelectField<T extends string>({
           {
             borderRadius: RADIUS.md,
             borderWidth: 1,
-            borderColor: error ? "#ef4444" : theme.input,
+            borderColor: error ? '#ef4444' : theme.input,
             backgroundColor: theme.background,
             paddingHorizontal: SPACING[3],
             minHeight: 44,
-            alignItems: "center",
-            flexDirection: "row",
+            alignItems: 'center',
+            flexDirection: 'row',
             gap: SPACING[2],
           },
           style,
         ]}
       >
-        <View
-          style={{
-            flex: 1,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: SPACING[2],
-          }}
-        >
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
           {selected?.icon}
           <ThemedText
             type="default"
@@ -559,14 +515,7 @@ export function SelectField<T extends string>({
         </View>
       </Pressable>
       {error ? (
-        <ThemedText
-          type="small"
-          style={{
-            color: "#f87171",
-            fontSize: FONT_SIZE.sm,
-            marginLeft: SPACING[0.5],
-          }}
-        >
+        <ThemedText type="small" style={{ color: '#f87171', fontSize: FONT_SIZE.sm, marginLeft: SPACING[0.5] }}>
           {error}
         </ThemedText>
       ) : null}

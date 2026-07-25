@@ -44,12 +44,14 @@ import {
   useAcceptRequest,
   useRejectRequest,
   useCancelRequest,
+  useCreateRequest,
 } from '@/lib/api-hooks';
 import {
   getRequestStatusColor,
   formatDateShort,
   calculateAverageRating,
 } from '@skil-ex2/shared';
+import * as v from 'valibot';
 import {
   Users,
   Sparkles,
@@ -93,8 +95,8 @@ export default function MatchesScreen() {
   const data = matchesQ.data as any;
   const perfect = data?.perfectMatches ?? [];
   const partial = data?.partialMatches ?? [];
-  const incoming = (requestsQ.data ?? []).filter((r: any) => r.direction === 'INCOMING');
-  const outgoing = (requestsQ.data ?? []).filter((r: any) => r.direction === 'OUTGOING');
+  const incoming = (requestsQ.data as any)?.['received'] ?? [];
+  const outgoing = (requestsQ.data as any)?.['sent'] ?? [];
 
   const requestCounts = {
     incoming: incoming.length,
@@ -195,7 +197,7 @@ export default function MatchesScreen() {
                     />
                   ) : (
                     perfect.map((m: any) => (
-                      <MatchCard key={m.user.id} match={m} perfect onPress={() => router.push(`/users/${m.user.id}` as any)} />
+                      <MatchCard key={m.id} match={m} perfect onPress={() => router.push(`/users/${m.id}` as any)} />
                     ))
                   )}
                 </CardContent>
@@ -234,7 +236,7 @@ export default function MatchesScreen() {
                     />
                   ) : (
                     partial.map((m: any) => (
-                      <MatchCard key={m.user.id} match={m} onPress={() => router.push(`/users/${m.user.id}` as any)} />
+                      <MatchCard key={m.id} match={m} onPress={() => router.push(`/users/${m.id}` as any)} />
                     ))
                   )}
                 </CardContent>
@@ -268,7 +270,7 @@ function MatchCard({
   onPress: () => void;
 }) {
   const theme = useTheme();
-  const user = match.user as any;
+  const user = match as any;
   const canTeachMe = match.canTeachMe ?? []; // they teach, I want
   const canLearnFromMe = match.canLearnFromMe ?? []; // I teach, they want
   const avgRating = user.reviews?.length ? calculateAverageRating(user.reviews) : 0;
