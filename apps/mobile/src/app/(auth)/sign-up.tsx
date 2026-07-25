@@ -1,20 +1,27 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { signUp } from '../../../lib/auth';
-import { SocialLogins } from '../../components/auth/social-logins';
-import { getAuthCallbackUrl } from 'lib/utils';
+import { Link, useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { signUp } from "../../../lib/auth";
+import { SocialLogins } from "../../components/auth/social-logins";
 
 export default function SignUpScreen() {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
     if (!name || !email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
@@ -27,16 +34,19 @@ export default function SignUpScreen() {
       });
 
       if (error) {
-        Alert.alert('Sign Up Failed', error.message || 'Could not create account');
+        Alert.alert(
+          "Sign Up Failed",
+          error.message || "Could not create account",
+        );
       } else {
-        Alert.alert('Verification Sent', 'Please check your email to verify your account.');
-        router.replace('/(auth)/sign-in');
+        (router as any).replace(
+          `/(auth)/verify-email?email=${encodeURIComponent(email)}`,
+        );
       }
     } catch (err: any) {
       console.log(err);
-      
 
-      Alert.alert('Error', err.message || 'An unexpected error occurred');
+      Alert.alert("Error", err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -114,80 +124,80 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: "#09090b",
     padding: 24,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: "bold",
+    color: "#ffffff",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#a1a1aa',
+    color: "#a1a1aa",
     marginBottom: 24,
   },
   form: {
     gap: 14,
   },
   dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 12,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#27272a',
+    backgroundColor: "#27272a",
   },
   dividerText: {
-    color: '#71717a',
+    color: "#71717a",
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
     marginHorizontal: 12,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#e4e4e7',
+    fontWeight: "500",
+    color: "#e4e4e7",
   },
   input: {
     height: 48,
-    backgroundColor: '#18181b',
+    backgroundColor: "#18181b",
     borderWidth: 1,
-    borderColor: '#27272a',
+    borderColor: "#27272a",
     borderRadius: 8,
     paddingHorizontal: 16,
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
   },
   button: {
     height: 48,
-    backgroundColor: '#6366f1',
+    backgroundColor: "#6366f1",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 8,
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 16,
   },
   footerText: {
-    color: '#a1a1aa',
+    color: "#a1a1aa",
     fontSize: 14,
   },
   linkText: {
-    color: '#6366f1',
+    color: "#6366f1",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

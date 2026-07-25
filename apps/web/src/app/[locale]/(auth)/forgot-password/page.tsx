@@ -11,14 +11,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Link } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
 import { ArrowLeft, CheckCircle2, Mail } from "lucide-react";
-import { Link } from "@/i18n/navigation";
-import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -28,16 +30,15 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { error } = await authClient.requestPasswordReset({
+      const { error } = await authClient.emailOtp.sendVerificationOtp({
         email,
-        redirectTo:
-          process.env.NEXT_PUBLIC_CLIENT_BASE_URL! + "/reset-password",
+        type: "forget-password",
       });
       if (error) {
         toast.error(error.message || t("failedToSendReset"));
       } else {
-        setIsSuccess(true);
-        toast.success(t("resetLinkSent"));
+        toast.success(t("resetCodeSent"));
+        router.push(`/verify-reset-otp?email=${encodeURIComponent(email)}`);
       }
     } catch {
       toast.error(t("unexpectedError"));
@@ -64,9 +65,7 @@ export default function ForgotPasswordPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-muted-foreground">
-              {t("checkInboxInfo")}
-            </p>
+            <p className="text-muted-foreground">{t("checkInboxInfo")}</p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 text-center">
             <Link
@@ -94,9 +93,7 @@ export default function ForgotPasswordPage() {
           <CardTitle className="text-3xl font-bold tracking-tight">
             {t("forgotPasswordTitle")}
           </CardTitle>
-          <CardDescription>
-            {t("forgotPasswordDesc")}
-          </CardDescription>
+          <CardDescription>{t("forgotPasswordDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
@@ -117,7 +114,7 @@ export default function ForgotPasswordPage() {
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? t("sendingLink") : t("sendResetLink")}
+              {isLoading ? t("sendingCode") : t("sendResetCode")}
             </Button>
           </form>
         </CardContent>

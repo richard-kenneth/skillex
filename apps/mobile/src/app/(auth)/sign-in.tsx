@@ -1,21 +1,28 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { signIn, authClient } from '../../../lib/auth';
-import { SocialLogins } from '../../components/auth/social-logins';
-import { getAuthCallbackUrl } from '../../../lib/utils';
+import { Link, useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { authClient, signIn } from "../../../lib/auth";
+import { SocialLogins } from "../../components/auth/social-logins";
 
 export default function SignInScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
@@ -27,24 +34,24 @@ export default function SignInScreen() {
       });
 
       if (error) {
-        if (error.code === 'EMAIL_NOT_VERIFIED') {
+        if (error.code === "EMAIL_NOT_VERIFIED") {
           setUnverifiedEmail(email);
           Alert.alert(
-            'Email Not Verified',
-            'Your email address is not verified yet. Would you like us to send another verification link?',
+            "Email Not Verified",
+            "Your email address is not verified yet. Would you like us to send another verification link?",
             [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Resend Email', onPress: handleResendVerification },
-            ]
+              { text: "Cancel", style: "cancel" },
+              { text: "Resend Email", onPress: handleResendVerification },
+            ],
           );
         } else {
-          Alert.alert('Sign In Failed', error.message || 'Invalid credentials');
+          Alert.alert("Sign In Failed", error.message || "Invalid credentials");
         }
       } else {
-        router.replace('/(tabs)');
+        router.replace("/(tabs)");
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'An unexpected error occurred');
+      Alert.alert("Error", err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -54,18 +61,24 @@ export default function SignInScreen() {
     if (!unverifiedEmail) return;
     setIsResending(true);
     try {
-      const { error } = await authClient.sendVerificationEmail({
+      // @ts-ignore - emailOtp plugin types not fully inferred in mobile client setup
+      const { error } = await authClient.emailOtp.sendVerificationOtp({
         email: unverifiedEmail,
-        callbackURL: getAuthCallbackUrl(),
+        type: "email-verification",
       });
       if (error) {
-        Alert.alert('Error', error.message || 'Failed to resend verification email.');
+        Alert.alert(
+          "Error",
+          error.message || "Failed to resend verification code.",
+        );
       } else {
-        Alert.alert('Success', 'Verification email sent! Please check your inbox.');
         setUnverifiedEmail(null);
+        (router as any).replace(
+          `/(auth)/verify-email?email=${encodeURIComponent(unverifiedEmail)}`,
+        );
       }
     } catch {
-      Alert.alert('Error', 'Failed to resend verification email.');
+      Alert.alert("Error", "Failed to resend verification code.");
     } finally {
       setIsResending(false);
     }
@@ -142,90 +155,90 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: "#09090b",
     padding: 24,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontWeight: "bold",
+    color: "#ffffff",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#a1a1aa',
+    color: "#a1a1aa",
     marginBottom: 24,
   },
   form: {
     gap: 14,
   },
   dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 12,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#27272a',
+    backgroundColor: "#27272a",
   },
   dividerText: {
-    color: '#71717a',
+    color: "#71717a",
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
     marginHorizontal: 12,
   },
   passwordHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   forgotText: {
-    color: '#6366f1',
+    color: "#6366f1",
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#e4e4e7',
+    fontWeight: "500",
+    color: "#e4e4e7",
   },
   input: {
     height: 48,
-    backgroundColor: '#18181b',
+    backgroundColor: "#18181b",
     borderWidth: 1,
-    borderColor: '#27272a',
+    borderColor: "#27272a",
     borderRadius: 8,
     paddingHorizontal: 16,
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
   },
   button: {
     height: 48,
-    backgroundColor: '#6366f1',
+    backgroundColor: "#6366f1",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 8,
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 16,
   },
   footerText: {
-    color: '#a1a1aa',
+    color: "#a1a1aa",
     fontSize: 14,
   },
   linkText: {
-    color: '#6366f1',
+    color: "#6366f1",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

@@ -1,0 +1,380 @@
+import type {
+  Bank,
+  CreateReviewPayload,
+  Exchange,
+  ExchangeChatMessage,
+  ExchangeRequest,
+  FeeConfig,
+  MatchesResponse,
+  Notification,
+  NotificationPreferences,
+  PointsTransaction,
+  PurchaseInitiationResult,
+  RecordingConsentPayload,
+  RecordingEstimate,
+  Referral,
+  ResolveAccountResult,
+  Review,
+  SessionChatMessage,
+  SessionTiming,
+  Skill,
+  SkillCategory,
+  StartRecordingPayload,
+  StopRecordingPayload,
+  UpdateProfileDto,
+  UserSkill,
+  VideoTokenResponse,
+} from "../types";
+import type { CreateExchangeRequestPayload, ProfileFormPayload, ProposeSlotsDto, PurchasePointsDto, SendMessageDto, WithdrawPointsDto } from "../schemas";
+
+export type FetchImpl = (
+  input: RequestInfo | URL,
+  init?: RequestInit
+) => Promise<Response>;
+
+export interface ApiClientConfig {
+  baseUrl: string;
+  fetchImpl?: FetchImpl;
+  getAuthHeaders?: () => Promise<HeadersInit> | HeadersInit;
+  withCredentials?: boolean;
+}
+
+/**
+ * Platform-agnostic API client factory.
+ * - Takes a base URL and optional fetch impl + auth headers provider
+ * - Works identically on Next.js (browser fetch + cookie credentials) and Expo (fetch + bearer token)
+ */
+export function createApiClient(config: ApiClientConfig) {
+  const {
+    baseUrl,
+    fetchImpl = (typeof globalThis !== "undefined" && "fetch" in globalThis
+      ? (globalThis.fetch as FetchImpl)
+      : undefined)!,
+    getAuthHeaders,
+    withCredentials = false,
+  } = config;
+
+  if (!fetchImpl) {
+    throw new Error(
+      "[createApiClient] No fetch implementation available and none provided."
+    );
+  }
+
+  async function request<T = unknown>(
+    endpoint: string,
+    init: RequestInit = {}
+  ): Promise<T> {
+    const headers = new Headers(init.headers ?? {});
+
+    if (!headers.has("Content-Type") && !(init.body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    if (getAuthHeaders) {
+      const auth = await getAuthHeaders();
+      const authHeaders = new Headers(auth);
+      authHeaders.forEach((value, key) => {
+        if (!headers.has(key)) headers.set(key, value);
+      });
+    }
+
+    const url = `${baseUrl}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+
+    const res = await fetchImpl(url, {
+      ...init,
+      headers,
+      ...(withCredentials ? ({ credentials: "include" } as any) : {}),
+    });
+
+    const text = await res.text();
+    let data: any = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = text;
+    }
+
+    if (!res.ok) {
+      const msg =
+        (data && (data.message || data.error)) ||
+        `Request failed: ${res.status} ${res.statusText}`;
+      throw new Error(msg);
+    }
+
+    return data as T;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Users
+  // ─────────────────────────────────────────────────────────────────────────
+  const users = {
+    me: () => request<any>(`/users/me`),
+    byId: (id: string) => request<any>(`/users/${id}`),
+    updateProfile: (payload: UpdateProfileDto) =>
+      request<any>(`/users/me`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    uploadImage: (formData: FormData) =>
+      request<any>(`/uploads`, {
+        method: "POST",
+        body: formData as any,
+      }),
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Skills
+  // ─────────────────────────────────────────────────────────────────────────
+  const skills = {
+    list: (search?: string, categoryId?: string) => {
+      const params = new URLSearchParams();
+      if (search) params.set("q", search);
+      if (categoryId) params.set("categoryId", categoryId);
+      const qs = params.toString();
+      return request<Skill[]>(`/skills${qs ? `?${qs}` : ""}`);
+    },
+    categories: () => request<SkillCategory[]>(`/skills/categories`),
+    addUserSkill: (payload: {
+      skillId: string;
+      type: "OFFERING" | "SEEKING";
+      experienceLevel?: string;
+    }) =>
+      request<UserSkill>(`/skills/user`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    removeUserSkill: (id: string) =>
+      request<void>(`/skills/user/${id}`, { method: "DELETE" }),
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Exchanges / Matches / Requests
+  // ─────────────────────────────────────────────────────────────────────────
+  const exchanges = {
+    list: () => request<Exchange[]>(`/exchanges`),
+    byId: (id: string) => request<Exchange>(`/exchanges/${id}`),
+    matches: () => request<MatchesResponse>(`/exchanges/matches`),
+    requests: () => request<ExchangeRequest[]>(`/exchanges/requests`),
+    requestById: (id: string) =>
+      request<ExchangeRequest>(`/exchanges/requests/${id}`),
+    createRequest: (payload: CreateExchangeRequestPayload) =>
+      request<ExchangeRequest>(`/exchanges/requests`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    acceptRequest: (id: string) =>
+      request<Exchange>(`/exchanges/requests/${id}/accept`, {
+        method: "POST",
+      }),
+    rejectRequest: (id: string) =>
+      request<void>(`/exchanges/requests/${id}/reject`, {
+        method: "POST",
+      }),
+    cancelRequest: (id: string) =>
+      request<void>(`/exchanges/requests/${id}/cancel`, {
+        method: "POST",
+      }),
+    sendMessage: (requestId: string, payload: SendMessageDto) =>
+      request<void>(`/exchanges/requests/${requestId}/messages`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    proposeSlots: (payload: ProposeSlotsDto) =>
+      request<void>(`/exchanges/slots`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    acceptSlots: (requestId: string, slotIds: string[]) =>
+      request<void>(`/exchanges/requests/${requestId}/slots/accept`, {
+        method: "POST",
+        body: JSON.stringify({ slotIds }),
+      }),
+    markComplete: (id: string) =>
+      request<void>(`/exchanges/${id}/complete`, { method: "POST" }),
+    chat: {
+      list: (exchangeId: string) =>
+        request<ExchangeChatMessage[]>(`/exchanges/${exchangeId}/chat`),
+      send: (exchangeId: string, content: string) =>
+        request<ExchangeChatMessage>(`/exchanges/${exchangeId}/chat`, {
+          method: "POST",
+          body: JSON.stringify({ content }),
+        }),
+    },
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Points
+  // ─────────────────────────────────────────────────────────────────────────
+  const points = {
+    balance: () =>
+      request<{ balance: number } | number>(`/points/balance`).then((res) =>
+        typeof res === "number" ? res : (res as any).balance ?? res
+      ),
+    transactions: () =>
+      request<PointsTransaction[]>(`/points/transactions`),
+    banks: () => request<Bank[]>(`/points/banks`),
+    feeConfig: () => request<FeeConfig>(`/points/fee-config`),
+    rates: () => request<Record<string, number>>(`/points/rates`),
+    purchase: (payload: PurchasePointsDto) =>
+      request<PurchaseInitiationResult>(`/points/purchase`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    withdraw: (payload: WithdrawPointsDto) =>
+      request<void>(`/points/withdraw`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    resolveAccount: (payload: {
+      accountNumber: string;
+      bankCode: string;
+    }) =>
+      request<ResolveAccountResult>(`/points/resolve-account`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Notifications
+  // ─────────────────────────────────────────────────────────────────────────
+  const notifications = {
+    list: () => request<Notification[]>(`/notifications`),
+    markRead: (id: string) =>
+      request<void>(`/notifications/${id}/read`, { method: "PATCH" }),
+    markAllRead: () =>
+      request<void>(`/notifications/read-all`, { method: "PATCH" }),
+    delete: (id: string) =>
+      request<void>(`/notifications/${id}`, { method: "DELETE" }),
+    preferences: () =>
+      request<NotificationPreferences>(`/notifications/preferences`),
+    updatePreferences: (prefs: Partial<NotificationPreferences>) =>
+      request<NotificationPreferences>(`/notifications/preferences`, {
+        method: "PATCH",
+        body: JSON.stringify(prefs),
+      }),
+    subscribePush: (subscription: any) =>
+      request<void>(`/notifications/push-subscription`, {
+        method: "POST",
+        body: JSON.stringify(subscription),
+      }),
+    testPush: () =>
+      request<void>(`/notifications/test-push`, { method: "POST" }),
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Reviews
+  // ─────────────────────────────────────────────────────────────────────────
+  const reviews = {
+    mine: () => request<Review[]>(`/reviews/user/me`),
+    byUserId: (userId: string) =>
+      request<Review[]>(`/reviews/user/${userId}`),
+    create: (payload: CreateReviewPayload) =>
+      request<Review>(`/reviews`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Referrals
+  // ─────────────────────────────────────────────────────────────────────────
+  const referrals = {
+    tracking: () =>
+      request<{
+        code: string;
+        referrals: Referral[];
+        totalEarned: number;
+        pending: number;
+        stats: {
+          invited: number;
+          converted: number;
+        };
+      }>(`/referrals/tracking`),
+    apply: (code: string) =>
+      request<void>(`/referrals/apply`, {
+        method: "POST",
+        body: JSON.stringify({ code }),
+      }),
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Video / LiveKit / Session Chat / Recording
+  // ─────────────────────────────────────────────────────────────────────────
+  const video = {
+    sessionDetails: (roomId: string) =>
+      request<{
+        sessionId: string;
+        exchangeId: string;
+        scheduledAt: string;
+        duration: number;
+        endsAt: string;
+      }>(`/video/session/${encodeURIComponent(roomId)}`),
+    token: (room: string) =>
+      request<VideoTokenResponse>(
+        `/video/token?room=${encodeURIComponent(room)}`
+      ),
+    record: {
+      estimate: (room: string) =>
+        request<RecordingEstimate>(
+          `/video/recording/estimate?room=${encodeURIComponent(room)}`
+        ),
+      consent: (payload: RecordingConsentPayload) =>
+        request<void>(`/video/recording/consent`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        }),
+      start: (payload: StartRecordingPayload) =>
+        request<{ approvedMinutes?: number }>(`/video/recording/start`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        }),
+      stop: (payload: StopRecordingPayload) =>
+        request<void>(`/video/recording/stop`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        }),
+    },
+    chat: {
+      list: (exchangeSessionId: string) =>
+        request<{ messages: SessionChatMessage[]; unreadCount: number }>(
+          `/video/chat/${exchangeSessionId}`
+        ),
+      send: (exchangeSessionId: string, message: string) =>
+        request<SessionChatMessage>(`/video/chat/${exchangeSessionId}`, {
+          method: "POST",
+          body: JSON.stringify({ message }),
+        }),
+      read: (exchangeSessionId: string) =>
+        request<void>(`/video/chat/${exchangeSessionId}/read`, {
+          method: "PATCH",
+        }),
+    },
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Better-Auth profile helper (name/image)
+  // ─────────────────────────────────────────────────────────────────────────
+  const auth = {
+    updateProfile: (payload: ProfileFormPayload) =>
+      request<any>(`/users/auth-profile`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+  };
+
+  return {
+    request,
+    users,
+    skills,
+    exchanges,
+    points,
+    notifications,
+    reviews,
+    referrals,
+    video,
+    auth,
+  };
+}
+
+export type ApiClient = ReturnType<typeof createApiClient>;

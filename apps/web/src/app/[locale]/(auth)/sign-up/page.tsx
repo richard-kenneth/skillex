@@ -12,15 +12,17 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Link } from "@/i18n/navigation";
 import { signUp } from "@/lib/auth-client";
 import { getAuthCallbackUrl } from "@/lib/utils";
 import { UserPlus } from "lucide-react";
-import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const t = useTranslations("auth");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -52,15 +54,15 @@ export default function SignUpPage() {
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({ referralCode: storedRef.trim() }),
-              }
+              },
             );
             localStorage.removeItem("skilex_ref");
           } catch {
             // Silently fail — the dashboard fallback will catch it
           }
         }
-        setIsSuccess(true);
-        toast.success(t("signUpSuccess"));
+        // Redirect to verify-email page instead of showing success message
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       }
     } catch {
       toast.error(t("unexpectedError"));
@@ -87,9 +89,7 @@ export default function SignUpPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-muted-foreground">
-              {t("verifyEmailDesc")}
-            </p>
+            <p className="text-muted-foreground">{t("verifyEmailDesc")}</p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 text-center">
             <Link
@@ -111,9 +111,7 @@ export default function SignUpPage() {
           <CardTitle className="text-3xl font-bold tracking-tight">
             {t("signUpTitle")}
           </CardTitle>
-          <CardDescription>
-            {t("signUpDescription")}
-          </CardDescription>
+          <CardDescription>{t("signUpDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
           <SocialLogins />

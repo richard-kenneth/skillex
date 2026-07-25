@@ -1,50 +1,67 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { authClient } from '../../../lib/auth';
-import { Lock, CheckCircle2 } from 'lucide-react-native';
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { CheckCircle2, Lock } from "lucide-react-native";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { authClient } from "../../../lib/auth";
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ token?: string }>();
-  const token = params.token;
+  const params = useLocalSearchParams<{ email?: string; otp?: string }>();
+  const email = params.email || "";
+  const otp = params.otp || "";
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleReset = async () => {
     if (!password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields.');
+      Alert.alert("Error", "Please fill in all fields.");
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match.');
+      Alert.alert("Error", "Passwords do not match.");
       return;
     }
-    if (!token) {
-      Alert.alert('Error', 'Invalid or missing reset token.');
+    if (!email || !otp) {
+      Alert.alert(
+        "Error",
+        "Invalid or missing reset information. Please start the password reset process again.",
+      );
       return;
     }
 
     setLoading(true);
     try {
-      const { error } = await authClient.resetPassword({
-        newPassword: password,
-        token,
+      // @ts-ignore - emailOtp plugin types not fully inferred in mobile client setup
+      const { error } = await authClient.emailOtp.resetPassword({
+        email,
+        otp,
+        password,
       });
 
       if (error) {
-        Alert.alert('Reset Failed', error.message || 'Could not reset password.');
+        Alert.alert(
+          "Reset Failed",
+          error.message || "Could not reset password.",
+        );
       } else {
         setIsSuccess(true);
         setTimeout(() => {
-          router.replace('/(auth)/sign-in');
+          router.replace("/(auth)/sign-in");
         }, 2000);
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'An unexpected error occurred.');
+      Alert.alert("Error", err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -70,9 +87,8 @@ export default function ResetPasswordScreen() {
         <Lock size={48} color="#6366f1" />
       </View>
       <Text style={styles.title}>Set New Password</Text>
-      <Text style={styles.subtitle}>
-        Please enter your new password below.
-      </Text>
+      {email ? <Text style={styles.emailText}>{email}</Text> : null}
+      <Text style={styles.subtitle}>Enter your new password below.</Text>
 
       <View style={styles.form}>
         <Text style={styles.label}>New Password</Text>
@@ -123,77 +139,84 @@ export default function ResetPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: "#09090b",
     padding: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   iconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(99, 102, 241, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 24,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#ffffff",
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 32,
+    color: "#a1a1aa",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  emailText: {
+    fontSize: 14,
+    color: "#6366f1",
+    fontWeight: "500",
+    marginBottom: 8,
   },
   form: {
-    width: '100%',
+    width: "100%",
     gap: 16,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#e4e4e7',
+    fontWeight: "500",
+    color: "#e4e4e7",
   },
   input: {
     height: 48,
-    backgroundColor: '#18181b',
+    backgroundColor: "#18181b",
     borderWidth: 1,
-    borderColor: '#27272a',
+    borderColor: "#27272a",
     borderRadius: 8,
     paddingHorizontal: 16,
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
   },
   button: {
     height: 48,
-    backgroundColor: '#6366f1',
+    backgroundColor: "#6366f1",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 8,
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 16,
   },
   footerText: {
-    color: '#a1a1aa',
+    color: "#a1a1aa",
     fontSize: 14,
   },
   linkText: {
-    color: '#6366f1',
+    color: "#6366f1",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

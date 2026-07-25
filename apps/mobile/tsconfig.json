@@ -25,6 +25,12 @@
       ],
       "@skil-ex2/shared": [
         "../../packages/shared/index.ts"
+      ],
+      "@/lib/api-hooks": [
+        "./lib/api-hooks.ts"
+      ],
+      "@/lib/style-utils": [
+        "./lib/style-utils.ts"
       ]
     }
   },

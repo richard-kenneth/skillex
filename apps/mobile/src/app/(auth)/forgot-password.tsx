@@ -1,35 +1,46 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { authClient } from '../../../lib/auth';
-import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react-native';
+import { Link, useRouter } from "expo-router";
+import { ArrowLeft, CheckCircle2, Mail } from "lucide-react-native";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { authClient } from "../../../lib/auth";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleResetRequest = async () => {
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address.');
+      Alert.alert("Error", "Please enter your email address.");
       return;
     }
 
     setLoading(true);
     try {
-      const { error } = await authClient.requestPasswordReset({
+      // @ts-ignore - emailOtp plugin types not fully inferred in mobile client setup
+      const { error } = await authClient.emailOtp.sendVerificationOtp({
         email,
-        redirectTo: 'mobile://reset-password',
+        type: "forget-password",
       });
 
       if (error) {
-        Alert.alert('Failed', error.message || 'Could not send reset link.');
+        Alert.alert("Failed", error.message || "Could not send reset code.");
       } else {
-        setIsSuccess(true);
+        (router as any).replace(
+          `/(auth)/verify-reset-otp?email=${encodeURIComponent(email)}`,
+        );
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'An unexpected error occurred.');
+      Alert.alert("Error", err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -63,7 +74,8 @@ export default function ForgotPasswordScreen() {
       </View>
       <Text style={styles.title}>Forgot Password?</Text>
       <Text style={styles.subtitle}>
-        Enter your email address and we'll send you a link to reset your password.
+        Enter your email address and we'll send you a link to reset your
+        password.
       </Text>
 
       <View style={styles.form}>
@@ -104,76 +116,76 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: "#09090b",
     padding: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   iconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(99, 102, 241, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 24,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#ffffff",
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: '#a1a1aa',
-    textAlign: 'center',
+    color: "#a1a1aa",
+    textAlign: "center",
     marginBottom: 32,
     lineHeight: 22,
   },
   form: {
-    width: '100%',
+    width: "100%",
     gap: 16,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#e4e4e7',
+    fontWeight: "500",
+    color: "#e4e4e7",
   },
   input: {
     height: 48,
-    backgroundColor: '#18181b',
+    backgroundColor: "#18181b",
     borderWidth: 1,
-    borderColor: '#27272a',
+    borderColor: "#27272a",
     borderRadius: 8,
     paddingHorizontal: 16,
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
   },
   button: {
     height: 48,
-    backgroundColor: '#6366f1',
+    backgroundColor: "#6366f1",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 8,
   },
   buttonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     marginTop: 16,
   },
   linkText: {
-    color: '#6366f1',
+    color: "#6366f1",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

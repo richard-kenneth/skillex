@@ -1,5 +1,7 @@
 "use client";
 
+import { SocialLogins } from "@/components/auth/social-logins";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,17 +13,17 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Link } from "@/i18n/navigation";
 import { authClient, signIn } from "@/lib/auth-client";
 import { getAuthCallbackUrl } from "@/lib/utils";
-import { SocialLogins } from "@/components/auth/social-logins";
 import { AlertCircle } from "lucide-react";
-import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useTranslations } from "next-intl";
 
 export default function SignInPage() {
+  const router = useRouter();
   const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,15 +59,18 @@ export default function SignInPage() {
     if (!unverifiedEmail) return;
     setIsResending(true);
     try {
-      const { error } = await authClient.sendVerificationEmail({
+      const { error } = await authClient.emailOtp.sendVerificationOtp({
         email: unverifiedEmail,
-        callbackURL: getAuthCallbackUrl(),
+        type: "email-verification",
       });
       if (error) {
         toast.error(error.message || t("resendVerificationFailed"));
       } else {
         toast.success(t("resendVerificationSuccess"));
         setUnverifiedEmail(null);
+        router.push(
+          `/verify-email?email=${encodeURIComponent(unverifiedEmail)}`,
+        );
       }
     } catch {
       toast.error(t("resendVerificationFailed"));
@@ -74,7 +79,6 @@ export default function SignInPage() {
     }
   };
 
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md shadow-lg border-border/50 bg-card/80 backdrop-blur-md">
@@ -82,20 +86,21 @@ export default function SignInPage() {
           <CardTitle className="text-3xl font-bold tracking-tight">
             {t("signInTitle")}
           </CardTitle>
-          <CardDescription>
-            {t("signInDescription")}
-          </CardDescription>
+          <CardDescription>{t("signInDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
           {unverifiedEmail && (
-            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+            <Alert
+              variant="destructive"
+              className="bg-destructive/10 border-destructive/20 text-destructive"
+            >
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>{t("unverifiedEmailAlertTitle")}</AlertTitle>
               <AlertDescription className="space-y-3">
                 <p>{t("unverifiedEmailAlertDesc")}</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleResendVerification}
                   disabled={isResending}
                   className="bg-background text-foreground hover:bg-muted"
