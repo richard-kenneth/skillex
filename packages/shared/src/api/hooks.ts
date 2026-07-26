@@ -1,37 +1,32 @@
 import type {
+  QueryClient,
   UseMutationOptions,
   UseQueryOptions,
-  QueryClient,
 } from "@tanstack/react-query";
-import type { ApiClient } from "./client";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../constants";
+import type { CreateExchangeRequestPayload, CreateReviewPayload, ProposeSlotsDto } from "../schemas/exchange.schema";
+import { SendMessageDto } from "../schemas/exchange.schema";
+import { PurchasePointsDto, WithdrawPointsDto } from "../schemas/points.schema";
+import type { UpdateProfileDto } from "../schemas/profile.schema";
+import { AddSkillDto } from "../schemas/skills.schema";
+import type { RecordingConsentPayload, StartRecordingPayload, StopRecordingPayload } from "../schemas/video.schema";
 import type {
   Bank,
-  CreateReviewPayload,
   Exchange,
+  ExchangeRequest,
   FeeConfig,
   MatchesResponse,
   Notification,
   NotificationPreferences,
   PointsTransaction,
-  RecordingConsentPayload,
   RecordingEstimate,
   Review,
   Skill,
   SkillCategory,
-  StartRecordingPayload,
-  StopRecordingPayload,
-  UpdateProfileDto,
-  UserSkill,
+  UserSkill
 } from "../types";
-import type {
-  CreateExchangeRequestPayload,
-  ProposeSlotsDto,
-  PurchasePointsDto,
-  SendMessageDto,
-  WithdrawPointsDto,
-} from "../schemas";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import type { ApiClient } from "./client";
 
 export interface CreateApiHooksOptions {
   client: ApiClient;
@@ -63,7 +58,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<T, Error>({
       queryKey: QUERY_KEYS.users.me,
       queryFn: () => client.users.me(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -75,7 +70,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       queryKey: QUERY_KEYS.users.byId(id),
       queryFn: () => client.users.byId(id),
       enabled: !!id,
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -92,7 +87,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useUploadImage(
@@ -105,7 +100,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -118,7 +113,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<Skill[], Error>({
       queryKey: [QUERY_KEYS.skills.list, params?.search, params?.categoryId],
       queryFn: () => client.skills.list(params?.search, params?.categoryId),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -131,28 +126,24 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<SkillCategory[], Error>({
       queryKey: QUERY_KEYS.skills.categories,
       queryFn: () => client.skills.categories(),
-      ...(options as any),
+      ...(options),
     });
   }
 
   function useAddUserSkill(
     options?: Omit<
-      UseMutationOptions<
-        UserSkill,
-        Error,
-        { skillId: string; type: "OFFERING" | "SEEKING"; experienceLevel?: string }
-      >,
+      UseMutationOptions<UserSkill, Error, AddSkillDto>,
       "mutationFn"
     >
   ) {
-    return useMutation<UserSkill, Error, any>({
+    return useMutation<UserSkill, Error, AddSkillDto>({
       mutationFn: (payload) => client.skills.addUserSkill(payload),
       onSuccess: (...args) => {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.me });
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useRemoveUserSkill(
@@ -165,7 +156,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -177,7 +168,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<Exchange[], Error>({
       queryKey: QUERY_KEYS.exchanges.list,
       queryFn: () => client.exchanges.list(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -189,7 +180,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       queryKey: QUERY_KEYS.exchanges.byId(id),
       queryFn: () => client.exchanges.byId(id),
       enabled: !!id,
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -202,7 +193,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<MatchesResponse, Error>({
       queryKey: QUERY_KEYS.exchanges.matches,
       queryFn: () => client.exchanges.matches(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -215,7 +206,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<any[], Error>({
       queryKey: QUERY_KEYS.exchanges.requests,
       queryFn: () => client.exchanges.requests(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -227,17 +218,17 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       queryKey: QUERY_KEYS.exchanges.requestById(id),
       queryFn: () => client.exchanges.requestById(id),
       enabled: !!id,
-      ...(options as any),
+      ...(options),
     });
   }
 
   function useCreateRequest(
     options?: Omit<
-      UseMutationOptions<any, Error, CreateExchangeRequestPayload>,
+      UseMutationOptions<ExchangeRequest, Error, CreateExchangeRequestPayload>,
       "mutationFn"
     >
   ) {
-    return useMutation<any, Error, CreateExchangeRequestPayload>({
+    return useMutation<ExchangeRequest, Error, CreateExchangeRequestPayload>({
       mutationFn: (p) => client.exchanges.createRequest(p),
       onSuccess: (...args) => {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exchanges.requests });
@@ -245,7 +236,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useAcceptRequest(
@@ -259,7 +250,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useRejectRequest(
@@ -272,7 +263,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useCancelRequest(
@@ -285,7 +276,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useSendRequestMessage(
@@ -302,7 +293,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useProposeSlots(
@@ -311,7 +302,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useMutation<void, Error, ProposeSlotsDto>({
       mutationFn: (p) => client.exchanges.proposeSlots(p),
       ...options,
-    } as any);
+    });
   }
 
   function useMarkExchangeComplete(
@@ -324,7 +315,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -336,7 +327,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<number, Error>({
       queryKey: QUERY_KEYS.points.balance,
       queryFn: () => client.points.balance() as Promise<number>,
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -349,7 +340,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<PointsTransaction[], Error>({
       queryKey: QUERY_KEYS.points.transactions,
       queryFn: () => client.points.transactions(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -359,7 +350,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<Bank[], Error>({
       queryKey: QUERY_KEYS.points.banks,
       queryFn: () => client.points.banks(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -369,7 +360,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<FeeConfig, Error>({
       queryKey: QUERY_KEYS.points.feeConfig,
       queryFn: () => client.points.feeConfig(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -382,7 +373,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<Record<string, number>, Error>({
       queryKey: QUERY_KEYS.points.rates,
       queryFn: () => client.points.rates(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -395,7 +386,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useMutation<any, Error, PurchasePointsDto>({
       mutationFn: (p) => client.points.purchase(p),
       ...options,
-    } as any);
+    });
   }
 
   function useWithdrawPoints(
@@ -412,7 +403,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useResolveAccount(
@@ -424,7 +415,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useMutation<any, Error, { accountNumber: string; bankCode: string }>({
       mutationFn: (p) => client.points.resolveAccount(p),
       ...options,
-    } as any);
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -439,7 +430,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<Notification[], Error>({
       queryKey: QUERY_KEYS.notifications.list,
       queryFn: () => client.notifications.list(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -454,7 +445,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useMarkAllNotificationsRead(
@@ -468,7 +459,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useDeleteNotification(
@@ -482,7 +473,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useNotificationPreferences(
@@ -494,7 +485,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<NotificationPreferences, Error>({
       queryKey: QUERY_KEYS.notifications.preferences,
       queryFn: () => client.notifications.preferences(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -511,7 +502,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -523,7 +514,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<Review[], Error>({
       queryKey: QUERY_KEYS.reviews.mine,
       queryFn: () => client.reviews.mine(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -535,7 +526,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       queryKey: QUERY_KEYS.reviews.byUserId(userId),
       queryFn: () => client.reviews.byUserId(userId),
       enabled: !!userId,
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -553,7 +544,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -565,7 +556,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useQuery<any, Error>({
       queryKey: QUERY_KEYS.referrals.tracking,
       queryFn: () => client.referrals.tracking(),
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -580,7 +571,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -594,7 +585,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       queryKey: QUERY_KEYS.video.session(roomId),
       queryFn: () => client.video.sessionDetails(roomId),
       enabled: !!roomId,
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -606,7 +597,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       queryKey: QUERY_KEYS.video.token(room),
       queryFn: () => client.video.token(room),
       enabled: !!room,
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -618,7 +609,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       queryKey: QUERY_KEYS.video.estimate(room),
       queryFn: () => client.video.record.estimate(room),
       enabled: !!room,
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -631,7 +622,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useMutation<void, Error, RecordingConsentPayload>({
       mutationFn: (p) => client.video.record.consent(p),
       ...options,
-    } as any);
+    });
   }
 
   function useStartRecording(
@@ -643,7 +634,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useMutation<{ approvedMinutes?: number }, Error, StartRecordingPayload>({
       mutationFn: (p) => client.video.record.start(p),
       ...options,
-    } as any);
+    });
   }
 
   function useStopRecording(
@@ -657,7 +648,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useSessionChatMessages(
@@ -668,7 +659,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       queryKey: QUERY_KEYS.video.chat(exchangeSessionId),
       queryFn: () => client.video.chat.list(exchangeSessionId),
       enabled: !!exchangeSessionId,
-      ...(options as any),
+      ...(options),
     });
   }
 
@@ -689,7 +680,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         return options?.onSuccess?.(...args);
       },
       ...options,
-    } as any);
+    });
   }
 
   function useMarkSessionChatRead(
@@ -699,7 +690,7 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
       mutationFn: (exchangeSessionId) =>
         client.video.chat.read(exchangeSessionId),
       ...options,
-    } as any);
+    });
   }
 
   return {

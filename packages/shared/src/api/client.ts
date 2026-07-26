@@ -1,6 +1,11 @@
+import type { CreateExchangeRequestPayload, CreateReviewPayload, ProposeSlotsDto } from "../schemas/exchange.schema";
+import { SendMessageDto } from "../schemas/exchange.schema";
+import { PurchasePointsDto, WithdrawPointsDto } from "../schemas/points.schema";
+import type { ProfileFormPayload, UpdateProfileDto } from "../schemas/profile.schema";
+import { AddSkillDto } from "../schemas/skills.schema";
+import type { RecordingConsentPayload, StartRecordingPayload, StopRecordingPayload } from "../schemas/video.schema";
 import type {
   Bank,
-  CreateReviewPayload,
   Exchange,
   ExchangeChatMessage,
   ExchangeRequest,
@@ -10,22 +15,15 @@ import type {
   NotificationPreferences,
   PointsTransaction,
   PurchaseInitiationResult,
-  RecordingConsentPayload,
   RecordingEstimate,
   Referral,
   ResolveAccountResult,
   Review,
-  SessionChatMessage,
-  SessionTiming,
-  Skill,
+  SessionChatMessage, Skill,
   SkillCategory,
-  StartRecordingPayload,
-  StopRecordingPayload,
-  UpdateProfileDto,
   UserSkill,
-  VideoTokenResponse,
+  VideoTokenResponse
 } from "../types";
-import type { CreateExchangeRequestPayload, ProfileFormPayload, ProposeSlotsDto, PurchasePointsDto, SendMessageDto, WithdrawPointsDto } from "../schemas";
 
 export type FetchImpl = (
   input: RequestInfo | URL,
@@ -134,11 +132,7 @@ export function createApiClient(config: ApiClientConfig) {
       return request<Skill[]>(`/skills${qs ? `?${qs}` : ""}`);
     },
     categories: () => request<SkillCategory[]>(`/skills/categories`),
-    addUserSkill: (payload: {
-      skillId: string;
-      type: "OFFERING" | "SEEKING";
-      experienceLevel?: string;
-    }) =>
+    addUserSkill: (payload: AddSkillDto) =>
       request<UserSkill>(`/skills/user`, {
         method: "POST",
         body: JSON.stringify(payload),
