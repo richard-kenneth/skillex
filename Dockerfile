@@ -35,9 +35,12 @@ ENV NODE_ENV=production
 
 # Copy node_modules containing production dependencies
 COPY --from=builder /app/node_modules ./node_modules
-# Copy shared package
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
+
+# Explicitly place the built shared package into node_modules for hoisted resolution
+RUN mkdir -p ./node_modules/@skil-ex2/shared
+COPY --from=builder /app/packages/shared/dist ./node_modules/@skil-ex2/shared/dist
+COPY --from=builder /app/packages/shared/package.json ./node_modules/@skil-ex2/shared/package.json
+
 # Copy API built files and prisma setup
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
