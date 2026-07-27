@@ -143,6 +143,26 @@ type RecordingSignal =
   | { type: 'recording_completed' }
   | { type: 'recording_failed' };
 
+function RecordingDataChannelHandler({ onInboundSignal, setSendSignal }: any) {
+  const { send } = useDataChannel('recording', (message) => {
+    const rawString = new TextDecoder().decode(message.payload);
+    onInboundSignal(rawString);
+  });
+
+  React.useEffect(() => {
+    if (send) {
+      // React state requires us to wrap functions in an anonymous function 
+      // so it doesn't execute it as a state updater
+      setSendSignal(() => (signal: RecordingSignal) => {
+        const payload = new TextEncoder().encode(JSON.stringify(signal));
+        send(payload, { reliable: true });
+      });
+    }
+  }, [send, setSendSignal]);
+
+  return null;
+}
+
 export default function RoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
@@ -225,22 +245,18 @@ export default function RoomScreen() {
   const loading = detailsQ.isLoading || tokenQ.isLoading;
   const error = (detailsQ.error as any)?.message || (tokenQ.error as any)?.message || null;
 
-  // Hook into LiveKit's data channel for the "recording" topic
-  const { send } = useDataChannel('recording', (message) => {
-    // Decode the incoming Uint8Array back to a string
-    const rawString = new TextDecoder().decode(message.payload);
-    handleSignalInbound(rawString);
-  });
+  /* ------ Recording signal sender ------ */
+  const [sendSignalRef, setSendSignalRef] = React.useState<any>(null);
 
   const sendSignal = React.useCallback(
     (signal: RecordingSignal) => {
-      if (!send) return;
-      
-      // Encode the JSON payload to Uint8Array before sending
-      const payload = new TextEncoder().encode(JSON.stringify(signal));
-      send(payload, { reliable: true });
+      if (sendSignalRef) {
+        sendSignalRef(signal);
+      } else {
+        console.log('send (not connected):', signal);
+      }
     },
-    [send]
+    [sendSignalRef]
   );
 
   /* ------ Recording signal receiver (LiveKit data channel ready) ------ */
@@ -454,44 +470,50 @@ export default function RoomScreen() {
             </ThemedText>
           </View>
         ) : (
-          <View style={{ flex: 1, backgroundColor: '#000' }}>
-            {/* Top bar: timer & status */}
-            <TopBar
-              onBack={() => handleLeave(true)}
-              sessionStartTime={scheduledAt}
-              remainingStr={remainingStr}
-              progressPct={progressPct}
-              recordingState={recordingState}
-              recordingStopAt={recordingStopAt}
-              now={now}
+          <LiveKitRoom
+            token={token}
+            serverUrl={serverUrl}
+            connect={true}
+            audio={audioOn}
+            video={videoOn}
+            onDisconnected={() => handleLeave(false)}
+          >
+            {/* Bridges the LiveKit context data channel back to RoomScreen state */}
+            <RecordingDataChannelHandler 
+              onInboundSignal={handleSignalInbound} 
+              setSendSignal={setSendSignalRef} 
             />
 
-            {/* Main content: Video / Chat */}
-            <Tabs<RoomTab>
-              variant="underline"
-              value={tab}
-              onChange={setTab}
-              items={[
-                { value: 'room', label: 'Room', icon: <Video size={14} color={tab === 'room' ? '#fff' : theme.mutedForeground} /> },
-                {
-                  value: 'chat',
-                  label: 'Chat',
-                  badge: (chatMsgsQ.data ?? []).length || undefined,
-                  icon: <MessageSquare size={14} color={tab === 'chat' ? '#fff' : theme.mutedForeground} />,
-                },
-              ]}
-              style={{ backgroundColor: '#0a0a0a', paddingHorizontal: SPACING[5], paddingVertical: SPACING[2] }}
-            />
+            <View style={{ flex: 1, backgroundColor: '#000' }}>
+              {/* Top bar: timer & status */}
+              <TopBar
+                onBack={() => handleLeave(true)}
+                sessionStartTime={scheduledAt}
+                remainingStr={remainingStr}
+                progressPct={progressPct}
+                recordingState={recordingState}
+                recordingStopAt={recordingStopAt}
+                now={now}
+              />
 
-            {tab === 'room' ? (
-              <LiveKitRoom
-                token={token}
-                serverUrl={serverUrl}
-                connect={true}
-                audio={audioOn}
-                video={videoOn}
-                onDisconnected={() => handleLeave(false)}
-              >
+              {/* Main content: Video / Chat */}
+              <Tabs<RoomTab>
+                variant="underline"
+                value={tab}
+                onChange={setTab}
+                items={[
+                  { value: 'room', label: 'Room', icon: <Video size={14} color={tab === 'room' ? '#fff' : theme.mutedForeground} /> },
+                  {
+                    value: 'chat',
+                    label: 'Chat',
+                    badge: (chatMsgsQ.data ?? []).length || undefined,
+                    icon: <MessageSquare size={14} color={tab === 'chat' ? '#fff' : theme.mutedForeground} />,
+                  },
+                ]}
+                style={{ backgroundColor: '#0a0a0a', paddingHorizontal: SPACING[5], paddingVertical: SPACING[2] }}
+              />
+
+              {tab === 'room' ? (
                 <RoomBody
                   audioOn={audioOn}
                   videoOn={videoOn}
@@ -500,91 +522,91 @@ export default function RoomScreen() {
                   me={currentUser}
                   onLeave={() => handleLeave(true)}
                 />
-              </LiveKitRoom>
-            ) : (
-              <ChatBody
-                messages={(chatMsgsQ.data ?? []) as any[]}
-                loading={chatMsgsQ.isLoading}
-                me={currentUser}
-                onRefresh={() => chatMsgsQ.refetch()}
-                flatRef={flatRef}
-              />
-            )}
-
-            {/* Bottom control bar */}
-            <ControlsBar
-              insets={insets}
-              audioOn={audioOn}
-              videoOn={videoOn}
-              recordingState={recordingState}
-              onToggleAudio={() => setAudioOn((v) => !v)}
-              onToggleVideo={() => setVideoOn((v) => !v)}
-              onToggleCamera={() => setFrontCamera((v) => !v)}
-              onRecording={
-                recordingState === 'recording' || recordingState === 'processing'
-                  ? handleStopRecording
-                  : recordingState === 'idle'
-                    ? handleInitiateRecording
-                    : undefined
-              }
-              onChat={() => setTab(tab === 'chat' ? 'room' : 'chat')}
-              onLeave={() => handleLeave(true)}
-              chatBadge={(chatMsgsQ.data ?? []).length > 0 && tab !== 'chat'}
-            />
-
-            {/* Chat input (only when chat) */}
-            {tab === 'chat' ? (
-              <View
-                style={{
-                  paddingHorizontal: SPACING[3],
-                  paddingBottom: SPACING[3],
-                  paddingTop: SPACING[2],
-                  backgroundColor: '#0a0a0a',
-                  borderTopWidth: 1,
-                  borderTopColor: '#1f1f23',
-                  flexDirection: 'row',
-                  gap: SPACING[2],
-                }}
-              >
-                <TextInput
-                  value={chatText}
-                  onChangeText={setChatText}
-                  placeholder="Send a message…"
-                  placeholderTextColor="#52525b"
-                  style={{
-                    flex: 1,
-                    borderRadius: RADIUS.pill,
-                    backgroundColor: '#18181b',
-                    color: '#fff',
-                    paddingHorizontal: SPACING[4],
-                    paddingVertical: SPACING[3],
-                    fontSize: FONT_SIZE.md,
-                  }}
-                  onSubmitEditing={handleSendChat}
-                  returnKeyType="send"
+              ) : (
+                <ChatBody
+                  messages={(chatMsgsQ.data ?? []) as any[]}
+                  loading={chatMsgsQ.isLoading}
+                  me={currentUser}
+                  onRefresh={() => chatMsgsQ.refetch()}
+                  flatRef={flatRef}
                 />
-                <Pressable
-                  onPress={handleSendChat}
-                  disabled={!chatText.trim() || sendMsgQ.isPending}
+              )}
+
+              {/* Bottom control bar */}
+              <ControlsBar
+                insets={insets}
+                audioOn={audioOn}
+                videoOn={videoOn}
+                recordingState={recordingState}
+                onToggleAudio={() => setAudioOn((v) => !v)}
+                onToggleVideo={() => setVideoOn((v) => !v)}
+                onToggleCamera={() => setFrontCamera((v) => !v)}
+                onRecording={
+                  recordingState === 'recording' || recordingState === 'processing'
+                    ? handleStopRecording
+                    : recordingState === 'idle'
+                      ? handleInitiateRecording
+                      : undefined
+                }
+                onChat={() => setTab(tab === 'chat' ? 'room' : 'chat')}
+                onLeave={() => handleLeave(true)}
+                chatBadge={(chatMsgsQ.data ?? []).length > 0 && tab !== 'chat'}
+              />
+
+              {/* Chat input (only when chat) */}
+              {tab === 'chat' ? (
+                <View
                   style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: RADIUS.pill,
-                    backgroundColor: !chatText.trim() ? '#27272a' : theme.primary,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    alignSelf: 'flex-end',
+                    paddingHorizontal: SPACING[3],
+                    paddingBottom: SPACING[3],
+                    paddingTop: SPACING[2],
+                    backgroundColor: '#0a0a0a',
+                    borderTopWidth: 1,
+                    borderTopColor: '#1f1f23',
+                    flexDirection: 'row',
+                    gap: SPACING[2],
                   }}
                 >
-                  {sendMsgQ.isPending ? (
-                    <Loader2 size={16} color="#fff" />
-                  ) : (
-                    <Send size={16} color="#fff" />
-                  )}
-                </Pressable>
-              </View>
-            ) : null}
-          </View>
+                  <TextInput
+                    value={chatText}
+                    onChangeText={setChatText}
+                    placeholder="Send a message…"
+                    placeholderTextColor="#52525b"
+                    style={{
+                      flex: 1,
+                      borderRadius: RADIUS.pill,
+                      backgroundColor: '#18181b',
+                      color: '#fff',
+                      paddingHorizontal: SPACING[4],
+                      paddingVertical: SPACING[3],
+                      fontSize: FONT_SIZE.md,
+                    }}
+                    onSubmitEditing={handleSendChat}
+                    returnKeyType="send"
+                  />
+                  <Pressable
+                    onPress={handleSendChat}
+                    disabled={!chatText.trim() || sendMsgQ.isPending}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: RADIUS.pill,
+                      backgroundColor: !chatText.trim() ? '#27272a' : theme.primary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      alignSelf: 'flex-end',
+                    }}
+                  >
+                    {sendMsgQ.isPending ? (
+                      <Loader2 size={16} color="#fff" />
+                    ) : (
+                      <Send size={16} color="#fff" />
+                    )}
+                  </Pressable>
+                </View>
+              ) : null}
+            </View>
+          </LiveKitRoom>
         )}
       </KeyboardAvoidingView>
 

@@ -10,8 +10,10 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { queryClient } from "../../lib/query-client";
 import { I18nProvider } from "lib/i18n";
+import { registerGlobals } from '@livekit/react-native';
 
 SplashScreen.preventAutoHideAsync();
+registerGlobals();
 
 function AppInner() {
   const theme = useTheme();
