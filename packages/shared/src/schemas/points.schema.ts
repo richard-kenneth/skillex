@@ -8,6 +8,7 @@ export const PurchasePointsSchema = v.strictObject({
     v.maxValue(100000, "Cannot purchase more than 100,000 points at once."),
   ),
   currency: v.optional(v.string()),
+  redirectUrl: v.optional(v.pipe(v.string(), v.url())),
 });
 
 export type PurchasePointsPayload = v.InferInput<typeof PurchasePointsSchema>;

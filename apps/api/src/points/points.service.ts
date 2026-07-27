@@ -79,7 +79,7 @@ export class PointsService {
 
     const txRef = `pts_buy_${userId}_${Date.now()}`;
 
-    await this.prisma.pointsTransaction.create({
+    const ptsTrx = await this.prisma.pointsTransaction.create({
       data: {
         userId,
         amount: basePoints,
@@ -92,16 +92,54 @@ export class PointsService {
       },
     });
 
-    return {
+    const customer = { email: user.email, name: user.name || 'User' };
+    const base = {
       txRef,
       fiatAmount: totalFiatRounded,
       fiatCurrency: currency,
       targetPoints: basePoints,
-      customer: {
-        email: user.email,
-        name: user.name || 'User',
-      },
+      customer,
     };
+
+    // Web: flutterwave-react-v3 opens its own inline modal client-side with this
+    // data and the public key. Nothing more needed from here.
+    if (!data.redirectUrl) return base;
+
+    // Mobile: no equivalent of an inline modal, so create a hosted checkout link
+    // and hand it back for the app to open.
+    const isNGN = currency === 'NGN';
+    const flwRes = await fetch('https://api.flutterwave.com/v3/payments', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        tx_ref: txRef,
+        amount: totalFiatRounded,
+        currency,
+        payment_options: isNGN
+          ? 'banktransfer,card,mobilemoney,ussd'
+          : 'card,mobilemoney,ussd',
+        redirect_url: data.redirectUrl,
+        customer,
+        customizations: { title: `${basePoints} points` },
+      }),
+    });
+    const flwData = await flwRes.json();    
+
+    if (flwData.status !== 'success') {
+      await this.prisma.pointsTransaction.update({
+        where: { id: ptsTrx.id },
+        data: {
+          status: 'FAILED',
+          description: 'Flutterwave rejected the checkout request',
+        },
+      });
+      throw new BadRequestException('Could not start the payment');
+    }
+
+    return { ...base, paymentLink: flwData.data.link as string };
   }
 
   async verifyWebhook(signature: string, payload: any) {
@@ -184,16 +222,15 @@ export class PointsService {
     const seventyTwoHoursAgo = new Date();
     seventyTwoHoursAgo.setHours(seventyTwoHoursAgo.getHours() - 72);
 
-    const recentIntlPurchase =
-      await this.prisma.pointsTransaction.findFirst({
-        where: {
-          userId,
-          type: 'PURCHASE',
-          status: 'SUCCESS',
-          fiatCurrency: { not: 'NGN' },
-          createdAt: { gte: seventyTwoHoursAgo },
-        },
-      });
+    const recentIntlPurchase = await this.prisma.pointsTransaction.findFirst({
+      where: {
+        userId,
+        type: 'PURCHASE',
+        status: 'SUCCESS',
+        fiatCurrency: { not: 'NGN' },
+        createdAt: { gte: seventyTwoHoursAgo },
+      },
+    });
 
     if (recentIntlPurchase) {
       throw new BadRequestException(
@@ -431,7 +468,7 @@ export class PointsService {
   async applyFacilitationFee(userId: string, exchangeId: string) {
     const config = await this.getFeeConfig();
     const facilitationFee = config.facilitationFee;
-    
+
     if (facilitationFee <= 0) return;
 
     const user = await this.prisma.user.findUnique({

@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   FlatList,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -118,7 +119,6 @@ export default function PointsScreen() {
   // Purchase
   const [purchaseAmount, setPurchaseAmount] = React.useState('');
   const [purchaseError, setPurchaseError] = React.useState<string | null>(null);
-  const [polling, setPolling] = React.useState<{ txRef: string; timer: any } | null>(null);
 
   // Withdraw
   const [withdrawAmount, setWithdrawAmount] = React.useState('');
@@ -127,23 +127,48 @@ export default function PointsScreen() {
   const [withdrawError, setWithdrawError] = React.useState<string | null>(null);
   const [resolvedName, setResolvedName] = React.useState<string | null>(null);
   const [confirmWithdraw, setConfirmWithdraw] = React.useState(false);
+
+  // Rates & Currency
+  const [selectedCurrency, setSelectedCurrency] = React.useState("USD");
+  const [currencyDetecting, setCurrencyDetecting] = React.useState(true);
   const resolveDebounceRef = React.useRef<any>(null);
 
-  const balance = (balanceQ.data as any)?.balance ?? 0;
+    // Auto-detect IP Currency
+    React.useEffect(() => {
+      const detectCurrency = async () => {
+        try {
+          const res = await fetch("https://ipapi.co/currency/");
+          if (res.ok) {
+            const currency = await res.text();
+            if (currency && currency.trim().length === 3) {
+              setSelectedCurrency(currency.trim().toUpperCase());
+            }
+          }
+        } catch (e) {
+          console.error("Currency detection failed, defaulting to USD.");
+        } finally {
+          setCurrencyDetecting(false);
+        }
+      };
+      detectCurrency();
+    }, []);
+  
+
+  const balance = (balanceQ.data as any) ?? 0;
   const transactions = (txQ.data ?? []) as any[];
   const feeConfig = feeQ.data as any;
   const rates = (ratesQ.data ?? {}) as Record<string, number>;
-  const selectedCurrency = 'USD';
-  const rate = rates[selectedCurrency] ?? 1;
-  const ngnRate = rates[WITHDRAWAL_CURRENCY] ?? 1500;
+  const rate = rates ? rates[selectedCurrency] || 1 : 1;
+  const ngnRate = rates ? rates["NGN"] || 1500 : 1500;
   const minWithdrawalPoints = feeConfig?.minWithdrawalPoints ?? MIN_WITHDRAWAL_POINTS;
   const withdrawalSpread = feeConfig?.withdrawalSpread ?? DEFAULT_WITHDRAWAL_SPREAD;
 
   /* -------- Derived: purchase -------- */
   const pAmount = parseInt(purchaseAmount) || 0;
+  const baseFiatRaw = pAmount * POINT_TO_USD_RATE * rate;
   const pFiatTotal = React.useMemo(() => {
     if (!pAmount) return 0;
-    return applyCurrencyPrecision(pAmount * POINT_TO_USD_RATE * rate, selectedCurrency, rate);
+    return applyCurrencyPrecision(baseFiatRaw, selectedCurrency, rate);
   }, [pAmount, rate, selectedCurrency]);
 
   /* -------- Derived: withdraw -------- */
@@ -209,52 +234,43 @@ export default function PointsScreen() {
     }
     setPurchaseError(null);
     try {
-      const res = await purchaseQ.mutateAsync({ amount: pAmount, currency: selectedCurrency });
-      const { paymentLink, txRef } = res as any;
-      const deepLink = Linking.createURL('points');
+      const redirectUrl =
+        Platform.OS === 'web'
+          ? `${window.location.origin}/points`
+          : Linking.createURL('points');
+      const res = await purchaseQ.mutateAsync({ amount: pAmount, currency: selectedCurrency, redirectUrl });
+      const { paymentLink, txRef } = res as any;      
 
       if (paymentLink) {
         // Open Flutterwave hosted payment page
-        const browserResult = await WebBrowser.openAuthSessionAsync(paymentLink, deepLink, {
+        if (Platform.OS === 'web') {
+          window.location.href = paymentLink;
+          return;
+        }
+        const browserResult = await WebBrowser.openAuthSessionAsync(paymentLink, redirectUrl, {
           showTitle: true,
           enableBarCollapsing: true,
         });
 
-        // Regardless of user action, poll backend status for 45s
-        const endAt = Date.now() + 45000;
-        let done = false;
-        setPolling({ txRef, timer: null });
-        toast.toast({ title: 'Verifying payment…', description: 'This may take a moment.', variant: 'info' });
-        const interval = setInterval(async () => {
-          if (Date.now() > endAt || done) {
-            clearInterval(interval);
-            setPolling(null);
-            if (!done) {
-              toast.toast({
-                title: 'Payment pending',
-                description: 'Your points will arrive once the payment clears. Pull to refresh.',
-                variant: 'warning',
-              });
-            }
-            return;
-          }
-          try {
-            await balanceQ.refetch();
-            await txQ.refetch();
-            const newBalance = (balanceQ.data as any)?.balance ?? 0;
-            if (newBalance > balance) {
-              done = true;
-              clearInterval(interval);
-              setPolling(null);
-              setPurchaseAmount('');
-              toast.toast({
-                title: `+${newBalance - balance} points added`,
-                variant: 'success',
-              });
-            }
-          } catch {
-            // ignore
-          }
+        if (browserResult.type !== 'success' || !browserResult.url) {
+          toast.toast({title: 'Payment failed', description: browserResult.type, variant: 'error'})
+          return;
+        }
+
+        const { queryParams } = Linking.parse(browserResult.url);
+        const transactionId = queryParams?.transaction_id as string | undefined;
+        if (!transactionId) {
+          toast.toast({title: 'Payment failed', description: 'Cancelled', variant: 'info'})
+          return;
+        }
+
+        setPurchaseAmount('');
+
+        // Webhook validation takes a moment. Keep the spinner active
+        // and fetch the updated balance after 3 seconds.
+        setTimeout(() => {
+          Promise.all([balanceQ.refetch(), txQ.refetch()]).finally(() => {
+          });
         }, 3000);
       } else {
         toast.toast({ title: 'Payment initiated', variant: 'info' });
@@ -309,7 +325,6 @@ export default function PointsScreen() {
   };
 
   const loading = balanceQ.isLoading || txQ.isLoading;
-  const pollingActive = polling !== null;
 
   /* -------- Filter transactions -------- */
   const filteredTransactions = React.useMemo(() => {
@@ -360,7 +375,7 @@ export default function PointsScreen() {
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
-                refreshing={refreshing || pollingActive}
+                refreshing={refreshing}
                 onRefresh={refresh}
                 tintColor={theme.primary}
                 colors={[theme.primary]}
@@ -489,13 +504,12 @@ export default function PointsScreen() {
 
                 <Button
                   onPress={handlePurchase}
-                  loading={purchaseQ.isPending || pollingActive}
+                  loading={purchaseQ.isPending}
                   leftIcon={<Plus size={16} color="#fff" />}
-                  disabled={!pAmount || pAmount < MIN_PURCHASE_POINTS}
+                  disabled={!pAmount || pAmount < MIN_PURCHASE_POINTS||
+                  currencyDetecting}
                 >
-                  {pollingActive
-                    ? 'Verifying payment…'
-                    : pAmount >= MIN_PURCHASE_POINTS
+                  {pAmount >= MIN_PURCHASE_POINTS
                       ? `Buy for ${formatCurrency(pFiatTotal, selectedCurrency)}`
                       : 'Buy points'}
                 </Button>

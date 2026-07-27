@@ -92,6 +92,13 @@ import {
   Zap,
 } from 'lucide-react-native';
 import { cn } from '@/lib/style-utils';
+import { 
+  LiveKitRoom, 
+  useParticipants, 
+  useDataChannel, 
+  VideoTrack 
+} from '@livekit/react-native';
+import { Track } from 'livekit-client';
 
 /*
  * ─── LiveKit integration note ─────────────────────────────────────────
@@ -218,16 +225,22 @@ export default function RoomScreen() {
   const loading = detailsQ.isLoading || tokenQ.isLoading;
   const error = (detailsQ.error as any)?.message || (tokenQ.error as any)?.message || null;
 
-  /* ------ Recording signal sender (LiveKit data channel ready) ------ */
+  // Hook into LiveKit's data channel for the "recording" topic
+  const { send } = useDataChannel('recording', (message) => {
+    // Decode the incoming Uint8Array back to a string
+    const rawString = new TextDecoder().decode(message.payload);
+    handleSignalInbound(rawString);
+  });
+
   const sendSignal = React.useCallback(
     (signal: RecordingSignal) => {
-      // No-op until data channel is wired. When using @livekit/react-native:
-      // const { send } = useDataChannel("recording"); send(JSON.stringify(signal));
-      // console.log("[Recording] sending:", signal);
-      // eslint-disable-next-line no-console
-      console.log('[Recording stub] send:', signal);
+      if (!send) return;
+      
+      // Encode the JSON payload to Uint8Array before sending
+      const payload = new TextEncoder().encode(JSON.stringify(signal));
+      send(payload, { reliable: true });
     },
-    [],
+    [send]
   );
 
   /* ------ Recording signal receiver (LiveKit data channel ready) ------ */
@@ -471,14 +484,23 @@ export default function RoomScreen() {
             />
 
             {tab === 'room' ? (
-              <RoomBody
-                audioOn={audioOn}
-                videoOn={videoOn}
-                session={session}
-                partner={detailsQ.data?.partner as any}
-                me={currentUser}
-                onLeave={() => handleLeave(true)}
-              />
+              <LiveKitRoom
+                token={token}
+                serverUrl={serverUrl}
+                connect={true}
+                audio={audioOn}
+                video={videoOn}
+                onDisconnected={() => handleLeave(false)}
+              >
+                <RoomBody
+                  audioOn={audioOn}
+                  videoOn={videoOn}
+                  session={session}
+                  partner={detailsQ.data?.partner as any}
+                  me={currentUser}
+                  onLeave={() => handleLeave(true)}
+                />
+              </LiveKitRoom>
             ) : (
               <ChatBody
                 messages={(chatMsgsQ.data ?? []) as any[]}
@@ -801,10 +823,12 @@ function RoomBody({
   me,
 }: any) {
   const theme = useTheme();
+  const participants = useParticipants();
+
   return (
     <View style={{ flex: 1, backgroundColor: '#000', padding: SPACING[4], gap: SPACING[3] }}>
-      {/* When LiveKit installed: replace this with useParticipants() + ParticipantTile */}
-      <ParticipantPlaceholderGrid
+      <ParticipantGrid
+        participants={participants}
         audioOn={audioOn}
         videoOn={videoOn}
         partner={partner}
@@ -851,63 +875,59 @@ function RoomBody({
   );
 }
 
-function ParticipantPlaceholderGrid({ audioOn, videoOn, partner, me }: any) {
+function ParticipantGrid({ participants, partner, me }: any) {
   return (
-    <View style={{ flex: 1, gap: SPACING[3] }}>
-      <View style={{ flex: 1, flexDirection: 'row', gap: SPACING[3] }}>
-        <ParticipantTile
-          label="You"
-          user={me}
-          muted={!audioOn}
-          videoOff={!videoOn}
-          style={{ flex: 1 }}
-        />
-        <ParticipantTile
-          label={partner?.name ?? 'Partner'}
-          user={partner}
-          style={{ flex: 1 }}
-        />
-      </View>
-    </View>
-  );
-}
+    <View style={{ flex: 1, flexDirection: 'row', gap: SPACING[3] }}>
+      {participants.map((participant: any) => {
+        // 1. Grab the publication reference
+        const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
+        const isMe = participant.isLocal;
+        const fallbackName = isMe ? 'You' : (partner?.name ?? participant.identity);
 
-function ParticipantTile({ label, user, muted, videoOff, style }: any) {
-  const theme = useTheme();
-  return (
-    <View
-      style={[
-        {
-          borderRadius: RADIUS.lg,
-          backgroundColor: '#18181b',
-          borderWidth: 1,
-          borderColor: '#27272a',
-          overflow: 'hidden',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: SPACING[3],
-        },
-        style,
-      ]}
-    >
-      <Avatar uri={user?.image} fallback={user?.name ?? label} size={72} />
-      <View style={{ alignItems: 'center', gap: 2 }}>
-        <ThemedText type="smallBold" style={{ fontSize: 13, color: '#fff' }}>
-          {user?.name ?? label}
-        </ThemedText>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          {muted ? (
-            <Badge variant="destructive">
-              <MicOff size={10} color="#fff" /> Muted
-            </Badge>
-          ) : null}
-          {videoOff ? (
-            <Badge variant="destructive">
-              <VideoOff size={10} color="#fff" /> No video
-            </Badge>
-          ) : null}
-        </View>
-      </View>
+        return (
+          <View 
+            key={participant.identity}
+            style={{
+              flex: 1,
+              borderRadius: RADIUS.lg,
+              backgroundColor: '#18181b',
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: '#27272a',
+            }}
+          >
+            {cameraPublication?.videoTrack ? (
+              <VideoTrack 
+                // 2. Pass publication into the trackRef object
+                trackRef={{ 
+                  participant, 
+                  source: Track.Source.Camera,
+                  publication: cameraPublication 
+                }} 
+                style={{ flex: 1, width: '100%', height: '100%' }} 
+              />
+            ) : (
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[3] }}>
+                <Avatar 
+                  uri={isMe ? me?.image : partner?.image} 
+                  fallback={fallbackName} 
+                  size={72} 
+                />
+                <ThemedText type="smallBold" style={{ fontSize: 13, color: '#fff' }}>
+                  {fallbackName}
+                </ThemedText>
+              </View>
+            )}
+
+            {/* Mute Indicator */}
+            {!participant.isMicrophoneEnabled && (
+              <View style={{ position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 4, borderRadius: 12 }}>
+                <MicOff size={14} color="#ef4444" />
+              </View>
+            )}
+          </View>
+        );
+      })}
     </View>
   );
 }
