@@ -8,6 +8,8 @@ services:
     dockerContext: .
     healthCheckPath: /health
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: PORT
         value: 3001
       # API URLs
@@ -85,3 +87,8 @@ services:
         sync: false
       - key: VAPID_EMAIL
         sync: false
+
+      # Expo
+      - key: EXPO_SCHEME
+        sync: false
+        
