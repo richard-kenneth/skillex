@@ -193,7 +193,8 @@
   },
   "dashboard": {
     "title": "Panel",
-    "welcomeBack": "¡Bienvenido de vuelta, {name}!",
+    "welcomeBack": "¡Bienvenido de vuelta!",
+    "welcomeBackWithName": "¡Bienvenido de vuelta, {name}!",
     "description": "Aquí tienes un resumen de tus intercambios",
     "quickStats": "Estadísticas rápidas",
     "activeExchanges": "Intercambios activos",

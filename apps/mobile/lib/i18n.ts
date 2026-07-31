@@ -1,11 +1,17 @@
-import { getLocales } from 'expo-localization';
-import { I18n } from 'i18n-js';
-import React from 'react';
-import { en, es, fr, pt } from '@skil-ex2/shared';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { en, es, fr, pt } from "@skil-ex2/shared";
+import { getLocales } from "expo-localization";
+import { I18n } from "i18n-js";
+import React from "react";
+import { AppState } from "react-native";
 
-export type Locale = 'en' | 'es' | 'fr' | 'pt';
+export type Locale = "en" | "es" | "fr" | "pt";
+
+export const SUPPORTED_LOCALES: Locale[] = ["en", "fr", "es", "pt"];
 
 const LOCALES: Record<Locale, any> = { en, es, fr, pt };
+
+const LOCALE_STORAGE_KEY = "@user_locale";
 
 // Set up i18n-js with expo-localization
 const i18n = new I18n({
@@ -15,9 +21,7 @@ const i18n = new I18n({
   pt,
 });
 
-// Set the locale once at the beginning of your app
-i18n.locale = getLocales()[0]?.languageCode ?? 'en';
-i18n.enableFallback = true; // Fall back to English if translation is missing
+i18n.enableFallback = true;
 
 interface I18nContextValue {
   locale: Locale;
@@ -27,29 +31,87 @@ interface I18nContextValue {
 
 const I18nContext = React.createContext<I18nContextValue | null>(null);
 
+function isValidLocale(value: unknown): value is Locale {
+  return typeof value === "string" && SUPPORTED_LOCALES.includes(value as Locale);
+}
+
+function getSystemLocale(defaultLocale: Locale = "en"): Locale {
+  const code = getLocales()[0]?.languageCode;
+  return isValidLocale(code) ? code : defaultLocale;
+}
+
 export function I18nProvider({
   children,
-  defaultLocale = 'en',
+  defaultLocale = "en",
 }: {
   children: React.ReactNode;
   defaultLocale?: Locale;
 }) {
-  const [locale, setLocale] = React.useState<Locale>(
-    (getLocales()[0]?.languageCode as Locale) ?? defaultLocale,
-  );
+  const [locale, setLocaleState] = React.useState<Locale>(() => {
+    const initial = getSystemLocale(defaultLocale);
+    i18n.locale = initial;
+    return initial;
+  });
+
+  // Load saved locale from storage on mount
+  React.useEffect(() => {
+    let isMounted = true;
+    const loadLocale = async () => {
+      try {
+        const savedLocale = await AsyncStorage.getItem(LOCALE_STORAGE_KEY);
+        if (!isMounted) return;
+
+        if (isValidLocale(savedLocale)) {
+          setLocaleState(savedLocale);
+          i18n.locale = savedLocale;
+        } else {
+          const systemLocale = getSystemLocale(defaultLocale);
+          setLocaleState(systemLocale);
+          i18n.locale = systemLocale;
+        }
+      } catch {
+        if (!isMounted) return;
+        const systemLocale = getSystemLocale(defaultLocale);
+        setLocaleState(systemLocale);
+        i18n.locale = systemLocale;
+      }
+    };
+    loadLocale();
+    return () => {
+      isMounted = false;
+    };
+  }, [defaultLocale]);
+
+  // Listen for app state changes to detect OS locale changes
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        AsyncStorage.getItem(LOCALE_STORAGE_KEY).then((saved) => {
+          if (!saved) {
+            const systemLocale = getSystemLocale(defaultLocale);
+            setLocaleState(systemLocale);
+            i18n.locale = systemLocale;
+          }
+        });
+      }
+    });
+
+    return () => subscription.remove();
+  }, [defaultLocale]);
 
   const value = React.useMemo<I18nContextValue>(() => {
     return {
       locale,
       setLocale: (l: Locale) => {
-        setLocale(l);
+        if (!isValidLocale(l)) return;
+        setLocaleState(l);
         i18n.locale = l;
+        AsyncStorage.setItem(LOCALE_STORAGE_KEY, l).catch(() => {});
       },
       t: (key, vars) => {
-        if (vars) {
-          return i18n.t(key, vars);
-        }
-        return i18n.t(key);
+        // Force sync global instance to current state
+        i18n.locale = locale;
+        return vars ? i18n.t(key, vars) : i18n.t(key);
       },
     };
   }, [locale]);
@@ -59,20 +121,25 @@ export function I18nProvider({
 
 export function useI18n() {
   const ctx = React.useContext(I18nContext);
+  
+  // FIX: Force standalone or fallback hooks to track state/force updates if needed,
+  // but crucially ensure context consumers re-render when `locale` changes.
   if (!ctx) {
-    // Fallback standalone (works outside provider, useful for early screens/signup)
+    const [currentLocale, setCurrentLocale] = React.useState<Locale>(
+      (isValidLocale(i18n.locale) ? i18n.locale : "en") as Locale
+    );
+
     return {
-      locale: (i18n.locale as Locale) ?? 'en',
+      locale: currentLocale,
       setLocale: (l: Locale) => {
-        console.log(l);
-        
+        if (!isValidLocale(l)) return;
         i18n.locale = l;
+        setCurrentLocale(l);
+        AsyncStorage.setItem(LOCALE_STORAGE_KEY, l).catch(() => {});
       },
       t: (key: string, vars?: Record<string, string | number>) => {
-        if (vars) {
-          return i18n.t(key, vars);
-        }
-        return i18n.t(key);
+        i18n.locale = currentLocale;
+        return vars ? i18n.t(key, vars) : i18n.t(key);
       },
     };
   }
@@ -80,29 +147,23 @@ export function useI18n() {
 }
 
 /**
- * Use this hook for page-level / component-level translations.
- * Usage: const t = useT('dashboard'); t('title')
- * Also accepts a direct dot-key: const t = useT(); t('common.cancel')
+ * FIXED: Wrapped with React.useMemo / dependencies pointing straight to `locale` 
+ * so tab screens immediately invalidate their translation string caches when the language changes.
  */
 export function useT(namespace?: string) {
-  const { t } = useI18n();
-  return React.useCallback(
-    (key: string, vars?: Record<string, string | number>) => {
+  const { t, locale } = useI18n();
+  
+  return React.useMemo(() => {
+    return (key: string, vars?: Record<string, string | number>) => {
       const fullKey = namespace ? `${namespace}.${key}` : key;
-      if (vars) {
-        return t(fullKey, vars);
-      }
-      return t(fullKey);
-    },
-    [t, namespace],
-  );
+      return vars ? t(fullKey, vars) : t(fullKey);
+    };
+  }, [t, namespace, locale]);
 }
 
-export const SUPPORTED_LOCALES: Locale[] = ['en', 'fr', 'es', 'pt'];
-
 export const LOCALE_LABELS: Record<Locale, string> = {
-  en: 'English',
-  fr: 'Français',
-  es: 'Español',
-  pt: 'Português',
+  en: "English",
+  fr: "Français",
+  es: "Español",
+  pt: "Português",
 };

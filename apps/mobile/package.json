@@ -9,6 +9,7 @@
     "@livekit/react-native": "^2.12.0",
     "@livekit/react-native-expo-plugin": "^1.0.2",
     "@livekit/react-native-webrtc": "^144.1.2",
+    "@react-native-async-storage/async-storage": "^3.1.1",
     "@skil-ex2/shared": "workspace:*",
     "@tanstack/react-query": "^5.100.3",
     "better-auth": "^1.6.25",

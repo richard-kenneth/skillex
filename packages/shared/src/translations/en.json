@@ -193,7 +193,8 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcomeBack": "Welcome back, <bold>{name}</bold>!",
+    "welcomeBack": "Welcome back",
+    "welcomeBackWithName": "Welcome back, <bold>{name}</bold>!",
     "description": "Here's your skill exchange overview",
     "quickStats": "Quick Stats",
     "activeExchanges": "Active Exchanges",

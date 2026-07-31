@@ -199,7 +199,8 @@
   },
   "dashboard": {
     "title": "Tableau de bord",
-    "welcomeBack": "Bon retour, <bold>{name}</bold> !",
+    "welcomeBack": "Bon retour !",
+    "welcomeBackWithName": "Bon retour, <bold>{name}</bold> !",
     "description": "Voici un aperçu de vos échanges de compétences",
     "quickStats": "Statistiques rapides",
     "activeExchanges": "Échanges actifs",

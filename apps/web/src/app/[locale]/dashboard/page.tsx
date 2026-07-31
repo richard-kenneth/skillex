@@ -79,7 +79,7 @@ export default async function DashboardPage() {
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground flex items-center gap-2">
-            {t.rich("welcomeBack", {
+            {t.rich("welcomeBackWithName", {
               name: fullUser.name,
               bold: (chunks) => <span className="font-semibold text-foreground">{chunks}</span>
             })}

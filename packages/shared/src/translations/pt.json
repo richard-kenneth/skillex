@@ -199,7 +199,8 @@
   },
   "dashboard": {
     "title": "Painel",
-    "welcomeBack": "Bem-vindo de volta, {name}!",
+    "welcomeBack": "Bem-vindo de volta!",
+    "welcomeBackWithName": "Bem-vindo de volta, {name}!",
     "description": "Aqui está seu resumo de trocas de habilidades",
     "quickStats": "Estatísticas rápidas",
     "activeExchanges": "Trocas ativas",
