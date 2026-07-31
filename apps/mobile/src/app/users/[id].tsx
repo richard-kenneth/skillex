@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useT } from "lib/i18n";
 import {
   ActionSheet,
   Avatar,
@@ -82,6 +83,7 @@ export default function PublicUserProfileScreen() {
   const nav = useNavigation();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const t = useT('users');
 
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [requestOpen, setRequestOpen] = React.useState(false);
@@ -133,7 +135,7 @@ export default function PublicUserProfileScreen() {
           <MoreHorizontal size={20} color={theme.foreground} />
         </Pressable>
       ),
-      headerTitle: user?.name ?? "Profile",
+      headerTitle: user?.name ?? t('profile'),
       headerTransparent: false,
     });
   }, [nav, user, theme, router]);
@@ -148,7 +150,7 @@ export default function PublicUserProfileScreen() {
       const parsed = v.parse(CreateExchangeRequestSchema, payload);  
           
       await createReqQ.mutateAsync(parsed);
-      toast.toast({ title: "Request sent!", variant: "success" });
+      toast.toast({ title: t('requestSent'), variant: "success" });
       setRequestOpen(false);
       setSkillTeachId(undefined);
       setSkillLearnId(undefined);
@@ -163,8 +165,8 @@ export default function PublicUserProfileScreen() {
         return;
       }
       toast.toast({
-        title: "Could not send request",
-        description: e?.message ?? "Try again",
+        title: t('couldNotSendRequest'),
+        description: e?.message ?? t('tryAgain'),
         variant: "error",
       });
     }
@@ -230,7 +232,7 @@ export default function PublicUserProfileScreen() {
                             fontWeight: "800",
                           }}
                         >
-                          {user?.name ?? "User"}
+                          {user?.name ?? t('user')}
                         </ThemedText>
                         <View
                           style={{
@@ -273,7 +275,7 @@ export default function PublicUserProfileScreen() {
                                 size={12}
                                 color={getAccent("emerald").main}
                               />{" "}
-                              Verified
+                              {t('verified')}
                             </Badge>
                           ) : null}
                         </View>
@@ -318,7 +320,7 @@ export default function PublicUserProfileScreen() {
                                 fontSize: 11,
                               }}
                             >
-                              Joined{" "}
+                              {t('joined')}{" "}
                               {new Date(user.createdAt).toLocaleDateString(
                                 undefined,
                                 { month: "long", year: "numeric" },
@@ -352,7 +354,7 @@ export default function PublicUserProfileScreen() {
                       loading={createReqQ.isPending}
                       leftIcon={<Handshake size={16} color="#fff" />}
                     >
-                      Request exchange
+                      {t('requestExchange')}
                     </Button>
                     <Button
                       variant="outline"
@@ -371,7 +373,7 @@ export default function PublicUserProfileScreen() {
                     variant="outline"
                     onPress={() => router.push("/(tabs)/profile" as any)}
                   >
-                    Edit your profile
+                    {t('editYourProfile')}
                   </Button>
                 )}
               </CardContent>
@@ -380,14 +382,14 @@ export default function PublicUserProfileScreen() {
             {/* Skill groups */}
             <Card>
               <CardHeader>
-                <CardTitle>Skills</CardTitle>
+                <CardTitle>{t('skills')}</CardTitle>
                 <CardDescription>
-                  What they teach and want to learn.
+                  {t('skillsDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent style={{ gap: SPACING[4] }}>
                 <SkillList
-                  title="They teach"
+                  title={t('theyTeach')}
                   accent="emerald"
                   icon={
                     <GraduationCap
@@ -396,15 +398,15 @@ export default function PublicUserProfileScreen() {
                     />
                   }
                   list={theirOffering}
-                  empty="No teaching skills listed yet."
+                  empty={t('noTeachingSkills')}
                 />
                 <Separator />
                 <SkillList
-                  title="They want to learn"
+                  title={t('theyWantToLearn')}
                   accent="blue"
                   icon={<BookOpen size={16} color={getAccent("blue").main} />}
                   list={theirSeeking}
-                  empty="No learning goals listed yet."
+                  empty={t('noLearningGoals')}
                 />
               </CardContent>
             </Card>
@@ -420,8 +422,8 @@ export default function PublicUserProfileScreen() {
                   }}
                 >
                   <View>
-                    <CardTitle>Reviews</CardTitle>
-                    <CardDescription>What their partners say.</CardDescription>
+                    <CardTitle>{t('reviews')}</CardTitle>
+                    <CardDescription>{t('reviewsDesc')}</CardDescription>
                   </View>
                   <View style={{ alignItems: "center" }}>
                     <ThemedText
@@ -475,7 +477,7 @@ export default function PublicUserProfileScreen() {
                         textAlign: "center",
                       }}
                     >
-                      No reviews yet — be the first after an exchange!
+                      {t('noReviewsYet')}
                     </ThemedText>
                   </View>
                 ) : (
@@ -493,7 +495,7 @@ export default function PublicUserProfileScreen() {
                 )}
                 {reviews.length > 5 ? (
                   <Button variant="ghost">
-                    View all {reviews.length} reviews
+                    {t('viewAllReviews', { count: reviews.length })}
                     <ChevronRight size={14} color={theme.primary} />
                   </Button>
                 ) : null}
@@ -526,7 +528,7 @@ export default function PublicUserProfileScreen() {
                       type="smallBold"
                       style={{ fontSize: FONT_SIZE.md }}
                     >
-                      Safe & verified
+                      {t('safeVerified')}
                     </ThemedText>
                     <ThemedText
                       type="small"
@@ -535,8 +537,7 @@ export default function PublicUserProfileScreen() {
                         fontSize: FONT_SIZE.sm,
                       }}
                     >
-                      Every exchange is protected by points escrow and session
-                      recordings with consent.
+                      {t('safeVerifiedDesc')}
                     </ThemedText>
                   </View>
                 </View>
@@ -552,9 +553,9 @@ export default function PublicUserProfileScreen() {
         onOpenChange={(o) => !createReqQ.isPending && setRequestOpen(o)}
       >
         <DialogHeader onClose={() => setRequestOpen(false)}>
-          <DialogTitle>Request skill exchange</DialogTitle>
+          <DialogTitle>{t('requestSkillExchange')}</DialogTitle>
           <DialogDescription>
-            Propose teaching one of your skills in exchange for one of theirs.
+            {t('requestSkillExchangeDesc')}
           </DialogDescription>
         </DialogHeader>
         <DialogContent style={{ gap: SPACING[4] }}>
@@ -563,7 +564,7 @@ export default function PublicUserProfileScreen() {
               type="smallBold"
               style={{ fontSize: FONT_SIZE.sm, marginLeft: SPACING[0.5] }}
             >
-              You will teach them
+              {t('youWillTeachThem')}
             </ThemedText>
             <View style={{ gap: SPACING[2] }}>
               {myOffering.length === 0 ? (
@@ -583,7 +584,7 @@ export default function PublicUserProfileScreen() {
                       fontSize: FONT_SIZE.sm,
                     }}
                   >
-                    Add a teaching skill to your profile first.
+                    {t('addTeachingSkillFirst')}
                   </ThemedText>
                   <Button
                     size="sm"
@@ -593,7 +594,7 @@ export default function PublicUserProfileScreen() {
                       router.push("/(tabs)/profile" as any);
                     }}
                   >
-                    Add teaching skill
+                    {t('addTeachingSkill')}
                   </Button>
                 </View>
               ) : (
@@ -668,7 +669,7 @@ export default function PublicUserProfileScreen() {
               type="smallBold"
               style={{ fontSize: FONT_SIZE.sm, marginLeft: SPACING[0.5] }}
             >
-              You want to learn from them
+              {t('youWantToLearnFromThem')}
             </ThemedText>
             <View style={{ gap: SPACING[2] }}>
               {theirOffering.length === 0 ? (
@@ -688,7 +689,7 @@ export default function PublicUserProfileScreen() {
                       fontSize: FONT_SIZE.sm,
                     }}
                   >
-                    This user isn't offering skills to teach yet.
+                    {t('noTeachingSkillsYet')}
                   </ThemedText>
                 </View>
               ) : (
@@ -762,14 +763,14 @@ export default function PublicUserProfileScreen() {
             onPress={() => setRequestOpen(false)}
             disabled={createReqQ.isPending}
           >
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onPress={submit}
             loading={createReqQ.isPending}
             disabled={!skillTeachId || !skillLearnId}
           >
-            Send request
+            {t('sendRequest')}
           </Button>
         </DialogFooter>
       </Dialog>
@@ -778,10 +779,10 @@ export default function PublicUserProfileScreen() {
       <ActionSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        title="More actions"
+        title={t('moreActions')}
         options={[
           {
-            label: "Share profile",
+            label: t('shareProfile'),
             icon: <Share2 size={18} color={theme.foreground} />,
             onPress: () =>
               Share.share({
@@ -789,13 +790,13 @@ export default function PublicUserProfileScreen() {
               }).catch(() => {}),
           },
           {
-            label: "Report user",
+            label: t('reportUser'),
             icon: <Shield size={18} color={theme.destructive as any} />,
             destructive: false,
             onPress: () =>
               toast.toast({
-                title: "Report submitted",
-                description: "Our team will review shortly.",
+                title: t('reportSubmitted'),
+                description: t('reportSubmittedDesc'),
                 variant: "info",
               }),
           },
@@ -864,6 +865,7 @@ function SkillList({
 
 function MiniReview({ review, onOpen }: { review: any; onOpen: () => void }) {
   const theme = useTheme();
+  const t = useT('users');
   const rating = Math.round(review.rating ?? 0);
   return (
     <Pressable
@@ -885,7 +887,7 @@ function MiniReview({ review, onOpen }: { review: any; onOpen: () => void }) {
         />
         <View style={{ flex: 1 }}>
           <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-            {review.reviewer?.name ?? "User"}
+            {review.reviewer?.name ?? t('user')}
           </ThemedText>
           <View style={{ flexDirection: "row", gap: 1, marginTop: 1 }}>
             {[1, 2, 3, 4, 5].map((i) => (

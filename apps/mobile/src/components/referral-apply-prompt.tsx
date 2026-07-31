@@ -3,7 +3,7 @@ import { View, TextInput } from 'react-native';
 import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 import { Badge, Button, Card, CardContent, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription, useToast } from '@/components/ui';
-import { useT } from '@/lib/i18n';
+import { useT } from 'lib/i18n';
 import { useApplyReferralCode } from '@/lib/api-hooks';
 import { Gift, Loader2, X, CheckCircle2, AlertTriangle, Sparkles, ArrowRight } from 'lucide-react-native';
 
@@ -37,7 +37,7 @@ export function ReferralApplyPrompt({
     const c = code.trim().toUpperCase();
     if (!c) return;
     try {
-      const res = await applyQ.mutateAsync({ referralCode: c });
+      const res = await applyQ.mutateAsync(c);
       setFeedback({ type: 'success', text: t('appliedDesc', { code: c }) });
       toast.toast({ title: t('appliedTitle'), variant: 'success' });
       setTimeout(() => {
@@ -86,7 +86,7 @@ export function ReferralApplyPrompt({
                 setCode(v.replace(/[^A-Za-z0-9]/g, '').toUpperCase());
                 setFeedback(null);
               }}
-              placeholder="e.g. ALEX-88F2"
+              placeholder={t('applyPlaceholderExample')}
               placeholderTextColor="#52525b"
               style={{
                 borderRadius: RADIUS.md,

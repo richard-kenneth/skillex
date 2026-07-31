@@ -22,3 +22,9 @@ export * from "./src/api/hooks";
 
 // Notifications
 export * from "./src/notifications";
+
+// Translations
+export { default as en } from "./src/translations/en.json";
+export { default as es } from "./src/translations/es.json";
+export { default as fr } from "./src/translations/fr.json";
+export { default as pt } from "./src/translations/pt.json";

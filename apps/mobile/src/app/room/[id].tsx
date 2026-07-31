@@ -44,6 +44,7 @@ import {
 } from '@/components/ui';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useT } from 'lib/i18n';
 import {
   useVideoSessionDetails,
   useVideoToken,
@@ -171,6 +172,7 @@ export default function RoomScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const t = useT('room');
 
   const sessionId = id!;
   const detailsQ = useVideoSessionDetails(sessionId);
@@ -215,7 +217,7 @@ export default function RoomScreen() {
     if (!endsAt) return;
     const endMs = new Date(endsAt).getTime() + 5 * 60 * 1000;
     if (now > endMs) {
-      toast.toast({ title: 'Session ended', description: 'Thank you! Returning to exchange…', variant: 'info' });
+      toast.toast({ title: t('sessionEnded'), description: t('sessionEndedDesc'), variant: 'info' });
       handleLeave(false);
     }
   }, [now, detailsQ.data?.session?.endsAt]);
@@ -437,7 +439,7 @@ export default function RoomScreen() {
               <AlertCircle size={24} color={getAccent('red').main} />
             </View>
             <ThemedText type="title" style={{ fontSize: FONT_SIZE.xl, fontWeight: '800' }}>
-              Can't join session
+              {t('cantJoinSession')}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
               {error}
@@ -448,7 +450,7 @@ export default function RoomScreen() {
             onPress={() => (exchangeId ? router.back() : router.back())}
             leftIcon={<ArrowLeft size={16} color={theme.foreground} />}
           >
-            Go back
+            {t('goBack')}
           </Button>
         </View>
       </SafeAreaView>
@@ -465,7 +467,7 @@ export default function RoomScreen() {
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[3] }}>
             <Loader2 size={32} color={theme.primary} />
             <ThemedText type="small" style={{ color: '#a1a1aa' }}>
-              Connecting to session…
+              {t('connecting')}
             </ThemedText>
           </View>
         ) : (
@@ -502,10 +504,10 @@ export default function RoomScreen() {
                 value={tab}
                 onChange={setTab}
                 items={[
-                  { value: 'room', label: 'Room', icon: <Video size={14} color={tab === 'room' ? '#fff' : theme.mutedForeground} /> },
+                  { value: 'room', label: t('room'), icon: <Video size={14} color={tab === 'room' ? '#fff' : theme.mutedForeground} /> },
                   {
                     value: 'chat',
-                    label: 'Chat',
+                    label: t('chat'),
                     badge: (chatMsgsQ.data ?? []).length || undefined,
                     icon: <MessageSquare size={14} color={tab === 'chat' ? '#fff' : theme.mutedForeground} />,
                   },
@@ -563,7 +565,7 @@ export default function RoomScreen() {
                   <TextInput
                     value={chatText}
                     onChangeText={setChatText}
-                    placeholder="Send a message…"
+                    placeholder={t('sendMessagePlaceholder')}
                     placeholderTextColor="#52525b"
                     style={{
                       flex: 1,
@@ -607,19 +609,19 @@ export default function RoomScreen() {
       <Dialog open={!!consentDialog && consentDialog.mode === 'estimate'} onOpenChange={(o) => !o && setConsentDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Recording estimate</DialogTitle>
+            <DialogTitle>{t('recordingEstimate')}</DialogTitle>
             <DialogDescription>
-              This session can be recorded for a small per-minute cost.
+              {t('recordingEstimateDesc')}
             </DialogDescription>
           </DialogHeader>
           {estimate ? (
             <CardContent style={{ gap: SPACING[3] }}>
-              <Row label="Rate" value={`${estimate.rate} pts / min`} />
-              <Row label="Your balance" value={`${estimate.userBalance.toLocaleString()} pts`} />
-              <Row label="Session time left" value={`${estimate.remainingSessionMinutes} min`} />
+              <Row label={t('rate')} value={`${estimate.rate} pts / min`} />
+              <Row label={t('yourBalance')} value={`${estimate.userBalance.toLocaleString()} pts`} />
+              <Row label={t('sessionTimeLeft')} value={`${estimate.remainingSessionMinutes} min`} />
               <Separator />
               <Row
-                label="Max affordable"
+                label={t('maxAffordable')}
                 value={`${estimate.maxAffordableMinutes} min`}
                 strong
                 accent="indigo"
@@ -638,7 +640,7 @@ export default function RoomScreen() {
               >
                 <ShieldCheck size={16} color={getAccent('amber').main} style={{ marginTop: 2 }} />
                 <ThemedText type="small" style={{ color: getAccent('amber').main, flex: 1, lineHeight: 20 }}>
-                  Recording requires explicit consent from both partners. Points are charged per-minute only while recording is active.
+                  {t('recordingConsentInfo')}
                 </ThemedText>
               </View>
             </CardContent>
@@ -649,13 +651,13 @@ export default function RoomScreen() {
           )}
           <DialogFooter>
             <Button variant="outline" onPress={() => setConsentDialog(null)}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               onPress={confirmAfterEstimate}
               leftIcon={<Sparkles size={16} color="#fff" />}
             >
-              Request consent
+              {t('requestConsent')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -665,9 +667,9 @@ export default function RoomScreen() {
       <Dialog open={!!consentDialog && consentDialog.mode === 'outbound_request'} onOpenChange={(o) => !o && setConsentDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Waiting for partner</DialogTitle>
+            <DialogTitle>{t('waitingForPartner')}</DialogTitle>
             <DialogDescription>
-              Your partner has been asked for consent. You'll start recording as soon as they accept.
+              {t('waitingForPartnerDesc')}
             </DialogDescription>
           </DialogHeader>
           <CardContent style={{ alignItems: 'center', gap: SPACING[3] }}>
@@ -686,12 +688,12 @@ export default function RoomScreen() {
               <Circle size={22} color={theme.primary} />
             </View>
             <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
-              If they decline, the recording won't start and no points will be charged.
+              {t('partnerDeclineInfo')}
             </ThemedText>
           </CardContent>
           <DialogFooter>
             <Button variant="outline" onPress={() => { setConsentDialog(null); setRecordingState('idle'); }}>
-              Cancel request
+              {t('cancelRequest')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -701,9 +703,9 @@ export default function RoomScreen() {
       <Dialog open={!!consentDialog && consentDialog.mode === 'inbound_request'} onOpenChange={() => {}}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Partner wants to record</DialogTitle>
+            <DialogTitle>{t('partnerWantsToRecord')}</DialogTitle>
             <DialogDescription>
-              Recording costs points per minute and requires your consent. You can decline without affecting the session.
+              {t('partnerWantsToRecordDesc')}
             </DialogDescription>
           </DialogHeader>
           <CardContent style={{ gap: SPACING[3] }}>
@@ -724,16 +726,16 @@ export default function RoomScreen() {
             >
               <ShieldCheck size={16} color={getAccent('blue').main} style={{ marginTop: 2 }} />
               <ThemedText type="small" style={{ color: getAccent('blue').main, flex: 1, lineHeight: 20 }}>
-                By accepting, you agree to this session being recorded. Recordings are encrypted and tied to the exchange.
+                {t('recordingAgreement')}
               </ThemedText>
             </View>
           </CardContent>
           <DialogFooter>
             <Button variant="outline" onPress={declineInboundConsent}>
-              Decline
+              {t('decline')}
             </Button>
             <Button onPress={acceptInboundConsent} leftIcon={<CheckCircle2 size={16} color="#fff" />}>
-              I consent
+              {t('iConsent')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -743,9 +745,9 @@ export default function RoomScreen() {
       <AlertDialog
         open={confirmLeave}
         onOpenChange={setConfirmLeave}
-        title="Leave session?"
-        description={recordingState === 'recording' ? 'Recording will be stopped and saved. Return to the exchange page?' : 'Return to the exchange page?'}
-        confirmLabel="Leave session"
+        title={t('leaveSession')}
+        description={recordingState === 'recording' ? t('leaveSessionRecordingDesc') : t('leaveSessionDesc')}
+        confirmLabel={t('leaveSession')}
         destructive
         onConfirm={() => handleLeave(false)}
       />
@@ -787,7 +789,7 @@ function TopBar({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
             <CalendarClock size={14} color="#a1a1aa" />
             <ThemedText type="smallBold" style={{ fontSize: 12, color: '#e4e4e7' }}>
-              {sessionStartTime ? formatDateTimeShort(sessionStartTime) : 'Session'}
+              {sessionStartTime ? formatDateTimeShort(sessionStartTime) : t('session')}
             </ThemedText>
           </View>
         </View>
@@ -807,11 +809,11 @@ function TopBar({
             </View>
           ) : recordingState === 'processing' ? (
             <Badge variant="accent" accent="purple">
-              Processing
+              {t('processing')}
             </Badge>
           ) : recordingState === 'waiting_for_partner' ? (
             <Badge variant="accent" accent="amber">
-              Waiting consent
+              {t('waitingConsent')}
             </Badge>
           ) : null}
 
@@ -859,10 +861,10 @@ function RoomBody({
             </View>
             <View style={{ flex: 1 }}>
               <ThemedText type="smallBold" style={{ fontSize: 12 }}>
-                Live session ready
+                {t('liveSessionReady')}
               </ThemedText>
               <ThemedText type="small" style={{ color: '#71717a', fontSize: 11 }}>
-                {session?.duration ? `${session.duration} minutes · ${session.taughtSkillName ?? 'Skill exchange'}` : 'You are in the session room.'}
+                {session?.duration ? `${session.duration} ${t('minutes')} · ${session.taughtSkillName ?? t('skillExchange')}` : t('inSessionRoom')}
               </ThemedText>
             </View>
           </View>
@@ -871,17 +873,17 @@ function RoomBody({
             <Badge variant="outline">
               <Mic size={10} color={isAudioEnabled ? getAccent('green').main : getAccent('red').main} />
               {'  '}
-              {isAudioEnabled ? 'Mic on' : 'Mic muted'}
+              {isAudioEnabled ? t('micOn') : t('micMuted')}
             </Badge>
             <Badge variant="outline">
               <Video size={10} color={isVideoEnabled ? getAccent('green').main : getAccent('red').main} />
               {'  '}
-              {isVideoEnabled ? 'Camera on' : 'Camera off'}
+              {isVideoEnabled ? t('cameraOn') : t('cameraOff')}
             </Badge>
             <Badge variant="accent" accent="blue">
               <ShieldCheck size={10} color={getAccent('blue').main} />
               {'  '}
-              Encrypted
+              {t('encrypted')}
             </Badge>
           </View>
         </CardContent>
@@ -897,7 +899,7 @@ function ParticipantGrid({ participants, partner, me }: any) {
         // 1. Grab the publication reference
         const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
         const isMe = participant.isLocal;
-        const fallbackName = isMe ? 'You' : (partner?.name ?? participant.identity);
+        const fallbackName = isMe ? t('you') : (partner?.name ?? participant.identity);
         const isMicEnabled = participant.isMicrophoneEnabled;
 
         return (
@@ -965,10 +967,10 @@ function ChatBody({ messages, loading, me, onRefresh, flatRef }: any) {
             <MessageSquare size={22} color="#52525b" />
           </View>
           <ThemedText type="default" style={{ color: '#e4e4e7', fontWeight: '700' }}>
-            No messages yet
+            {t('noMessagesYet')}
           </ThemedText>
           <ThemedText type="small" style={{ color: '#71717a', textAlign: 'center' }}>
-            Say hi to your partner, share notes, or coordinate times.
+            {t('noMessagesDesc')}
           </ThemedText>
         </View>
       ) : (
@@ -1078,11 +1080,11 @@ function ControlsBar({
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: SPACING[2] }}>
-        <CtrlBtn onPress={handleToggleAudio} active={!isAudioEnabled} destructive={!isAudioEnabled} label={isAudioEnabled ? 'Mute' : 'Unmute'}>
+        <CtrlBtn onPress={handleToggleAudio} active={!isAudioEnabled} destructive={!isAudioEnabled} label={isAudioEnabled ? t('mute') : t('unmute')}>
           {isAudioEnabled ? <Mic size={20} color="#fff" /> : <MicOff size={20} color="#fff" />}
         </CtrlBtn>
 
-        <CtrlBtn onPress={handleToggleVideo} active={!isVideoEnabled} destructive={!isVideoEnabled} label={isVideoEnabled ? 'Video' : 'Off'}>
+        <CtrlBtn onPress={handleToggleVideo} active={!isVideoEnabled} destructive={!isVideoEnabled} label={isVideoEnabled ? t('video') : t('off')}>
           {isVideoEnabled ? <Video size={20} color="#fff" /> : <VideoOff size={20} color="#fff" />}
         </CtrlBtn>
 

@@ -13,9 +13,11 @@ import {
 } from "react-native";
 import { authClient, signIn } from "../../../lib/auth";
 import { SocialLogins } from "../../components/auth/social-logins";
+import { useT } from "lib/i18n";
 
 export default function SignInScreen() {
   const router = useRouter();
+  const t = useT('auth');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,7 +27,7 @@ export default function SignInScreen() {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert(t('error'), t('fillAllFields'));
       return;
     }
 
@@ -40,21 +42,21 @@ export default function SignInScreen() {
         if (error.code === "EMAIL_NOT_VERIFIED") {
           setUnverifiedEmail(email);
           Alert.alert(
-            "Email Not Verified",
-            "Your email address is not verified yet. Would you like us to send another verification link?",
+            t('emailNotVerified'),
+            t('emailNotVerifiedDesc'),
             [
-              { text: "Cancel", style: "cancel" },
-              { text: "Resend Email", onPress: handleResendVerification },
+              { text: t('cancel'), style: "cancel" },
+              { text: t('resendEmail'), onPress: handleResendVerification },
             ],
           );
         } else {
-          Alert.alert("Sign In Failed", error.message || "Invalid credentials");
+          Alert.alert(t('signInFailed'), error.message || t('invalidCredentials'));
         }
       } else {
         router.replace("/(tabs)");
       }
     } catch (err: any) {
-      Alert.alert("Error", err.message || "An unexpected error occurred");
+      Alert.alert(t('error'), err.message || t('unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -71,8 +73,8 @@ export default function SignInScreen() {
       });
       if (error) {
         Alert.alert(
-          "Error",
-          error.message || "Failed to resend verification code.",
+          t('error'),
+          error.message || t('failedResendCode'),
         );
       } else {
         setUnverifiedEmail(null);
@@ -81,7 +83,7 @@ export default function SignInScreen() {
         );
       }
     } catch {
-      Alert.alert("Error", "Failed to resend verification code.");
+      Alert.alert(t('error'), t('failedResendCode'));
     } finally {
       setIsResending(false);
     }
@@ -93,22 +95,22 @@ export default function SignInScreen() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.title}>Sign In</Text>
-      <Text style={styles.subtitle}>Welcome back to Skill Exchange</Text>
+      <Text style={styles.title}>{t('signIn')}</Text>
+      <Text style={styles.subtitle}>{t('signInDescription')}</Text>
 
       <View style={styles.form}>
         <SocialLogins />
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR CONTINUE WITH EMAIL</Text>
+          <Text style={styles.dividerText}>{t('orContinueWith').toUpperCase()}</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>{t('email')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="name@example.com"
+          placeholder={t('emailPlaceholder')}
           placeholderTextColor="#666"
           value={email}
           onChangeText={setEmail}
@@ -117,10 +119,10 @@ export default function SignInScreen() {
         />
 
         <View style={styles.passwordHeader}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>{t('password')}</Text>
           <Link href="/(auth)/forgot-password" asChild>
             <TouchableOpacity>
-              <Text style={styles.forgotText}>Forgot password?</Text>
+              <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -155,15 +157,15 @@ export default function SignInScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={styles.buttonText}>{t('signIn')}</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
+          <Text style={styles.footerText}>{t('noAccount')} </Text>
           <Link href="/(auth)/sign-up" asChild>
             <TouchableOpacity>
-              <Text style={styles.linkText}>Sign Up</Text>
+              <Text style={styles.linkText}>{t('signUp')}</Text>
             </TouchableOpacity>
           </Link>
         </View>

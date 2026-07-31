@@ -13,6 +13,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { useTheme } from '@/hooks/use-theme';
 import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
+import { useT } from 'lib/i18n';
 import {
   Avatar,
   Badge,
@@ -103,6 +104,7 @@ export default function PointsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const t = useT('points');
 
   const balanceQ = usePointsBalance();
   const txQ = usePointsTransactions();
@@ -368,10 +370,10 @@ export default function PointsScreen() {
             }}
           >
             <ThemedText type="title" style={{ fontSize: FONT_SIZE['2xl'], fontWeight: '800', letterSpacing: -0.2 }}>
-              Points wallet
+              {t('title')}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
-              Buy, withdraw, and track your skill-economy credits
+              {t('description')}
             </ThemedText>
           </View>
 
@@ -398,17 +400,17 @@ export default function PointsScreen() {
               <View style={{ flexDirection: 'row', gap: SPACING[3] }}>
                 <InfoStat
                   loading={loading}
-                  label="Commission"
+                  label={t('commission')}
                   value="10%"
-                  hint="Per exchange"
+                  hint={t('perExchange')}
                   Icon={Zap}
                   accent="indigo"
                 />
                 <InfoStat
                   loading={loading}
-                  label="Withdraw spread"
+                  label={t('withdrawSpread')}
                   value={`${Math.round(withdrawalSpread * 100)}%`}
-                  hint={`Min ${minWithdrawalPoints} pts`}
+                  hint={`${t('min')} ${minWithdrawalPoints} pts`}
                   Icon={ShieldCheck}
                   accent="blue"
                 />
@@ -432,20 +434,20 @@ export default function PointsScreen() {
                     <Plus size={18} color={getAccent('indigo').main} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <CardTitle>Buy points</CardTitle>
-                    <CardDescription>Pay with card, bank transfer, or mobile money</CardDescription>
+                    <CardTitle>{t('buyPoints')}</CardTitle>
+                    <CardDescription>{t('buyPointsDesc')}</CardDescription>
                   </View>
                 </View>
               </CardHeader>
               <CardContent style={{ gap: SPACING[4] }}>
                 <Input
-                  label="Points amount"
+                  label={t('pointsAmount')}
                   value={purchaseAmount}
                   onChangeText={(v) => {
                     setPurchaseAmount(v.replace(/[^0-9]/g, ''));
                     setPurchaseError(null);
                   }}
-                  placeholder={`Min ${MIN_PURCHASE_POINTS}`}
+                  placeholder={`${t('min')} ${MIN_PURCHASE_POINTS}`}
                   keyboardType="numeric"
                   rightSlot={
                     <Badge variant="accent" accent="amber">
@@ -456,7 +458,7 @@ export default function PointsScreen() {
 
                 {pAmount > 0 && pAmount < MIN_PURCHASE_POINTS ? (
                   <ThemedText type="small" style={{ color: theme.destructive, fontSize: 11 }}>
-                    Minimum purchase is {MIN_PURCHASE_POINTS} points
+                    {t('minPurchase')} {MIN_PURCHASE_POINTS} {t('points')}
                   </ThemedText>
                 ) : null}
 
@@ -471,11 +473,11 @@ export default function PointsScreen() {
                       gap: SPACING[2],
                     }}
                   >
-                    <Row label="Rate" value={`1 pt = ${formatCurrency(POINT_TO_USD_RATE * rate, selectedCurrency)}`} />
-                    <Row label="Subtotal" value={`${pAmount.toLocaleString()} pts`} />
+                    <Row label={t('rate')} value={`1 pt = ${formatCurrency(POINT_TO_USD_RATE * rate, selectedCurrency)}`} />
+                    <Row label={t('subtotal')} value={`${pAmount.toLocaleString()} pts`} />
                     <Separator />
                     <Row
-                      label="You pay"
+                      label={t('youPay')}
                       value={formatCurrency(pFiatTotal, selectedCurrency)}
                       strong
                       accent="indigo"
@@ -484,7 +486,9 @@ export default function PointsScreen() {
                 ) : null}
 
                 <View style={{ gap: SPACING[2] }}>
-                  <Label label="Quick amounts" />
+                  <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm, color: theme.foreground }}>
+                    {t('quickAmounts')}
+                  </ThemedText>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
                     {QUICK_BUY.map((amt) => {
                       const active = purchaseAmount === String(amt);
@@ -519,8 +523,8 @@ export default function PointsScreen() {
                   currencyDetecting}
                 >
                   {pAmount >= MIN_PURCHASE_POINTS
-                      ? `Buy for ${formatCurrency(pFiatTotal, selectedCurrency)}`
-                      : 'Buy points'}
+                      ? `${t('buyFor')} ${formatCurrency(pFiatTotal, selectedCurrency)}`
+                      : t('buyPoints')}
                 </Button>
 
                 {purchaseError ? (
@@ -548,33 +552,33 @@ export default function PointsScreen() {
                     <Landmark size={18} color={getAccent('emerald').main} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <CardTitle>Withdraw to bank</CardTitle>
-                    <CardDescription>Convert points to local currency</CardDescription>
+                    <CardTitle>{t('withdrawToBank')}</CardTitle>
+                    <CardDescription>{t('withdrawDesc')}</CardDescription>
                   </View>
                 </View>
               </CardHeader>
               <CardContent style={{ gap: SPACING[4] }}>
                 <Input
-                  label="Points to withdraw"
+                  label={t('pointsToWithdraw')}
                   value={withdrawAmount}
                   onChangeText={(v) => {
                     setWithdrawAmount(v.replace(/[^0-9]/g, ''));
                     setWithdrawError(null);
                   }}
-                  placeholder={`Min ${minWithdrawalPoints} pts`}
+                  placeholder={`${t('min')} ${minWithdrawalPoints} pts`}
                   keyboardType="numeric"
                   rightSlot={
-                    <Badge variant="outline">Bal: {balance.toLocaleString()}</Badge>
+                    <Badge variant="outline">{t('balance')}: {balance.toLocaleString()}</Badge>
                   }
                 />
 
                 {wAmount > 0 && wAmount < minWithdrawalPoints ? (
                   <ThemedText type="small" style={{ color: theme.destructive, fontSize: 11 }}>
-                    Minimum is {minWithdrawalPoints} points
+                    {t('min')} {minWithdrawalPoints} {t('points')}
                   </ThemedText>
                 ) : wAmount > balance ? (
                   <ThemedText type="small" style={{ color: theme.destructive, fontSize: 11 }}>
-                    Exceeds your balance ({balance.toLocaleString()})
+                    {t('exceedsBalance')} ({balance.toLocaleString()})
                   </ThemedText>
                 ) : null}
 
@@ -589,11 +593,11 @@ export default function PointsScreen() {
                       gap: SPACING[2],
                     }}
                   >
-                    <Row label="Nominal value" value={`${formatCurrency(wNominalRaw / ngnRate, 'USD')} · ${formatCurrency(wNominalRaw, WITHDRAWAL_CURRENCY)}`} />
-                    <Row label={`Spread (${Math.round(withdrawalSpread * 100)}%)`} value={`- ${formatCurrency(wNominalRaw - wReceive, WITHDRAWAL_CURRENCY)}`} dim />
+                    <Row label={t('nominalValue')} value={`${formatCurrency(wNominalRaw / ngnRate, 'USD')} · ${formatCurrency(wNominalRaw, WITHDRAWAL_CURRENCY)}`} />
+                    <Row label={`${t('spread')} (${Math.round(withdrawalSpread * 100)}%)`} value={`- ${formatCurrency(wNominalRaw - wReceive, WITHDRAWAL_CURRENCY)}`} dim />
                     <Separator />
                     <Row
-                      label="You receive"
+                      label={t('youReceive')}
                       value={formatCurrency(wReceive, WITHDRAWAL_CURRENCY)}
                       strong
                       accent="emerald"
@@ -602,8 +606,8 @@ export default function PointsScreen() {
                 ) : null}
 
                 <SelectField
-                  label="Select bank"
-                  placeholder="Tap to pick your bank"
+                  label={t('selectBank')}
+                  placeholder={banksQ.isLoading ? t('loadingBanks') : t('tapToPickBank')}
                   value={withdrawBankCode}
                   onChange={(v) => {
                     setWithdrawBankCode(v as string);
@@ -611,11 +615,10 @@ export default function PointsScreen() {
                     setWithdrawError(null);
                   }}
                   options={(banksQ.data ?? []).map((b: any) => ({ label: b.name, value: b.code }))}
-                  emptyLabel="Loading banks…"
                 />
 
                 <Input
-                  label="Account number (10 digits)"
+                  label={t('accountNumber')}
                   value={withdrawAccount}
                   onChangeText={(v) => {
                     setWithdrawAccount(v.replace(/[^0-9]/g, '').slice(0, 10));
@@ -645,7 +648,7 @@ export default function PointsScreen() {
                     }}
                   >
                     <ThemedText type="small" style={{ fontSize: 11, color: getAccent('emerald').main, textTransform: 'uppercase' as const }}>
-                      Account verified
+                      {t('accountVerified')}
                     </ThemedText>
                     <ThemedText type="default" style={{ fontWeight: '700' }}>
                       {resolvedName}
@@ -666,7 +669,7 @@ export default function PointsScreen() {
                   disabled={!wAmount || wAmount < minWithdrawalPoints || wAmount > balance || !withdrawBankCode || !resolvedName}
                   variant="default"
                 >
-                  Withdraw to bank
+                  {t('withdrawToBank')}
                 </Button>
               </CardContent>
             </Card>
@@ -682,7 +685,7 @@ export default function PointsScreen() {
                 }}
               >
                 <ThemedText type="title" style={{ fontSize: FONT_SIZE.lg, fontWeight: '800' }}>
-                  History
+                  {t('history')}
                 </ThemedText>
                 <Pressable hitSlop={10} onPress={refresh} style={{ padding: SPACING[2] }}>
                   <RefreshCw size={16} color={theme.mutedForeground} />
@@ -694,10 +697,10 @@ export default function PointsScreen() {
                 value={tab}
                 onChange={setTab}
                 items={[
-                  { value: 'all', label: 'All', badge: transactions.length || undefined },
-                  { value: 'purchase', label: 'Purchases' },
-                  { value: 'withdraw', label: 'Withdrawals' },
-                  { value: 'exchange', label: 'Exchanges' },
+                  { value: 'all', label: t('all'), badge: transactions.length || undefined },
+                  { value: 'purchase', label: t('purchases') },
+                  { value: 'withdraw', label: t('withdrawals') },
+                  { value: 'exchange', label: t('exchanges') },
                 ]}
               />
 
@@ -724,10 +727,10 @@ export default function PointsScreen() {
                         <Banknote size={22} color={theme.mutedForeground} />
                       </View>
                       <ThemedText type="default" style={{ fontWeight: '700', textAlign: 'center' }}>
-                        No transactions yet
+                        {t('noTransactions')}
                       </ThemedText>
                       <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
-                        Buy some points, or complete an exchange to see activity here.
+                        {t('noTransactionsDesc')}
                       </ThemedText>
                     </CardContent>
                   </Card>
@@ -743,9 +746,9 @@ export default function PointsScreen() {
       <AlertDialog
         open={confirmWithdraw}
         onOpenChange={setConfirmWithdraw}
-        title={`Withdraw ${wAmount.toLocaleString()} points?`}
-        description={`You will receive ~${formatCurrency(wReceive, WITHDRAWAL_CURRENCY)} in ${resolvedName ?? 'your account'} (${(withdrawalSpread * 100).toFixed(0)}% spread applied).`}
-        confirmLabel="Confirm withdrawal"
+        title={`${t('withdraw')} ${wAmount.toLocaleString()} ${t('points')}?`}
+        description={`${t('youWillReceive')} ~${formatCurrency(wReceive, WITHDRAWAL_CURRENCY)} ${t('in')} ${resolvedName ?? t('yourAccount')} (${(withdrawalSpread * 100).toFixed(0)}% ${t('spreadApplied')}).`}
+        confirmLabel={t('confirmWithdrawal')}
         onConfirm={submitWithdraw}
       />
     </SafeAreaView>
@@ -756,6 +759,7 @@ export default function PointsScreen() {
 
 function BalanceCard({ balance, loading, ngnRate }: { balance: number; loading: boolean; ngnRate: number }) {
   const theme = useTheme();
+  const t = useT('points');
   const usd = balance * POINT_TO_USD_RATE;
   const ngn = usd * ngnRate;
   return (
@@ -798,7 +802,7 @@ function BalanceCard({ balance, loading, ngnRate }: { balance: number; loading: 
           </View>
           <View>
             <ThemedText type="small" style={{ fontSize: 11, color: '#d4a260', textTransform: 'uppercase' as const, fontWeight: '700' }}>
-              Available balance
+              {t('availableBalance')}
             </ThemedText>
           </View>
         </View>
@@ -815,7 +819,7 @@ function BalanceCard({ balance, loading, ngnRate }: { balance: number; loading: 
                 {balance.toLocaleString()}
               </ThemedText>
               <ThemedText type="default" style={{ fontSize: FONT_SIZE.lg, color: '#d4a260', fontWeight: '700' }}>
-                pts
+                {t('points')}
               </ThemedText>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[3] }}>

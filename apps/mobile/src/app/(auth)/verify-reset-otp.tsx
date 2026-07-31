@@ -12,18 +12,21 @@ import {
   View,
 } from "react-native";
 import { authClient } from "../../../lib/auth";
+import { useT } from "lib/i18n";
 
 export default function VerifyResetOtpScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string }>();
   const email = params.email || "";
+  const t = useT();
+  const authT = useT('auth');
 
   const [otp, setOtp] = useState("");
   const [isResending, setIsResending] = useState(false);
 
   const handleContinue = () => {
     if (otp.length !== 6) {
-      Alert.alert("Error", "Please enter the complete 6-digit code.");
+      Alert.alert(authT('error'), authT('enterOtp'));
       return;
     }
     router.replace(
@@ -40,12 +43,12 @@ export default function VerifyResetOtpScreen() {
         type: "forget-password",
       });
       if (error) {
-        Alert.alert("Error", error.message || "Failed to resend code.");
+        Alert.alert(authT('error'), error.message || authT('resendCodeFailed'));
       } else {
-        Alert.alert("Success", "A new code has been sent to your email.");
+        Alert.alert(t('success'), authT('resendCodeSuccess'));
       }
     } catch {
-      Alert.alert("Error", "Failed to resend code.");
+      Alert.alert(authT('error'), authT('resendCodeFailed'));
     } finally {
       setIsResending(false);
     }
@@ -60,14 +63,14 @@ export default function VerifyResetOtpScreen() {
         <View style={styles.iconContainer}>
           <ShieldCheck size={48} color="#6366f1" />
         </View>
-        <Text style={styles.title}>Reset Password</Text>
+        <Text style={styles.title}>{authT('resetPasswordTitle')}</Text>
         <Text style={styles.subtitle}>
-          Enter the 6-digit code sent to your email.
+          {authT('enterOtp')}
         </Text>
         {email ? <Text style={styles.emailText}>{email}</Text> : null}
 
         <View style={styles.form}>
-          <Text style={styles.label}>Verification Code</Text>
+          <Text style={styles.label}>{authT('verificationCode')}</Text>
           <TextInput
             style={styles.otpInput}
             placeholder="000000"
@@ -84,7 +87,7 @@ export default function VerifyResetOtpScreen() {
             onPress={handleContinue}
             disabled={otp.length !== 6}
           >
-            <Text style={styles.buttonText}>Continue</Text>
+            <Text style={styles.buttonText}>{t('continue')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -95,13 +98,13 @@ export default function VerifyResetOtpScreen() {
             {isResending ? (
               <ActivityIndicator color="#6366f1" size="small" />
             ) : (
-              <Text style={styles.resendText}>Resend Code</Text>
+              <Text style={styles.resendText}>{authT('resendCode')}</Text>
             )}
           </TouchableOpacity>
 
           <Link href="/(auth)/sign-in" asChild>
             <TouchableOpacity style={styles.backButton}>
-              <Text style={styles.linkText}>Back to Sign In</Text>
+              <Text style={styles.linkText}>{authT('goToSignIn')}</Text>
             </TouchableOpacity>
           </Link>
         </View>

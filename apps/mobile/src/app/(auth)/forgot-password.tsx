@@ -12,16 +12,18 @@ import {
   View,
 } from "react-native";
 import { authClient } from "../../../lib/auth";
+import { useT } from "lib/i18n";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const t = useT('auth');
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleResetRequest = async () => {
     if (!email) {
-      Alert.alert("Error", "Please enter your email address.");
+      Alert.alert(t('error'), t('fillAllFields'));
       return;
     }
 
@@ -34,14 +36,14 @@ export default function ForgotPasswordScreen() {
       });
 
       if (error) {
-        Alert.alert("Failed", error.message || "Could not send reset code.");
+        Alert.alert(t('error'), error.message || t('failedToSendReset'));
       } else {
         (router as any).replace(
           `/(auth)/verify-reset-otp?email=${encodeURIComponent(email)}`,
         );
       }
     } catch (err: any) {
-      Alert.alert("Error", err.message || "An unexpected error occurred.");
+      Alert.alert(t('error'), err.message || t('unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -53,15 +55,15 @@ export default function ForgotPasswordScreen() {
         <View style={styles.iconContainer}>
           <CheckCircle2 size={48} color="#6366f1" />
         </View>
-        <Text style={styles.title}>Check your inbox</Text>
+        <Text style={styles.title}>{t('codeSentTitle')}</Text>
         <Text style={styles.subtitle}>
-          We sent a password reset link to {email}.
+          {t('codeSentDesc', { email })}
         </Text>
 
         <Link href="/(auth)/sign-in" asChild>
           <TouchableOpacity style={styles.backButton}>
             <ArrowLeft size={16} color="#6366f1" />
-            <Text style={styles.linkText}>Back to Sign In</Text>
+            <Text style={styles.linkText}>{t('goToSignIn')}</Text>
           </TouchableOpacity>
         </Link>
       </View>
@@ -77,17 +79,16 @@ export default function ForgotPasswordScreen() {
         <View style={styles.iconContainer}>
           <Mail size={48} color="#6366f1" />
         </View>
-        <Text style={styles.title}>Forgot Password?</Text>
+        <Text style={styles.title}>{t('forgotPasswordTitle')}</Text>
         <Text style={styles.subtitle}>
-          Enter your email address and we'll send you a link to reset your
-          password.
+          {t('forgotPasswordDesc')}
         </Text>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Email Address</Text>
+          <Text style={styles.label}>{t('emailAddress')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="name@example.com"
+            placeholder={t('emailPlaceholder')}
             placeholderTextColor="#666"
             value={email}
             onChangeText={setEmail}
@@ -103,14 +104,14 @@ export default function ForgotPasswordScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Send Reset Link</Text>
+              <Text style={styles.buttonText}>{t('sendResetCode')}</Text>
             )}
           </TouchableOpacity>
 
           <Link href="/(auth)/sign-in" asChild>
             <TouchableOpacity style={styles.backButton}>
               <ArrowLeft size={16} color="#6366f1" />
-              <Text style={styles.linkText}>Back to Sign In</Text>
+              <Text style={styles.linkText}>{t('goToSignIn')}</Text>
             </TouchableOpacity>
           </Link>
         </View>

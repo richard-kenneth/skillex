@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useT } from "lib/i18n";
 import {
   Avatar,
   Badge,
@@ -65,6 +66,7 @@ export default function DashboardScreen() {
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useT('dashboard');
 
   const userQ = useCurrentUser();
   const exchangesQ = useExchanges();
@@ -178,7 +180,7 @@ export default function DashboardScreen() {
                 type="small"
                 style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}
               >
-                Welcome back
+                {t('welcomeBack')}
               </ThemedText>
               <ThemedText
                 type="title"
@@ -302,9 +304,9 @@ export default function DashboardScreen() {
                       <Sparkles size={18} color={getAccent("indigo").main} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <CardTitle>Finish setting up your profile</CardTitle>
+                      <CardTitle>{t('onboardingTitle')}</CardTitle>
                       <CardDescription>
-                        Complete these quick steps to start exchanging skills.
+                        {t('onboardingDesc')}
                       </CardDescription>
                     </View>
                   </View>
@@ -345,20 +347,20 @@ export default function DashboardScreen() {
                   <View style={{ gap: SPACING[2] }}>
                     <OnboardingRow
                       done={onboardingFlags.hasCompletedProfile}
-                      title="Complete your profile"
-                      subtitle="Add bio + location"
+                      title={t('completeProfile')}
+                      subtitle={t('completeProfileDesc')}
                       onPress={() => router.push("/(tabs)/profile" as any)}
                     />
                     <OnboardingRow
                       done={onboardingFlags.hasOfferingSkills}
-                      title="Add a skill you can teach"
-                      subtitle="Let others learn from you"
+                      title={t('addTeachingSkill')}
+                      subtitle={t('addTeachingSkillDesc')}
                       onPress={() => router.push("/(tabs)/profile" as any)}
                     />
                     <OnboardingRow
                       done={onboardingFlags.hasSeekingSkills}
-                      title="Add a skill you want to learn"
-                      subtitle="Get matched with a teacher"
+                      title={t('addLearningSkill')}
+                      subtitle={t('addLearningSkillDesc')}
                       onPress={() => router.push("/(tabs)/profile" as any)}
                     />
                   </View>
@@ -377,7 +379,7 @@ export default function DashboardScreen() {
               <StatCard
                 icon={<Repeat2 size={16} color={getAccent("indigo").main} />}
                 color="indigo"
-                label="Active Exchanges"
+                label={t('activeExchanges')}
                 loading={exchangesQ.isLoading}
                 value={
                   exchangesQ.isLoading
@@ -388,7 +390,7 @@ export default function DashboardScreen() {
               <StatCard
                 icon={<Users size={16} color={getAccent("emerald").main} />}
                 color="emerald"
-                label="Skills Shared"
+                label={t('skillsShared')}
                 loading={userQ.isLoading}
                 value={
                   userQ.isLoading ? undefined : offeringSkills.length.toString()
@@ -397,7 +399,7 @@ export default function DashboardScreen() {
               <StatCard
                 icon={<Star size={16} color={getAccent("amber").main} />}
                 color="amber"
-                label="Average Rating"
+                label={t('averageRating')}
                 loading={reviewsQ.isLoading}
                 value={
                   reviewsQ.isLoading
@@ -407,19 +409,19 @@ export default function DashboardScreen() {
                 subtitle={
                   reviewsQ.isLoading
                     ? undefined
-                    : `${reviewCount} review${reviewCount === 1 ? "" : "s"}`
+                    : `${reviewCount} ${reviewCount === 1 ? t('review') : t('reviews')}`
                 }
               />
               <StatCard
                 icon={<Zap size={16} color={getAccent("violet").main} />}
                 color="violet"
-                label="Total Impact"
+                label={t('totalImpact')}
                 loading={exchangesQ.isLoading}
                 value={
                   exchangesQ.isLoading ? undefined : completedCount.toString()
                 }
                 subtitle={
-                  exchangesQ.isLoading ? undefined : "completed exchanges"
+                  exchangesQ.isLoading ? undefined : t('completedExchanges')
                 }
               />
             </View>
@@ -436,15 +438,15 @@ export default function DashboardScreen() {
                     }}
                   >
                     <View>
-                      <CardTitle>Your Skills</CardTitle>
-                      <CardDescription>Tap to manage</CardDescription>
+                      <CardTitle>{t('yourSkills')}</CardTitle>
+                      <CardDescription>{t('tapToManage')}</CardDescription>
                     </View>
                     <Button
                       size="sm"
                       variant="outline"
                       onPress={() => router.push("/(tabs)/profile" as any)}
                     >
-                      Manage
+                      {t('manage')}
                     </Button>
                   </View>
                 </CardHeader>
@@ -457,7 +459,7 @@ export default function DashboardScreen() {
                         color: theme.mutedForeground,
                       }}
                     >
-                      You teach
+                      {t('youTeach')}
                     </ThemedText>
                     {offeringSkills.length === 0 ? (
                       <EmptySkillsRow
@@ -490,7 +492,7 @@ export default function DashboardScreen() {
                         color: theme.mutedForeground,
                       }}
                     >
-                      You want to learn
+                      {t('youWantToLearn')}
                     </ThemedText>
                     {seekingSkills.length === 0 ? (
                       <EmptySkillsRow
@@ -532,15 +534,15 @@ export default function DashboardScreen() {
                   }}
                 >
                   <View>
-                    <CardTitle>Active Exchanges</CardTitle>
-                    <CardDescription>Keep the momentum going</CardDescription>
+                    <CardTitle>{t('activeExchanges')}</CardTitle>
+                    <CardDescription>{t('keepMomentum')}</CardDescription>
                   </View>
                   <Button
                     size="sm"
                     variant="ghost"
                     onPress={() => router.push("/(tabs)/exchanges" as any)}
                   >
-                    View all
+                    {t('viewAll')}
                   </Button>
                 </View>
               </CardHeader>
@@ -639,7 +641,7 @@ export default function DashboardScreen() {
                                 color: theme.mutedForeground,
                               }}
                             >
-                              Progress
+                              {t('progress')}
                             </ThemedText>
                             <ThemedText
                               type="smallBold"
@@ -698,9 +700,9 @@ export default function DashboardScreen() {
                     <Gift size={20} color={getAccent("violet").main} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <CardTitle>Invite friends, earn points</CardTitle>
+                    <CardTitle>{t('inviteFriends')}</CardTitle>
                     <CardDescription>
-                      Share your link and earn 200 points per referral
+                      {t('inviteDesc')}
                     </CardDescription>
                   </View>
                 </View>
@@ -741,12 +743,12 @@ export default function DashboardScreen() {
                     <View style={{ flexDirection: "row", gap: SPACING[2] }}>
                       <StatChip
                         icon={<Users size={14} color={theme.mutedForeground} />}
-                        label="Referrals"
+                        label={t('referrals')}
                         value={referralStatsQ.data?.totalReferrals ?? 0}
                       />
                       <StatChip
                         icon={<Zap size={14} color={theme.mutedForeground} />}
-                        label="Earned"
+                        label={t('earned')}
                         value={`${referralStatsQ.data?.pointsEarned ?? 0} pts`}
                       />
                     </View>
@@ -756,7 +758,7 @@ export default function DashboardScreen() {
                       leftIcon={<ChevronRight size={16} color="#fff" />}
                       onPress={() => router.push("/(tabs)/profile" as any)}
                     >
-                      Track referrals
+                      {t('trackReferrals')}
                     </Button>
                   </>
                 )}

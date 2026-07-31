@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Skil Exchange",
+    "name": "Skill Exchange",
     "slug": "skil-ex",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -58,6 +58,15 @@
         "expo-notifications",
         {
           "color": "#6366f1"
+        }
+      ],
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["en", "fr", "es", "pt"],
+            "android": ["en", "fr", "es", "pt"]
+          }
         }
       ]
     ],

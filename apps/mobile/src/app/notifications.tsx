@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useT } from "lib/i18n";
 import {
   ActionSheet,
   Button,
@@ -88,6 +89,7 @@ export default function NotificationsScreen() {
   const nav = useNavigation();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const t = useT('notifications');
 
   const [tab, setTab] = React.useState<FilterTab>("all");
   const [sheetOpen, setSheetOpen] = React.useState<string | null>(null);
@@ -145,7 +147,7 @@ export default function NotificationsScreen() {
           <ArrowLeft size={20} color={theme.foreground} />
         </Pressable>
       ),
-      headerTitle: "Notifications",
+      headerTitle: t('title'),
     });
   }, [nav, router, theme]);
 
@@ -196,7 +198,7 @@ export default function NotificationsScreen() {
                   type="default"
                   style={{ fontSize: FONT_SIZE.lg, fontWeight: "800" }}
                 >
-                  {unreadCount} unread
+                  {unreadCount} {t('unread')}
                 </ThemedText>
                 <ThemedText
                   type="small"
@@ -205,7 +207,7 @@ export default function NotificationsScreen() {
                     fontSize: FONT_SIZE.sm,
                   }}
                 >
-                  {notifQ.data?.length ?? 0} total
+                  {notifQ.data?.length ?? 0} {t('total')}
                 </ThemedText>
               </View>
             </View>
@@ -216,13 +218,13 @@ export default function NotificationsScreen() {
               onPress={async () => {
                 await markAllQ.mutateAsync();
                 toast.toast({
-                  title: "All marked as read",
+                  title: t('allMarkedRead'),
                   variant: "success",
                 });
               }}
               leftIcon={<CheckCheck size={14} color={theme.foreground} />}
             >
-              Mark all
+              {t('markAll')}
             </Button>
           </View>
 
@@ -231,18 +233,18 @@ export default function NotificationsScreen() {
             value={tab}
             onChange={setTab}
             items={[
-              { value: "all", label: "All", badge: unreadCount || undefined },
+              { value: "all", label: t('all'), badge: unreadCount || undefined },
               {
                 value: "exchanges",
-                label: "Exchanges",
+                label: t('exchanges'),
                 badge: unexchCount || undefined,
               },
               {
                 value: "points",
-                label: "Points",
+                label: t('points'),
                 badge: unptsCount || undefined,
               },
-              { value: "system", label: "System" },
+              { value: "system", label: t('system') },
             ]}
           />
 
@@ -293,7 +295,7 @@ export default function NotificationsScreen() {
                     <Bell size={22} color={theme.mutedForeground} />
                   </View>
                   <ThemedText type="default" style={{ fontWeight: "700" }}>
-                    Nothing here yet
+                    {t('nothingHere')}
                   </ThemedText>
                   <ThemedText
                     type="small"
@@ -303,8 +305,7 @@ export default function NotificationsScreen() {
                       fontSize: FONT_SIZE.sm,
                     }}
                   >
-                    Notifications for exchanges, points and more will appear
-                    here.
+                    {t('nothingHereDesc')}
                   </ThemedText>
                 </View>
               )
@@ -419,10 +420,10 @@ export default function NotificationsScreen() {
                   <ActionSheet
                     open={sheetOpen === n.id}
                     onClose={() => setSheetOpen(null)}
-                    title="Notification options"
+                    title={t('notificationOptions')}
                     options={[
                       {
-                        label: n.read ? "Mark as unread" : "Mark as read",
+                        label: n.read ? t('markAsUnread') : t('markAsRead'),
                         icon: <CheckCheck size={18} color={theme.foreground} />,
                         onPress: async () => {
                           if (n.read) {
@@ -433,7 +434,7 @@ export default function NotificationsScreen() {
                         },
                       },
                       {
-                        label: "Delete",
+                        label: t('delete'),
                         icon: (
                           <Trash2 size={18} color={theme.destructive as any} />
                         ),
@@ -441,7 +442,7 @@ export default function NotificationsScreen() {
                         onPress: async () => {
                           await deleteQ.mutateAsync(n.id);
                           await notifQ.refetch();
-                          toast.toast({ title: "Deleted", variant: "success" });
+                          toast.toast({ title: t('deleted'), variant: "success" });
                         },
                       },
                     ]}
@@ -454,13 +455,13 @@ export default function NotificationsScreen() {
           {/* Prefs panel */}
           <Card>
             <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-              <CardDescription>Quick toggles.</CardDescription>
+              <CardTitle>{t('preferences')}</CardTitle>
+              <CardDescription>{t('preferencesDesc')}</CardDescription>
             </CardHeader>
             <CardContent style={{ gap: SPACING[4] }}>
               <Switch
-                label="In-app notifications"
-                description="Show toasts inside the app."
+                label={t('inAppNotifications')}
+                description={t('inAppNotificationsDesc')}
                 value={userQ.data?.inAppNotifications ?? true}
                 onValueChange={async (v) => {
                   await updatePrefsQ.mutateAsync({
@@ -470,8 +471,8 @@ export default function NotificationsScreen() {
                 }}
               />
               <Switch
-                label="Email notifications"
-                description="Receive important notifications via email."
+                label={t('emailNotifications')}
+                description={t('emailNotificationsDesc')}
                 value={userQ.data?.emailNotifications ?? true}
                 onValueChange={async (v) => {
                   await updatePrefsQ.mutateAsync({
@@ -481,8 +482,8 @@ export default function NotificationsScreen() {
                 }}
               />
               <Switch
-                label="Push notifications"
-                description="Deliver to device when app is closed."
+                label={t('pushNotifications')}
+                description={t('pushNotificationsDesc')}
                 value={userQ.data?.pushNotifications ?? true}
                 onValueChange={async (v) => {
                   await updatePrefsQ.mutateAsync({
@@ -496,5 +497,5 @@ export default function NotificationsScreen() {
         </View>
       </ThemedView>
     </SafeAreaView>
-  );
+  )
 }

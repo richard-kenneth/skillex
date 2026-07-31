@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Avatar, Badge, Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, useToast } from '@/components/ui';
 import { useRouter } from 'expo-router';
-import { useT, useI18n } from '@/lib/i18n';
+import { useT, useI18n } from 'lib/i18n';
 import { isOnboardingComplete, onboardingProgress } from '@skil-ex2/shared';
 import {
   Sparkles,
@@ -99,7 +99,7 @@ export function OnboardingWizard({
   };
   const handleSkip = () => {
     onOpenChange(false);
-    toast.toast({ title: 'Onboarding saved', description: 'You can pick this up any time from your profile.', variant: 'info' });
+    toast.toast({ title: t('skipTitle'), description: t('skipDesc'), variant: 'info' });
   };
 
   return (

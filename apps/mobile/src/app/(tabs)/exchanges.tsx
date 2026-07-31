@@ -9,6 +9,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/use-theme';
 import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
+import { useT } from 'lib/i18n';
 import {
   Avatar,
   Badge,
@@ -61,6 +62,7 @@ export default function ExchangesListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const t = useT('exchanges');
 
   const exchangesQ = useExchanges();
   const [filter, setFilter] = React.useState<Filter>('all');
@@ -97,10 +99,10 @@ export default function ExchangesListScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View>
                 <ThemedText type="title" style={{ fontSize: FONT_SIZE['2xl'], fontWeight: '800', letterSpacing: -0.2 }}>
-                  Exchanges
+                  {t('title')}
                 </ThemedText>
                 <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
-                  {activeCount} active · {completedCount} completed
+                  {activeCount} {t('statusActive')} · {completedCount} {t('statusCompleted')}
                 </ThemedText>
               </View>
               <Button
@@ -117,10 +119,10 @@ export default function ExchangesListScreen() {
               value={filter}
               onChange={setFilter}
               items={[
-                { value: 'all', label: 'All' },
-                { value: 'active', label: 'Active', badge: activeCount || undefined },
-                { value: 'completed', label: 'Completed', badge: completedCount || undefined },
-                { value: 'cancelled', label: 'Cancelled' },
+                { value: 'all', label: t('statusAll') },
+                { value: 'active', label: t('statusActive'), badge: activeCount || undefined },
+                { value: 'completed', label: t('statusCompleted'), badge: completedCount || undefined },
+                { value: 'cancelled', label: t('statusCancelled') },
               ]}
             />
           </View>
@@ -176,20 +178,20 @@ export default function ExchangesListScreen() {
                     <Handshake size={28} color={getAccent('blue').main} />
                   </View>
                   <ThemedText type="default" style={{ fontWeight: '700', textAlign: 'center' }}>
-                    No exchanges here yet
+                    {t('noExchangesTitle')}
                   </ThemedText>
                   <ThemedText
                     type="small"
                     style={{ color: theme.mutedForeground, textAlign: 'center', fontSize: FONT_SIZE.sm }}
                   >
-                    Find a match and send your first exchange request.
+                    {t('noExchangesDesc')}
                   </ThemedText>
                   <Button
                     size="sm"
                     onPress={() => router.push('/(tabs)/matches' as any)}
                     leftIcon={<Zap size={14} color="#fff" />}
                   >
-                    Find matches
+                    {t('findMatches')}
                   </Button>
                 </View>
               )
@@ -321,23 +323,24 @@ export function ExchangeRowCard({
 }
 
 function labelForStatus(s: string) {
+  const t = useT('exchanges');
   switch (s) {
     case 'IN_PROGRESS':
-      return 'In progress';
+      return t('in_progress');
     case 'COMPLETED':
-      return 'Completed';
+      return t('completed');
     case 'CANCELLED':
-      return 'Cancelled';
+      return t('cancelled');
     case 'ACCEPTED':
-      return 'Accepted';
+      return t('accepted');
     case 'SCHEDULED':
-      return 'Scheduled';
+      return t('scheduled');
     case 'PENDING':
-      return 'Pending';
+      return t('pending');
     case 'REJECTED':
-      return 'Rejected';
+      return t('rejected');
     case 'EXPIRED':
-      return 'Expired';
+      return t('expired');
     default:
       return s.replace(/_/g, ' ');
   }

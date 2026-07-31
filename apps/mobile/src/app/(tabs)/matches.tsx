@@ -10,6 +10,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/use-theme';
 import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
+import { useT } from 'lib/i18n';
 import {
   Avatar,
   Badge,
@@ -80,6 +81,7 @@ export default function MatchesScreen() {
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useT('matches');
 
   const [tab, setTab] = React.useState<SubTab>('discover');
   const [refreshing, setRefreshing] = React.useState(false);
@@ -120,10 +122,10 @@ export default function MatchesScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View>
                 <ThemedText type="title" style={{ fontSize: FONT_SIZE['2xl'], fontWeight: '800', letterSpacing: -0.2 }}>
-                  Matches
+                  {t('title')}
                 </ThemedText>
                 <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
-                  Discover people ready to exchange
+                  {t('description')}
                 </ThemedText>
               </View>
             </View>
@@ -135,13 +137,13 @@ export default function MatchesScreen() {
               items={[
                 {
                   value: 'discover',
-                  label: 'Discover',
+                  label: t('discoverLabel'),
                   icon: <Sparkles size={14} color={tab === 'discover' ? '#fff' : theme.mutedForeground} />,
                   badge: perfect.length + partial.length || undefined,
                 },
                 {
                   value: 'requests',
-                  label: 'Requests',
+                  label: t('requestsLabel'),
                   icon: <Inbox size={14} color={tab === 'requests' ? '#fff' : theme.mutedForeground} />,
                   badge: requestCounts.total || undefined,
                 },
@@ -177,8 +179,8 @@ export default function MatchesScreen() {
                       <Sparkles size={18} color={getAccent('indigo').main} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <CardTitle>Perfect matches</CardTitle>
-                      <CardDescription>You teach what they want — they teach what you want.</CardDescription>
+                      <CardTitle>{t('perfectMatchesTitle')}</CardTitle>
+                      <CardDescription>{t('perfectMatchesDesc')}</CardDescription>
                     </View>
                     <Badge variant="default">{perfect.length}</Badge>
                   </View>
@@ -192,8 +194,8 @@ export default function MatchesScreen() {
                   ) : perfect.length === 0 ? (
                     <EmptyMatches
                       onAdd={() => router.push('/(tabs)/profile' as any)}
-                      title="No perfect matches yet"
-                      description="Add the skills you teach and want to learn to find your perfect exchange partner."
+                      title={t('noMatchesTitle')}
+                      description={t('noMatchesDesc')}
                     />
                   ) : (
                     perfect.map((m: any) => (
@@ -219,8 +221,8 @@ export default function MatchesScreen() {
                       <Target size={18} color={getAccent('blue').main} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <CardTitle>Partial matches</CardTitle>
-                      <CardDescription>One-way matches you might be able to work out.</CardDescription>
+                      <CardTitle>{t('moreMatchesTitle')}</CardTitle>
+                      <CardDescription>{t('moreMatchesDesc')}</CardDescription>
                     </View>
                     <Badge variant="outline">{partial.length}</Badge>
                   </View>
@@ -231,8 +233,8 @@ export default function MatchesScreen() {
                   ) : partial.length === 0 ? (
                     <EmptyMatches
                       onAdd={() => router.push('/(tabs)/profile' as any)}
-                      title="No partial matches yet"
-                      description="Add skills to broaden your network."
+                      title={t('noMatchesTitle')}
+                      description={t('noMatchesDesc')}
                     />
                   ) : (
                     partial.map((m: any) => (
@@ -270,6 +272,7 @@ function MatchCard({
   onPress: () => void;
 }) {
   const theme = useTheme();
+  const t = useT('matches');
   const user = match as any;
   const canTeachMe = match.canTeachMe ?? []; // they teach, I want
   const canLearnFromMe = match.canLearnFromMe ?? []; // I teach, they want
@@ -296,7 +299,7 @@ function MatchCard({
             </ThemedText>
             {perfect ? (
               <Badge variant="accent" accent="indigo">
-                <Sparkles size={12} color={getAccent('indigo').main} /> Perfect
+                <Sparkles size={12} color={getAccent('indigo').main} /> {t('perfectMatchBadge')}
               </Badge>
             ) : null}
           </View>
@@ -320,7 +323,7 @@ function MatchCard({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1.5] }}>
               <GraduationCap size={14} color={getAccent('emerald').main} />
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                They can teach you
+                {t('canTeach')}
               </ThemedText>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2], paddingLeft: SPACING[5] }}>
@@ -338,7 +341,7 @@ function MatchCard({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1.5] }}>
               <BookOpen size={14} color={getAccent('blue').main} />
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                Wants to learn from you
+                {t('wantsToLearn')}
               </ThemedText>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2], paddingLeft: SPACING[5] }}>
@@ -354,10 +357,10 @@ function MatchCard({
 
       <View style={{ flexDirection: 'row', gap: SPACING[2] }}>
         <Button style={{ flex: 1 }} size="sm" leftIcon={<Handshake size={14} color="#fff" />} onPress={onPress}>
-          Exchange
+          {t('requestExchange')}
         </Button>
         <Button variant="outline" size="sm" leftIcon={<MessageSquare size={14} color={theme.foreground} />} onPress={onPress}>
-          View
+          {t('viewProfile')}
         </Button>
       </View>
     </Pressable>
@@ -368,6 +371,7 @@ import { StyleSheet } from 'react-native';
 
 function EmptyMatches({ onAdd, title, description }: { onAdd: () => void; title: string; description: string }) {
   const theme = useTheme();
+  const t = useT('matches');
   return (
     <View
       style={{
@@ -397,7 +401,7 @@ function EmptyMatches({ onAdd, title, description }: { onAdd: () => void; title:
         {description}
       </ThemedText>
       <Button size="sm" onPress={onAdd} leftIcon={<UserPlus size={14} color="#fff" />}>
-        Set up skills
+        {t('manageSkills')}
       </Button>
     </View>
   );
@@ -421,6 +425,7 @@ function RequestsList({
   insetsBottom: number;
 }) {
   const theme = useTheme();
+  const t = useT('matches');
   const [sub, setSub] = React.useState<'incoming' | 'outgoing'>('incoming');
   const list = sub === 'incoming' ? incoming : outgoing;
 
@@ -438,8 +443,8 @@ function RequestsList({
           onChange={setSub}
           variant="pills"
           items={[
-            { value: 'incoming', label: 'Incoming', badge: incoming.length || undefined },
-            { value: 'outgoing', label: 'Outgoing', badge: outgoing.length || undefined },
+            { value: 'incoming', label: t('received'), badge: incoming.length || undefined },
+            { value: 'outgoing', label: t('sent'), badge: outgoing.length || undefined },
           ]}
         />
       </View>
@@ -482,16 +487,16 @@ function RequestsList({
                 <Inbox size={22} color={theme.mutedForeground} />
               </View>
               <ThemedText type="default" style={{ fontWeight: '700' }}>
-                No {sub} requests
+                {sub === 'incoming' ? t('noReceivedRequests') : t('noSentRequests')}
               </ThemedText>
               <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center', fontSize: FONT_SIZE.sm }}>
                 {sub === 'incoming'
-                  ? 'Requests from others will appear here.'
-                  : 'Your proposals will live here.'}
+                  ? t('noReceivedRequestsDesc')
+                  : t('noSentRequestsDesc')}
               </ThemedText>
               {sub === 'outgoing' ? (
                 <Button size="sm" onPress={() => router.push('/(tabs)/index' as any)} leftIcon={<Sparkles size={14} color="#fff" />}>
-                  Browse matches
+                  {t('explorePotentialMatches')}
                 </Button>
               ) : null}
             </View>
@@ -549,6 +554,7 @@ export function RequestCard({
   onCancel?: () => Promise<void>;
 }) {
   const theme = useTheme();
+  const t = useT('matches');
   const statusColor = getRequestStatusColor(request.status);
   const otherUser = direction === 'incoming' ? request.sender : request.receiver;
   const [confirmReject, setConfirmReject] = React.useState(false);
@@ -641,24 +647,24 @@ export function RequestCard({
           </View>
         ) : direction === 'outgoing' && request.status === 'PENDING' ? (
           <Button size="sm" variant="outline" onPress={() => setConfirmCancel(true)} leftIcon={<Ban size={14} color={theme.foreground} />}>
-            Cancel request
+            {t('decline')}
           </Button>
         ) : null}
       </View>
       <AlertDialog
         open={confirmReject}
         onOpenChange={setConfirmReject}
-        title="Reject this request?"
-        description="This cannot be undone."
-        confirmLabel="Reject"
+        title={t('decline')}
+        description={t('decline')}
+        confirmLabel={t('decline')}
         destructive
         onConfirm={() => onReject?.()}
       />
       <AlertDialog
         open={confirmCancel}
         onOpenChange={setConfirmCancel}
-        title="Cancel your request?"
-        confirmLabel="Cancel request"
+        title={t('decline')}
+        confirmLabel={t('decline')}
         destructive
         onConfirm={() => onCancel?.()}
       />

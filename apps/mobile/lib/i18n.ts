@@ -1,45 +1,31 @@
+import * as Localization from 'expo-localization';
+import { I18n } from 'i18n-js';
 import React from 'react';
-import en from '@/translations/en';
-import es from '@/translations/es';
-import fr from '@/translations/fr';
-import pt from '@/translations/pt';
+import { en, es, fr, pt } from '@skil-ex2/shared';
 
 export type Locale = 'en' | 'es' | 'fr' | 'pt';
 
 const LOCALES: Record<Locale, any> = { en, es, fr, pt };
 
+// Set up i18n-js with expo-localization
+const i18n = new I18n({
+  en,
+  es,
+  fr,
+  pt,
+});
+
+// Set the locale once at the beginning of your app
+i18n.locale = Localization.getLocales()[0]?.languageCode ?? 'en';
+i18n.enableFallback = true; // Fall back to English if translation is missing
+
 interface I18nContextValue {
   locale: Locale;
   setLocale: (l: Locale) => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
-  has: (key: string) => boolean;
 }
 
 const I18nContext = React.createContext<I18nContextValue | null>(null);
-
-function resolveKey(dict: any, key: string): string | null {
-  if (typeof key !== 'string') return null;
-  const parts = key.split('.');
-  let curr: any = dict;
-  for (const p of parts) {
-    if (curr == null || typeof curr !== 'object') return null;
-    curr = curr[p];
-  }
-  return typeof curr === 'string' ? curr : null;
-}
-
-function interpolate(str: string, vars?: Record<string, string | number>): string {
-  if (!vars || typeof str !== 'string') return str;
-  let out = str;
-  for (const [k, v] of Object.entries(vars)) {
-    // Simple {key} replacement (non-ICU) - adequate for 95% of cases.
-    // For ICU plural ({count, plural, =1 {...} other {...}}) we'd add a
-    // lightweight parser, but for parity MVP we prefer the simpler form.
-    const pattern = new RegExp(`\\{${k}\\}`, 'g');
-    out = out.replace(pattern, String(v));
-  }
-  return out;
-}
 
 export function I18nProvider({
   children,
@@ -48,22 +34,22 @@ export function I18nProvider({
   children: React.ReactNode;
   defaultLocale?: Locale;
 }) {
-  const [locale, setLocale] = React.useState<Locale>(defaultLocale);
+  const [locale, setLocale] = React.useState<Locale>(
+    (Localization.getLocales()[0]?.languageCode as Locale) ?? defaultLocale,
+  );
 
   const value = React.useMemo<I18nContextValue>(() => {
-    const dict = LOCALES[locale];
     return {
       locale,
-      setLocale,
-      has: (key) => resolveKey(dict, key) != null,
+      setLocale: (l: Locale) => {
+        setLocale(l);
+        i18n.locale = l;
+      },
       t: (key, vars) => {
-        const v = resolveKey(dict, key);
-        if (v == null) {
-          // Fallback to English dict to prevent missing strings on partially-translated locales.
-          const fb = resolveKey(LOCALES.en, key);
-          return fb ? interpolate(fb, vars) : key;
+        if (vars) {
+          return i18n.t(key, vars);
         }
-        return interpolate(v, vars);
+        return i18n.t(key);
       },
     };
   }, [locale]);
@@ -75,14 +61,16 @@ export function useI18n() {
   const ctx = React.useContext(I18nContext);
   if (!ctx) {
     // Fallback standalone (works outside provider, useful for early screens/signup)
-    const dict = LOCALES.en;
     return {
-      locale: 'en' as Locale,
-      setLocale: (_: Locale) => {},
-      has: (key: string) => resolveKey(dict, key) != null,
+      locale: (i18n.locale as Locale) ?? 'en',
+      setLocale: (l: Locale) => {
+        i18n.locale = l;
+      },
       t: (key: string, vars?: Record<string, string | number>) => {
-        const v = resolveKey(dict, key);
-        return v ? interpolate(v, vars) : key;
+        if (vars) {
+          return i18n.t(key, vars);
+        }
+        return i18n.t(key);
       },
     };
   }
@@ -99,7 +87,10 @@ export function useT(namespace?: string) {
   return React.useCallback(
     (key: string, vars?: Record<string, string | number>) => {
       const fullKey = namespace ? `${namespace}.${key}` : key;
-      return t(fullKey, vars);
+      if (vars) {
+        return t(fullKey, vars);
+      }
+      return t(fullKey);
     },
     [t, namespace],
   );

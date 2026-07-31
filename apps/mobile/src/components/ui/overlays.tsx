@@ -1,4 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
+import { Input } from "@/components/ui/input";
 import { FONT_SIZE, RADIUS, SPACING } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/style-utils";
@@ -510,6 +511,7 @@ export function SelectField<T extends string>({
   options,
   error,
   style,
+  searchable = false,
 }: {
   label?: string;
   placeholder?: string;
@@ -518,10 +520,19 @@ export function SelectField<T extends string>({
   options: SelectOption<T>[];
   error?: string | null;
   style?: any;
+  searchable?: boolean;
 }) {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
   const selected = options.find((o) => o.value === value);
+
+  const filteredOptions = searchable
+    ? options.filter((o) =>
+        o.label.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : options;
+
   return (
     <View style={{ gap: SPACING[2] }}>
       {label ? (
@@ -603,52 +614,91 @@ export function SelectField<T extends string>({
             shadowOpacity: 0.15,
             shadowRadius: 8,
             shadowOffset: { width: 0, height: 4 },
-            maxHeight: 240,
+            maxHeight: 300,
           }}
         >
+          {searchable && (
+            <View
+              style={{
+                padding: SPACING[2],
+                borderBottomWidth: 1,
+                borderBottomColor: theme.border,
+              }}
+            >
+              <Input
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search…"
+                autoFocus
+                style={{
+                  backgroundColor: theme.background,
+                  borderWidth: 0,
+                }}
+              />
+            </View>
+          )}
           <ScrollView
             nestedScrollEnabled
-            style={{ maxHeight: 240 }}
+            style={{ maxHeight: searchable ? 220 : 240 }}
             contentContainerStyle={{ gap: 0 }}
           >
-            {options.map((o, i) => {
-              const isSelected = o.value === value;
-              return (
-                <Pressable
-                  key={i}
-                  onPress={() => {
-                    onChange(o.value);
-                    setOpen(false);
-                  }}
-                  style={{
-                    padding: SPACING[3],
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: SPACING[2],
-                    backgroundColor: isSelected
-                      ? theme.backgroundElement
-                      : "transparent",
-                    borderBottomWidth:
-                      i < options.length - 1 ? StyleSheet.hairlineWidth : 0,
-                    borderBottomColor: theme.border,
-                  }}
+            {filteredOptions.length === 0 ? (
+              <View
+                style={{
+                  padding: SPACING[4],
+                  alignItems: "center",
+                }}
+              >
+                <ThemedText
+                  type="small"
+                  style={{ color: theme.mutedForeground }}
                 >
-                  {o.icon}
-                  <ThemedText
-                    type="default"
+                  No results found
+                </ThemedText>
+              </View>
+            ) : (
+              filteredOptions.map((o, i) => {
+                const isSelected = o.value === value;
+                return (
+                  <Pressable
+                    key={i}
+                    onPress={() => {
+                      onChange(o.value);
+                      setOpen(false);
+                      setSearchQuery("");
+                    }}
                     style={{
-                      fontSize: FONT_SIZE.md,
-                      color: isSelected ? theme.primary : theme.foreground,
-                      fontWeight: isSelected ? "600" : "400",
-                      flex: 1,
+                      padding: SPACING[3],
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: SPACING[2],
+                      backgroundColor: isSelected
+                        ? theme.backgroundElement
+                        : "transparent",
+                      borderBottomWidth:
+                        i < filteredOptions.length - 1
+                          ? StyleSheet.hairlineWidth
+                          : 0,
+                      borderBottomColor: theme.border,
                     }}
                   >
-                    {o.label}
-                  </ThemedText>
-                  {isSelected && <Check size={16} color={theme.primary} />}
-                </Pressable>
-              );
-            })}
+                    {o.icon}
+                    <ThemedText
+                      type="default"
+                      style={{
+                        fontSize: FONT_SIZE.md,
+                        color: isSelected ? theme.primary : theme.foreground,
+                        fontWeight: isSelected ? "600" : "400",
+                        flex: 1,
+                      }}
+                    >
+                      {o.label}
+                    </ThemedText>
+                    {isSelected && <Check size={16} color={theme.primary} />}
+                  </Pressable>
+                );
+              })
+            )}
           </ScrollView>
         </View>
       )}

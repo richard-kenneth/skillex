@@ -13,9 +13,11 @@ import {
 } from "react-native";
 import { signUp } from "../../../lib/auth";
 import { SocialLogins } from "../../components/auth/social-logins";
+import { useT } from "lib/i18n";
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const t = useT('auth');
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +26,7 @@ export default function SignUpScreen() {
 
   const handleSignUp = async () => {
     if (!name || !email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert(t('error'), t('fillAllFields'));
       return;
     }
 
@@ -38,8 +40,8 @@ export default function SignUpScreen() {
 
       if (error) {
         Alert.alert(
-          "Sign Up Failed",
-          error.message || "Could not create account",
+          t('signUpFailed'),
+          error.message || t('unexpectedError'),
         );
       } else {
         (router as any).replace(
@@ -49,7 +51,7 @@ export default function SignUpScreen() {
     } catch (err: any) {
       console.log(err);
 
-      Alert.alert("Error", err.message || "An unexpected error occurred");
+      Alert.alert(t('error'), err.message || t('unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -61,31 +63,31 @@ export default function SignUpScreen() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Join Skill Exchange today</Text>
+      <Text style={styles.title}>{t('signUp')}</Text>
+      <Text style={styles.subtitle}>{t('signUpDescription')}</Text>
 
       <View style={styles.form}>
         <SocialLogins />
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR CONTINUE WITH EMAIL</Text>
+          <Text style={styles.dividerText}>{t('orContinueWith').toUpperCase()}</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        <Text style={styles.label}>Full Name</Text>
+        <Text style={styles.label}>{t('name')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Jane Doe"
+          placeholder={t('namePlaceholder')}
           placeholderTextColor="#666"
           value={name}
           onChangeText={setName}
         />
 
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>{t('email')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="name@example.com"
+          placeholder={t('emailPlaceholder')}
           placeholderTextColor="#666"
           value={email}
           onChangeText={setEmail}
@@ -93,7 +95,7 @@ export default function SignUpScreen() {
           keyboardType="email-address"
         />
 
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>{t('password')}</Text>
         <View style={styles.passwordInputWrapper}>
           <TextInput
             style={[styles.input, { flex: 1, paddingRight: 44 }]}
@@ -124,15 +126,15 @@ export default function SignUpScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Create Account</Text>
+            <Text style={styles.buttonText}>{t('signUp')}</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
+          <Text style={styles.footerText}>{t('hasAccount')} </Text>
           <Link href="/(auth)/sign-in" asChild>
             <TouchableOpacity>
-              <Text style={styles.linkText}>Sign In</Text>
+              <Text style={styles.linkText}>{t('signIn')}</Text>
             </TouchableOpacity>
           </Link>
         </View>

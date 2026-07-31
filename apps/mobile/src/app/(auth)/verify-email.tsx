@@ -12,11 +12,13 @@ import {
   View,
 } from "react-native";
 import { authClient } from "../../../lib/auth";
+import { useT } from "lib/i18n";
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string }>();
   const email = params.email || "";
+  const t = useT('auth');
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export default function VerifyEmailScreen() {
 
   const handleVerify = async () => {
     if (otp.length !== 6) {
-      Alert.alert("Error", "Please enter the complete 6-digit code.");
+      Alert.alert(t('error'), t('enterOtp'));
       return;
     }
 
@@ -37,15 +39,15 @@ export default function VerifyEmailScreen() {
       });
       if (error) {
         Alert.alert(
-          "Verification Failed",
-          error.message || "Could not verify email.",
+          t('error'),
+          error.message || t('verifyEmailFailed'),
         );
       } else {
         setIsSuccess(true);
         setTimeout(() => router.replace("/(tabs)"), 2000);
       }
     } catch (err: any) {
-      Alert.alert("Error", err.message || "An unexpected error occurred.");
+      Alert.alert(t('error'), err.message || t('unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -59,15 +61,15 @@ export default function VerifyEmailScreen() {
         type: "email-verification",
       });
       if (error) {
-        Alert.alert("Error", error.message || "Failed to resend code.");
+        Alert.alert(t('error'), error.message || t('resendCodeFailed'));
       } else {
         Alert.alert(
-          "Success",
-          "A new verification code has been sent to your email.",
+          t('success'),
+          t('resendCodeSuccess'),
         );
       }
     } catch {
-      Alert.alert("Error", "Failed to resend code.");
+      Alert.alert(t('error'), t('resendCodeFailed'));
     } finally {
       setIsResending(false);
     }
@@ -79,9 +81,9 @@ export default function VerifyEmailScreen() {
         <View style={styles.iconContainer}>
           <CheckCircle2 size={48} color="#22c55e" />
         </View>
-        <Text style={styles.title}>Email Verified</Text>
+        <Text style={styles.title}>{t('verifyEmailSuccess')}</Text>
         <Text style={styles.subtitle}>
-          Your email has been verified successfully. Redirecting...
+          {t('redirectInfo')}
         </Text>
       </View>
     );
@@ -96,14 +98,14 @@ export default function VerifyEmailScreen() {
         <View style={styles.iconContainer}>
           <ShieldCheck size={48} color="#6366f1" />
         </View>
-        <Text style={styles.title}>Verify Your Email</Text>
+        <Text style={styles.title}>{t('verifyEmailTitle')}</Text>
         <Text style={styles.subtitle}>
-          Enter the 6-digit code sent to your email address.
+          {t('verifyEmailDesc')}
         </Text>
         {email ? <Text style={styles.emailText}>{email}</Text> : null}
 
         <View style={styles.form}>
-          <Text style={styles.label}>Verification Code</Text>
+          <Text style={styles.label}>{t('verificationCode')}</Text>
           <TextInput
             style={styles.otpInput}
             placeholder="******"
@@ -123,7 +125,7 @@ export default function VerifyEmailScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Verify Email</Text>
+              <Text style={styles.buttonText}>{t('verifyEmail')}</Text>
             )}
           </TouchableOpacity>
 
@@ -135,13 +137,13 @@ export default function VerifyEmailScreen() {
             {isResending ? (
               <ActivityIndicator color="#6366f1" size="small" />
             ) : (
-              <Text style={styles.resendText}>Resend Code</Text>
+              <Text style={styles.resendText}>{t('resendCode')}</Text>
             )}
           </TouchableOpacity>
 
           <Link href="/(auth)/sign-in" asChild>
             <TouchableOpacity style={styles.backButton}>
-              <Text style={styles.linkText}>Back to Sign In</Text>
+              <Text style={styles.linkText}>{t('goToSignIn')}</Text>
             </TouchableOpacity>
           </Link>
         </View>

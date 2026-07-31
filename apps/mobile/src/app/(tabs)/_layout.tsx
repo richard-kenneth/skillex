@@ -1,8 +1,10 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, Users, RefreshCw, Coins, User } from 'lucide-react-native';
+import { useT } from 'lib/i18n';
 
 export default function TabsLayout() {
+  const t = useT('nav');
   return (
     <Tabs
       screenOptions={{
@@ -20,35 +22,35 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: t('dashboard'),
           tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="matches"
         options={{
-          title: 'Matches',
+          title: t('matches'),
           tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="exchanges"
         options={{
-          title: 'Exchanges',
+          title: t('exchanges'),
           tabBarIcon: ({ color, size }) => <RefreshCw size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="points"
         options={{
-          title: 'Points',
+          title: t('points'),
           tabBarIcon: ({ color, size }) => <Coins size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('profile'),
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />

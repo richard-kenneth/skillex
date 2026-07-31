@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useT } from "lib/i18n";
 import {
   Avatar,
   Badge,
@@ -16,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
   Input,
-  Label,
   SelectField,
   Separator,
   Skeleton,
@@ -46,7 +46,6 @@ import {
   useSkills,
   useUpdateNotificationPreferences,
   useUpdateProfile,
-  useUploadImage,
 } from "@/lib/api-hooks";
 import {
   calculateAverageRating,
@@ -56,9 +55,10 @@ import {
   REVIEW_TAG_LABELS,
   SkillType,
 } from "@skil-ex2/shared";
+import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router, useRouter } from "expo-router";
-import { Locale, LOCALE_LABELS, SUPPORTED_LOCALES, useI18n } from "lib/i18n";
+import { LOCALE_LABELS, SUPPORTED_LOCALES, useI18n } from "lib/i18n";
 import {
   BadgeCheck,
   Bell,
@@ -71,7 +71,6 @@ import {
   HandCoins,
   LogOut,
   Mail,
-  MapPin,
   Monitor,
   Moon,
   Plus,
@@ -86,10 +85,13 @@ import {
 import React from "react";
 import {
   Alert,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
   Share,
+  StatusBar,
+  StyleSheet,
   View,
 } from "react-native";
 import {
@@ -105,6 +107,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const t = useT('profile');
 
   const userQ = useCurrentUser();
   const user = userQ.data as any;
@@ -118,10 +121,10 @@ export default function ProfileScreen() {
   }, [userQ]);
 
   const handleSignOut = async () => {
-    Alert.alert("Sign out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t('signOut'), t('signOutConfirm'), [
+      { text: t('cancel'), style: "cancel" },
       {
-        text: "Sign out",
+        text: t('signOut'),
         style: "destructive",
         onPress: async () => {
           await authClient.signOut();
@@ -158,7 +161,7 @@ export default function ProfileScreen() {
               letterSpacing: -0.2,
             }}
           >
-            Profile
+            {t('title')}
           </ThemedText>
           <Pressable
             onPress={handleSignOut}
@@ -216,7 +219,7 @@ export default function ProfileScreen() {
               items={[
                 {
                   value: "edit",
-                  label: "Edit",
+                  label: t('editTab'),
                   icon: (
                     <UserRound
                       size={14}
@@ -226,7 +229,7 @@ export default function ProfileScreen() {
                 },
                 {
                   value: "skills",
-                  label: "Skills",
+                  label: t('skillsTab'),
                   icon: (
                     <GraduationCap
                       size={14}
@@ -236,7 +239,7 @@ export default function ProfileScreen() {
                 },
                 {
                   value: "reviews",
-                  label: "Reviews",
+                  label: t('reviewsTab'),
                   icon: (
                     <Star
                       size={14}
@@ -246,7 +249,7 @@ export default function ProfileScreen() {
                 },
                 {
                   value: "referrals",
-                  label: "Referrals",
+                  label: t('referralsTab'),
                   icon: (
                     <Gift
                       size={14}
@@ -258,7 +261,7 @@ export default function ProfileScreen() {
                 },
                 {
                   value: "notifications",
-                  label: "Alerts",
+                  label: t('alertsTab'),
                   icon: (
                     <Bell
                       size={14}
@@ -291,6 +294,8 @@ export default function ProfileScreen() {
 function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
   const theme = useTheme();
   const reviewsQ = useMyReviews();
+    const t = useT('profile');
+
   const avg = reviewsQ.data
     ? calculateAverageRating(reviewsQ.data as any[])
     : 0;
@@ -330,7 +335,7 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                     letterSpacing: -0.2,
                   }}
                 >
-                  {user?.name ?? "Your name"}
+                  {user?.name ?? t('yourName')}
                 </ThemedText>
                 <View
                   style={{
@@ -349,30 +354,9 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                     }}
                     numberOfLines={1}
                   >
-                    {user?.email ?? "email not set"}
+                    {user?.email ?? t('emailNotSet')}
                   </ThemedText>
                 </View>
-                {user?.location ? (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: SPACING[1.5],
-                      marginTop: 2,
-                    }}
-                  >
-                    <MapPin size={12} color={theme.mutedForeground} />
-                    <ThemedText
-                      type="small"
-                      style={{
-                        color: theme.mutedForeground,
-                        fontSize: FONT_SIZE.sm,
-                      }}
-                    >
-                      {user.location}
-                    </ThemedText>
-                  </View>
-                ) : null}
                 <View
                   style={{
                     flexDirection: "row",
@@ -413,11 +397,11 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                         color={getAccent("emerald").main}
                       />
                     }
-                    label={`${offering.length} teach`}
+                    label={`${offering.length} ${t('teach')}`}
                   />
                   <StatBadge
                     icon={<BookOpen size={12} color={getAccent("blue").main} />}
-                    label={`${seeking.length} learn`}
+                    label={`${seeking.length} ${t('learn')}`}
                   />
                 </View>
               </>
@@ -459,9 +443,9 @@ function AvatarUploader({
   fallback?: string;
 }) {
   const theme = useTheme();
-  const uploadImg = useUploadImage();
   const userQ = useCurrentUser();
   const toast = useToast();
+  const [preview, setPreview] = React.useState<string | null>(null);
 
   const pick = async () => {
     try {
@@ -483,27 +467,22 @@ function AvatarUploader({
       });
       if (res.canceled || !res.assets?.[0]) return;
       const uri = res.assets[0].uri;
-      const fileExt = uri.split(".").pop() ?? "jpg";
-      const file: any = {
-        uri,
-        type: `image/${fileExt === "jpg" ? "jpeg" : fileExt}`,
-        name: `avatar.${fileExt}`,
-      };
-      const form = new FormData();
-      form.append("file", file);
-      try {
-        const uploaded = await uploadImg.mutateAsync(form);
-        toast.toast({ title: "Avatar updated", variant: "success" });
-        await userQ.refetch();
-      } catch (err: any) {
-        toast.toast({
-          title: "Failed to upload",
-          description: err?.message ?? "Try again",
-          variant: "error",
-        });
-      }
+      setPreview(uri);
+      // Note: Full upload implementation would require presigned URL flow
+      // For now, show preview. Backend upload to be implemented.
+      toast.toast({
+        title: "Photo selected",
+        description: "Upload will be implemented with presigned URLs",
+        variant: "info",
+      });
     } catch (err: any) {
       toast.toast({ title: "Could not pick image", variant: "error" });
+    }
+  };
+
+  const showFullScreen = () => {
+    if (current || preview) {
+      setPreview(current || preview);
     }
   };
 
@@ -529,7 +508,69 @@ function AvatarUploader({
           <Camera size={14} color="#fff" />
         </View>
       </Pressable>
+      {(current || preview) && (
+        <Pressable
+          onPress={showFullScreen}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+        />
+      )}
+      {preview && (
+        <ImagePreviewModal uri={preview} onClose={() => setPreview(null)} />
+      )}
     </View>
+  );
+}
+
+function ImagePreviewModal({
+  uri,
+  onClose,
+}: {
+  uri: string;
+  onClose: () => void;
+}) {
+  const theme = useTheme();
+  return (
+    <Modal visible onRequestClose={onClose} transparent animationType="fade">
+      <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.9)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <ExpoImage
+            source={{ uri }}
+            style={{ width: "100%", height: "100%" }}
+            contentFit="contain"
+          />
+          <Pressable
+            onPress={onClose}
+            style={{
+              position: "absolute",
+              top: 50,
+              right: 20,
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: "rgba(255,255,255,0.2)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ThemedText style={{ color: "#fff", fontSize: 24 }}>×</ThemedText>
+          </Pressable>
+        </View>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -538,22 +579,18 @@ function AvatarUploader({
 function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
   const theme = useTheme();
   const toast = useToast();
+  const t = useT('profile');
   const updateUser = useUpdateProfile();
 
   const [name, setName] = React.useState("");
   const [bio, setBio] = React.useState("");
-  const [location, setLocation] = React.useState("");
-  const [availability, setAvailability] = React.useState<
-    Record<string, boolean>
-  >({});
+
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
     if (user) {
       setName(user.name ?? "");
       setBio(user.bio ?? "");
-      setLocation(user.location ?? "");
-      setAvailability(user.availability ?? {});
     }
   }, [user]);
 
@@ -562,11 +599,9 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
       const parsed = v.parse(ProfileFormSchema, {
         name,
         bio,
-        location,
-        availability,
       });
       await updateUser.mutateAsync(parsed);
-      toast.toast({ title: "Profile saved", variant: "success" });
+      toast.toast({ title: t('profileSaved'), variant: "success" });
     } catch (e: any) {
       if (e instanceof v.ValiError) {
         const map: Record<string, string> = {};
@@ -578,8 +613,8 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
         return;
       }
       toast.toast({
-        title: "Could not save",
-        description: e?.message ?? "Try again",
+        title: t('couldNotSave'),
+        description: e?.message ?? t('tryAgain'),
         variant: "error",
       });
     }
@@ -589,39 +624,31 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Profile information</CardTitle>
+          <CardTitle>{t('profileInformation')}</CardTitle>
           <CardDescription>
-            This information will be visible to other users.
+            {t('profileInformationDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent style={{ gap: SPACING[4] }}>
           <Input
-            label="Display name"
+            label={t('displayName')}
             value={name}
             onChangeText={setName}
-            placeholder="Your name"
+            placeholder={t('yourName')}
             error={errors.name}
             leftSlot={<UserRound size={16} color={theme.mutedForeground} />}
           />
           <Textarea
-            label="Bio"
+            label={t('bio')}
             value={bio}
             onChangeText={setBio}
-            placeholder="Tell others a bit about yourself…"
+            placeholder={t('bioPlaceholder')}
             numberOfLines={5}
             error={errors.bio}
             description={`${bio.length}/500`}
           />
-          <Input
-            label="Location"
-            value={location}
-            onChangeText={setLocation}
-            placeholder="City, Country"
-            error={errors.location}
-            leftSlot={<MapPin size={16} color={theme.mutedForeground} />}
-          />
           <Button onPress={save} loading={updateUser.isPending || loading}>
-            Save changes
+            {t('saveChanges')}
           </Button>
         </CardContent>
       </Card>
@@ -633,6 +660,7 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
 
 function AppPreferencesCard() {
   const theme = useTheme();
+  const t = useT('profile');
   const { locale, setLocale } = useI18n();
   const { mode, setMode } = useThemeContext();
   const localeOpts = SUPPORTED_LOCALES.map((l) => ({
@@ -643,19 +671,56 @@ function AppPreferencesCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>App preferences</CardTitle>
+        <CardTitle>{t('appPreferences')}</CardTitle>
         <CardDescription>
-          Personalize how Skil-Ex looks and feels for you.
+          {t('appPreferencesDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent style={{ gap: SPACING[4] }}>
-        <SelectField
-          label="Language"
-          value={locale}
-          onChange={(v) => setLocale(v as Locale)}
-          options={localeOpts}
-          leftSlot={<Globe2 size={16} color={theme.mutedForeground} />}
-        />
+        <View style={{ gap: SPACING[2] }}>
+          <ThemedText
+            type="smallBold"
+            style={{
+              fontSize: FONT_SIZE.sm,
+              color: theme.foreground,
+              marginLeft: SPACING[0.5],
+            }}
+          >
+            Language
+          </ThemedText>
+          <View style={{ flexDirection: "row", gap: SPACING[2] }}>
+            {localeOpts.map((opt) => (
+              <Pressable
+                key={opt.value}
+                onPress={() => setLocale(opt.value)}
+                style={{
+                  flex: 1,
+                  padding: SPACING[3],
+                  borderRadius: RADIUS.md,
+                  borderWidth: 1,
+                  borderColor:
+                    locale === opt.value ? theme.primary : theme.border,
+                  backgroundColor:
+                    locale === opt.value
+                      ? getAccent("indigo").bg
+                      : theme.backgroundElement,
+                  alignItems: "center",
+                  gap: SPACING[1],
+                }}
+              >
+                <Globe2
+                  size={16}
+                  color={
+                    locale === opt.value ? theme.primary : theme.mutedForeground
+                  }
+                />
+                <ThemedText type="smallBold" style={{ fontSize: 12 }}>
+                  {opt.label}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </View>
+        </View>
         <View style={{ gap: SPACING[2] }}>
           <ThemedText
             type="smallBold"
@@ -666,7 +731,7 @@ function AppPreferencesCard() {
               letterSpacing: 1,
             }}
           >
-            Appearance
+            {t('appearance')}
           </ThemedText>
           <View style={{ flexDirection: "row", gap: SPACING[2] }}>
             <AppearanceChip
@@ -678,7 +743,7 @@ function AppPreferencesCard() {
                   }
                 />
               }
-              label="System"
+              label={t('system')}
               active={mode === "system"}
               onPress={() => setMode("system")}
             />
@@ -691,7 +756,7 @@ function AppPreferencesCard() {
                   }
                 />
               }
-              label="Light"
+              label={t('light')}
               active={mode === "light"}
               onPress={() => setMode("light")}
             />
@@ -704,7 +769,7 @@ function AppPreferencesCard() {
                   }
                 />
               }
-              label="Dark"
+              label={t('dark')}
               active={mode === "dark"}
               onPress={() => setMode("dark")}
             />
@@ -746,6 +811,7 @@ function AppearanceChip({ icon, label, active, onPress }: any) {
 
 function SkillsPane({ user }: { user: any }) {
   const theme = useTheme();
+  const t = useT('profile');
   const skillsQ = useSkills();
   const catsQ = useSkillCategories();
   const addQ = useAddUserSkill();
@@ -754,7 +820,7 @@ function SkillsPane({ user }: { user: any }) {
   const toast = useToast();
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [type, setType] = React.useState<SkillType>("OFFERING");
+  const [type, setType] = React.useState<SkillType>(SkillType.OFFERING);
   const [skillId, setSkillId] = React.useState<string | undefined>();
   const [level, setLevel] = React.useState<string>("INTERMEDIATE");
   const [customSkill, setCustomSkill] = React.useState("");
@@ -792,7 +858,7 @@ function SkillsPane({ user }: { user: any }) {
       } as any);
       toast.toast({
         title:
-          type === "OFFERING" ? "Added teaching skill" : "Added learning skill",
+          type === "OFFERING" ? t('addedTeachingSkill') : t('addedLearningSkill'),
         variant: "success",
       });
       reset();
@@ -800,22 +866,22 @@ function SkillsPane({ user }: { user: any }) {
       await userQ.refetch();
     } catch (e: any) {
       toast.toast({
-        title: "Failed to add skill",
-        description: e?.message ?? "Try again",
+        title: t('failedToAddSkill'),
+        description: e?.message ?? t('tryAgain'),
         variant: "error",
       });
     }
   };
 
   const remove = async (id: string) => {
-    Alert.alert("Remove skill?", "This cannot be undone.", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t('removeSkill'), t('removeSkillConfirm'), [
+      { text: t('cancel'), style: "cancel" },
       {
-        text: "Remove",
+        text: t('remove'),
         style: "destructive",
         onPress: async () => {
           await removeQ.mutateAsync(id);
-          toast.toast({ title: "Skill removed", variant: "success" });
+          toast.toast({ title: t('skillRemoved'), variant: "success" });
           await userQ.refetch();
         },
       },
@@ -834,9 +900,9 @@ function SkillsPane({ user }: { user: any }) {
             }}
           >
             <View>
-              <CardTitle>Skills</CardTitle>
+              <CardTitle>{t('skills')}</CardTitle>
               <CardDescription>
-                What you teach and what you want to learn.
+                {t('skillsDesc')}
               </CardDescription>
             </View>
             <Button
@@ -844,27 +910,27 @@ function SkillsPane({ user }: { user: any }) {
               leftIcon={<Plus size={14} color="#fff" />}
               onPress={() => setDialogOpen(true)}
             >
-              Add
+              {t('add')}
             </Button>
           </View>
         </CardHeader>
         <CardContent style={{ gap: SPACING[5] }}>
           <SkillGroup
-            title="I can teach"
+            title={t('iCanTeach')}
             accent="emerald"
             icon={<GraduationCap size={16} color={getAccent("emerald").main} />}
             list={offering}
             onRemove={remove}
-            empty="Add the skills you're ready to share."
+            empty={t('addSkillsToShare')}
           />
           <Separator />
           <SkillGroup
-            title="I want to learn"
+            title={t('iWantToLearn')}
             accent="blue"
             icon={<BookOpen size={16} color={getAccent("blue").main} />}
             list={seeking}
             onRemove={remove}
-            empty="Add skills you'd love to pick up from someone."
+            empty={t('addSkillsToLearn')}
           />
         </CardContent>
       </Card>
@@ -874,97 +940,133 @@ function SkillsPane({ user }: { user: any }) {
         onOpenChange={(o) => !addQ.isPending && setDialogOpen(o)}
       >
         <DialogHeader onClose={() => setDialogOpen(false)}>
-          <DialogTitle>Add a skill</DialogTitle>
+          <DialogTitle>{t('addSkill')}</DialogTitle>
           <DialogDescription>
-            Choose an existing skill or create a custom one.
+            {t('addSkillDesc')}
           </DialogDescription>
         </DialogHeader>
         <DialogContent style={{ gap: SPACING[4] }}>
           <View style={{ gap: SPACING[2] }}>
-            <Label>Skill type</Label>
-            <Tabs<"OFFERING" | "SEEKING">
-              value={type}
-              onChange={setType}
-              items={[
-                {
-                  value: "OFFERING",
-                  label: "I teach",
-                  icon: (
-                    <GraduationCap
-                      size={14}
-                      color={
-                        type === "OFFERING" ? "#fff" : theme.mutedForeground
-                      }
-                    />
-                  ),
-                },
-                {
-                  value: "SEEKING",
-                  label: "I learn",
-                  _icon: (
-                    <BookOpen
-                      size={14}
-                      color={
-                        type === "SEEKING" ? "#fff" : theme.mutedForeground
-                      }
-                    />
-                  ),
-                  get icon() {
-                    return this._icon;
-                  },
-                  set icon(value) {
-                    this._icon = value;
-                  },
-                },
-              ]}
-            />
+            <ThemedText
+              type="smallBold"
+              style={{
+                fontSize: FONT_SIZE.sm,
+                color: theme.foreground,
+                marginLeft: SPACING[0.5],
+              }}
+            >
+              {t('skillType')}
+            </ThemedText>
+            <View style={{ flexDirection: "row", gap: SPACING[2] }}>
+              <Pressable
+                onPress={() => setType(SkillType.OFFERING)}
+                style={{
+                  flex: 1,
+                  padding: SPACING[3],
+                  borderRadius: RADIUS.md,
+                  borderWidth: 1,
+                  borderColor:
+                    type === SkillType.OFFERING ? theme.primary : theme.border,
+                  backgroundColor:
+                    type === SkillType.OFFERING
+                      ? getAccent("emerald").bg
+                      : theme.backgroundElement,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: SPACING[1.5],
+                }}
+              >
+                <GraduationCap
+                  size={14}
+                  color={
+                    type === SkillType.OFFERING
+                      ? theme.primary
+                      : theme.mutedForeground
+                  }
+                />
+                <ThemedText type="smallBold" style={{ fontSize: 12 }}>
+                  {t('iTeach')}
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={() => setType(SkillType.SEEKING)}
+                style={{
+                  flex: 1,
+                  padding: SPACING[3],
+                  borderRadius: RADIUS.md,
+                  borderWidth: 1,
+                  borderColor:
+                    type === SkillType.SEEKING ? theme.primary : theme.border,
+                  backgroundColor:
+                    type === SkillType.SEEKING
+                      ? getAccent("blue").bg
+                      : theme.backgroundElement,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: SPACING[1.5],
+                }}
+              >
+                <BookOpen
+                  size={14}
+                  color={
+                    type === SkillType.SEEKING
+                      ? theme.primary
+                      : theme.mutedForeground
+                  }
+                />
+                <ThemedText type="smallBold" style={{ fontSize: 12 }}>
+                  {t('iLearn')}
+                </ThemedText>
+              </Pressable>
+            </View>
           </View>
           <SelectField
-            label="Category"
+            label={t('category')}
             value={categoryId}
             onChange={setCategoryId}
-            placeholder="Pick a category"
+            placeholder={t('pickCategory')}
             options={[
-              { label: "All categories", value: "" as any },
+              { label: t('allCategories'), value: "" as any },
               ...categories.map((c: any) => ({ label: c.name, value: c.id })),
             ]}
           />
-          {filtered.length > 0 ? (
-            <SelectField
-              label="Skill"
-              value={skillId}
-              onChange={setSkillId}
-              placeholder="Search skills…"
-              options={[
-                { label: "Custom skill", value: "__custom__" },
-                ...filtered.map((s: any) => ({ label: s.name, value: s.id })),
-              ]}
-            />
-          ) : null}
+          <SelectField
+            label={t('skill')}
+            value={skillId}
+            onChange={setSkillId}
+            placeholder={t('searchOrSelectSkill')}
+            options={[
+              { label: t('customSkill'), value: "__custom__" },
+              ...filtered.map((s: any) => ({ label: s.name, value: s.id })),
+            ]}
+            searchable
+          />
           {skillId === "__custom__" ? (
             <Input
-              label="Custom skill name"
+              label={t('customSkillName')}
               value={customSkill}
               onChangeText={setCustomSkill}
-              placeholder="e.g., Watercolor painting"
+              placeholder={t('customSkillPlaceholder')}
             />
           ) : null}
           <SelectField
-            label="Level"
+            label={t('level')}
             value={level}
             onChange={setLevel}
             options={[
-              { label: "Beginner", value: "BEGINNER" },
-              { label: "Intermediate", value: "INTERMEDIATE" },
-              { label: "Advanced", value: "ADVANCED" },
-              { label: "Expert", value: "EXPERT" },
+              { label: t('beginner'), value: "BEGINNER" },
+              { label: t('intermediate'), value: "INTERMEDIATE" },
+              { label: t('advanced'), value: "ADVANCED" },
+              { label: t('expert'), value: "EXPERT" },
             ]}
           />
           <Textarea
-            label="Experience (optional)"
+            label={t('experience')}
             value={experience}
             onChangeText={setExperience}
-            placeholder="How long / where you've taught or learned…"
+            placeholder={t('experiencePlaceholder')}
             numberOfLines={3}
           />
         </DialogContent>
@@ -974,7 +1076,7 @@ function SkillsPane({ user }: { user: any }) {
             onPress={() => setDialogOpen(false)}
             disabled={addQ.isPending}
           >
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onPress={submit}
@@ -983,7 +1085,7 @@ function SkillsPane({ user }: { user: any }) {
               !((skillId && skillId !== "__custom__") || customSkill.trim())
             }
           >
-            Add skill
+            {t('addSkill')}
           </Button>
         </DialogFooter>
       </Dialog>
@@ -1070,17 +1172,15 @@ function SkillGroup({
                 <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
                   {s.skill?.name ?? s.skillName ?? "Skill"}
                   {s.level ? (
-                    <ThemedText type="small" as any>
+                    <ThemedText
+                      type="small"
+                      style={{
+                        color: theme.mutedForeground,
+                        fontSize: FONT_SIZE.sm,
+                      }}
+                    >
                       {" "}
-                      <ThemedText
-                        type="small"
-                        style={{
-                          color: theme.mutedForeground,
-                          fontSize: FONT_SIZE.sm,
-                        }}
-                      >
-                        · {s.level.toLowerCase()}
-                      </ThemedText>
+                      · {s.level.toLowerCase()}
                     </ThemedText>
                   ) : null}
                 </ThemedText>
@@ -1112,6 +1212,7 @@ function SkillGroup({
 
 function ReviewsPane() {
   const theme = useTheme();
+  const t = useT('profile');
   const reviewsQ = useMyReviews();
   const loading = reviewsQ.isLoading;
   const reviews = reviewsQ.data ?? [];
@@ -1126,8 +1227,8 @@ function ReviewsPane() {
     <View style={{ gap: SPACING[4] }}>
       <Card>
         <CardHeader>
-          <CardTitle>Reviews</CardTitle>
-          <CardDescription>What other users say about you.</CardDescription>
+          <CardTitle>{t('reviews')}</CardTitle>
+          <CardDescription>{t('reviewsDesc')}</CardDescription>
         </CardHeader>
         <CardContent style={{ gap: SPACING[4] }}>
           <View
@@ -1175,7 +1276,7 @@ function ReviewsPane() {
                   marginTop: 4,
                 }}
               >
-                {reviews.length} review{reviews.length === 1 ? "" : "s"}
+                {reviews.length} {reviews.length === 1 ? t('review') : t('reviews')}
               </ThemedText>
             </View>
             <View style={{ flex: 1, gap: SPACING[1] }}>
@@ -1270,7 +1371,7 @@ function ReviewsPane() {
               <Star size={24} color={theme.mutedForeground} />
             </View>
             <ThemedText type="default" style={{ fontWeight: "700" }}>
-              No reviews yet
+              {t('noReviewsYet')}
             </ThemedText>
             <ThemedText
               type="small"
@@ -1280,8 +1381,7 @@ function ReviewsPane() {
                 fontSize: FONT_SIZE.sm,
               }}
             >
-              Complete your first exchange and you'll start seeing reviews
-              appear here.
+              {t('noReviewsDesc')}
             </ThemedText>
           </CardContent>
         </Card>
@@ -1298,6 +1398,8 @@ function ReviewsPane() {
 
 export function ReviewCard({ review }: { review: any }) {
   const theme = useTheme();
+    const t = useT('profile');
+
   const rating = Math.round(review.rating ?? 0);
   const tags: string[] = review.tags ?? [];
   const router = useRouter();
@@ -1325,7 +1427,7 @@ export function ReviewCard({ review }: { review: any }) {
           </Pressable>
           <View style={{ flex: 1 }}>
             <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-              {review.reviewer?.name ?? "User"}
+              {review.reviewer?.name ?? t('user')}
             </ThemedText>
             <View
               style={{
@@ -1732,14 +1834,14 @@ function NotificationsPrefsPane() {
               set({ inAppNotifications: v });
             }}
           />
-            <Switch
-              label="Email digests"
-              description="Daily or weekly email updates."
-              value={user.emailNotifications ?? true}
-              onValueChange={(v) => {
-                set({ emailNotifications: v });
-              }}
-            />
+          <Switch
+            label="Email digests"
+            description="Daily or weekly email updates."
+            value={user.emailNotifications ?? true}
+            onValueChange={(v) => {
+              set({ emailNotifications: v });
+            }}
+          />
           <Switch
             label="Push notifications"
             description="Send to your device lock screen."

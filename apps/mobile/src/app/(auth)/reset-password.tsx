@@ -12,12 +12,15 @@ import {
   View,
 } from "react-native";
 import { authClient } from "../../../lib/auth";
+import { useT } from "lib/i18n";
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string; otp?: string }>();
   const email = params.email || "";
   const otp = params.otp || "";
+  const t = useT();
+  const authT = useT('auth');
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,17 +31,17 @@ export default function ResetPasswordScreen() {
 
   const handleReset = async () => {
     if (!password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields.");
+      Alert.alert(authT('error'), authT('fillAllFields'));
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match.");
+      Alert.alert(authT('error'), authT('passwordsDoNotMatch'));
       return;
     }
     if (!email || !otp) {
       Alert.alert(
-        "Error",
-        "Invalid or missing reset information. Please start the password reset process again.",
+        authT('error'),
+        authT('unexpectedError'),
       );
       return;
     }
@@ -54,8 +57,8 @@ export default function ResetPasswordScreen() {
 
       if (error) {
         Alert.alert(
-          "Reset Failed",
-          error.message || "Could not reset password.",
+          authT('error'),
+          error.message || authT('failedToReset'),
         );
       } else {
         setIsSuccess(true);
@@ -64,7 +67,7 @@ export default function ResetPasswordScreen() {
         }, 2000);
       }
     } catch (err: any) {
-      Alert.alert("Error", err.message || "An unexpected error occurred.");
+      Alert.alert(authT('error'), err.message || authT('unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -76,9 +79,9 @@ export default function ResetPasswordScreen() {
         <View style={styles.iconContainer}>
           <CheckCircle2 size={48} color="#22c55e" />
         </View>
-        <Text style={styles.title}>Password Reset Complete</Text>
+        <Text style={styles.title}>{authT('passwordResetTitle')}</Text>
         <Text style={styles.subtitle}>
-          Your password has been updated. Redirecting to sign in...
+          {authT('passwordResetDesc')}
         </Text>
       </View>
     );
@@ -93,12 +96,12 @@ export default function ResetPasswordScreen() {
       <View style={styles.iconContainer}>
         <Lock size={48} color="#6366f1" />
       </View>
-      <Text style={styles.title}>Set New Password</Text>
+      <Text style={styles.title}>{authT('newPassword')}</Text>
       {email ? <Text style={styles.emailText}>{email}</Text> : null}
-      <Text style={styles.subtitle}>Enter your new password below.</Text>
+      <Text style={styles.subtitle}>{authT('resetPasswordDesc')}</Text>
 
       <View style={styles.form}>
-        <Text style={styles.label}>New Password</Text>
+        <Text style={styles.label}>{authT('newPassword')}</Text>
         <View style={styles.passwordInputWrapper}>
           <TextInput
             style={[styles.input, { flex: 1, paddingRight: 44 }]}
@@ -121,7 +124,7 @@ export default function ResetPasswordScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.label}>Confirm New Password</Text>
+        <Text style={styles.label}>{authT('confirmNewPassword')}</Text>
         <View style={styles.passwordInputWrapper}>
           <TextInput
             style={[styles.input, { flex: 1, paddingRight: 44 }]}
@@ -152,15 +155,15 @@ export default function ResetPasswordScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Reset Password</Text>
+            <Text style={styles.buttonText}>{authT('resetPassword')}</Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Remember your password? </Text>
+          <Text style={styles.footerText}>{authT('rememberedPassword')} </Text>
           <Link href="/(auth)/sign-in" asChild>
             <TouchableOpacity>
-              <Text style={styles.linkText}>Sign In</Text>
+              <Text style={styles.linkText}>{authT('signIn')}</Text>
             </TouchableOpacity>
           </Link>
         </View>

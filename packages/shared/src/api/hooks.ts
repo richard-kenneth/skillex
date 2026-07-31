@@ -329,7 +329,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
         client.exchanges.updateSessionStatus(exchangeId, sessionId, status),
       onSuccess: (...args) => {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exchanges.list });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exchanges.byId });
         return options?.onSuccess?.(...args);
       },
       ...options,
@@ -590,7 +589,8 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     return useMutation<void, Error, string>({
       mutationFn: (code) => client.referrals.apply(code),
       onSuccess: (...args) => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.referrals.tracking });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.referrals.code });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.referrals.stats });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.points.balance });
         return options?.onSuccess?.(...args);
       },
