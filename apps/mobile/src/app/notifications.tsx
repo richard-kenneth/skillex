@@ -23,10 +23,10 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import {
+  useCurrentUser,
   useDeleteNotification,
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
-  useNotificationPreferences,
   useNotifications,
   useUpdateNotificationPreferences,
 } from "@/lib/api-hooks";
@@ -97,14 +97,14 @@ export default function NotificationsScreen() {
   const markReadQ = useMarkNotificationRead();
   const markAllQ = useMarkAllNotificationsRead();
   const deleteQ = useDeleteNotification();
-  const prefsQ = useNotificationPreferences();
   const updatePrefsQ = useUpdateNotificationPreferences();
+  const userQ = useCurrentUser();
 
   const refresh = React.useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([notifQ.refetch(), prefsQ.refetch()]);
+    await Promise.all([notifQ.refetch(), userQ.refetch()]);
     setRefreshing(false);
-  }, [notifQ, prefsQ]);
+  }, [notifQ, userQ]);
 
   const items = React.useMemo(() => {
     const all = notifQ.data ?? [];
@@ -461,25 +461,34 @@ export default function NotificationsScreen() {
               <Switch
                 label="In-app notifications"
                 description="Show toasts inside the app."
-                value={prefsQ.data?.channels?.inApp !== false}
+                value={userQ.data?.inAppNotifications ?? true}
                 onValueChange={async (v) => {
-                  const base = prefsQ.data?.channels ?? {};
                   await updatePrefsQ.mutateAsync({
-                    channels: { ...base, inApp: v },
+                    inAppNotifications: v,
                   });
-                  await prefsQ.refetch();
+                  await userQ.refetch();
+                }}
+              />
+              <Switch
+                label="Email notifications"
+                description="Receive important notifications via email."
+                value={userQ.data?.emailNotifications ?? true}
+                onValueChange={async (v) => {
+                  await updatePrefsQ.mutateAsync({
+                    emailNotifications: v,
+                  });
+                  await userQ.refetch();
                 }}
               />
               <Switch
                 label="Push notifications"
                 description="Deliver to device when app is closed."
-                value={prefsQ.data?.channels?.push ?? false}
+                value={userQ.data?.pushNotifications ?? true}
                 onValueChange={async (v) => {
-                  const base = prefsQ.data?.channels ?? {};
                   await updatePrefsQ.mutateAsync({
-                    channels: { ...base, push: v },
+                    pushNotifications: v,
                   });
-                  await prefsQ.refetch();
+                  await userQ.refetch();
                 }}
               />
             </CardContent>

@@ -42,3 +42,9 @@ example
 # generated native folders
 /ios
 /android
+
+# Service accounts
+*service-account*.json
+
+# Google services
+google-services.json

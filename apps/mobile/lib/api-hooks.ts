@@ -48,14 +48,14 @@ export const {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
   useDeleteNotification,
-  useNotificationPreferences,
   useUpdateNotificationPreferences,
   // Reviews
   useMyReviews,
   useReviewsByUserId,
   useCreateReview,
   // Referrals
-  useReferralTracking,
+  useReferralCode,
+  useReferralStats,
   useApplyReferralCode,
   // Video
   useVideoSessionDetails,

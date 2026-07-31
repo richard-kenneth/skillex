@@ -12,9 +12,15 @@ export class BetterAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+    // console.log(request);
+    // console.log(request.headers);
+    
     const session = await this.authService.auth.api.getSession({
       headers: request.headers,
     });
+
+    // console.log(session?.session?.token);
+    
 
     if (!session) {
       throw new UnauthorizedException();

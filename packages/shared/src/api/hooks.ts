@@ -503,19 +503,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     });
   }
 
-  function useNotificationPreferences(
-    options?: Omit<
-      UseQueryOptions<NotificationPreferences, Error, NotificationPreferences>,
-      "queryKey" | "queryFn"
-    >
-  ) {
-    return useQuery<NotificationPreferences, Error>({
-      queryKey: QUERY_KEYS.notifications.preferences,
-      queryFn: () => client.notifications.preferences(),
-      ...(options),
-    });
-  }
-
   function useUpdateNotificationPreferences(
     options?: Omit<
       UseMutationOptions<NotificationPreferences, Error, Partial<NotificationPreferences>>,
@@ -577,12 +564,22 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   // ─────────────────────────────────────────────────────────────────────
   //  Referrals
   // ─────────────────────────────────────────────────────────────────────
-  function useReferralTracking(
+  function useReferralCode(
     options?: Omit<UseQueryOptions<any, Error, any>, "queryKey" | "queryFn">
   ) {
     return useQuery<any, Error>({
-      queryKey: QUERY_KEYS.referrals.tracking,
-      queryFn: () => client.referrals.tracking(),
+      queryKey: QUERY_KEYS.referrals.code,
+      queryFn: () => client.referrals.code(),
+      ...(options),
+    });
+  }
+
+  function useReferralStats(
+    options?: Omit<UseQueryOptions<any, Error, any>, "queryKey" | "queryFn">
+  ) {
+    return useQuery<any, Error>({
+      queryKey: QUERY_KEYS.referrals.stats,
+      queryFn: () => client.referrals.stats(),
       ...(options),
     });
   }
@@ -760,14 +757,14 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     useMarkNotificationRead,
     useMarkAllNotificationsRead,
     useDeleteNotification,
-    useNotificationPreferences,
     useUpdateNotificationPreferences,
     // Reviews
     useMyReviews,
     useReviewsByUserId,
     useCreateReview,
     // Referrals
-    useReferralTracking,
+    useReferralCode,
+    useReferralStats,
     useApplyReferralCode,
     // Video
     useVideoSessionDetails,

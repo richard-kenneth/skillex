@@ -45,6 +45,7 @@ model User {
   recordingsPaid       SessionRecording[]       @relation("RecordingBilling")
   notifications        Notification[]
   pushSubscriptions    PushSubscription[]
+  pushTokens           PushToken[]
   emailNotifications   Boolean                  @default(true)
   inAppNotifications   Boolean                  @default(true)
   pushNotifications    Boolean                  @default(true)
@@ -479,6 +480,15 @@ model PushSubscription {
   endpoint  String   @unique
   p256dh    String
   auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PushToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  platform  String   // "ios" | "android"
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

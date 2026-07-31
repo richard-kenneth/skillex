@@ -19,3 +19,6 @@ export * from "./src/api/client";
 
 // TanStack Query hooks factory (platform-agnostic)
 export * from "./src/api/hooks";
+
+// Notifications
+export * from "./src/notifications";

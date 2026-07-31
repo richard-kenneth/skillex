@@ -17,6 +17,8 @@ import type {
   PurchaseInitiationResult,
   RecordingEstimate,
   Referral,
+  ReferralCodeData,
+  ReferralStats,
   ResolveAccountResult,
   Review,
   SessionChatMessage, Skill,
@@ -245,8 +247,6 @@ export function createApiClient(config: ApiClientConfig) {
       request<void>(`/notifications/read-all`, { method: "PATCH" }),
     delete: (id: string) =>
       request<void>(`/notifications/${id}`, { method: "DELETE" }),
-    preferences: () =>
-      request<NotificationPreferences>(`/notifications/preferences`),
     updatePreferences: (prefs: Partial<NotificationPreferences>) =>
       request<NotificationPreferences>(`/notifications/preferences`, {
         method: "PATCH",
@@ -279,17 +279,12 @@ export function createApiClient(config: ApiClientConfig) {
   //  Referrals
   // ─────────────────────────────────────────────────────────────────────────
   const referrals = {
-    tracking: () =>
-      request<{
-        code: string;
-        referrals: Referral[];
-        totalEarned: number;
-        pending: number;
-        stats: {
-          invited: number;
-          converted: number;
-        };
-      }>(`/referrals/tracking`),
+    code: () =>
+      request<ReferralCodeData | string>(`/referrals/my-code`).then((res) =>
+        typeof res === "string" ? res : res.referralCode ?? res
+      ),
+    stats: () =>
+      request<ReferralStats>(`/referrals/stats`),
     apply: (code: string) =>
       request<void>(`/referrals/apply`, {
         method: "POST",

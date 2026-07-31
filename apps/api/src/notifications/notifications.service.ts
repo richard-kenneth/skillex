@@ -1,13 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import * as webpush from 'web-push';
 import { Resend } from 'resend';
+import * as webpush from 'web-push';
+import { PrismaService } from '../prisma/prisma.service';
+
+// Expo push notification API endpoint
+const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private readonly resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+  private readonly resend = process.env.RESEND_API_KEY
+    ? new Resend(process.env.RESEND_API_KEY)
+    : null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -22,7 +27,9 @@ export class NotificationsService {
       webpush.setVapidDetails(vapidEmail, vapidPubKey, vapidPrivKey);
       this.logger.log('VAPID details configured successfully');
     } else {
-      this.logger.warn('VAPID public or private key is missing in environment variables. Web Push notifications will not be sent.');
+      this.logger.warn(
+        'VAPID public or private key is missing in environment variables. Web Push notifications will not be sent.',
+      );
     }
   }
 
@@ -35,14 +42,24 @@ export class NotificationsService {
   }) {
     const user = await this.prisma.user.findUnique({
       where: { id: data.userId },
-      select: { inAppNotifications: true, emailNotifications: true, pushNotifications: true, email: true },
+      select: {
+        inAppNotifications: true,
+        emailNotifications: true,
+        pushNotifications: true,
+        email: true,
+      },
     });
 
     if (!user) return null;
 
     if (data.type === 'EXCHANGE_CHAT_MESSAGE') {
       if (user.pushNotifications) {
-        await this.sendWebPush(data.userId, data.title, data.message, data.link);
+        await this.sendWebPush(
+          data.userId,
+          data.title,
+          data.message,
+          data.link,
+        );
       }
       return null;
     }
@@ -68,7 +85,17 @@ export class NotificationsService {
 
     // Send Web Push if enabled
     if (user.pushNotifications) {
-      await this.sendWebPush(data.userId, data.title, data.message, data.link);
+      // Send to both web (browser) and mobile (Expo) push subscribers
+      await Promise.all([
+        this.sendWebPush(data.userId, data.title, data.message, data.link),
+        this.sendMobilePush(
+          data.userId,
+          data.title,
+          data.message,
+          data.link,
+          data.type,
+        ),
+      ]);
     }
 
     // Send Email if enabled (and it is critical)
@@ -131,13 +158,105 @@ export class NotificationsService {
 
   async updatePreferences(
     userId: string,
-    data: { emailNotifications?: boolean; inAppNotifications?: boolean; pushNotifications?: boolean },
+    data: {
+      emailNotifications?: boolean;
+      inAppNotifications?: boolean;
+      pushNotifications?: boolean;
+    },
   ) {
     return this.prisma.user.update({
       where: { id: userId },
       data,
-      select: { emailNotifications: true, inAppNotifications: true, pushNotifications: true },
+      select: {
+        emailNotifications: true,
+        inAppNotifications: true,
+        pushNotifications: true,
+      },
     });
+  }
+
+  // Mobile Push Tokens
+  async savePushToken(userId: string, token: string, platform: string) {
+    return this.prisma.pushToken.upsert({
+      where: { token },
+      update: { userId, platform },
+      create: { userId, token, platform },
+    });
+  }
+
+  async removePushToken(userId: string, token: string) {
+    return this.prisma.pushToken.deleteMany({
+      where: { userId, token },
+    });
+  }
+
+  async sendMobilePush(
+    userId: string,
+    title: string,
+    body: string,
+    link?: string,
+    type?: string,
+  ) {
+    const tokens = await this.prisma.pushToken.findMany({
+      where: { userId },
+    });
+
+    if (tokens.length === 0) return;
+
+    const messages = tokens.map((t: any) => ({
+      to: t.token,
+      title,
+      body,
+      sound: 'default',
+      badge: 1,
+      data: {
+        url: link || '/',
+        type: type || 'SYSTEM',
+        title,
+        body,
+      },
+      channelId: this.getChannelForType(type),
+    }));
+
+    try {
+      const response = await fetch(EXPO_PUSH_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(messages),
+      });
+
+      const result = await response.json();
+
+      if (result.errors) {
+        for (const [token, error] of Object.entries(result.errors)) {
+          this.logger.error(`Expo push error for token ${token}:`, error);
+          // Remove invalid tokens
+          if (
+            error === 'DeviceNotRegistered' ||
+            error === 'InvalidCredentials'
+          ) {
+            await this.prisma.pushToken
+              .deleteMany({ where: { token } })
+              .catch(() => {});
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.error('Failed to send Expo push notification:', err);
+    }
+  }
+
+  private getChannelForType(type?: string): string {
+    if (!type) return 'default';
+    if (type.startsWith('EXCHANGE') || type.startsWith('SESSION'))
+      return 'exchanges';
+    if (type.startsWith('POINTS') || type.startsWith('REFERRAL'))
+      return 'points';
+    if (type === 'SESSION_REMINDER') return 'sessions';
+    return 'default';
   }
 
   // Push Subscriptions
@@ -163,7 +282,12 @@ export class NotificationsService {
     });
   }
 
-  async sendWebPush(userId: string, title: string, body: string, link?: string) {
+  async sendWebPush(
+    userId: string,
+    title: string,
+    body: string,
+    link?: string,
+  ) {
     const subscriptions = await this.prisma.pushSubscription.findMany({
       where: { userId },
     });
@@ -195,9 +319,14 @@ export class NotificationsService {
         if (err.statusCode === 410 || err.statusCode === 404) {
           // Subscription expired/defunct -> remove it
           this.logger.log(`Removing expired subscription: ${sub.id}`);
-          await this.prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+          await this.prisma.pushSubscription
+            .delete({ where: { id: sub.id } })
+            .catch(() => {});
         } else {
-          this.logger.error(`Error sending Web Push to subscription ${sub.id}:`, err);
+          this.logger.error(
+            `Error sending Web Push to subscription ${sub.id}:`,
+            err,
+          );
         }
       }
     });
@@ -205,14 +334,22 @@ export class NotificationsService {
     await Promise.all(promises);
   }
 
-  private async sendEmail(to: string, title: string, message: string, link?: string) {
+  private async sendEmail(
+    to: string,
+    title: string,
+    message: string,
+    link?: string,
+  ) {
     if (!this.resend) {
       this.logger.warn('Resend API key is missing. Skipping email.');
       return;
     }
 
-    const actionUrl = link ? `${process.env.CLIENT_BASE_URL || 'http://localhost:3000'}${link}` : null;
-    const fromEmail = process.env.ONBOARDING_EMAIL_FROM || 'onboarding@richardkenneth.com';
+    const actionUrl = link
+      ? `${process.env.CLIENT_BASE_URL || 'http://localhost:3000'}${link}`
+      : null;
+    const fromEmail =
+      process.env.ONBOARDING_EMAIL_FROM || 'onboarding@richardkenneth.com';
 
     try {
       await this.resend.emails.send({
@@ -225,10 +362,14 @@ export class NotificationsService {
             <p style="color: #4a5568; line-height: 1.6; margin-bottom: 24px;">
               ${message}
             </p>
-            ${actionUrl ? `
+            ${
+              actionUrl
+                ? `
             <a href="${actionUrl}" style="display: inline-block; background-color: #3182ce; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
               View in App
-            </a>` : ''}
+            </a>`
+                : ''
+            }
             <p style="color: #718096; font-size: 12px; margin-top: 32px; border-t: 1px solid #edf2f7; padding-top: 16px;">
               This is a transactional email from Skill Exchange. You can adjust your notification settings in your profile dashboard.
             </p>

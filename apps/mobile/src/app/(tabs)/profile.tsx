@@ -39,8 +39,8 @@ import {
   useAddUserSkill,
   useCurrentUser,
   useMyReviews,
-  useNotificationPreferences,
-  useReferralTracking,
+  useReferralCode,
+  useReferralStats,
   useRemoveUserSkill,
   useSkillCategories,
   useSkills,
@@ -775,7 +775,7 @@ function SkillsPane({ user }: { user: any }) {
     ? skills.filter((s: any) => s.categoryId === categoryId)
     : skills;
 
-  const userSkills = (user?.userSkills ?? []) as any[];
+  const userSkills = (user?.skills ?? []) as any[];
 
   const offering = userSkills.filter((s) => s.type === "OFFERING");
   const seeking = userSkills.filter((s) => s.type === "SEEKING");
@@ -1417,14 +1417,15 @@ export function ReviewCard({ review }: { review: any }) {
 /* ---------------------------- Referrals Pane ---------------------------- */
 
 function ReferralsPane() {
-  const refQ = useReferralTracking();
+  const refCodeQ = useReferralCode();
+  const refStatsQ = useReferralStats();
   const toast = useToast();
   const theme = useTheme();
-  const loading = refQ.isLoading;
-  const tracking = refQ.data as any;
-  const referrals = tracking?.referrals ?? [];
-  const code = tracking?.code ?? "SKIL-XXXXXX";
-  const shareLink = `${process.env.EXPO_PUBLIC_WEB_URL ?? "https://skil.ex"}/r/${code}`;
+  const loading = refCodeQ.isLoading || refStatsQ.isLoading;
+  const code = refCodeQ.data;
+  const stats = refStatsQ.data;
+  const referrals = stats?.referrals ?? [];
+  const shareLink = `${process.env.EXPO_PUBLIC_WEB_BASE_URL!}?ref=${code}`;
 
   const copy = async () => {
     const { Clipboard } = await import("react-native");
@@ -1434,7 +1435,7 @@ function ReferralsPane() {
   const share = async () => {
     try {
       await Share.share({
-        message: `Join Skil-Ex with my referral link and earn points! ${shareLink}`,
+        message: `Join Skil-Ex with my referral link to learn and earn points! ${shareLink}`,
       });
     } catch {}
   };
@@ -1487,10 +1488,12 @@ function ReferralsPane() {
             <ThemedText
               type="default"
               style={{
-                fontSize: FONT_SIZE.lg,
+                fontSize: FONT_SIZE["2xl"],
                 fontWeight: "800",
                 color: theme.primary,
                 letterSpacing: 0.5,
+                flexGrow: 1,
+                textAlign: "center",
               }}
             >
               {code}
@@ -1528,19 +1531,19 @@ function ReferralsPane() {
             <MiniStat
               icon={<Users size={16} color={getAccent("indigo").main} />}
               label="Referrals"
-              value={tracking?.totalReferrals ?? 0}
+              value={stats?.totalReferrals ?? 0}
               accent="indigo"
             />
             <MiniStat
               icon={<TrendingUp size={16} color={getAccent("emerald").main} />}
               label="Active"
-              value={tracking?.activeReferrals ?? 0}
+              value={stats?.activeReferrals ?? 0}
               accent="emerald"
             />
             <MiniStat
               icon={<HandCoins size={16} color={getAccent("amber").main} />}
               label="Points earned"
-              value={tracking?.pointsEarned ?? 0}
+              value={stats?.pointsEarned ?? 0}
               accent="amber"
             />
           </View>
@@ -1688,14 +1691,15 @@ function MiniStat({
 
 function NotificationsPrefsPane() {
   const theme = useTheme();
-  const prefsQ = useNotificationPreferences();
   const updateQ = useUpdateNotificationPreferences();
-  const loading = prefsQ.isLoading || updateQ.isPending;
-  const prefs = prefsQ.data as any;
+  const userQ = useCurrentUser();
+
+  const loading = userQ.isLoading || updateQ.isPending;
+  const user = userQ.data;
 
   const set = async (patch: any) => {
-    await updateQ.mutateAsync({ ...(prefs ?? {}), ...patch });
-    await prefsQ.refetch();
+    await updateQ.mutateAsync(patch);
+    await userQ.refetch();
   };
 
   const sections = [
@@ -1718,66 +1722,33 @@ function NotificationsPrefsPane() {
         <CardDescription>Choose what reaches you.</CardDescription>
       </CardHeader>
       <CardContent style={{ gap: SPACING[4] }}>
-        {loading && !prefs ? <SkeletonText lines={6} /> : null}
-        <Switch
-          label="Receive notifications"
-          description="Master toggle. Turn off to mute everything."
-          value={prefs?.enabled ?? true}
-          onValueChange={(v) => set({ enabled: v })}
-          disabled={updateQ.isPending}
-        />
-        <Separator />
-        {sections.map((sec) => (
-          <View key={sec.title} style={{ gap: SPACING[3] }}>
-            <View>
-              <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-                {sec.title}
-              </ThemedText>
-              <ThemedText
-                type="small"
-                style={{
-                  color: theme.mutedForeground,
-                  fontSize: FONT_SIZE.sm,
-                  marginTop: 2,
-                }}
-              >
-                {sec.description}
-              </ThemedText>
-            </View>
-            <View style={{ gap: SPACING[3] }}>
-              <Switch
-                label="In-app"
-                description="Show a toast inside the app."
-                value={prefs?.channels?.inApp !== false}
-                onValueChange={(v) => {
-                  const base = prefs?.channels ?? {};
-                  set({ channels: { ...base, inApp: v } });
-                }}
-                disabled={!prefs?.enabled}
-              />
-              <Switch
-                label="Push notifications"
-                description="Send to your device lock screen."
-                value={prefs?.channels?.push ?? false}
-                onValueChange={(v) => {
-                  const base = prefs?.channels ?? {};
-                  set({ channels: { ...base, push: v } });
-                }}
-                disabled={!prefs?.enabled}
-              />
-              <Switch
-                label="Email digests"
-                description="Daily or weekly email updates."
-                value={prefs?.channels?.email ?? false}
-                onValueChange={(v) => {
-                  const base = prefs?.channels ?? {};
-                  set({ channels: { ...base, email: v } });
-                }}
-                disabled={!prefs?.enabled}
-              />
-            </View>
-          </View>
-        ))}
+        {loading && !user ? <SkeletonText lines={6} /> : null}
+        <View style={{ gap: SPACING[3] }}>
+          <Switch
+            label="In-app"
+            description="Show a toast inside the app."
+            value={user.inAppNotifications ?? true}
+            onValueChange={(v) => {
+              set({ inAppNotifications: v });
+            }}
+          />
+            <Switch
+              label="Email digests"
+              description="Daily or weekly email updates."
+              value={user.emailNotifications ?? true}
+              onValueChange={(v) => {
+                set({ emailNotifications: v });
+              }}
+            />
+          <Switch
+            label="Push notifications"
+            description="Send to your device lock screen."
+            value={user.pushNotifications ?? true}
+            onValueChange={(v) => {
+              set({ pushNotifications: v });
+            }}
+          />
+        </View>
       </CardContent>
     </Card>
   );

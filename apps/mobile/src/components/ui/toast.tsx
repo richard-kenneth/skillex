@@ -2,6 +2,22 @@
  * Lightweight toast (snackbar) system — a context provider + useToast() hook.
  * Mirrors the web's Sonner API shape (toast({ title, description, … })).
  */
+import { ThemedText } from "@/components/themed-text";
+import {
+  FONT_SIZE,
+  MAX_CONTENT_WIDTH,
+  RADIUS,
+  SPACING,
+} from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { cn } from "@/lib/style-utils";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  X,
+  XCircle,
+} from "lucide-react-native";
 import React, {
   createContext,
   useCallback,
@@ -9,23 +25,19 @@ import React, {
   useMemo,
   useRef,
   useState,
-} from 'react';
+} from "react";
 import {
   Animated,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
-  SafeAreaView,
+  StatusBar,
   StyleSheet,
   View,
-} from 'react-native';
-import { useTheme } from '@/hooks/use-theme';
-import { ThemedText } from '@/components/themed-text';
-import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
-import { cn } from '@/lib/style-utils';
-import { CheckCircle2, AlertTriangle, Info, XCircle, X } from 'lucide-react-native';
+} from "react-native";
 
-export type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info';
+export type ToastVariant = "default" | "success" | "error" | "warning" | "info";
 
 export interface ToastOptions {
   id?: string;
@@ -36,10 +48,12 @@ export interface ToastOptions {
   action?: { label: string; onPress: () => void };
 }
 
-export interface ToastItem extends Required<Pick<ToastOptions, 'id' | 'variant' | 'duration'>> {
+export interface ToastItem extends Required<
+  Pick<ToastOptions, "id" | "variant" | "duration">
+> {
   title: string;
   description?: string;
-  action?: ToastOptions['action'];
+  action?: ToastOptions["action"];
   createdAt: number;
 }
 
@@ -70,7 +84,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         id,
         title: opts.title,
         description: opts.description,
-        variant: opts.variant ?? 'default',
+        variant: opts.variant ?? "default",
         duration,
         action: opts.action,
         createdAt: Date.now(),
@@ -81,7 +95,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       }
       return id;
     },
-    [dismiss]
+    [dismiss],
   );
 
   const value = useMemo(() => ({ toast, dismiss }), [toast, dismiss]);
@@ -96,7 +110,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export function useToast() {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used within ToastProvider');
+  if (!ctx) throw new Error("useToast must be used within ToastProvider");
   return ctx;
 }
 
@@ -109,36 +123,40 @@ function ToastStack({
 }) {
   const theme = useTheme();
   return (
-    <View
-      pointerEvents="box-none"
-      style={StyleSheet.absoluteFill}
+    <Modal
+      visible={items.length > 0}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={() => {}}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{
-          position: 'absolute',
-          top: Platform.OS === 'android' ? 8 : 52,
-          left: 0,
-          right: 0,
-          alignItems: 'center',
-          paddingHorizontal: SPACING[3],
-          pointerEvents: 'box-none',
-        }}
-      >
-        <View
+      <StatusBar backgroundColor="transparent" barStyle="light-content" />
+      <View style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{
-            width: '100%',
-            maxWidth: MAX_CONTENT_WIDTH,
-            gap: SPACING[2],
+            position: "absolute",
+            top: Platform.OS === "android" ? 8 : 52,
+            left: 0,
+            right: 0,
+            alignItems: "center",
+            paddingHorizontal: SPACING[3],
           }}
-          pointerEvents="box-none"
         >
-          {items.map((t) => (
-            <ToastCard key={t.id} item={t} onDismiss={onDismiss} />
-          ))}
-        </View>
-      </KeyboardAvoidingView>
-    </View>
+          <View
+            style={{
+              width: "100%",
+              maxWidth: MAX_CONTENT_WIDTH,
+              gap: SPACING[2],
+            }}
+          >
+            {items.map((t) => (
+              <ToastCard key={t.id} item={t} onDismiss={onDismiss} />
+            ))}
+          </View>
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
   );
 }
 
@@ -155,13 +173,29 @@ function ToastCard({
 
   React.useEffect(() => {
     Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 260, useNativeDriver: true }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 260,
+        useNativeDriver: true,
+      }),
     ]).start();
     return () => {
       Animated.parallel([
-        Animated.timing(opacity, { toValue: 0, duration: 160, useNativeDriver: true }),
-        Animated.timing(translateY, { toValue: -8, duration: 180, useNativeDriver: true }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: -8,
+          duration: 180,
+          useNativeDriver: true,
+        }),
       ]).start();
     };
   }, [opacity, translateY]);
@@ -194,89 +228,81 @@ function ToastCard({
             padding: SPACING[3],
             paddingRight: SPACING[10],
             gap: SPACING[1],
-            shadowColor: '#000',
+            shadowColor: "#000",
             shadowOpacity: 0.25,
             shadowRadius: 12,
             shadowOffset: { width: 0, height: 6 },
-            elevation: 6,
+            elevation: 8,
           },
-          { flexDirection: 'row', alignItems: 'flex-start' }
+          styles.toastCard,
         )}
       >
         <View
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: RADIUS.pill,
-            backgroundColor: palette.bg,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: SPACING[3],
+            flexDirection: "row",
+            alignItems: "flex-start",
+            gap: SPACING[3],
           }}
         >
-          <Icon size={16} color={palette.fg} />
-        </View>
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <ThemedText
-            type="smallBold"
-            style={{ color: theme.foreground, fontSize: FONT_SIZE.md, lineHeight: 20 }}
-          >
-            {item.title}
-          </ThemedText>
-          {item.description ? (
+          <View style={{ marginTop: 2 }}>
+            <Icon size={20} color={palette.icon} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
             <ThemedText
-              type="small"
+              type="smallBold"
               style={{
-                color: theme.mutedForeground,
-                fontSize: FONT_SIZE.sm,
-                lineHeight: 18,
-                marginTop: 2,
+                fontSize: FONT_SIZE.md,
+                color: theme.foreground,
               }}
             >
-              {item.description}
+              {item.title}
             </ThemedText>
-          ) : null}
-          {item.action ? (
-            <Pressable
-              onPress={(e) => {
-                e.stopPropagation();
-                item.action!.onPress();
-                onDismiss(item.id);
-              }}
-              style={{
-                alignSelf: 'flex-start',
-                marginTop: SPACING[2],
-                paddingHorizontal: SPACING[3],
-                paddingVertical: SPACING[1],
-                backgroundColor: palette.bg,
-                borderRadius: RADIUS.md,
-              }}
-            >
-              <ThemedText type="smallBold" style={{ color: palette.fg, fontSize: FONT_SIZE.sm }}>
-                {item.action.label}
+            {item.description ? (
+              <ThemedText
+                type="small"
+                style={{
+                  color: theme.mutedForeground,
+                  fontSize: FONT_SIZE.sm,
+                  lineHeight: 18,
+                }}
+              >
+                {item.description}
               </ThemedText>
-            </Pressable>
-          ) : null}
+            ) : null}
+          </View>
+          <Pressable
+            onPress={() => onDismiss(item.id)}
+            style={{ padding: 4, marginTop: -4 }}
+          >
+            <X size={16} color={theme.mutedForeground} />
+          </Pressable>
         </View>
-        <Pressable
-          hitSlop={10}
-          style={{ position: 'absolute', right: SPACING[2], top: SPACING[2], padding: SPACING[2] }}
-          onPress={(e) => {
-            e.stopPropagation();
-            onDismiss(item.id);
-          }}
-        >
-          <X size={16} color={theme.mutedForeground} />
-        </Pressable>
       </Pressable>
     </Animated.View>
   );
 }
 
 function getToastPalette(variant: ToastVariant) {
-  if (variant === 'success') return { fg: getAccent('green').main, bg: getAccent('green').bg, border: getAccent('green').border };
-  if (variant === 'error') return { fg: getAccent('red').main, bg: getAccent('red').bg, border: getAccent('red').border };
-  if (variant === 'warning') return { fg: getAccent('amber').main, bg: getAccent('amber').bg, border: getAccent('amber').border };
-  if (variant === 'info') return { fg: getAccent('blue').main, bg: getAccent('blue').bg, border: getAccent('blue').border };
-  return { fg: getAccent('indigo').main, bg: getAccent('indigo').bg, border: getAccent('indigo').border };
+  switch (variant) {
+    case "success":
+      return { border: "#22c55e33", icon: "#22c55e" };
+    case "error":
+      return { border: "#ef444433", icon: "#ef4444" };
+    case "warning":
+      return { border: "#f59e0b33", icon: "#f59e0b" };
+    case "info":
+      return { border: "#3b82f633", icon: "#3b82f6" };
+    default:
+      return { border: "#71717a33", icon: "#a1a1aa" };
+  }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  toastCard: {
+    maxWidth: "100%",
+  },
+});

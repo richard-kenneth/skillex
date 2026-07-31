@@ -12,7 +12,8 @@
       "bundleIdentifier": "com.skil_ex",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "bitcode": false
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +24,18 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.skil_ex",
       "icon": "./assets/images/icon.png",
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH"
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -41,7 +53,13 @@
       ],
       "expo-secure-store",
       "@livekit/react-native-expo-plugin",
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      [
+        "expo-notifications",
+        {
+          "color": "#6366f1"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -50,7 +68,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "adf9f631-3c0a-410b-8ce7-95983c9e502a"
+        "projectId": "1993b0b3-9fcc-44bd-8f8b-fffd35c56e3f"
       }
     },
     "runtimeVersion": {
@@ -58,6 +76,7 @@
     },
     "updates": {
       "url": "https://u.expo.dev/adf9f631-3c0a-410b-8ce7-95983c9e502a"
-    }
+    },
+    "owner": "richardkenneth"
   }
 }

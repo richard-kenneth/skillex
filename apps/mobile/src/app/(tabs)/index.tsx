@@ -27,7 +27,8 @@ import {
   useExchanges,
   useMyReviews,
   useNotifications,
-  useReferralTracking,
+  useReferralCode,
+  useReferralStats,
 } from "@/lib/api-hooks";
 import {
   calculateAverageRating,
@@ -69,7 +70,10 @@ export default function DashboardScreen() {
   const exchangesQ = useExchanges();
   const reviewsQ = useMyReviews();
   const notifQ = useNotifications({});
-  const referralQ = useReferralTracking();
+  const referralCodeQ = useReferralCode()
+  const referralStatsQ = useReferralStats();
+
+  const referralLoading = referralCodeQ.isLoading || referralStatsQ.isLoading;
 
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -80,10 +84,10 @@ export default function DashboardScreen() {
       exchangesQ.refetch(),
       reviewsQ.refetch(),
       notifQ.refetch(),
-      referralQ.refetch(),
+      referralStatsQ.refetch(),
     ]);
     setRefreshing(false);
-  }, [userQ, exchangesQ, reviewsQ, notifQ, referralQ]);
+  }, [userQ, exchangesQ, reviewsQ, notifQ, referralCodeQ, referralStatsQ]);
 
   const user = userQ.data;
   const exchanges = exchangesQ.data ?? [];
@@ -702,7 +706,7 @@ export default function DashboardScreen() {
                 </View>
               </CardHeader>
               <CardContent style={{ gap: SPACING[3] }}>
-                {referralQ.isLoading ? (
+                {referralLoading ? (
                   <SkeletonText lines={2} />
                 ) : (
                   <>
@@ -723,26 +727,27 @@ export default function DashboardScreen() {
                         type="default"
                         style={{
                           flex: 1,
-                          fontSize: FONT_SIZE.md,
+                          fontSize: FONT_SIZE["2xl"],
                           fontWeight: "600",
                           letterSpacing: 0.5,
                           color: theme.primary,
+                          textAlign: "center",
                         }}
                         numberOfLines={1}
                       >
-                        {referralQ.data?.code ?? "SKIL-XXXXXX"}
+                        {referralCodeQ.data}
                       </ThemedText>
                     </View>
                     <View style={{ flexDirection: "row", gap: SPACING[2] }}>
                       <StatChip
                         icon={<Users size={14} color={theme.mutedForeground} />}
                         label="Referrals"
-                        value={referralQ.data?.totalReferrals ?? 0}
+                        value={referralStatsQ.data?.totalReferrals ?? 0}
                       />
                       <StatChip
                         icon={<Zap size={14} color={theme.mutedForeground} />}
                         label="Earned"
-                        value={`${referralQ.data?.pointsEarned ?? 0} pts`}
+                        value={`${referralStatsQ.data?.pointsEarned ?? 0} pts`}
                       />
                     </View>
                     <Button

@@ -246,7 +246,8 @@ export const QUERY_KEYS = {
     byUserId: (userId: string) => ["reviews", "user", userId] as const,
   },
   referrals: {
-    tracking: ["referrals", "tracking"] as const,
+    code: ["referrals", "code"] as const,
+    stats: ["referrals", "stats"] as const,
   },
   skills: {
     list: ["skills"] as const,

@@ -14,13 +14,10 @@ export async function apiFetch<T = any>(
 
   // Get session token if available
   const session = await authClient.getSession();
-  console.log('Session: ', session);
   
   if (session?.data?.session?.token) {
-    console.log('Session token:', session.data.session.token);
     headers.set('Authorization', `Bearer ${session.data.session.token}`);
   }
-console.log(headers);
 
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
   const res = await fetch(url, {

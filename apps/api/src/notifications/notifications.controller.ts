@@ -60,7 +60,12 @@ export class NotificationsController {
   @Patch('preferences')
   updatePreferences(
     @Req() req: Request & { user: { id: string } },
-    @Body() body: { emailNotifications?: boolean; inAppNotifications?: boolean; pushNotifications?: boolean },
+    @Body()
+    body: {
+      emailNotifications?: boolean;
+      inAppNotifications?: boolean;
+      pushNotifications?: boolean;
+    },
   ) {
     return this.notificationsService.updatePreferences(req.user.id, body);
   }
@@ -76,14 +81,45 @@ export class NotificationsController {
     );
   }
 
+  // Mobile push token registration (Expo)
+  @Post('push-token')
+  savePushToken(
+    @Req() req: Request & { user: { id: string } },
+    @Body() body: { token: string; platform: string },
+  ) {
+    return this.notificationsService.savePushToken(
+      req.user.id,
+      body.token,
+      body.platform,
+    );
+  }
+
+  @Delete('push-token')
+  removePushToken(
+    @Req() req: Request & { user: { id: string } },
+    @Body() body: { token: string },
+  ) {
+    return this.notificationsService.removePushToken(req.user.id, body.token);
+  }
+
   @Post('test-push')
   testPush(@Req() req: Request & { user: { id: string } }) {
-    return this.notificationsService.sendWebPush(
-      req.user.id,
-      'Test Notification 🚀',
-      'It works! Web Push is successfully configured on Skill Exchange.',
-      '/dashboard',
-    );
+    // Send test push to both web and mobile
+    return Promise.all([
+      this.notificationsService.sendWebPush(
+        req.user.id,
+        'Test Notification 🚀',
+        'It works! Web Push is successfully configured on Skill Exchange.',
+        '/dashboard',
+      ),
+      this.notificationsService.sendMobilePush(
+        req.user.id,
+        'Test Notification 🚀',
+        'It works! Mobile Push is successfully configured on Skill Exchange.',
+        '/dashboard',
+        'SYSTEM',
+      ),
+    ]);
   }
 
   @Sse('stream')
@@ -115,9 +151,6 @@ export class NotificationsController {
       })),
     );
 
-    return merge(
-      createdNotifications,
-      countUpdates,
-    ) as Observable<MessageEvent>;
+    return merge(createdNotifications, countUpdates);
   }
 }

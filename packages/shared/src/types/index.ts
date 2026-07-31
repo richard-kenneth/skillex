@@ -401,3 +401,17 @@ export interface PurchaseInitiationResult {
   };
   paymentLink?: string;
 }
+
+export interface ReferralCodeData {
+  referralCode: string;
+}
+
+export interface ReferralStats {
+  referralCount: number;
+  convertedCount: number;
+  totalEarned: number;
+  monthlyEarnings: number;
+  monthlyCap: number;
+  rewardPerReferral: number;
+  isReferred: boolean;
+}
