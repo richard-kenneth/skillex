@@ -27,6 +27,7 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import {
+  useCurrentUser,
   useExchanges,
 } from '@/lib/api-hooks';
 import {
@@ -215,7 +216,12 @@ export function ExchangeRowCard({
 }) {
   const theme = useTheme();
   const statusColor = getExchangeStatusColor(exchange.status);
-  const other = exchange.otherUser ?? {};
+  const userQ = useCurrentUser();
+  const user = userQ.data;
+  const isSender = exchange.senderId === user.id;
+  
+  const otherUser = isSender ? exchange.receiver : exchange.sender;
+  
   const progress = calculateExchangeProgress(exchange);
   const isActive = ['ACCEPTED', 'IN_PROGRESS', 'SCHEDULED'].includes(exchange.status);
 
@@ -236,11 +242,11 @@ export function ExchangeRowCard({
       <View style={{ padding: SPACING[4], gap: SPACING[3] }}>
         {/* User row */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
-          <Avatar uri={other.image} fallback={other.name} size={44} />
+          <Avatar uri={otherUser.image} fallback={otherUser.name} size={44} />
           <View style={{ flex: 1, gap: 2 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <ThemedText type="default" style={{ fontSize: FONT_SIZE.lg, fontWeight: '700' }}>
-                {other.name ?? 'Peer'}
+                {otherUser.name ?? 'Peer'}
               </ThemedText>
               <Badge variant="accent" accent={statusColor}>
                 {labelForStatus(exchange.status)}
@@ -284,8 +290,8 @@ export function ExchangeRowCard({
             label={
               points
                 ? `${points.gross} pts (net ${points.net})`
-                : exchange.pointsValue
-                ? `${exchange.pointsValue} pts`
+                : exchange.pointsAmount
+                ? `${exchange.pointsAmount} pts`
                 : 'No points'
             }
           />

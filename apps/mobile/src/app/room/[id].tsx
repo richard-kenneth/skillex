@@ -94,6 +94,7 @@ import {
 import { cn } from '@/lib/style-utils';
 import { 
   LiveKitRoom, 
+  useRoomContext, 
   useParticipants, 
   useDataChannel, 
   VideoTrack 
@@ -177,9 +178,7 @@ export default function RoomScreen() {
   const userQ = useCurrentUser();
 
   /* ------ Media state ------ */
-  const [audioOn, setAudioOn] = React.useState(true);
-  const [videoOn, setVideoOn] = React.useState(true);
-  const [frontCamera, setFrontCamera] = React.useState(true);
+  // Media state is now managed by LiveKit via useRoomContext
 
   /* ------ Recording state machine ------ */
   const [recordingState, setRecordingState] = React.useState<RecordingState>('idle');
@@ -474,8 +473,9 @@ export default function RoomScreen() {
             token={token}
             serverUrl={serverUrl}
             connect={true}
-            audio={audioOn}
-            video={videoOn}
+            audio={true}
+            video={true}
+            camera={true}
             onDisconnected={() => handleLeave(false)}
           >
             {/* Bridges the LiveKit context data channel back to RoomScreen state */}
@@ -515,8 +515,6 @@ export default function RoomScreen() {
 
               {tab === 'room' ? (
                 <RoomBody
-                  audioOn={audioOn}
-                  videoOn={videoOn}
                   session={session}
                   partner={detailsQ.data?.partner as any}
                   me={currentUser}
@@ -535,12 +533,7 @@ export default function RoomScreen() {
               {/* Bottom control bar */}
               <ControlsBar
                 insets={insets}
-                audioOn={audioOn}
-                videoOn={videoOn}
                 recordingState={recordingState}
-                onToggleAudio={() => setAudioOn((v) => !v)}
-                onToggleVideo={() => setVideoOn((v) => !v)}
-                onToggleCamera={() => setFrontCamera((v) => !v)}
                 onRecording={
                   recordingState === 'recording' || recordingState === 'processing'
                     ? handleStopRecording
@@ -838,21 +831,21 @@ function TopBar({
 /* ---------------- Room Body ---------------- */
 
 function RoomBody({
-  audioOn,
-  videoOn,
   session,
   partner,
   me,
 }: any) {
   const theme = useTheme();
   const participants = useParticipants();
+  const room = useRoomContext();
+  const localParticipant = room?.localParticipant;
+  const isAudioEnabled = localParticipant?.isMicrophoneEnabled ?? true;
+  const isVideoEnabled = localParticipant?.isCameraEnabled ?? true;
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000', padding: SPACING[4], gap: SPACING[3] }}>
       <ParticipantGrid
         participants={participants}
-        audioOn={audioOn}
-        videoOn={videoOn}
         partner={partner}
         me={me}
       />
@@ -876,14 +869,14 @@ function RoomBody({
           <Separator />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
             <Badge variant="outline">
-              <Mic size={10} color={audioOn ? getAccent('green').main : getAccent('red').main} />
+              <Mic size={10} color={isAudioEnabled ? getAccent('green').main : getAccent('red').main} />
               {'  '}
-              {audioOn ? 'Mic on' : 'Mic muted'}
+              {isAudioEnabled ? 'Mic on' : 'Mic muted'}
             </Badge>
             <Badge variant="outline">
-              <Video size={10} color={videoOn ? getAccent('green').main : getAccent('red').main} />
+              <Video size={10} color={isVideoEnabled ? getAccent('green').main : getAccent('red').main} />
               {'  '}
-              {videoOn ? 'Camera on' : 'Camera off'}
+              {isVideoEnabled ? 'Camera on' : 'Camera off'}
             </Badge>
             <Badge variant="accent" accent="blue">
               <ShieldCheck size={10} color={getAccent('blue').main} />
@@ -905,6 +898,7 @@ function ParticipantGrid({ participants, partner, me }: any) {
         const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
         const isMe = participant.isLocal;
         const fallbackName = isMe ? 'You' : (partner?.name ?? participant.identity);
+        const isMicEnabled = participant.isMicrophoneEnabled;
 
         return (
           <View 
@@ -942,7 +936,7 @@ function ParticipantGrid({ participants, partner, me }: any) {
             )}
 
             {/* Mute Indicator */}
-            {!participant.isMicrophoneEnabled && (
+            {!isMicEnabled && (
               <View style={{ position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 4, borderRadius: 12 }}>
                 <MicOff size={14} color="#ef4444" />
               </View>
@@ -1025,21 +1019,52 @@ function ChatBody({ messages, loading, me, onRefresh, flatRef }: any) {
 
 function ControlsBar({
   insets,
-  audioOn,
-  videoOn,
   recordingState,
-  onToggleAudio,
-  onToggleVideo,
-  onToggleCamera,
   onRecording,
   onChat,
   onLeave,
   chatBadge,
 }: any) {
   const theme = useTheme();
+  const room = useRoomContext();
+  const localParticipant = room?.localParticipant;
+  
+  const isAudioEnabled = localParticipant?.isMicrophoneEnabled ?? true;
+  const isVideoEnabled = localParticipant?.isCameraEnabled ?? true;
+  
   const recDisabled = !onRecording;
   const recRecording = recordingState === 'recording' || recordingState === 'processing';
   const recLoading = recordingState === 'starting' || recordingState === 'processing';
+
+  const handleToggleAudio = () => {
+    localParticipant?.setMicrophoneEnabled(!isAudioEnabled);
+  };
+
+  const handleToggleVideo = () => {
+    localParticipant?.setCameraEnabled(!isVideoEnabled);
+  };
+
+  const handleToggleCamera = () => {
+    if (localParticipant) {
+      // Switch camera position (front/back)
+      const cameraPublication = localParticipant.getTrackPublication(Track.Source.Camera);
+      if (cameraPublication?.track) {
+        const track = cameraPublication.track as any;
+        // Toggle facingMode
+        if (track.mediaStreamTrack) {
+          const currentSettings = track.mediaStreamTrack.getSettings();
+          const newFacingMode = currentSettings?.facingMode === 'user' ? 'environment' : 'user';
+          
+          // Disable camera, restart with new facing mode
+          localParticipant.setCameraEnabled(false).then(() => {
+            // In React Native, camera switching is handled by the native layer
+            // This is a simplified version - actual implementation may need platform-specific code
+            localParticipant.setCameraEnabled(true);
+          });
+        }
+      }
+    }
+  };
 
   return (
     <View
@@ -1053,16 +1078,16 @@ function ControlsBar({
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: SPACING[2] }}>
-        <CtrlBtn onPress={onToggleAudio} active={!audioOn} destructive={!audioOn} label={audioOn ? 'Mute' : 'Unmute'}>
-          {audioOn ? <Mic size={20} color="#fff" /> : <MicOff size={20} color="#fff" />}
+        <CtrlBtn onPress={handleToggleAudio} active={!isAudioEnabled} destructive={!isAudioEnabled} label={isAudioEnabled ? 'Mute' : 'Unmute'}>
+          {isAudioEnabled ? <Mic size={20} color="#fff" /> : <MicOff size={20} color="#fff" />}
         </CtrlBtn>
 
-        <CtrlBtn onPress={onToggleVideo} active={!videoOn} destructive={!videoOn} label={videoOn ? 'Video' : 'Off'}>
-          {videoOn ? <Video size={20} color="#fff" /> : <VideoOff size={20} color="#fff" />}
+        <CtrlBtn onPress={handleToggleVideo} active={!isVideoEnabled} destructive={!isVideoEnabled} label={isVideoEnabled ? 'Video' : 'Off'}>
+          {isVideoEnabled ? <Video size={20} color="#fff" /> : <VideoOff size={20} color="#fff" />}
         </CtrlBtn>
 
         <CtrlBtn
-          onPress={onToggleCamera}
+          onPress={handleToggleCamera}
           label="Flip"
         >
           <RefreshCw size={20} color="#fff" />

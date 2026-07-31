@@ -318,6 +318,33 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     });
   }
 
+  function useUpdateSessionStatus(
+    options?: Omit<
+      UseMutationOptions<void, Error, { exchangeId: string; sessionId: string; status: string }>,
+      "mutationFn"
+    >
+  ) {
+    return useMutation<void, Error, { exchangeId: string; sessionId: string; status: string }>({
+      mutationFn: ({ exchangeId, sessionId, status }) =>
+        client.exchanges.updateSessionStatus(exchangeId, sessionId, status),
+      onSuccess: (...args) => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exchanges.list });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exchanges.byId });
+        return options?.onSuccess?.(...args);
+      },
+      ...options,
+    });
+  }
+
+  function useRecordingPlayback(
+    options?: Omit<UseMutationOptions<any, Error, string>, "mutationFn">
+  ) {
+    return useMutation<any, Error, string>({
+      mutationFn: (recordingId) => client.video.record.playback(recordingId),
+      ...options,
+    });
+  }
+
   // ─────────────────────────────────────────────────────────────────────
   //  Points
   // ─────────────────────────────────────────────────────────────────────
@@ -717,6 +744,8 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     useSendRequestMessage,
     useProposeSlots,
     useMarkExchangeComplete,
+    useUpdateSessionStatus,
+    useRecordingPlayback,
     // Points
     usePointsBalance,
     usePointsTransactions,

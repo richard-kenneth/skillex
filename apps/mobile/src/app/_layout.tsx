@@ -1,16 +1,17 @@
 import { ToastProvider } from "@/components/ui/toast";
+import { ThemeProvider as AppThemeProvider } from "@/hooks/theme-context";
 import { useTheme } from "@/hooks/use-theme";
+import { registerGlobals } from "@livekit/react-native";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { I18nProvider } from "lib/i18n";
 import { useEffect } from "react";
-import { useColorScheme, View } from "react-native";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { queryClient } from "../../lib/query-client";
-import { I18nProvider } from "lib/i18n";
-import { registerGlobals } from '@livekit/react-native';
 
 SplashScreen.preventAutoHideAsync();
 registerGlobals();
@@ -18,6 +19,10 @@ registerGlobals();
 function AppInner() {
   const theme = useTheme();
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <Stack
         screenOptions={{
@@ -84,14 +89,13 @@ function AppInner() {
           }}
         />
       </Stack>
-      <StatusBar style="light" />
+      <StatusBar style="auto" />
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
@@ -101,13 +105,11 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <QueryClientProvider client={queryClient}>
           <I18nProvider defaultLocale="en">
-            <ThemeProvider
-              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-            >
+            <AppThemeProvider>
               <ToastProvider>
                 <AppInner />
               </ToastProvider>
-            </ThemeProvider>
+            </AppThemeProvider>
           </I18nProvider>
         </QueryClientProvider>
       </GestureHandlerRootView>

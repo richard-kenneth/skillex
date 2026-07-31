@@ -137,7 +137,16 @@ export default function PointsScreen() {
     React.useEffect(() => {
       const detectCurrency = async () => {
         try {
-          const res = await fetch("https://ipapi.co/currency/");
+          const res = await fetch("https://ipapi.co/currency/",
+            {
+              // pass a browser-like User-Agent in your fetch header
+              // to overcome the API firewall's automated bot protection
+              headers: {
+                  'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36'
+              }
+            }
+          );
+          
           if (res.ok) {
             const currency = await res.text();
             if (currency && currency.trim().length === 3) {

@@ -152,7 +152,7 @@ export function createApiClient(config: ApiClientConfig) {
     requestById: (id: string) =>
       request<ExchangeRequest>(`/exchanges/requests/${id}`),
     createRequest: (payload: CreateExchangeRequestPayload) =>
-      request<ExchangeRequest>(`/exchanges/requests`, {
+      request<ExchangeRequest>(`/exchanges/request`, {
         method: "POST",
         body: JSON.stringify(payload),
       }),
@@ -166,7 +166,7 @@ export function createApiClient(config: ApiClientConfig) {
       }),
     cancelRequest: (id: string) =>
       request<void>(`/exchanges/requests/${id}/cancel`, {
-        method: "POST",
+        method: "PATCH",
       }),
     sendMessage: (requestId: string, payload: SendMessageDto) =>
       request<void>(`/exchanges/requests/${requestId}/messages`, {
@@ -185,6 +185,11 @@ export function createApiClient(config: ApiClientConfig) {
       }),
     markComplete: (id: string) =>
       request<void>(`/exchanges/${id}/complete`, { method: "POST" }),
+    updateSessionStatus: (exchangeId: string, sessionId: string, status: string) =>
+      request<void>(`/exchanges/${exchangeId}/sessions/${sessionId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      }),
     chat: {
       list: (exchangeId: string) =>
         request<ExchangeChatMessage[]>(`/exchanges/${exchangeId}/chat`),
@@ -328,6 +333,8 @@ export function createApiClient(config: ApiClientConfig) {
           method: "POST",
           body: JSON.stringify(payload),
         }),
+      playback: (recordingId: string) =>
+        request<{ url: string }>(`/video/recording/${recordingId}/playback`),
     },
     chat: {
       list: (exchangeSessionId: string) =>

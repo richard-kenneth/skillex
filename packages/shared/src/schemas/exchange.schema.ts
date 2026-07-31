@@ -16,31 +16,7 @@ export const CreateExchangeRequestSchema = v.strictObject({
   ),
   pointsPayerId: v.optional(
     v.pipe(v.string(), v.length(32, "Invalid payer ID.")),
-  ),
-  requestedSkillSessions: v.optional(
-    v.pipe(
-      v.number(),
-      v.integer(),
-      v.minValue(1, "Must be at least 1 session."),
-    ),
-    1,
-  ),
-  requestedSkillDuration: v.optional(
-    v.pipe(
-      v.number(),
-      v.integer(),
-      v.minValue(15, "Minimum duration is 15 minutes."),
-    ),
-    60,
-  ),
-  offeredSkillSessions: v.optional(
-    v.pipe(v.number(), v.integer(), v.minValue(0, "Cannot be negative.")),
-    0,
-  ),
-  offeredSkillDuration: v.optional(
-    v.pipe(v.number(), v.integer(), v.minValue(0, "Cannot be negative.")),
-    0,
-  ),
+  )
 });
 
 export type CreateExchangeRequestPayload = v.InferInput<

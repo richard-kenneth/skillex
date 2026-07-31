@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -68,54 +69,58 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.iconContainer}>
-        <Mail size={48} color="#6366f1" />
-      </View>
-      <Text style={styles.title}>Forgot Password?</Text>
-      <Text style={styles.subtitle}>
-        Enter your email address and we'll send you a link to reset your
-        password.
-      </Text>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
+        <View style={styles.iconContainer}>
+          <Mail size={48} color="#6366f1" />
+        </View>
+        <Text style={styles.title}>Forgot Password?</Text>
+        <Text style={styles.subtitle}>
+          Enter your email address and we'll send you a link to reset your
+          password.
+        </Text>
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Email Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="name@example.com"
-          placeholderTextColor="#666"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
+        <View style={styles.form}>
+          <Text style={styles.label}>Email Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="name@example.com"
+            placeholderTextColor="#666"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleResetRequest}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Send Reset Link</Text>
-          )}
-        </TouchableOpacity>
-
-        <Link href="/(auth)/sign-in" asChild>
-          <TouchableOpacity style={styles.backButton}>
-            <ArrowLeft size={16} color="#6366f1" />
-            <Text style={styles.linkText}>Back to Sign In</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleResetRequest}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Send Reset Link</Text>
+            )}
           </TouchableOpacity>
-        </Link>
-      </View>
-    </View>
+
+          <Link href="/(auth)/sign-in" asChild>
+            <TouchableOpacity style={styles.backButton}>
+              <ArrowLeft size={16} color="#6366f1" />
+              <Text style={styles.linkText}>Back to Sign In</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#09090b",
     padding: 24,
     justifyContent: "center",

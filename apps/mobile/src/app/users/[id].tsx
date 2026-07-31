@@ -1,68 +1,75 @@
-import React from 'react';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
 import {
-  Alert,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Share,
-  View,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { useTheme } from '@/hooks/use-theme';
-import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
-import {
+  ActionSheet,
   Avatar,
   Badge,
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
   Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogContent,
-  DialogFooter,
+  Separator,
   Skeleton,
   SkeletonText,
-  Separator,
   Textarea,
   useToast,
-  ActionSheet,
-  Alert as UIAlert,
-} from '@/components/ui';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+} from "@/components/ui";
 import {
-  useCurrentUser,
-  useUserById,
-  useReviewsByUserId,
+  FONT_SIZE,
+  getAccent,
+  MAX_CONTENT_WIDTH,
+  RADIUS,
+  SPACING,
+} from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import {
   useCreateRequest,
-} from '@/lib/api-hooks';
+  useCurrentUser,
+  useReviewsByUserId,
+  useUserById,
+} from "@/lib/api-hooks";
 import {
   calculateAverageRating,
+  CreateExchangeRequestSchema,
   REVIEW_TAG_LABELS,
-} from '@skil-ex2/shared';
-import * as v from 'valibot';
-import { CreateExchangeRequestSchema } from '@skil-ex2/shared';
+} from "@skil-ex2/shared";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
-  GraduationCap,
-  BookOpen,
-  Star,
-  MapPin,
-  Share2,
   ArrowLeft,
-  Handshake,
-  ChevronRight,
-  MessageCircle,
-  Shield,
   BadgeCheck,
-  MoreHorizontal,
+  BookOpen,
   CalendarDays,
-} from 'lucide-react-native';
+  ChevronRight,
+  GraduationCap,
+  Handshake,
+  MapPin,
+  MessageCircle,
+  MoreHorizontal,
+  Share2,
+  Shield,
+  Star,
+} from "lucide-react-native";
+import React from "react";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Share,
+  View,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import * as v from "valibot";
 
 export default function PublicUserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -82,7 +89,6 @@ export default function PublicUserProfileScreen() {
 
   const [skillTeachId, setSkillTeachId] = React.useState<string | undefined>();
   const [skillLearnId, setSkillLearnId] = React.useState<string | undefined>();
-  const [message, setMessage] = React.useState('');
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   const refresh = async () => {
@@ -93,9 +99,15 @@ export default function PublicUserProfileScreen() {
 
   const user = userQ.data as any;
   const me = meQ.data as any;
-  const myOffering = (me?.userSkills ?? []).filter((s: any) => s.type === 'OFFERING');
-  const theirOffering = (user?.userSkills ?? []).filter((s: any) => s.type === 'OFFERING');
-  const theirSeeking = (user?.userSkills ?? []).filter((s: any) => s.type === 'SEEKING');
+  const myOffering = (me?.skills ?? []).filter(
+    (s: any) => s.type === "OFFERING",
+  );
+  const theirOffering = (user?.skills ?? []).filter(
+    (s: any) => s.type === "OFFERING",
+  );
+  const theirSeeking = (user?.skills ?? []).filter(
+    (s: any) => s.type === "SEEKING",
+  );
   const reviews = reviewsQ.data ?? [];
   const avg = reviews.length ? calculateAverageRating(reviews as any[]) : 0;
 
@@ -121,7 +133,7 @@ export default function PublicUserProfileScreen() {
           <MoreHorizontal size={20} color={theme.foreground} />
         </Pressable>
       ),
-      headerTitle: user?.name ?? 'Profile',
+      headerTitle: user?.name ?? "Profile",
       headerTransparent: false,
     });
   }, [nav, user, theme, router]);
@@ -129,16 +141,15 @@ export default function PublicUserProfileScreen() {
   const submit = async () => {
     try {
       const payload: any = {
-        toUserId: user?.id,
+        receiverId: user?.id,
         offeredSkillId: skillTeachId,
         requestedSkillId: skillLearnId,
-        message: message || undefined,
       };
-      const parsed = v.parse(CreateExchangeRequestSchema, payload);
+      const parsed = v.parse(CreateExchangeRequestSchema, payload);  
+          
       await createReqQ.mutateAsync(parsed);
-      toast.toast({ title: 'Request sent!', variant: 'success' });
+      toast.toast({ title: "Request sent!", variant: "success" });
       setRequestOpen(false);
-      setMessage('');
       setSkillTeachId(undefined);
       setSkillLearnId(undefined);
     } catch (e: any) {
@@ -146,38 +157,62 @@ export default function PublicUserProfileScreen() {
         const map: Record<string, string> = {};
         const issues = v.flatten(e.issues);
         Object.entries(issues.nested ?? {}).forEach(([k, v]) => {
-          map[k] = (v as any)[0] ?? 'Invalid';
+          map[k] = (v as any)[0] ?? "Invalid";
         });
         setErrors(map);
         return;
       }
-      toast.toast({ title: 'Could not send request', description: e?.message ?? 'Try again', variant: 'error' });
+      toast.toast({
+        title: "Could not send request",
+        description: e?.message ?? "Try again",
+        variant: "error",
+      });
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={['bottom']}>
-      <ThemedView type="background" style={{ flex: 1, alignItems: 'center' }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: theme.background }}
+      edges={["bottom"]}
+    >
+      <ThemedView type="background" style={{ flex: 1, alignItems: "center" }}>
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: SPACING[5],
             paddingTop: SPACING[3],
             paddingBottom: insets.bottom + SPACING[10],
-            width: '100%',
-            alignItems: 'center',
+            width: "100%",
+            alignItems: "center",
             gap: SPACING[4],
           }}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={theme.primary} colors={[theme.primary]} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={refresh}
+              tintColor={theme.primary}
+              colors={[theme.primary]}
+            />
           }
-          style={{ width: '100%' }}
+          style={{ width: "100%" }}
         >
-          <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, gap: SPACING[4] }}>
+          <View
+            style={{
+              width: "100%",
+              maxWidth: MAX_CONTENT_WIDTH,
+              gap: SPACING[4],
+            }}
+          >
             {/* Header */}
             <Card>
               <CardContent style={{ paddingTop: SPACING[5], gap: SPACING[4] }}>
-                <View style={{ flexDirection: 'row', gap: SPACING[4], alignItems: 'center' }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    gap: SPACING[4],
+                    alignItems: "center",
+                  }}
+                >
                   <Avatar uri={user?.image} fallback={user?.name} size={88} />
                   <View style={{ flex: 1, gap: SPACING[1] }}>
                     {userQ.isLoading ? (
@@ -188,38 +223,106 @@ export default function PublicUserProfileScreen() {
                       </View>
                     ) : (
                       <>
-                        <ThemedText type="title" style={{ fontSize: FONT_SIZE['2xl'], fontWeight: '800' }}>
-                          {user?.name ?? 'User'}
+                        <ThemedText
+                          type="title"
+                          style={{
+                            fontSize: FONT_SIZE["2xl"],
+                            fontWeight: "800",
+                          }}
+                        >
+                          {user?.name ?? "User"}
                         </ThemedText>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                            <Star size={14} color={getAccent('amber').main} fill={getAccent('amber').main} />
-                            <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: SPACING[2],
+                          }}
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 3,
+                            }}
+                          >
+                            <Star
+                              size={14}
+                              color={getAccent("amber").main}
+                              fill={getAccent("amber").main}
+                            />
+                            <ThemedText
+                              type="smallBold"
+                              style={{ fontSize: FONT_SIZE.sm }}
+                            >
                               {avg.toFixed(1)}
                             </ThemedText>
-                            <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: 11 }}>
+                            <ThemedText
+                              type="small"
+                              style={{
+                                color: theme.mutedForeground,
+                                fontSize: 11,
+                              }}
+                            >
                               ({reviews.length})
                             </ThemedText>
                           </View>
                           {(user?.reviewsCompleted ?? 0) > 0 ? (
                             <Badge variant="accent" accent="emerald">
-                              <BadgeCheck size={12} color={getAccent('emerald').main} /> Verified
+                              <BadgeCheck
+                                size={12}
+                                color={getAccent("emerald").main}
+                              />{" "}
+                              Verified
                             </Badge>
                           ) : null}
                         </View>
                         {user?.location ? (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1.5], marginTop: 2 }}>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: SPACING[1.5],
+                              marginTop: 2,
+                            }}
+                          >
                             <MapPin size={12} color={theme.mutedForeground} />
-                            <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
+                            <ThemedText
+                              type="small"
+                              style={{
+                                color: theme.mutedForeground,
+                                fontSize: FONT_SIZE.sm,
+                              }}
+                            >
                               {user.location}
                             </ThemedText>
                           </View>
                         ) : null}
                         {user?.createdAt ? (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1.5], marginTop: 2 }}>
-                            <CalendarDays size={12} color={theme.mutedForeground} />
-                            <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: 11 }}>
-                              Joined {new Date(user.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: SPACING[1.5],
+                              marginTop: 2,
+                            }}
+                          >
+                            <CalendarDays
+                              size={12}
+                              color={theme.mutedForeground}
+                            />
+                            <ThemedText
+                              type="small"
+                              style={{
+                                color: theme.mutedForeground,
+                                fontSize: 11,
+                              }}
+                            >
+                              Joined{" "}
+                              {new Date(user.createdAt).toLocaleDateString(
+                                undefined,
+                                { month: "long", year: "numeric" },
+                              )}
                             </ThemedText>
                           </View>
                         ) : null}
@@ -231,14 +334,18 @@ export default function PublicUserProfileScreen() {
                 {user?.bio ? (
                   <ThemedText
                     type="small"
-                    style={{ color: theme.foreground, fontSize: FONT_SIZE.md, lineHeight: 22 }}
+                    style={{
+                      color: theme.foreground,
+                      fontSize: FONT_SIZE.md,
+                      lineHeight: 22,
+                    }}
                   >
                     {user.bio}
                   </ThemedText>
                 ) : null}
 
                 {!isSelf ? (
-                  <View style={{ flexDirection: 'row', gap: SPACING[2] }}>
+                  <View style={{ flexDirection: "row", gap: SPACING[2] }}>
                     <Button
                       style={{ flex: 1 }}
                       onPress={() => setRequestOpen(true)}
@@ -249,16 +356,10 @@ export default function PublicUserProfileScreen() {
                     </Button>
                     <Button
                       variant="outline"
-                      leftIcon={<MessageCircle size={16} color={theme.foreground} />}
-                    >
-                      Message
-                    </Button>
-                    <Button
-                      variant="ghost"
                       size="icon"
                       onPress={() =>
                         Share.share({
-                          message: `Check out ${user?.name ?? 'this user'} on Skil-Ex`,
+                          message: `Check out ${user?.name ?? "this user"} on Skil-Ex`,
                         }).catch(() => {})
                       }
                     >
@@ -266,7 +367,10 @@ export default function PublicUserProfileScreen() {
                     </Button>
                   </View>
                 ) : (
-                  <Button variant="outline" onPress={() => router.push('/(tabs)/profile' as any)}>
+                  <Button
+                    variant="outline"
+                    onPress={() => router.push("/(tabs)/profile" as any)}
+                  >
                     Edit your profile
                   </Button>
                 )}
@@ -277,13 +381,20 @@ export default function PublicUserProfileScreen() {
             <Card>
               <CardHeader>
                 <CardTitle>Skills</CardTitle>
-                <CardDescription>What they teach and want to learn.</CardDescription>
+                <CardDescription>
+                  What they teach and want to learn.
+                </CardDescription>
               </CardHeader>
               <CardContent style={{ gap: SPACING[4] }}>
                 <SkillList
                   title="They teach"
                   accent="emerald"
-                  icon={<GraduationCap size={16} color={getAccent('emerald').main} />}
+                  icon={
+                    <GraduationCap
+                      size={16}
+                      color={getAccent("emerald").main}
+                    />
+                  }
                   list={theirOffering}
                   empty="No teaching skills listed yet."
                 />
@@ -291,7 +402,7 @@ export default function PublicUserProfileScreen() {
                 <SkillList
                   title="They want to learn"
                   accent="blue"
-                  icon={<BookOpen size={16} color={getAccent('blue').main} />}
+                  icon={<BookOpen size={16} color={getAccent("blue").main} />}
                   list={theirSeeking}
                   empty="No learning goals listed yet."
                 />
@@ -301,26 +412,46 @@ export default function PublicUserProfileScreen() {
             {/* Reviews */}
             <Card>
               <CardHeader>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <View>
                     <CardTitle>Reviews</CardTitle>
                     <CardDescription>What their partners say.</CardDescription>
                   </View>
-                  <View style={{ alignItems: 'center' }}>
-                    <ThemedText type="title" style={{ fontSize: FONT_SIZE.xl, fontWeight: '900' }}>
+                  <View style={{ alignItems: "center" }}>
+                    <ThemedText
+                      type="title"
+                      style={{ fontSize: FONT_SIZE.xl, fontWeight: "900" }}
+                    >
                       {avg.toFixed(1)}
                     </ThemedText>
-                    <View style={{ flexDirection: 'row', gap: 1 }}>
+                    <View style={{ flexDirection: "row", gap: 1 }}>
                       {[1, 2, 3, 4, 5].map((i) => (
                         <Star
                           key={i}
                           size={11}
-                          color={i <= Math.round(avg) ? getAccent('amber').main : theme.mutedForeground}
-                          fill={i <= Math.round(avg) ? getAccent('amber').main : 'transparent'}
+                          color={
+                            i <= Math.round(avg)
+                              ? getAccent("amber").main
+                              : theme.mutedForeground
+                          }
+                          fill={
+                            i <= Math.round(avg)
+                              ? getAccent("amber").main
+                              : "transparent"
+                          }
                         />
                       ))}
                     </View>
-                    <ThemedText type="small" style={{ fontSize: 11, color: theme.mutedForeground }}>
+                    <ThemedText
+                      type="small"
+                      style={{ fontSize: 11, color: theme.mutedForeground }}
+                    >
                       {reviews.length}
                     </ThemedText>
                   </View>
@@ -330,13 +461,35 @@ export default function PublicUserProfileScreen() {
                 {reviewsQ.isLoading ? (
                   <SkeletonText lines={5} />
                 ) : reviews.length === 0 ? (
-                  <View style={{ padding: SPACING[5], alignItems: 'center', gap: SPACING[2] }}>
-                    <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
+                  <View
+                    style={{
+                      padding: SPACING[5],
+                      alignItems: "center",
+                      gap: SPACING[2],
+                    }}
+                  >
+                    <ThemedText
+                      type="small"
+                      style={{
+                        color: theme.mutedForeground,
+                        textAlign: "center",
+                      }}
+                    >
                       No reviews yet — be the first after an exchange!
                     </ThemedText>
                   </View>
                 ) : (
-                  reviews.slice(0, 5).map((r: any) => <MiniReview key={r.id} review={r} onOpen={() => router.push(`/users/${r.reviewerId}` as any)} />)
+                  reviews
+                    .slice(0, 5)
+                    .map((r: any) => (
+                      <MiniReview
+                        key={r.id}
+                        review={r}
+                        onOpen={() =>
+                          router.push(`/users/${r.reviewerId}` as any)
+                        }
+                      />
+                    ))
                 )}
                 {reviews.length > 5 ? (
                   <Button variant="ghost">
@@ -347,12 +500,12 @@ export default function PublicUserProfileScreen() {
               </CardContent>
             </Card>
 
-            <Card style={{ borderColor: getAccent('blue').border }}>
+            <Card style={{ borderColor: getAccent("blue").border }}>
               <CardContent>
                 <View
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
+                    flexDirection: "row",
+                    alignItems: "center",
                     gap: SPACING[3],
                   }}
                 >
@@ -361,19 +514,29 @@ export default function PublicUserProfileScreen() {
                       width: 40,
                       height: 40,
                       borderRadius: RADIUS.md,
-                      backgroundColor: getAccent('blue').bg,
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      backgroundColor: getAccent("blue").bg,
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    <Shield size={20} color={getAccent('blue').main} />
+                    <Shield size={20} color={getAccent("blue").main} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
+                    <ThemedText
+                      type="smallBold"
+                      style={{ fontSize: FONT_SIZE.md }}
+                    >
                       Safe & verified
                     </ThemedText>
-                    <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
-                      Every exchange is protected by points escrow and session recordings with consent.
+                    <ThemedText
+                      type="small"
+                      style={{
+                        color: theme.mutedForeground,
+                        fontSize: FONT_SIZE.sm,
+                      }}
+                    >
+                      Every exchange is protected by points escrow and session
+                      recordings with consent.
                     </ThemedText>
                   </View>
                 </View>
@@ -384,7 +547,10 @@ export default function PublicUserProfileScreen() {
       </ThemedView>
 
       {/* Request Dialog */}
-      <Dialog open={requestOpen} onOpenChange={(o) => !createReqQ.isPending && setRequestOpen(o)}>
+      <Dialog
+        open={requestOpen}
+        onOpenChange={(o) => !createReqQ.isPending && setRequestOpen(o)}
+      >
         <DialogHeader onClose={() => setRequestOpen(false)}>
           <DialogTitle>Request skill exchange</DialogTitle>
           <DialogDescription>
@@ -393,7 +559,10 @@ export default function PublicUserProfileScreen() {
         </DialogHeader>
         <DialogContent style={{ gap: SPACING[4] }}>
           <View style={{ gap: SPACING[2] }}>
-            <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm, marginLeft: SPACING[0.5] }}>
+            <ThemedText
+              type="smallBold"
+              style={{ fontSize: FONT_SIZE.sm, marginLeft: SPACING[0.5] }}
+            >
               You will teach them
             </ThemedText>
             <View style={{ gap: SPACING[2] }}>
@@ -403,11 +572,17 @@ export default function PublicUserProfileScreen() {
                     padding: SPACING[4],
                     borderRadius: RADIUS.md,
                     borderWidth: 1,
-                    borderStyle: 'dashed',
+                    borderStyle: "dashed",
                     borderColor: theme.border,
                   }}
                 >
-                  <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
+                  <ThemedText
+                    type="small"
+                    style={{
+                      color: theme.mutedForeground,
+                      fontSize: FONT_SIZE.sm,
+                    }}
+                  >
                     Add a teaching skill to your profile first.
                   </ThemedText>
                   <Button
@@ -415,7 +590,7 @@ export default function PublicUserProfileScreen() {
                     style={{ marginTop: SPACING[3] }}
                     onPress={() => {
                       setRequestOpen(false);
-                      router.push('/(tabs)/profile' as any);
+                      router.push("/(tabs)/profile" as any);
                     }}
                   >
                     Add teaching skill
@@ -423,19 +598,21 @@ export default function PublicUserProfileScreen() {
                 </View>
               ) : (
                 myOffering.map((s: any) => {
-                  const selected = skillTeachId === s.id;
+                  const selected = skillTeachId === s.skill.id;
                   return (
                     <Pressable
-                      key={s.id}
-                      onPress={() => setSkillTeachId(s.id)}
+                      key={s.skill.id}
+                      onPress={() => setSkillTeachId(s.skill.id)}
                       style={{
                         padding: SPACING[3],
                         borderRadius: RADIUS.md,
                         borderWidth: 1,
                         borderColor: selected ? theme.primary : theme.border,
-                        backgroundColor: selected ? `${theme.primary}1A` : theme.backgroundElement,
-                        flexDirection: 'row',
-                        alignItems: 'center',
+                        backgroundColor: selected
+                          ? `${theme.primary}1A`
+                          : theme.backgroundElement,
+                        flexDirection: "row",
+                        alignItems: "center",
                         gap: SPACING[3],
                       }}
                     >
@@ -444,23 +621,41 @@ export default function PublicUserProfileScreen() {
                         color={selected ? theme.primary : theme.mutedForeground}
                       />
                       <View style={{ flex: 1 }}>
-                        <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-                          {s.skill?.name ?? s.skillName ?? 'Skill'}
+                        <ThemedText
+                          type="smallBold"
+                          style={{ fontSize: FONT_SIZE.md }}
+                        >
+                          {s.skill?.name ?? s.skillName ?? "Skill"}
                         </ThemedText>
                         {s.level ? (
-                          <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
+                          <ThemedText
+                            type="small"
+                            style={{
+                              color: theme.mutedForeground,
+                              fontSize: FONT_SIZE.sm,
+                            }}
+                          >
                             {s.level.toLowerCase()}
                           </ThemedText>
                         ) : null}
                       </View>
-                      {selected ? <Badge variant="default">Selected</Badge> : null}
+                      {selected ? (
+                        <Badge variant="default">Selected</Badge>
+                      ) : null}
                     </Pressable>
                   );
                 })
               )}
             </View>
             {errors.offeredSkillId ? (
-              <ThemedText type="small" style={{ color: '#f87171', fontSize: FONT_SIZE.sm, marginLeft: SPACING[0.5] }}>
+              <ThemedText
+                type="small"
+                style={{
+                  color: "#f87171",
+                  fontSize: FONT_SIZE.sm,
+                  marginLeft: SPACING[0.5],
+                }}
+              >
                 {errors.offeredSkillId}
               </ThemedText>
             ) : null}
@@ -469,7 +664,10 @@ export default function PublicUserProfileScreen() {
           <Separator />
 
           <View style={{ gap: SPACING[2] }}>
-            <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm, marginLeft: SPACING[0.5] }}>
+            <ThemedText
+              type="smallBold"
+              style={{ fontSize: FONT_SIZE.sm, marginLeft: SPACING[0.5] }}
+            >
               You want to learn from them
             </ThemedText>
             <View style={{ gap: SPACING[2] }}>
@@ -479,68 +677,91 @@ export default function PublicUserProfileScreen() {
                     padding: SPACING[4],
                     borderRadius: RADIUS.md,
                     borderWidth: 1,
-                    borderStyle: 'dashed',
+                    borderStyle: "dashed",
                     borderColor: theme.border,
                   }}
                 >
-                  <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
+                  <ThemedText
+                    type="small"
+                    style={{
+                      color: theme.mutedForeground,
+                      fontSize: FONT_SIZE.sm,
+                    }}
+                  >
                     This user isn't offering skills to teach yet.
                   </ThemedText>
                 </View>
               ) : (
                 theirOffering.map((s: any) => {
-                  const selected = skillLearnId === s.id;
+                  const selected = skillLearnId === s.skill.id;
                   return (
                     <Pressable
-                      key={s.id}
-                      onPress={() => setSkillLearnId(s.id)}
+                      key={s.skill.id}
+                      onPress={() => setSkillLearnId(s.skill.id)}
                       style={{
                         padding: SPACING[3],
                         borderRadius: RADIUS.md,
                         borderWidth: 1,
                         borderColor: selected ? theme.primary : theme.border,
-                        backgroundColor: selected ? `${theme.primary}1A` : theme.backgroundElement,
-                        flexDirection: 'row',
-                        alignItems: 'center',
+                        backgroundColor: selected
+                          ? `${theme.primary}1A`
+                          : theme.backgroundElement,
+                        flexDirection: "row",
+                        alignItems: "center",
                         gap: SPACING[3],
                       }}
                     >
-                      <BookOpen size={16} color={selected ? theme.primary : theme.mutedForeground} />
+                      <BookOpen
+                        size={16}
+                        color={selected ? theme.primary : theme.mutedForeground}
+                      />
                       <View style={{ flex: 1 }}>
-                        <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-                          {s.skill?.name ?? s.skillName ?? 'Skill'}
+                        <ThemedText
+                          type="smallBold"
+                          style={{ fontSize: FONT_SIZE.md }}
+                        >
+                          {s.skill?.name ?? s.skillName ?? "Skill"}
                         </ThemedText>
                         {s.level ? (
-                          <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
+                          <ThemedText
+                            type="small"
+                            style={{
+                              color: theme.mutedForeground,
+                              fontSize: FONT_SIZE.sm,
+                            }}
+                          >
                             {s.level.toLowerCase()}
                           </ThemedText>
                         ) : null}
                       </View>
-                      {selected ? <Badge variant="default">Selected</Badge> : null}
+                      {selected ? (
+                        <Badge variant="default">Selected</Badge>
+                      ) : null}
                     </Pressable>
                   );
                 })
               )}
             </View>
             {errors.requestedSkillId ? (
-              <ThemedText type="small" style={{ color: '#f87171', fontSize: FONT_SIZE.sm, marginLeft: SPACING[0.5] }}>
+              <ThemedText
+                type="small"
+                style={{
+                  color: "#f87171",
+                  fontSize: FONT_SIZE.sm,
+                  marginLeft: SPACING[0.5],
+                }}
+              >
                 {errors.requestedSkillId}
               </ThemedText>
             ) : null}
           </View>
-
-          <Textarea
-            label="Message (optional)"
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Introduce yourself, mention availability, or a short-term goal."
-            numberOfLines={4}
-            error={errors.message}
-            description={`${message.length}/500`}
-          />
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onPress={() => setRequestOpen(false)} disabled={createReqQ.isPending}>
+          <Button
+            variant="outline"
+            onPress={() => setRequestOpen(false)}
+            disabled={createReqQ.isPending}
+          >
             Cancel
           </Button>
           <Button
@@ -560,22 +781,22 @@ export default function PublicUserProfileScreen() {
         title="More actions"
         options={[
           {
-            label: 'Share profile',
+            label: "Share profile",
             icon: <Share2 size={18} color={theme.foreground} />,
             onPress: () =>
               Share.share({
-                message: `Check out ${user?.name ?? 'this user'} on Skil-Ex`,
+                message: `Check out ${user?.name ?? "this user"} on Skil-Ex`,
               }).catch(() => {}),
           },
           {
-            label: 'Report user',
+            label: "Report user",
             icon: <Shield size={18} color={theme.destructive as any} />,
             destructive: false,
             onPress: () =>
               toast.toast({
-                title: 'Report submitted',
-                description: 'Our team will review shortly.',
-                variant: 'info',
+                title: "Report submitted",
+                description: "Our team will review shortly.",
+                variant: "info",
               }),
           },
         ]}
@@ -600,7 +821,9 @@ function SkillList({
   const theme = useTheme();
   return (
     <View style={{ gap: SPACING[2] }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
+      <View
+        style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}
+      >
         {icon}
         <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
           {title}
@@ -612,20 +835,25 @@ function SkillList({
             padding: SPACING[3],
             borderRadius: RADIUS.md,
             borderWidth: 1,
-            borderStyle: 'dashed',
+            borderStyle: "dashed",
             borderColor: theme.border,
           }}
         >
-          <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
+          <ThemedText
+            type="small"
+            style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}
+          >
             {empty}
           </ThemedText>
         </View>
       ) : (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
+        <View
+          style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}
+        >
           {list.map((s: any) => (
             <Badge key={s.id} variant="accent" accent={accent}>
               {s.skill?.name ?? s.skillName}
-              {s.level ? ` · ${s.level.toLowerCase()}` : ''}
+              {s.level ? ` · ${s.level.toLowerCase()}` : ""}
             </Badge>
           ))}
         </View>
@@ -647,36 +875,60 @@ function MiniReview({ review, onOpen }: { review: any; onOpen: () => void }) {
         gap: SPACING[2],
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
-        <Avatar uri={review.reviewer?.image} fallback={review.reviewer?.name} size={32} />
+      <View
+        style={{ flexDirection: "row", alignItems: "center", gap: SPACING[3] }}
+      >
+        <Avatar
+          uri={review.reviewer?.image}
+          fallback={review.reviewer?.name}
+          size={32}
+        />
         <View style={{ flex: 1 }}>
           <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-            {review.reviewer?.name ?? 'User'}
+            {review.reviewer?.name ?? "User"}
           </ThemedText>
-          <View style={{ flexDirection: 'row', gap: 1, marginTop: 1 }}>
+          <View style={{ flexDirection: "row", gap: 1, marginTop: 1 }}>
             {[1, 2, 3, 4, 5].map((i) => (
               <Star
                 key={i}
                 size={11}
-                color={i <= rating ? getAccent('amber').main : theme.mutedForeground}
-                fill={i <= rating ? getAccent('amber').main : 'transparent'}
+                color={
+                  i <= rating ? getAccent("amber").main : theme.mutedForeground
+                }
+                fill={i <= rating ? getAccent("amber").main : "transparent"}
               />
             ))}
           </View>
         </View>
-        <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: 11 }}>
+        <ThemedText
+          type="small"
+          style={{ color: theme.mutedForeground, fontSize: 11 }}
+        >
           {review.createdAt
-            ? new Date(review.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-            : ''}
+            ? new Date(review.createdAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              })
+            : ""}
         </ThemedText>
       </View>
       {review.comment ? (
-        <ThemedText type="small" style={{ color: theme.foreground, fontSize: FONT_SIZE.sm, lineHeight: 19 }} numberOfLines={3}>
+        <ThemedText
+          type="small"
+          style={{
+            color: theme.foreground,
+            fontSize: FONT_SIZE.sm,
+            lineHeight: 19,
+          }}
+          numberOfLines={3}
+        >
           {review.comment}
         </ThemedText>
       ) : null}
       {(review.tags ?? []).length > 0 ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
+        <View
+          style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}
+        >
           {(review.tags as string[]).slice(0, 3).map((t) => (
             <Badge key={t} variant="outline">
               {REVIEW_TAG_LABELS[t as keyof typeof REVIEW_TAG_LABELS] ?? t}

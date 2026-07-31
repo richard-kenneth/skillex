@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -87,66 +88,70 @@ export default function VerifyEmailScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.iconContainer}>
-        <ShieldCheck size={48} color="#6366f1" />
-      </View>
-      <Text style={styles.title}>Verify Your Email</Text>
-      <Text style={styles.subtitle}>
-        Enter the 6-digit code sent to your email address.
-      </Text>
-      {email ? <Text style={styles.emailText}>{email}</Text> : null}
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
+        <View style={styles.iconContainer}>
+          <ShieldCheck size={48} color="#6366f1" />
+        </View>
+        <Text style={styles.title}>Verify Your Email</Text>
+        <Text style={styles.subtitle}>
+          Enter the 6-digit code sent to your email address.
+        </Text>
+        {email ? <Text style={styles.emailText}>{email}</Text> : null}
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Verification Code</Text>
-        <TextInput
-          style={styles.otpInput}
-          placeholder="******"
-          placeholderTextColor="#666"
-          value={otp}
-          onChangeText={setOtp}
-          keyboardType="number-pad"
-          maxLength={6}
-          textAlign="center"
-        />
+        <View style={styles.form}>
+          <Text style={styles.label}>Verification Code</Text>
+          <TextInput
+            style={styles.otpInput}
+            placeholder="******"
+            placeholderTextColor="#666"
+            value={otp}
+            onChangeText={setOtp}
+            keyboardType="number-pad"
+            maxLength={6}
+            textAlign="center"
+          />
 
-        <TouchableOpacity
-          style={[styles.button, otp.length !== 6 && styles.buttonDisabled]}
-          onPress={handleVerify}
-          disabled={loading || otp.length !== 6}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Verify Email</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.resendButton}
-          onPress={handleResend}
-          disabled={isResending}
-        >
-          {isResending ? (
-            <ActivityIndicator color="#6366f1" size="small" />
-          ) : (
-            <Text style={styles.resendText}>Resend Code</Text>
-          )}
-        </TouchableOpacity>
-
-        <Link href="/(auth)/sign-in" asChild>
-          <TouchableOpacity style={styles.backButton}>
-            <Text style={styles.linkText}>Back to Sign In</Text>
+          <TouchableOpacity
+            style={[styles.button, otp.length !== 6 && styles.buttonDisabled]}
+            onPress={handleVerify}
+            disabled={loading || otp.length !== 6}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Verify Email</Text>
+            )}
           </TouchableOpacity>
-        </Link>
-      </View>
-    </View>
+
+          <TouchableOpacity
+            style={styles.resendButton}
+            onPress={handleResend}
+            disabled={isResending}
+          >
+            {isResending ? (
+              <ActivityIndicator color="#6366f1" size="small" />
+            ) : (
+              <Text style={styles.resendText}>Resend Code</Text>
+            )}
+          </TouchableOpacity>
+
+          <Link href="/(auth)/sign-in" asChild>
+            <TouchableOpacity style={styles.backButton}>
+              <Text style={styles.linkText}>Back to Sign In</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#09090b",
     padding: 24,
     justifyContent: "center",

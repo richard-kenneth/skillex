@@ -1,8 +1,10 @@
 import { Link, useRouter } from "expo-router";
+import { Eye, EyeOff } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +19,7 @@ export default function SignUpScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
@@ -53,7 +56,11 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.title}>Create Account</Text>
       <Text style={styles.subtitle}>Join Skill Exchange today</Text>
 
@@ -87,14 +94,27 @@ export default function SignUpScreen() {
         />
 
         <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••"
-          placeholderTextColor="#666"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordInputWrapper}>
+          <TextInput
+            style={[styles.input, { flex: 1, paddingRight: 44 }]}
+            placeholder="••••••••"
+            placeholderTextColor="#666"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowPassword(!showPassword)}
+            hitSlop={10}
+          >
+            {showPassword ? (
+              <EyeOff size={20} color="#71717a" />
+            ) : (
+              <Eye size={20} color="#71717a" />
+            )}
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={styles.button}
@@ -117,13 +137,13 @@ export default function SignUpScreen() {
           </Link>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#09090b",
     padding: 24,
     justifyContent: "center",
@@ -172,6 +192,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     color: "#ffffff",
     fontSize: 16,
+  },
+  passwordInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
+  },
+  eyeButton: {
+    position: "absolute",
+    right: 12,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
   },
   button: {
     height: 48,

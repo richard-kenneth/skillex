@@ -1,9 +1,10 @@
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import { CheckCircle2, Lock } from "lucide-react-native";
+import { CheckCircle2, Eye, EyeOff, Lock } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -20,6 +21,8 @@ export default function ResetPasswordScreen() {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -82,7 +85,11 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.iconContainer}>
         <Lock size={48} color="#6366f1" />
       </View>
@@ -92,24 +99,50 @@ export default function ResetPasswordScreen() {
 
       <View style={styles.form}>
         <Text style={styles.label}>New Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••"
-          placeholderTextColor="#666"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordInputWrapper}>
+          <TextInput
+            style={[styles.input, { flex: 1, paddingRight: 44 }]}
+            placeholder="••••••••"
+            placeholderTextColor="#666"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowPassword(!showPassword)}
+            hitSlop={10}
+          >
+            {showPassword ? (
+              <EyeOff size={20} color="#71717a" />
+            ) : (
+              <Eye size={20} color="#71717a" />
+            )}
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Confirm New Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••"
-          placeholderTextColor="#666"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordInputWrapper}>
+          <TextInput
+            style={[styles.input, { flex: 1, paddingRight: 44 }]}
+            placeholder="••••••••"
+            placeholderTextColor="#666"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirmPassword}
+          />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            hitSlop={10}
+          >
+            {showConfirmPassword ? (
+              <EyeOff size={20} color="#71717a" />
+            ) : (
+              <Eye size={20} color="#71717a" />
+            )}
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={styles.button}
@@ -132,13 +165,13 @@ export default function ResetPasswordScreen() {
           </Link>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#09090b",
     padding: 24,
     justifyContent: "center",
@@ -191,6 +224,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     color: "#ffffff",
     fontSize: 16,
+  },
+  passwordInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
+  },
+  eyeButton: {
+    position: "absolute",
+    right: 12,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
   },
   button: {
     height: 48,

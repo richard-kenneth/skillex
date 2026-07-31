@@ -116,8 +116,8 @@ export default function DashboardScreen() {
   );
   const complete = isOnboardingComplete(onboardingFlags);
   const progress = onboardingProgress(onboardingFlags);
-
-  const unreadCount = (notifQ.data ?? []).filter((n: any) => !n.readAt).length;
+  
+  const unreadCount = (notifQ.data ?? []).filter((n: any) => !n.read).length;
   const offeringSkills = ((user as any)?.userSkills ?? []).filter(
     (s: any) => s.type === "OFFERING",
   );

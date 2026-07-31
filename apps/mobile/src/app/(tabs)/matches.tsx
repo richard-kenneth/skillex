@@ -518,7 +518,7 @@ function RequestsList({
                 toast.toast({ title: 'Could not reject', variant: 'error' });
               }
             }}
-            onCancel={async () => {
+            onCancel={async () => {              
               try {
                 await cancelQ.mutateAsync(item.id);
                 toast.toast({ title: 'Request cancelled', variant: 'info' });
@@ -550,7 +550,7 @@ export function RequestCard({
 }) {
   const theme = useTheme();
   const statusColor = getRequestStatusColor(request.status);
-  const other = direction === 'incoming' ? request.fromUser : request.toUser;
+  const otherUser = direction === 'incoming' ? request.sender : request.receiver;
   const [confirmReject, setConfirmReject] = React.useState(false);
   const [confirmCancel, setConfirmCancel] = React.useState(false);
 
@@ -567,11 +567,11 @@ export function RequestCard({
     >
       <View style={{ padding: SPACING[4], gap: SPACING[3] }}>
         <View style={{ flexDirection: 'row', gap: SPACING[3], alignItems: 'center' }}>
-          <Avatar uri={other?.image} fallback={other?.name} size={44} />
+          <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={44} />
           <View style={{ flex: 1, gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-                {direction === 'incoming' ? `From ${other?.name ?? 'User'}` : `To ${other?.name ?? 'User'}`}
+                {direction === 'incoming' ? `From ${otherUser?.name ?? 'User'}` : `To ${otherUser?.name ?? 'User'}`}
               </ThemedText>
               <Badge variant="accent" accent={statusColor}>
                 {request.status.replace('_', ' ')}

@@ -33,6 +33,7 @@ import {
   RADIUS,
   SPACING,
 } from "@/constants/theme";
+import { useThemeContext } from "@/hooks/theme-context";
 import { useTheme } from "@/hooks/use-theme";
 import {
   useAddUserSkill,
@@ -47,17 +48,17 @@ import {
   useUpdateProfile,
   useUploadImage,
 } from "@/lib/api-hooks";
-import { authClient } from "../../../lib/auth";
 import {
   calculateAverageRating,
   EXCHANGE_NOTIFICATION_TYPES,
   POINTS_NOTIFICATION_TYPES,
+  ProfileFormSchema,
   REVIEW_TAG_LABELS,
   SkillType,
 } from "@skil-ex2/shared";
-import { ProfileFormSchema } from "@skil-ex2/shared";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
+import { Locale, LOCALE_LABELS, SUPPORTED_LOCALES, useI18n } from "lib/i18n";
 import {
   BadgeCheck,
   Bell,
@@ -96,8 +97,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import * as v from "valibot";
-import { Locale, LOCALE_LABELS, SUPPORTED_LOCALES, useI18n } from "lib/i18n";
-import { router } from 'expo-router'
+import { authClient } from "../../../lib/auth";
 
 type ProfileTab = "edit" | "skills" | "reviews" | "referrals" | "notifications";
 
@@ -125,7 +125,7 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           await authClient.signOut();
-          router.replace('/(auth)/sign-in')
+          router.replace("/(auth)/sign-in");
         },
       },
     ]);
@@ -634,13 +634,19 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
 function AppPreferencesCard() {
   const theme = useTheme();
   const { locale, setLocale } = useI18n();
-  const localeOpts = SUPPORTED_LOCALES.map((l) => ({ label: LOCALE_LABELS[l], value: l }));
+  const { mode, setMode } = useThemeContext();
+  const localeOpts = SUPPORTED_LOCALES.map((l) => ({
+    label: LOCALE_LABELS[l],
+    value: l,
+  }));
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>App preferences</CardTitle>
-        <CardDescription>Personalize how Skil-Ex looks and feels for you.</CardDescription>
+        <CardDescription>
+          Personalize how Skil-Ex looks and feels for you.
+        </CardDescription>
       </CardHeader>
       <CardContent style={{ gap: SPACING[4] }}>
         <SelectField
@@ -651,32 +657,58 @@ function AppPreferencesCard() {
           leftSlot={<Globe2 size={16} color={theme.mutedForeground} />}
         />
         <View style={{ gap: SPACING[2] }}>
-          <ThemedText type="smallBold" style={{ fontSize: 11, color: theme.mutedForeground, textTransform: 'uppercase', letterSpacing: 1 }}>
+          <ThemedText
+            type="smallBold"
+            style={{
+              fontSize: 11,
+              color: theme.mutedForeground,
+              textTransform: "uppercase",
+              letterSpacing: 1,
+            }}
+          >
             Appearance
           </ThemedText>
-          <View style={{ flexDirection: 'row', gap: SPACING[2] }}>
+          <View style={{ flexDirection: "row", gap: SPACING[2] }}>
             <AppearanceChip
-              icon={<Monitor size={16} color={theme.foreground} />}
+              icon={
+                <Monitor
+                  size={16}
+                  color={
+                    mode === "system" ? theme.primary : theme.mutedForeground
+                  }
+                />
+              }
               label="System"
-              active={true}
-              onPress={() => {}}
+              active={mode === "system"}
+              onPress={() => setMode("system")}
             />
             <AppearanceChip
-              icon={<Sun size={16} color={theme.mutedForeground} />}
+              icon={
+                <Sun
+                  size={16}
+                  color={
+                    mode === "light" ? theme.primary : theme.mutedForeground
+                  }
+                />
+              }
               label="Light"
-              active={false}
-              onPress={() => {}}
+              active={mode === "light"}
+              onPress={() => setMode("light")}
             />
             <AppearanceChip
-              icon={<Moon size={16} color={theme.foreground} />}
+              icon={
+                <Moon
+                  size={16}
+                  color={
+                    mode === "dark" ? theme.primary : theme.mutedForeground
+                  }
+                />
+              }
               label="Dark"
-              active={true}
-              onPress={() => {}}
+              active={mode === "dark"}
+              onPress={() => setMode("dark")}
             />
           </View>
-          <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: 12 }}>
-            Light + System toggles are disabled in this preview build; Dark theme is enabled by default.
-          </ThemedText>
         </View>
       </CardContent>
     </Card>
@@ -694,8 +726,10 @@ function AppearanceChip({ icon, label, active, onPress }: any) {
         borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: active ? theme.primary : theme.border,
-        backgroundColor: active ? getAccent('indigo').bg : theme.backgroundElement,
-        alignItems: 'center',
+        backgroundColor: active
+          ? getAccent("indigo").bg
+          : theme.backgroundElement,
+        alignItems: "center",
         gap: SPACING[1],
         opacity: active ? 1 : 0.6,
       }}
@@ -870,7 +904,10 @@ function SkillsPane({ user }: { user: any }) {
                   _icon: (
                     <BookOpen
                       size={14}
-                      color={type === "SEEKING" ? "#fff" : theme.mutedForeground} />
+                      color={
+                        type === "SEEKING" ? "#fff" : theme.mutedForeground
+                      }
+                    />
                   ),
                   get icon() {
                     return this._icon;

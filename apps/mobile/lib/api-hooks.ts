@@ -32,6 +32,8 @@ export const {
   useSendRequestMessage,
   useProposeSlots,
   useMarkExchangeComplete,
+  useUpdateSessionStatus,
+  useRecordingPlayback,
   // Points
   usePointsBalance,
   usePointsTransactions,
