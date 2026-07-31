@@ -1803,20 +1803,7 @@ function NotificationsPrefsPane() {
     await updateQ.mutateAsync(patch);
     await userQ.refetch();
   };
-
-  const sections = [
-    {
-      title: "Exchange notifications",
-      description: "New requests, accepted matches, session reminders.",
-      types: EXCHANGE_NOTIFICATION_TYPES,
-    },
-    {
-      title: "Points & wallet",
-      description: "Purchases, withdrawals, and earned points.",
-      types: POINTS_NOTIFICATION_TYPES,
-    },
-  ];
-
+  
   return (
     <Card>
       <CardHeader>

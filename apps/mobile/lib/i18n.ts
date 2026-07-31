@@ -1,4 +1,4 @@
-import * as Localization from 'expo-localization';
+import { getLocales } from 'expo-localization';
 import { I18n } from 'i18n-js';
 import React from 'react';
 import { en, es, fr, pt } from '@skil-ex2/shared';
@@ -16,7 +16,7 @@ const i18n = new I18n({
 });
 
 // Set the locale once at the beginning of your app
-i18n.locale = Localization.getLocales()[0]?.languageCode ?? 'en';
+i18n.locale = getLocales()[0]?.languageCode ?? 'en';
 i18n.enableFallback = true; // Fall back to English if translation is missing
 
 interface I18nContextValue {
@@ -35,7 +35,7 @@ export function I18nProvider({
   defaultLocale?: Locale;
 }) {
   const [locale, setLocale] = React.useState<Locale>(
-    (Localization.getLocales()[0]?.languageCode as Locale) ?? defaultLocale,
+    (getLocales()[0]?.languageCode as Locale) ?? defaultLocale,
   );
 
   const value = React.useMemo<I18nContextValue>(() => {
@@ -64,6 +64,8 @@ export function useI18n() {
     return {
       locale: (i18n.locale as Locale) ?? 'en',
       setLocale: (l: Locale) => {
+        console.log(l);
+        
         i18n.locale = l;
       },
       t: (key: string, vars?: Record<string, string | number>) => {
@@ -96,11 +98,11 @@ export function useT(namespace?: string) {
   );
 }
 
-export const SUPPORTED_LOCALES: Locale[] = ['en', 'es', 'fr', 'pt'];
+export const SUPPORTED_LOCALES: Locale[] = ['en', 'fr', 'es', 'pt'];
 
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: 'English',
-  es: 'Español',
   fr: 'Français',
+  es: 'Español',
   pt: 'Português',
 };

@@ -168,13 +168,13 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <QueryClientProvider client={queryClient}>
-          <I18nProvider defaultLocale="en">
-            <AppThemeProvider>
+          <AppThemeProvider>
+            <I18nProvider defaultLocale="en">
               <ToastProvider>
                 <AppInner />
               </ToastProvider>
-            </AppThemeProvider>
-          </I18nProvider>
+            </I18nProvider>
+          </AppThemeProvider>
         </QueryClientProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
