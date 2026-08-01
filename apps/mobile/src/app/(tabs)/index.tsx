@@ -60,7 +60,7 @@ import {
 } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useT } from 'lib/i18n';
 
@@ -471,29 +471,37 @@ function QuickAction({
   onPress: () => void;
 }) {
   const theme = useTheme();
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        {
-          flex: 1,
-          paddingVertical: SPACING[3],
-          paddingHorizontal: SPACING[2],
-          borderRadius: RADIUS.xl,
-          backgroundColor: theme.card,
-          borderWidth: 1,
-          borderColor: theme.border,
-          alignItems: 'center',
-          gap: 6,
-        },
-        pressed && { opacity: 0.7 },
-      ]}
-    >
-      {icon}
-      <ThemedText type="badge" style={{ marginTop: 2 }}>
-        {label}
-      </ThemedText>
-    </Pressable>
+    <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { scale.value = withSpring(0.92, { damping: 12, stiffness: 200 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 150 }); }}
+        style={[
+          {
+            paddingVertical: SPACING[3],
+            paddingHorizontal: SPACING[2],
+            borderRadius: RADIUS.xl,
+            backgroundColor: theme.glassBackground,
+            borderWidth: 1,
+            borderColor: theme.glassBorder,
+            alignItems: 'center',
+            gap: 6,
+          },
+        ]}
+      >
+        {icon}
+        <ThemedText type="badge" style={{ marginTop: 2 }} numberOfLines={1}>
+          {label}
+        </ThemedText>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -513,11 +521,11 @@ function StatCard({
     <View
       style={{
         flex: 1,
-        minWidth: 150,
+        minWidth: 140,
         borderRadius: RADIUS['2xl'],
         borderWidth: 1,
-        borderColor: theme.border,
-        backgroundColor: theme.card,
+        borderColor: theme.glassBorder,
+        backgroundColor: theme.glassBackground,
         padding: SPACING[4],
         gap: SPACING[1.5],
       }}
@@ -529,10 +537,10 @@ function StatCard({
         </View>
       ) : (
         <>
-          <ThemedText type="screenTitle" style={{ fontSize: 22 }}>
+          <ThemedText type="screenTitle" style={{ fontSize: 22 }} numberOfLines={1}>
             {value ?? '—'}
           </ThemedText>
-          <ThemedText type="caption" muted>
+          <ThemedText type="caption" muted numberOfLines={1}>
             {label}
             {subtitle ? ` · ${subtitle}` : ''}
           </ThemedText>

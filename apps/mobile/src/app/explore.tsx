@@ -83,10 +83,10 @@ export default function TabTwoScreen() {
               <ThemedText type="label">@3x</ThemedText> suffixes to provide files for
               different screen densities.
             </ThemedText>
-            <Image
+            {/* <Image
               source={require('@/assets/images/react-logo.png')}
               style={styles.imageReact}
-            />
+            /> */}
             <ExternalLink href="https://docs.expo.dev/development/introduction/">
               <ThemedText type="label" style={{ marginTop: 8 }}>Learn more</ThemedText>
             </ExternalLink>

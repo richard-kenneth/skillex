@@ -1,90 +1,92 @@
-import { ThemedText } from '@/components/themed-text';
-import { Input } from '@/components/ui/input';
-import { FONT_SIZE, RADIUS, SPACING, TYPOGRAPHY } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { Check, ChevronDown } from 'lucide-react-native';
 import React from 'react';
-import { Modal, Pressable, ScrollView, StatusBar, StyleSheet, View } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
   FadeIn,
   FadeOut,
   SlideInDown,
   SlideOutDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Check, ChevronDown } from 'lucide-react-native';
+import { ThemedText } from '@/components/themed-text';
+import { useTheme } from '@/hooks/use-theme';
+import { RADIUS, SPACING, SHADOWS, ICON_SIZE, ANIMATION } from '@/constants/theme';
+import { Input } from './input';
 
 // ─── Skeleton ───────────────────────────────────────────────────────────────
 
 export function Skeleton({
-  width = '100%',
-  height = 16,
+  width,
+  height,
+  rounded = false,
   style,
-  rounded,
 }: {
   width?: number | string;
-  height?: number;
-  style?: any;
+  height?: number | string;
   rounded?: boolean;
+  style?: ViewStyle;
 }) {
   const theme = useTheme();
-  const opacity = useSharedValue(0.4);
-
-  React.useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(
-        withTiming(0.7, { duration: 800 }),
-        withTiming(0.4, { duration: 800 }),
-      ),
-      -1,
-    );
-  }, [opacity]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
-
   return (
-    <Animated.View
+    <View
       style={[
         {
-          width,
-          height,
+          width: width as any,
+          height: height as any,
+          borderRadius: rounded ? RADIUS.pill : RADIUS.md,
           backgroundColor: theme.secondary,
-          borderRadius: rounded ? RADIUS.pill : RADIUS.sm,
+          opacity: 0.6,
         },
-        animatedStyle,
         style,
       ]}
     />
   );
 }
 
-export function SkeletonCard({ style }: { style?: any }) {
+export function SkeletonText({ lines = 3, style }: { lines?: number; style?: ViewStyle }) {
   return (
-    <View style={[{ padding: SPACING[4], gap: SPACING[3] }, style]}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
-        <Skeleton width={40} height={40} rounded />
-        <View style={{ flex: 1, gap: SPACING[1.5] }}>
-          <Skeleton width="55%" height={14} rounded />
-          <Skeleton width="35%" height={12} rounded />
-        </View>
-      </View>
-      <Skeleton width="85%" height={12} rounded />
-      <Skeleton width="100%" height={60} />
+    <View style={[{ gap: SPACING[2] }, style]}>
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skeleton
+          key={i}
+          height={14}
+          width={i === lines - 1 ? '60%' : '100%'}
+        />
+      ))}
     </View>
   );
 }
 
-export function SkeletonText({ lines = 3, style }: { lines?: number; style?: any }) {
+export function SkeletonCard({ style }: { style?: ViewStyle }) {
   return (
-    <View style={[{ gap: SPACING[2] }, style]}>
-      {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton key={i} width={i === lines - 1 ? '55%' : '100%'} height={12} rounded />
-      ))}
+    <View
+      style={[
+        {
+          padding: SPACING[4],
+          borderRadius: RADIUS['2xl'],
+          gap: SPACING[3],
+        },
+        style,
+      ]}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
+        <Skeleton width={44} height={44} rounded />
+        <View style={{ flex: 1, gap: 6 }}>
+          <Skeleton width="50%" height={16} />
+          <Skeleton width="30%" height={12} />
+        </View>
+      </View>
+      <SkeletonText lines={2} />
     </View>
   );
 }
@@ -96,6 +98,35 @@ export interface TabItem<T extends string> {
   label: string;
   icon?: React.ReactNode;
   badge?: number | string;
+}
+
+function TabPressable({
+  onPress,
+  children,
+  style,
+}: {
+  onPress: () => void;
+  children: React.ReactNode;
+  style?: any;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { scale.value = withSpring(0.95, { damping: 15, stiffness: 250 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 200 }); }}
+        style={style}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
 }
 
 export function Tabs<T extends string>({
@@ -112,16 +143,17 @@ export function Tabs<T extends string>({
   variant?: 'pills' | 'underline' | 'scroll';
 }) {
   const theme = useTheme();
+  const isScrollable = items.length > 3 || variant === 'scroll';
 
-  return (
+  const content = (
     <View
       style={[
         {
           flexDirection: 'row',
-          gap: variant === 'pills' ? SPACING[0.5] : SPACING[3],
-          padding: variant === 'pills' ? SPACING[0.5] : 0,
+          gap: variant === 'pills' ? SPACING[1.5] : SPACING[3],
+          padding: variant === 'pills' ? SPACING[1] : 0,
           backgroundColor: variant === 'pills' ? theme.secondary : 'transparent',
-          borderRadius: variant === 'pills' ? RADIUS.lg : 0,
+          borderRadius: variant === 'pills' ? RADIUS.xl : 0,
         },
         style,
       ]}
@@ -129,15 +161,15 @@ export function Tabs<T extends string>({
       {items.map((it) => {
         const active = it.value === value;
         return (
-          <Pressable
+          <TabPressable
             key={it.value}
             onPress={() => onChange(it.value)}
-            style={{ flex: variant === 'pills' ? 1 : undefined }}
           >
             {variant === 'underline' ? (
               <View
                 style={{
                   paddingVertical: SPACING[2.5],
+                  paddingHorizontal: SPACING[1],
                   borderBottomWidth: 2,
                   borderBottomColor: active ? theme.foreground : 'transparent',
                   flexDirection: 'row',
@@ -157,44 +189,20 @@ export function Tabs<T extends string>({
                 </ThemedText>
                 {it.badge != null && <TabBadge active={active}>{it.badge}</TabBadge>}
               </View>
-            ) : variant === 'scroll' ? (
-              <View
-                style={{
-                  paddingHorizontal: SPACING[3],
-                  paddingVertical: SPACING[2],
-                  borderRadius: RADIUS.md,
-                  backgroundColor: active ? theme.primary : 'transparent',
-                  borderWidth: active ? 0 : 1,
-                  borderColor: theme.border,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: SPACING[1.5],
-                }}
-              >
-                {it.icon}
-                <ThemedText
-                  type="label"
-                  style={{
-                    color: active ? theme.primaryForeground : theme.foreground,
-                    fontWeight: active ? '600' : '400',
-                  }}
-                >
-                  {it.label}
-                </ThemedText>
-                {it.badge != null && <TabBadge active={active}>{it.badge}</TabBadge>}
-              </View>
             ) : (
-              /* pills */
+              /* Pills or Scroll */
               <View
                 style={{
-                  paddingHorizontal: SPACING[3],
+                  paddingHorizontal: SPACING[3.5],
                   paddingVertical: SPACING[2],
-                  borderRadius: RADIUS.md,
+                  borderRadius: RADIUS.lg,
                   backgroundColor: active ? theme.background : 'transparent',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexDirection: 'row',
                   gap: SPACING[1.5],
+                  borderWidth: active ? 1 : 0,
+                  borderColor: active ? theme.border : 'transparent',
                 }}
               >
                 {it.icon}
@@ -210,11 +218,25 @@ export function Tabs<T extends string>({
                 {it.badge != null && <TabBadge active={active}>{it.badge}</TabBadge>}
               </View>
             )}
-          </Pressable>
+          </TabPressable>
         );
       })}
     </View>
   );
+
+  if (isScrollable) {
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingRight: SPACING[2] }}
+      >
+        {content}
+      </ScrollView>
+    );
+  }
+
+  return content;
 }
 
 function TabBadge({ active, children }: { active: boolean; children: React.ReactNode }) {
@@ -226,17 +248,16 @@ function TabBadge({ active, children }: { active: boolean; children: React.React
         height: 18,
         paddingHorizontal: 5,
         borderRadius: 9,
-        backgroundColor: active ? theme.foreground : theme.muted,
+        backgroundColor: active ? theme.primary : theme.secondary,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
       <ThemedText
-        type="badge"
         style={{
-          color: active ? theme.background : theme.mutedForeground,
           fontSize: 10,
           fontWeight: '600',
+          color: active ? theme.primaryForeground : theme.mutedForeground,
         }}
       >
         {children}
@@ -247,129 +268,113 @@ function TabBadge({ active, children }: { active: boolean; children: React.React
 
 // ─── ActionSheet ────────────────────────────────────────────────────────────
 
-export type ActionSheetOption = {
+export interface ActionSheetOption<T extends string = string> {
+  value?: T;
   label: string;
-  icon?: React.ReactNode;
-  onPress: () => void;
-  destructive?: boolean;
-  disabled?: boolean;
   subtitle?: string;
-};
+  icon?: React.ReactNode;
+  destructive?: boolean;
+  onPress?: () => void;
+}
 
-export function ActionSheet({
+export function ActionSheet<T extends string = string>({
   open,
+  onOpenChange,
   onClose,
   title,
   description,
   options,
-  cancelLabel = 'Cancel',
+  onSelect,
 }: {
   open: boolean;
-  onClose: () => void;
+  onOpenChange?: (open: boolean) => void;
+  onClose?: () => void;
   title?: string;
   description?: string;
-  options: ActionSheetOption[];
-  cancelLabel?: string;
+  options: ActionSheetOption<T>[];
+  onSelect?: (v: T) => void;
 }) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
+
+  const handleClose = () => {
+    onClose?.();
+    onOpenChange?.(false);
+  };
+
   if (!open) return null;
 
   return (
-    <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
-      <StatusBar backgroundColor="transparent" barStyle="light-content" />
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-        <Animated.View entering={FadeIn.duration(200)} style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlay }]} />
-      </Pressable>
-      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Animated.View entering={SlideInDown.duration(300).springify()} exiting={SlideOutDown.duration(200)}>
-          <Pressable onPress={() => {}}>
-            <View
-              style={{
-                backgroundColor: theme.card,
-                borderTopLeftRadius: RADIUS['3xl'],
-                borderTopRightRadius: RADIUS['3xl'],
-                padding: SPACING[4],
-                gap: SPACING[2],
-                paddingBottom: SPACING[10],
-                borderTopWidth: StyleSheet.hairlineWidth,
-                borderTopColor: theme.border,
-              }}
-            >
-              <View
-                style={{
-                  alignSelf: 'center',
-                  width: 36,
-                  height: 4,
-                  borderRadius: 2,
-                  backgroundColor: theme.border,
-                  marginBottom: SPACING[1],
-                }}
-              />
-              {title ? (
-                <View style={{ padding: SPACING[2], alignItems: 'center', gap: SPACING[0.5] }}>
-                  <ThemedText type="cardTitle">{title}</ThemedText>
-                  {description ? (
-                    <ThemedText type="caption" muted style={{ textAlign: 'center' }}>
-                      {description}
-                    </ThemedText>
-                  ) : null}
-                </View>
-              ) : null}
-              <View style={{ gap: SPACING[1] }}>
-                {options.map((o, i) => (
-                  <Pressable
-                    key={i}
-                    onPress={() => {
-                      onClose();
-                      o.onPress();
-                    }}
-                    disabled={o.disabled}
-                    style={({ pressed }) => ({
-                      padding: SPACING[3.5],
-                      backgroundColor: pressed ? theme.secondary : theme.background,
-                      borderRadius: RADIUS.lg,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: SPACING[3],
-                      opacity: o.disabled ? 0.4 : 1,
-                    })}
-                  >
-                    {o.icon ? <View>{o.icon}</View> : null}
-                    <View style={{ flex: 1 }}>
-                      <ThemedText
-                        type="body"
-                        style={{
-                          color: o.destructive ? theme.destructive : theme.foreground,
-                        }}
-                      >
-                        {o.label}
-                      </ThemedText>
-                      {o.subtitle ? (
-                        <ThemedText type="caption" muted style={{ marginTop: 2 }}>
-                          {o.subtitle}
-                        </ThemedText>
-                      ) : null}
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
-              <Pressable
-                onPress={onClose}
-                style={({ pressed }) => ({
-                  marginTop: SPACING[2],
-                  padding: SPACING[3.5],
-                  backgroundColor: pressed ? theme.secondary : theme.background,
-                  borderRadius: RADIUS.lg,
-                  alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: theme.border,
-                })}
-              >
-                <ThemedText type="label">{cancelLabel}</ThemedText>
-              </Pressable>
-            </View>
-          </Pressable>
+    <Modal visible transparent animationType="none" onRequestClose={handleClose}>
+      <View style={StyleSheet.absoluteFill}>
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: theme.overlay },
+          ]}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         </Animated.View>
+
+        <View style={styles.sheetContainer} pointerEvents="box-none">
+          <Animated.View
+            entering={SlideInDown.duration(250)}
+            exiting={SlideOutDown.duration(250)}
+            style={[
+              styles.sheetCard,
+              {
+                backgroundColor: theme.card,
+                borderColor: theme.border,
+                paddingBottom: Math.max(insets.bottom, SPACING[4]),
+              },
+            ]}
+          >
+            <View style={styles.handleBar}>
+              <View style={[styles.handle, { backgroundColor: theme.border }]} />
+            </View>
+
+            {title || description ? (
+              <View style={{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[2], gap: 2 }}>
+                {title && <ThemedText type="cardTitle">{title}</ThemedText>}
+                {description && <ThemedText type="caption" muted>{description}</ThemedText>}
+              </View>
+            ) : null}
+
+            <View style={{ paddingHorizontal: SPACING[2], gap: SPACING[1] }}>
+              {options.map((opt, i) => (
+                <Pressable
+                  key={opt.value || String(i)}
+                  onPress={() => {
+                    if (opt.onPress) opt.onPress();
+                    if (opt.value && onSelect) onSelect(opt.value);
+                    handleClose();
+                  }}
+                  style={({ pressed }) => [
+                    styles.sheetOption,
+                    { backgroundColor: pressed ? theme.secondary : 'transparent' },
+                  ]}
+                >
+                  {opt.icon}
+                  <View style={{ flex: 1, gap: 1 }}>
+                    <ThemedText
+                      type="label"
+                      style={{
+                        color: opt.destructive ? theme.destructive : theme.foreground,
+                      }}
+                    >
+                      {opt.label}
+                    </ThemedText>
+                    {opt.subtitle ? (
+                      <ThemedText type="caption" muted>{opt.subtitle}</ThemedText>
+                    ) : null}
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </Animated.View>
+        </View>
       </View>
     </Modal>
   );
@@ -377,151 +382,213 @@ export function ActionSheet({
 
 // ─── SelectField ────────────────────────────────────────────────────────────
 
-export type SelectOption<T extends string> = {
+export interface SelectOption {
   label: string;
-  value: T;
-  icon?: React.ReactNode;
-};
+  value: string | number;
+}
 
-export function SelectField<T extends string>({
+export function SelectField({
   label,
-  placeholder = 'Select…',
+  placeholder = 'Select option...',
   value,
   onChange,
   options,
   error,
-  style,
+  disabled = false,
   searchable = false,
 }: {
   label?: string;
   placeholder?: string;
-  value?: T;
-  onChange: (v: T) => void;
-  options: SelectOption<T>[];
-  error?: string | null;
-  style?: any;
+  value?: string | number;
+  onChange: (v: any) => void;
+  options: SelectOption[];
+  error?: string;
+  disabled?: boolean;
   searchable?: boolean;
 }) {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const selected = options.find((o) => o.value === value);
+  const [search, setSearch] = React.useState('');
 
-  const filteredOptions = searchable
-    ? options.filter((o) => o.label.toLowerCase().includes(searchQuery.toLowerCase()))
-    : options;
+  const selectedOpt = options.find((o) => o.value === value);
+
+  const filtered = React.useMemo(() => {
+    if (!searchable || !search) return options;
+    const q = search.toLowerCase();
+    return options.filter((o) => o.label.toLowerCase().includes(q));
+  }, [options, search, searchable]);
 
   return (
     <View style={{ gap: SPACING[1.5] }}>
-      {label ? (
-        <ThemedText type="label" style={{ marginLeft: SPACING[0.5] }}>
-          {label}
-        </ThemedText>
-      ) : null}
+      {label && <ThemedText type="label">{label}</ThemedText>}
+
       <Pressable
-        onPress={() => setOpen((v) => !v)}
-        style={[
+        disabled={disabled}
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [
+          styles.selectTrigger,
           {
-            borderRadius: RADIUS.lg,
-            borderWidth: 1,
-            borderColor: error ? theme.destructive : open ? theme.foreground : theme.border,
             backgroundColor: theme.background,
-            paddingHorizontal: SPACING[3],
-            minHeight: 44,
-            alignItems: 'center',
-            flexDirection: 'row',
-            gap: SPACING[2],
+            borderColor: error ? theme.destructive : theme.border,
+            opacity: disabled ? 0.5 : pressed ? 0.8 : 1,
           },
-          style,
         ]}
       >
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-          {selected?.icon}
-          <ThemedText
-            type="body"
-            style={{ color: selected ? theme.foreground : theme.mutedForeground }}
-          >
-            {selected ? selected.label : placeholder}
-          </ThemedText>
-        </View>
-        <ChevronDown
-          size={14}
-          color={theme.mutedForeground}
-          style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}
-        />
-      </Pressable>
-      {error ? (
-        <ThemedText type="caption" style={{ color: theme.destructive, marginLeft: SPACING[0.5] }}>
-          {error}
-        </ThemedText>
-      ) : null}
-      {open && (
-        <View
+        <ThemedText
+          type="body"
           style={{
-            borderRadius: RADIUS.lg,
-            borderWidth: 1,
-            borderColor: theme.border,
-            backgroundColor: theme.card,
-            overflow: 'hidden',
-            maxHeight: 300,
+            color: selectedOpt ? theme.foreground : theme.mutedForeground,
+            flex: 1,
           }}
         >
-          {searchable && (
-            <View style={{ padding: SPACING[2], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border }}>
-              <Input
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Search…"
-                autoFocus
-                inputWrapperStyle={{ borderWidth: 0, backgroundColor: theme.secondary }}
-              />
+          {selectedOpt ? selectedOpt.label : placeholder}
+        </ThemedText>
+        <ChevronDown size={16} color={theme.mutedForeground} />
+      </Pressable>
+
+      {error && (
+        <ThemedText type="caption" style={{ color: theme.destructive }}>
+          {error}
+        </ThemedText>
+      )}
+
+      {open && (
+        <Modal visible transparent animationType="none" onRequestClose={() => setOpen(false)}>
+          <View style={StyleSheet.absoluteFill}>
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
+              style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlay }]}
+            >
+              <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
+            </Animated.View>
+
+            <View style={styles.sheetContainer} pointerEvents="box-none">
+              <Animated.View
+                entering={SlideInDown.duration(250)}
+                exiting={SlideOutDown.duration(250)}
+                style={[
+                  styles.sheetCard,
+                  {
+                    backgroundColor: theme.card,
+                    borderColor: theme.border,
+                    maxHeight: '75%',
+                  },
+                ]}
+              >
+                <View style={styles.handleBar}>
+                  <View style={[styles.handle, { backgroundColor: theme.border }]} />
+                </View>
+
+                {label && (
+                  <View style={{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[2] }}>
+                    <ThemedText type="cardTitle">{label}</ThemedText>
+                  </View>
+                )}
+
+                {searchable && (
+                  <View style={{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[3] }}>
+                    <Input
+                      placeholder="Search options..."
+                      value={search}
+                      onChangeText={setSearch}
+                    />
+                  </View>
+                )}
+
+                <ScrollView
+                  contentContainerStyle={{ paddingHorizontal: SPACING[2], paddingBottom: SPACING[6] }}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {filtered.map((opt) => {
+                    const isSel = opt.value === value;
+                    return (
+                      <Pressable
+                        key={String(opt.value)}
+                        onPress={() => {
+                          onChange(opt.value);
+                          setOpen(false);
+                          setSearch('');
+                        }}
+                        style={({ pressed }) => [
+                          styles.selectOption,
+                          {
+                            backgroundColor: isSel
+                              ? theme.secondary
+                              : pressed
+                              ? theme.muted
+                              : 'transparent',
+                          },
+                        ]}
+                      >
+                        <ThemedText
+                          type="body"
+                          style={{
+                            color: isSel ? theme.foreground : theme.foreground,
+                            fontWeight: isSel ? '600' : '400',
+                            flex: 1,
+                          }}
+                        >
+                          {opt.label}
+                        </ThemedText>
+                        {isSel && <Check size={16} color={theme.foreground} />}
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </Animated.View>
             </View>
-          )}
-          <ScrollView nestedScrollEnabled style={{ maxHeight: searchable ? 220 : 260 }}>
-            {filteredOptions.length === 0 ? (
-              <View style={{ padding: SPACING[4], alignItems: 'center' }}>
-                <ThemedText type="caption" muted>No results found</ThemedText>
-              </View>
-            ) : (
-              filteredOptions.map((o, i) => {
-                const isSelected = o.value === value;
-                return (
-                  <Pressable
-                    key={i}
-                    onPress={() => {
-                      onChange(o.value);
-                      setOpen(false);
-                      setSearchQuery('');
-                    }}
-                    style={({ pressed }) => ({
-                      padding: SPACING[3],
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: SPACING[2],
-                      backgroundColor: pressed || isSelected ? theme.secondary : 'transparent',
-                      borderBottomWidth: i < filteredOptions.length - 1 ? StyleSheet.hairlineWidth : 0,
-                      borderBottomColor: theme.border,
-                    })}
-                  >
-                    {o.icon}
-                    <ThemedText
-                      type="body"
-                      style={{
-                        color: isSelected ? theme.foreground : theme.foreground,
-                        fontWeight: isSelected ? '600' : '400',
-                        flex: 1,
-                      }}
-                    >
-                      {o.label}
-                    </ThemedText>
-                    {isSelected && <Check size={14} color={theme.foreground} />}
-                  </Pressable>
-                );
-              })
-            )}
-          </ScrollView>
-        </View>
+          </View>
+        </Modal>
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  sheetContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  sheetCard: {
+    borderTopLeftRadius: RADIUS['3xl'],
+    borderTopRightRadius: RADIUS['3xl'],
+    borderTopWidth: 1,
+    paddingTop: SPACING[2],
+    maxHeight: '80%',
+  },
+  handleBar: {
+    alignItems: 'center',
+    paddingVertical: SPACING[2],
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+  },
+  sheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING[4],
+    paddingVertical: SPACING[3],
+    borderRadius: RADIUS.lg,
+    gap: SPACING[3],
+  },
+  selectTrigger: {
+    height: 48,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    paddingHorizontal: SPACING[4],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING[4],
+    paddingVertical: SPACING[3],
+    borderRadius: RADIUS.lg,
+  },
+});

@@ -47,22 +47,24 @@ function AppInner() {
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: theme.background },
-            animation: 'fade_from_bottom',
+            animation: Platform.OS === 'ios' ? 'default' : 'slide_from_right',
+            animationDuration: 250,
           }}
         >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade_from_bottom' }} />
           <Stack.Screen
             name="notifications"
             options={{
               headerShown: true,
               headerTitle: 'Notifications',
               headerTransparent: false,
-              headerStyle: { backgroundColor: theme.background },
+              headerStyle: { backgroundColor: theme.glassBackground },
               headerTintColor: theme.foreground,
               headerShadowVisible: false,
               headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+              animation: 'slide_from_right',
             }}
           />
           <Stack.Screen
@@ -71,22 +73,24 @@ function AppInner() {
               headerShown: true,
               headerTitle: 'Profile',
               headerTransparent: false,
-              headerStyle: { backgroundColor: theme.background },
+              headerStyle: { backgroundColor: theme.glassBackground },
               headerTintColor: theme.foreground,
               headerShadowVisible: false,
               headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+              animation: 'slide_from_right',
             }}
           />
           <Stack.Screen
             name="exchanges/[id]"
             options={{
               headerShown: true,
-              headerTitle: 'Exchange',
+              headerTitle: 'Exchange Details',
               headerTransparent: false,
-              headerStyle: { backgroundColor: theme.background },
+              headerStyle: { backgroundColor: theme.glassBackground },
               headerTintColor: theme.foreground,
               headerShadowVisible: false,
               headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+              animation: 'slide_from_right',
             }}
           />
           <Stack.Screen

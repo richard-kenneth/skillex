@@ -185,7 +185,7 @@ export default function PointsScreen() {
 
       <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: 'center' }}>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: SPACING[4], paddingTop: SPACING[4], paddingBottom: insets.bottom + 90, gap: SPACING[4] }}
+          contentContainerStyle={{ paddingHorizontal: SPACING[4], paddingTop: SPACING[4], paddingBottom: insets.bottom + 100, gap: SPACING[4] }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={theme.mutedForeground} colors={[theme.mutedForeground]} />}
         >
@@ -204,7 +204,7 @@ export default function PointsScreen() {
 
           {/* Purchase Points */}
           <Animated.View entering={FadeInDown.duration(400).delay(150)}>
-            <Card>
+            <Card variant="glass">
               <CardHeader>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
                   <View style={{ width: 36, height: 36, borderRadius: RADIUS.lg, backgroundColor: theme.secondary, alignItems: 'center', justifyContent: 'center' }}>
@@ -280,7 +280,7 @@ export default function PointsScreen() {
 
           {/* Withdraw */}
           <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-            <Card>
+            <Card variant="glass">
               <CardHeader>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
                   <View style={{ width: 36, height: 36, borderRadius: RADIUS.lg, backgroundColor: theme.secondary, alignItems: 'center', justifyContent: 'center' }}>

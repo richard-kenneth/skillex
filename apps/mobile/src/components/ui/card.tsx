@@ -11,8 +11,6 @@ import { RADIUS, SPACING, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// ─── Card ───────────────────────────────────────────────────────────────────
-
 export interface CardProps extends ViewProps {
   variant?: 'default' | 'glass' | 'accent' | 'outline';
   glow?: boolean;
@@ -20,16 +18,41 @@ export interface CardProps extends ViewProps {
 
 export function Card({ style, children, variant = 'default', glow, ...rest }: CardProps) {
   const theme = useTheme();
+
+  const getVariantStyle = () => {
+    switch (variant) {
+      case 'glass':
+        return {
+          backgroundColor: theme.glassBackground,
+          borderColor: theme.glassBorder,
+        };
+      case 'accent':
+        return {
+          backgroundColor: theme.secondary,
+          borderColor: theme.border,
+        };
+      case 'outline':
+        return {
+          backgroundColor: 'transparent',
+          borderColor: theme.border,
+        };
+      default:
+        return {
+          backgroundColor: theme.card,
+          borderColor: theme.border,
+        };
+    }
+  };
+
   return (
     <View
       style={[
         {
           borderRadius: RADIUS['2xl'],
           borderWidth: 1,
-          borderColor: theme.border,
-          backgroundColor: theme.card,
           overflow: 'hidden',
         },
+        getVariantStyle(),
         style,
       ]}
       {...rest}
@@ -38,8 +61,6 @@ export function Card({ style, children, variant = 'default', glow, ...rest }: Ca
     </View>
   );
 }
-
-// ─── PressableCard ──────────────────────────────────────────────────────────
 
 export interface PressableCardProps extends PressableProps {
   variant?: 'default' | 'glass' | 'accent' | 'outline';
@@ -72,6 +93,31 @@ export function PressableCard({
     onPressOut?.(e);
   };
 
+  const getVariantStyle = () => {
+    switch (variant) {
+      case 'glass':
+        return {
+          backgroundColor: theme.glassBackground,
+          borderColor: theme.glassBorder,
+        };
+      case 'accent':
+        return {
+          backgroundColor: theme.secondary,
+          borderColor: theme.border,
+        };
+      case 'outline':
+        return {
+          backgroundColor: 'transparent',
+          borderColor: theme.border,
+        };
+      default:
+        return {
+          backgroundColor: theme.card,
+          borderColor: theme.border,
+        };
+    }
+  };
+
   return (
     <AnimatedPressable
       onPressIn={handlePressIn}
@@ -80,10 +126,9 @@ export function PressableCard({
         {
           borderRadius: RADIUS['2xl'],
           borderWidth: 1,
-          borderColor: theme.border,
-          backgroundColor: theme.card,
           overflow: 'hidden',
         },
+        getVariantStyle(),
         animatedStyle,
         style as any,
       ]}

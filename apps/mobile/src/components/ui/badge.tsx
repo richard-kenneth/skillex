@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ViewStyle } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { RADIUS, SPACING, TYPOGRAPHY, getAccent } from '@/constants/theme';
+import { RADIUS, SPACING, getAccent } from '@/constants/theme';
 
 type Variant = 'default' | 'secondary' | 'outline' | 'destructive' | 'success' | 'accent' | 'warning';
 
@@ -26,8 +26,8 @@ export function Badge({
 
   const base: ViewStyle = {
     alignSelf: 'flex-start',
-    paddingHorizontal: SPACING[2],
-    paddingVertical: SPACING[0.5],
+    paddingHorizontal: SPACING[2.5],
+    paddingVertical: 3,
     borderRadius: RADIUS.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -102,6 +102,7 @@ export function Badge({
             height: 5,
             borderRadius: 2.5,
             backgroundColor: _dotColor,
+            flexShrink: 0,
           }}
         />
       )}

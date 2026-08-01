@@ -1,13 +1,88 @@
 import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayoutDashboard, Users, RefreshCw, Coins, User } from 'lucide-react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
-import { RADIUS, SPACING, ICON_SIZE } from '@/constants/theme';
+import { RADIUS, SPACING, ICON_SIZE, SHADOWS, ANIMATION } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from 'lib/i18n';
 import { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs/types';
+
+function AnimatedTabItem({
+  route,
+  isFocused,
+  options,
+  onPress,
+  IconComponent,
+  label,
+}: {
+  route: any;
+  isFocused: boolean;
+  options: any;
+  onPress: () => void;
+  IconComponent: (props: { color: string; size: number }) => React.ReactNode;
+  label: string;
+}) {
+  const theme = useTheme();
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.92, { damping: 12, stiffness: 200 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, ANIMATION.spring as any ?? { damping: 15, stiffness: 150 });
+  };
+
+  return (
+    <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={isFocused ? { selected: true } : {}}
+        accessibilityLabel={options.tabBarAccessibilityLabel}
+        testID={options.tabBarButtonTestID}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={styles.tabItem}
+      >
+        <View
+          style={[
+            styles.iconWrapper,
+            isFocused && {
+              backgroundColor: theme.secondary,
+              borderRadius: RADIUS.pill,
+            },
+          ]}
+        >
+          {IconComponent({
+            color: isFocused ? theme.foreground : theme.mutedForeground,
+            size: ICON_SIZE.lg,
+          })}
+        </View>
+
+        <ThemedText
+          type="badge"
+          style={{
+            color: isFocused ? theme.foreground : theme.mutedForeground,
+            fontWeight: isFocused ? '600' : '400',
+            fontSize: 10,
+            marginTop: 2,
+          }}
+          numberOfLines={1}
+        >
+          {label}
+        </ThemedText>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const theme = useTheme();
@@ -30,18 +105,28 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     profile: t('profile'),
   };
 
+  const bottomInset = Math.max(insets.bottom, 8);
+
   return (
     <View
+      pointerEvents="box-none"
       style={[
-        styles.tabBarWrapper,
+        styles.tabBarFloatingWrapper,
         {
-          paddingBottom: Math.max(insets.bottom, 8),
-          backgroundColor: theme.background,
-          borderTopColor: theme.border,
+          bottom: bottomInset,
         },
       ]}
     >
-      <View style={styles.tabBarContainer}>
+      <View
+        style={[
+          styles.glassDockContainer,
+          {
+            backgroundColor: theme.tabBarBackground,
+            borderColor: theme.tabBarBorder,
+          },
+          SHADOWS.lg,
+        ]}
+      >
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -61,35 +146,15 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           const label = labels[route.name] || options.title || route.name;
 
           return (
-            <Pressable
+            <AnimatedTabItem
               key={route.key}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarButtonTestID}
+              route={route}
+              isFocused={isFocused}
+              options={options}
               onPress={onPress}
-              style={({ pressed }) => [
-                styles.tabItem,
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              {IconComponent({
-                color: isFocused ? theme.foreground : theme.mutedForeground,
-                size: ICON_SIZE.lg,
-              })}
-
-              <ThemedText
-                type="badge"
-                style={{
-                  color: isFocused ? theme.foreground : theme.mutedForeground,
-                  fontWeight: isFocused ? '600' : '400',
-                  marginTop: 2,
-                }}
-                numberOfLines={1}
-              >
-                {label}
-              </ThemedText>
-            </Pressable>
+              IconComponent={IconComponent}
+              label={label}
+            />
           );
         })}
       </View>
@@ -114,23 +179,32 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabBarWrapper: {
+  tabBarFloatingWrapper: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: SPACING[2],
+    left: SPACING[3],
+    right: SPACING[3],
+    alignItems: 'center',
   },
-  tabBarContainer: {
+  glassDockContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
+    width: '100%',
+    maxWidth: 520,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    paddingVertical: SPACING[1.5],
+    paddingHorizontal: SPACING[2],
   },
   tabItem: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 2,
+  },
+  iconWrapper: {
+    width: 38,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

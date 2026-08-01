@@ -3,10 +3,11 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, ArrowLeft, Search } from 'lucide-react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { Avatar } from '@/components/ui/avatar';
 import { useTheme } from '@/hooks/use-theme';
-import { RADIUS, SPACING, ICON_SIZE } from '@/constants/theme';
+import { RADIUS, SPACING, ICON_SIZE, ANIMATION } from '@/constants/theme';
 import { useCurrentUser, useNotifications } from '@/lib/api-hooks';
 
 interface CustomHeaderProps {
@@ -18,6 +19,35 @@ interface CustomHeaderProps {
   showSearch?: boolean;
   rightAction?: React.ReactNode;
   style?: any;
+}
+
+function AnimatedHeaderBtn({
+  onPress,
+  children,
+  style,
+}: {
+  onPress: () => void;
+  children: React.ReactNode;
+  style?: any;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { scale.value = withSpring(0.9, ANIMATION.spring as any ?? { damping: 15, stiffness: 200 }); }}
+        onPressOut={() => { scale.value = withSpring(1, ANIMATION.spring as any ?? { damping: 15, stiffness: 150 }); }}
+        style={style}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
 }
 
 export function CustomHeader({
@@ -48,37 +78,36 @@ export function CustomHeader({
           paddingHorizontal: SPACING[4],
           paddingBottom: SPACING[3],
           borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: theme.border,
-          backgroundColor: theme.background,
+          borderBottomColor: theme.glassBorder,
+          backgroundColor: theme.glassBackground,
         },
         style,
       ]}
     >
       <View style={styles.content}>
         {showBack ? (
-          <Pressable
+          <AnimatedHeaderBtn
             onPress={() => router.back()}
-            style={({ pressed }) => [
+            style={[
               styles.iconBtn,
               { backgroundColor: theme.secondary, borderColor: theme.border },
-              pressed && { opacity: 0.7 },
             ]}
           >
             <ArrowLeft size={ICON_SIZE.md} color={theme.foreground} />
-          </Pressable>
+          </AnimatedHeaderBtn>
         ) : showUser ? (
           <Pressable
             onPress={() => router.push('/(tabs)/profile' as any)}
             style={styles.userSection}
           >
             <Avatar
-              uri={user?.avatar}
+              uri={user?.avatar || (user as any)?.image}
               fallback={user?.name || user?.username || 'U'}
               size={36}
             />
             <View style={styles.userText}>
               <ThemedText type="cardTitle" numberOfLines={1}>
-                {user?.name?.split(' ')[0] || user?.username || 'Hi'}
+                {user?.name?.split(' ')[0] || user?.username || 'Peer Trader'}
               </ThemedText>
               <ThemedText type="caption" muted numberOfLines={1}>
                 {user?.role || 'Skill Exchanger'}
@@ -102,27 +131,25 @@ export function CustomHeader({
 
         <View style={styles.actions}>
           {showSearch && (
-            <Pressable
+            <AnimatedHeaderBtn
               onPress={() => router.push('/explore' as any)}
-              style={({ pressed }) => [
+              style={[
                 styles.iconBtn,
                 { backgroundColor: theme.secondary, borderColor: theme.border },
-                pressed && { opacity: 0.7 },
               ]}
             >
               <Search size={ICON_SIZE.sm} color={theme.foreground} />
-            </Pressable>
+            </AnimatedHeaderBtn>
           )}
 
           {rightAction}
 
           {showNotifications && (
-            <Pressable
+            <AnimatedHeaderBtn
               onPress={() => router.push('/notifications' as any)}
-              style={({ pressed }) => [
+              style={[
                 styles.iconBtn,
                 { backgroundColor: theme.secondary, borderColor: theme.border },
-                pressed && { opacity: 0.7 },
               ]}
             >
               <Bell size={ICON_SIZE.sm} color={theme.foreground} />
@@ -147,7 +174,7 @@ export function CustomHeader({
                   </ThemedText>
                 </View>
               )}
-            </Pressable>
+            </AnimatedHeaderBtn>
           )}
         </View>
       </View>
@@ -167,6 +194,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING[2.5],
     flex: 1,
+    paddingRight: SPACING[2],
   },
   userText: {
     justifyContent: 'center',
@@ -175,6 +203,7 @@ const styles = StyleSheet.create({
   titleSection: {
     justifyContent: 'center',
     flex: 1,
+    paddingRight: SPACING[2],
   },
   actions: {
     flexDirection: 'row',

@@ -78,7 +78,7 @@ export default function ExchangesListScreen() {
           keyExtractor={(e: any) => e.id}
           contentContainerStyle={{
             paddingHorizontal: SPACING[4],
-            paddingBottom: insets.bottom + 90,
+            paddingBottom: insets.bottom + 100,
             gap: SPACING[3],
           }}
           showsVerticalScrollIndicator={false}
@@ -125,7 +125,7 @@ export default function ExchangesListScreen() {
                 <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
                   {t('noExchangesTitle')}
                 </ThemedText>
-                <ThemedText type="caption" muted style={{ textAlign: 'center' }}>
+                <ThemedText type="caption" muted style={{ textAlign: 'center', maxWidth: 280 }}>
                   {t('noExchangesDesc')}
                 </ThemedText>
                 <Button
@@ -169,10 +169,10 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
   return (
     <PressableCard onPress={onPress} style={{ padding: SPACING[4], gap: SPACING[3] }}>
       {/* User row */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
-        <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={42} />
-        <View style={{ flex: 1, gap: 3 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACING[3] }}>
+        <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={44} />
+        <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: SPACING[1.5] }}>
             <ThemedText type="cardTitle">
               {otherUser?.name ?? 'Peer Trader'}
             </ThemedText>
@@ -180,7 +180,7 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
               {labelForStatus(exchange.status, t)}
             </Badge>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1.5], marginTop: 2 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
             <Badge variant="accent" accent="emerald">
               {exchange.taughtSkillName ?? exchange.taughtSkill?.name ?? 'Skill'}
             </Badge>
@@ -259,8 +259,8 @@ function MetaChip({ icon, label, accent }: { icon: React.ReactNode; label: React
         flexDirection: 'row',
         alignItems: 'center',
         gap: SPACING[1.5],
-        paddingHorizontal: SPACING[2],
-        paddingVertical: 3,
+        paddingHorizontal: SPACING[2.5],
+        paddingVertical: 4,
         borderRadius: RADIUS.md,
         backgroundColor: palette ? palette.bg : theme.secondary,
         borderWidth: 1,
@@ -271,7 +271,6 @@ function MetaChip({ icon, label, accent }: { icon: React.ReactNode; label: React
       <ThemedText
         type="badge"
         style={{ color: palette ? palette.main : theme.mutedForeground }}
-        numberOfLines={1}
       >
         {label}
       </ThemedText>

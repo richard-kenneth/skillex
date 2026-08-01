@@ -170,7 +170,7 @@ export default function ProfileScreen() {
       <View style={{ width: "100%", maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: "center" }}>
         <ScrollView
           contentContainerStyle={{
-            paddingBottom: insets.bottom + 90,
+            paddingBottom: insets.bottom + 100,
             paddingHorizontal: SPACING[4],
             paddingTop: SPACING[4],
             width: "100%",
@@ -676,33 +676,40 @@ function AppPreferencesCard() {
           >
             Language
           </ThemedText>
-          <View style={{ flexDirection: "row", gap: SPACING[2] }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}>
             {localeOpts.map((opt) => (
               <Pressable
                 key={opt.value}
                 onPress={() => setLocale(opt.value)}
                 style={{
-                  flex: 1,
-                  padding: SPACING[3],
-                  borderRadius: RADIUS.md,
+                  paddingHorizontal: SPACING[3.5],
+                  paddingVertical: SPACING[2.5],
+                  borderRadius: RADIUS.lg,
                   borderWidth: 1,
                   borderColor:
                     locale === opt.value ? theme.primary : theme.border,
                   backgroundColor:
                     locale === opt.value
-                      ? getAccent("indigo").bg
-                      : theme.backgroundElement,
+                      ? theme.primary
+                      : theme.secondary,
+                  flexDirection: "row",
                   alignItems: "center",
-                  gap: SPACING[1],
+                  gap: SPACING[1.5],
                 }}
               >
                 <Globe2
-                  size={16}
+                  size={15}
                   color={
-                    locale === opt.value ? theme.primary : theme.mutedForeground
+                    locale === opt.value ? theme.primaryForeground : theme.mutedForeground
                   }
                 />
-                <ThemedText type="smallBold" style={{ fontSize: 12 }}>
+                <ThemedText
+                  type="label"
+                  style={{
+                    color: locale === opt.value ? theme.primaryForeground : theme.foreground,
+                    fontWeight: locale === opt.value ? '600' : '400',
+                  }}
+                >
                   {opt.label}
                 </ThemedText>
               </Pressable>
