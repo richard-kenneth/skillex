@@ -26,6 +26,7 @@ import {
   Textarea,
   useToast,
 } from "@/components/ui";
+import { CustomHeader } from "@/components/ui/custom-header";
 import {
   FONT_SIZE,
   getAccent,
@@ -105,6 +106,7 @@ type ProfileTab = "edit" | "skills" | "reviews" | "referrals" | "notifications";
 
 export default function ProfileScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const t = useT('profile');
@@ -135,56 +137,42 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: theme.background }}
-      edges={["top"]}
-    >
-      <ThemedView type="background" style={{ flex: 1, alignItems: "center" }}>
-        {/* Header */}
-        <View
-          style={{
-            width: "100%",
-            maxWidth: MAX_CONTENT_WIDTH,
-            paddingHorizontal: SPACING[5],
-            paddingTop: SPACING[2],
-            paddingBottom: SPACING[4],
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <ThemedText
-            type="title"
-            style={{
-              fontSize: FONT_SIZE["2xl"],
-              fontWeight: "800",
-              letterSpacing: -0.2,
-            }}
-          >
-            {t('title')}
-          </ThemedText>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      {/* Custom Header */}
+      <CustomHeader
+        title="Profile"
+        subtitle="Manage account, skills & preferences"
+        showNotifications={true}
+        showSearch={true}
+        rightAction={
           <Pressable
             onPress={handleSignOut}
             hitSlop={10}
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: RADIUS.pill,
-              backgroundColor: theme.backgroundElement,
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 1,
-              borderColor: theme.border,
-            }}
+            style={({ pressed }) => [
+              {
+                width: 40,
+                height: 40,
+                borderRadius: RADIUS.xl,
+                backgroundColor: getAccent('red').bg,
+                alignItems: "center",
+                justifyContent: "center",
+                borderWidth: 1,
+                borderColor: getAccent('red').border,
+              },
+              pressed && { opacity: 0.8 },
+            ]}
           >
-            <LogOut size={18} color={theme.destructive as any} />
+            <LogOut size={18} color="#f87171" />
           </Pressable>
-        </View>
+        }
+      />
 
+      <View style={{ width: "100%", maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: "center" }}>
         <ScrollView
           contentContainerStyle={{
-            paddingBottom: insets.bottom + SPACING[10],
-            paddingHorizontal: SPACING[5],
+            paddingBottom: insets.bottom + 90,
+            paddingHorizontal: SPACING[4],
+            paddingTop: SPACING[4],
             width: "100%",
             alignItems: "center",
             gap: SPACING[4],
@@ -194,8 +182,8 @@ export default function ProfileScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={theme.primary}
-              colors={[theme.primary]}
+              tintColor={theme.mutedForeground}
+              colors={[theme.mutedForeground]}
             />
           }
           style={{ width: "100%" }}
@@ -208,7 +196,7 @@ export default function ProfileScreen() {
               gap: SPACING[4],
             }}
           >
-            {/* Profile Card */}
+            {/* Profile Header Card */}
             <ProfileHeaderCard user={user} loading={userQ.isLoading} />
 
             {/* Tabs */}
@@ -223,7 +211,7 @@ export default function ProfileScreen() {
                   icon: (
                     <UserRound
                       size={14}
-                      color={tab === "edit" ? "#fff" : theme.mutedForeground}
+                      color={tab === 'edit' ? theme.foreground : theme.mutedForeground}
                     />
                   ),
                 },
@@ -233,7 +221,7 @@ export default function ProfileScreen() {
                   icon: (
                     <GraduationCap
                       size={14}
-                      color={tab === "skills" ? "#fff" : theme.mutedForeground}
+                      color={tab === 'skills' ? theme.foreground : theme.mutedForeground}
                     />
                   ),
                 },
@@ -243,7 +231,7 @@ export default function ProfileScreen() {
                   icon: (
                     <Star
                       size={14}
-                      color={tab === "reviews" ? "#fff" : theme.mutedForeground}
+                      color={tab === 'reviews' ? theme.foreground : theme.mutedForeground}
                     />
                   ),
                 },
@@ -254,7 +242,7 @@ export default function ProfileScreen() {
                     <Gift
                       size={14}
                       color={
-                        tab === "referrals" ? "#fff" : theme.mutedForeground
+                        tab === 'referrals' ? theme.foreground : theme.mutedForeground
                       }
                     />
                   ),
@@ -266,7 +254,7 @@ export default function ProfileScreen() {
                     <Bell
                       size={14}
                       color={
-                        tab === "notifications" ? "#fff" : theme.mutedForeground
+                        tab === 'notifications' ? theme.foreground : theme.mutedForeground
                       }
                     />
                   ),
@@ -284,17 +272,16 @@ export default function ProfileScreen() {
             {tab === "notifications" && <NotificationsPrefsPane />}
           </View>
         </ScrollView>
-      </ThemedView>
-    </SafeAreaView>
+      </View>
+    </View>
   );
 }
 
 /* ---------------------------- Profile Header ---------------------------- */
 
 function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
-  const theme = useTheme();
   const reviewsQ = useMyReviews();
-    const t = useT('profile');
+  const t = useT('profile');
 
   const avg = reviewsQ.data
     ? calculateAverageRating(reviewsQ.data as any[])
@@ -308,7 +295,7 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
   );
 
   return (
-    <Card>
+    <Card variant="glass" glow={true}>
       <CardContent style={{ paddingTop: SPACING[5] }}>
         <View
           style={{
@@ -332,7 +319,8 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                   style={{
                     fontSize: FONT_SIZE["2xl"],
                     fontWeight: "800",
-                    letterSpacing: -0.2,
+                    letterSpacing: -0.3,
+                    color: "#fafafa",
                   }}
                 >
                   {user?.name ?? t('yourName')}
@@ -345,11 +333,11 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                     marginTop: 2,
                   }}
                 >
-                  <Mail size={12} color={theme.mutedForeground} />
+                  <Mail size={13} color="#a1a1aa" />
                   <ThemedText
                     type="small"
                     style={{
-                      color: theme.mutedForeground,
+                      color: "#a1a1aa",
                       fontSize: FONT_SIZE.sm,
                     }}
                     numberOfLines={1}
@@ -361,7 +349,7 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: SPACING[3],
+                    gap: SPACING[2],
                     marginTop: SPACING[2],
                   }}
                 >
@@ -374,18 +362,18 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                   >
                     <Star
                       size={14}
-                      color={getAccent("amber").main}
-                      fill={getAccent("amber").main}
+                      color="#f59e0b"
+                      fill="#f59e0b"
                     />
                     <ThemedText
                       type="smallBold"
-                      style={{ fontSize: FONT_SIZE.sm }}
+                      style={{ fontSize: FONT_SIZE.sm, color: "#fafafa" }}
                     >
-                      {avg.toFixed(1)}
+                      {avg > 0 ? avg.toFixed(1) : 'New'}
                     </ThemedText>
                     <ThemedText
                       type="small"
-                      style={{ color: theme.mutedForeground, fontSize: 11 }}
+                      style={{ color: "#a1a1aa", fontSize: 11 }}
                     >
                       ({count})
                     </ThemedText>
@@ -394,13 +382,13 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                     icon={
                       <GraduationCap
                         size={12}
-                        color={getAccent("emerald").main}
+                        color="#4ade80"
                       />
                     }
                     label={`${offering.length} ${t('teach')}`}
                   />
                   <StatBadge
-                    icon={<BookOpen size={12} color={getAccent("blue").main} />}
+                    icon={<BookOpen size={12} color="#818cf8" />}
                     label={`${seeking.length} ${t('learn')}`}
                   />
                 </View>

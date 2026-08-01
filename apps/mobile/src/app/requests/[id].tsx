@@ -263,7 +263,7 @@ export default function RequestDetailScreen() {
                 isPending={isPending}
                 onQuickReply={async (key) => {
                   try {
-                    await msgQ.mutateAsync({ requestId: id!, messageKey: key });
+                    await msgQ.mutateAsync({ requestId: id!, payload: { messageKey: key } } as any);
                     toast.toast({ title: "Message sent", variant: "success" });
                     await q.refetch();
                   } catch (e: any) {
@@ -565,7 +565,7 @@ function HeaderCard({
               <View style={{ flex: 1, gap: 3 }}>
                 <ThemedText
                   type="title"
-                  style={{ fontSize: FONT_SIZE.xl, fontWeight: "800" }}
+                  style={{ fontSize: FONT_SIZE.xl, fontWeight: '600' }}
                 >
                   {otherUser?.name ?? "Peer"}
                 </ThemedText>
@@ -1788,7 +1788,7 @@ function ActionStrip({
               <CheckCircle2 size={20} color={getAccent("green").main} />
             </View>
             <View style={{ flex: 1 }}>
-              <ThemedText type="default" style={{ fontWeight: "800" }}>
+              <ThemedText type="default" style={{ fontWeight: '600' }}>
                 Exchange is live!
               </ThemedText>
               <ThemedText

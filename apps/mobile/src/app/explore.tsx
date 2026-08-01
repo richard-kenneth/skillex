@@ -1,20 +1,19 @@
 import { Image } from 'expo-image';
 import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ExternalLink } from '@/components/external-link';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { SPACING, MAX_CONTENT_WIDTH, RADIUS } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function TabTwoScreen() {
   const safeAreaInsets = useSafeAreaInsets();
   const insets = {
     ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
+    bottom: safeAreaInsets.bottom + 60 + SPACING[3],
   };
   const theme = useTheme();
 
@@ -26,100 +25,92 @@ export default function TabTwoScreen() {
       paddingBottom: insets.bottom,
     },
     web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
+      paddingTop: SPACING[6],
+      paddingBottom: SPACING[4],
     },
   });
 
   return (
     <ScrollView
       style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
       contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
+      <View style={styles.container}>
+        <View style={styles.titleContainer}>
+          <ThemedText type="screenTitle">Explore</ThemedText>
+          <ThemedText type="bodySmall" muted style={styles.centerText}>
             This starter app includes example{'\n'}code to help you get started.
           </ThemedText>
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
+          <ExternalLink href="https://docs.expo.dev/router/introduction">
+            <View style={[styles.linkButton, { backgroundColor: theme.secondary }]}>
+              <ThemedText type="label">Learn more</ThemedText>
+              <SymbolView
+                name="chevron.right"
+                size={12}
+                weight="medium"
+                tintColor={theme.foreground}
+              />
+            </View>
           </ExternalLink>
-        </ThemedView>
+        </View>
 
-        <ThemedView style={styles.sectionsWrapper}>
+        <View style={styles.sectionsWrapper}>
           <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
+            <ThemedText type="body">
+              This app has two screens:{' '}
+              <ThemedText type="label">app/(tabs)/index.tsx</ThemedText> and{' '}
+              <ThemedText type="label">app/(tabs)/explore.tsx</ThemedText>
             </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
+            <ThemedText type="body" style={{ marginTop: 8 }}>
+              The layout file in <ThemedText type="label">app/(tabs)/_layout.tsx</ThemedText>{' '}
+              sets up the tab navigator.
             </ThemedText>
             <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
+              <ThemedText type="label" style={{ marginTop: 8 }}>Learn more</ThemedText>
             </ExternalLink>
           </Collapsible>
 
           <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              {/* <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              /> */}
-            </ThemedView>
+            <ThemedText type="body">
+              You can open this project on Android, iOS, and the web. To open the web version, press{' '}
+              <ThemedText type="label">w</ThemedText> in the terminal running this project.
+            </ThemedText>
           </Collapsible>
 
           <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
+            <ThemedText type="body">
+              For static images, you can use the <ThemedText type="label">@2x</ThemedText> and{' '}
+              <ThemedText type="label">@3x</ThemedText> suffixes to provide files for
+              different screen densities.
             </ThemedText>
-            {/* <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} /> */}
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
+            <Image
+              source={require('@/assets/images/react-logo.png')}
+              style={styles.imageReact}
+            />
+            <ExternalLink href="https://docs.expo.dev/development/introduction/">
+              <ThemedText type="label" style={{ marginTop: 8 }}>Learn more</ThemedText>
+            </ExternalLink>
+          </Collapsible>
+
+          <Collapsible title="Custom fonts">
+            <ThemedText type="body">
+              Open <ThemedText type="label">app/_layout.tsx</ThemedText> to see how to load{' '}
+              <ThemedText type="body">custom fonts such as Inter.</ThemedText>
+            </ThemedText>
+            <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
+              <ThemedText type="label" style={{ marginTop: 8 }}>Learn more</ThemedText>
             </ExternalLink>
           </Collapsible>
 
           <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
+            <ThemedText type="body">
               This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
+              <ThemedText type="label">useTheme</ThemedText> hook lets you inspect
+              the current theme mode and access themed colors.
             </ThemedText>
           </Collapsible>
-        </ThemedView>
-        {/* {Platform.OS === 'web' && <WebBadge />} */}
-      </ThemedView>
+        </View>
+      </View>
     </ScrollView>
   );
 }
@@ -133,14 +124,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   container: {
-    maxWidth: MaxContentWidth,
+    maxWidth: MAX_CONTENT_WIDTH,
     flexGrow: 1,
   },
   titleContainer: {
-    gap: Spacing.three,
+    gap: SPACING[3],
     alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    paddingHorizontal: SPACING[4],
+    paddingVertical: SPACING[6],
   },
   centerText: {
     textAlign: 'center',
@@ -150,30 +141,22 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
+    paddingHorizontal: SPACING[4],
+    paddingVertical: SPACING[2],
+    borderRadius: RADIUS.md,
     justifyContent: 'center',
-    gap: Spacing.one,
+    gap: SPACING[1],
     alignItems: 'center',
   },
   sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-  },
-  collapsibleContent: {
-    alignItems: 'center',
-  },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
+    gap: SPACING[5],
+    paddingHorizontal: SPACING[4],
+    paddingTop: SPACING[3],
   },
   imageReact: {
     width: 100,
     height: 100,
     alignSelf: 'center',
+    marginTop: SPACING[3],
   },
 });

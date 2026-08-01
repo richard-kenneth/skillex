@@ -8,11 +8,17 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { useTheme } from '@/hooks/use-theme';
-import { FONT_SIZE, FONT_WEIGHT, RADIUS, SPACING } from '@/constants/theme';
-import { cn } from '@/lib/style-utils';
+import { FONT_SIZE, FONT_WEIGHT, RADIUS, SPACING, TYPOGRAPHY } from '@/constants/theme';
 
-type Variant = 'default' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+type Variant = 'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
 type Size = 'sm' | 'md' | 'lg' | 'icon';
 
 export interface ButtonProps extends Omit<PressableProps, 'children'> {
@@ -35,18 +41,34 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
     rightIcon,
     children,
     style,
+    onPressIn,
+    onPressOut,
     ...rest
   },
   ref
 ) {
   const theme = useTheme();
   const isDisabled = disabled || loading;
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = (e: any) => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    onPressIn?.(e);
+  };
+
+  const handlePressOut = (e: any) => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    onPressOut?.(e);
+  };
 
   const base: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: RADIUS.md,
     overflow: 'hidden',
   };
 
@@ -54,8 +76,13 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
     default: {
       backgroundColor: theme.primary,
     },
+    primary: {
+      backgroundColor: theme.primary,
+    },
     secondary: {
       backgroundColor: theme.secondary,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     outline: {
       backgroundColor: 'transparent',
@@ -78,73 +105,70 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
       paddingHorizontal: SPACING[3],
       paddingVertical: SPACING[1.5],
       minHeight: 32,
-      gap: SPACING[1],
+      borderRadius: RADIUS.md,
+      gap: SPACING[1.5],
     },
     md: {
       paddingHorizontal: SPACING[4],
-      paddingVertical: SPACING[2],
+      paddingVertical: SPACING[2.5],
       minHeight: 40,
+      borderRadius: RADIUS.lg,
       gap: SPACING[2],
     },
     lg: {
       paddingHorizontal: SPACING[6],
       paddingVertical: SPACING[3],
       minHeight: 48,
+      borderRadius: RADIUS.xl,
       gap: SPACING[2],
     },
     icon: {
       padding: 0,
       width: 40,
       height: 40,
+      borderRadius: RADIUS.lg,
     },
   };
 
   const textColors: Record<Variant, string> = {
     default: theme.primaryForeground,
+    primary: theme.primaryForeground,
     secondary: theme.secondaryForeground,
     outline: theme.foreground,
     ghost: theme.foreground,
     destructive: theme.destructiveForeground,
-    link: theme.primary,
+    link: theme.foreground,
   };
 
-  const textSizes: Record<Size, { fontSize: number; fontWeight: any }> = {
-    sm: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium },
-    md: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.medium },
-    lg: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.semibold },
-    icon: { fontSize: FONT_SIZE.base, fontWeight: FONT_WEIGHT.medium },
-  };
+  const textVariant = size === 'sm' ? TYPOGRAPHY.buttonSm : TYPOGRAPHY.button;
 
   return (
-    <Pressable
+    <AnimatedPressable
       ref={ref}
       disabled={isDisabled}
       accessibilityRole="button"
-      style={({ pressed }) =>
-        cn(
-          base,
-          variants[variant],
-          sizes[size],
-          pressed && { opacity: variant === 'link' ? 0.6 : 0.85 },
-          isDisabled && { opacity: 0.5 },
-          style
-        )
-      }
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[
+        base,
+        variants[variant],
+        sizes[size],
+        animatedStyle,
+        isDisabled && { opacity: 0.5 },
+        style as any,
+      ]}
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator
-          size={size === 'sm' || size === 'icon' ? 'small' : 'small'}
-          color={textColors[variant]}
-        />
+        <ActivityIndicator size="small" color={textColors[variant]} />
       ) : (
         <>
           {leftIcon ? <View style={styles.iconSlot}>{leftIcon}</View> : null}
           {typeof children === 'string' || typeof children === 'number' ? (
             <Text
               style={[
+                textVariant,
                 { color: textColors[variant] },
-                textSizes[size],
                 variant === 'link' && { textDecorationLine: 'underline' as const },
               ]}
               numberOfLines={1}
@@ -157,7 +181,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
           {rightIcon ? <View style={styles.iconSlot}>{rightIcon}</View> : null}
         </>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 });
 
@@ -165,5 +189,6 @@ const styles = StyleSheet.create({
   iconSlot: {
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
 });

@@ -1,9 +1,8 @@
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { RADIUS } from '@/constants/theme';
-import { cn } from '@/lib/style-utils';
 import { Image as ExpoImage } from 'expo-image';
 
 interface AvatarProps {
@@ -24,20 +23,20 @@ export function Avatar({
   const theme = useTheme();
   return (
     <View
-      style={cn(
+      style={[
         {
           width: size,
           height: size,
-          borderRadius: rounded ? RADIUS.pill : RADIUS.md,
-          backgroundColor: theme.muted,
+          borderRadius: rounded ? size / 2 : RADIUS.lg,
+          backgroundColor: theme.secondary,
           overflow: 'hidden',
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: theme.border,
         },
-        style
-      )}
+        style,
+      ]}
     >
       {uri ? (
         <ExpoImage
@@ -49,9 +48,9 @@ export function Avatar({
       ) : (
         <ThemedText
           style={{
-            fontSize: Math.round(size * 0.4),
-            fontWeight: '700',
-            color: theme.foreground,
+            fontSize: Math.round(size * 0.38),
+            fontWeight: '500',
+            color: theme.mutedForeground,
           }}
           numberOfLines={1}
         >

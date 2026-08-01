@@ -2,22 +2,22 @@ import React from 'react';
 import { View, ViewStyle } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { FONT_SIZE, RADIUS, SPACING, getAccent } from '@/constants/theme';
-import { cn } from '@/lib/style-utils';
+import { RADIUS, SPACING, TYPOGRAPHY, getAccent } from '@/constants/theme';
 
-type Variant = 'default' | 'secondary' | 'outline' | 'destructive' | 'success' | 'accent';
+type Variant = 'default' | 'secondary' | 'outline' | 'destructive' | 'success' | 'accent' | 'warning';
 
 export interface BadgeProps {
   children: React.ReactNode;
   variant?: Variant;
-  /** Shared accent name from business helpers: "purple" | "green" | "red" | "blue" | "amber" ... */
+  dot?: boolean;
   accent?: string;
   style?: ViewStyle;
 }
 
 export function Badge({
   children,
-  variant = 'default',
+  variant = 'secondary',
+  dot = false,
   accent,
   style,
 }: BadgeProps) {
@@ -26,64 +26,89 @@ export function Badge({
 
   const base: ViewStyle = {
     alignSelf: 'flex-start',
-    paddingHorizontal: SPACING[2.5],
+    paddingHorizontal: SPACING[2],
     paddingVertical: SPACING[0.5],
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
+    borderRadius: RADIUS.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING[1],
   };
 
-  const variants: Record<Variant, ViewStyle & { color: string }> = {
+  type VariantStyle = ViewStyle & { _textColor: string; _dotColor: string };
+
+  const variants: Record<Variant, VariantStyle> = {
     default: {
       backgroundColor: theme.primary,
-      borderColor: theme.primary,
-      color: theme.primaryForeground,
+      _textColor: theme.primaryForeground,
+      _dotColor: theme.primaryForeground,
     },
     secondary: {
       backgroundColor: theme.secondary,
-      borderColor: theme.secondary,
-      color: theme.secondaryForeground,
+      borderWidth: 1,
+      borderColor: theme.border,
+      _textColor: theme.mutedForeground,
+      _dotColor: theme.mutedForeground,
     },
     outline: {
       backgroundColor: 'transparent',
+      borderWidth: 1,
       borderColor: theme.border,
-      color: theme.foreground,
+      _textColor: theme.foreground,
+      _dotColor: theme.mutedForeground,
     },
     destructive: {
-      backgroundColor: 'rgba(239,68,68,0.15)',
-      borderColor: 'rgba(239,68,68,0.3)',
-      color: '#f87171',
+      backgroundColor: theme.destructive,
+      _textColor: theme.destructiveForeground,
+      _dotColor: theme.destructiveForeground,
     },
     success: {
-      backgroundColor: 'rgba(34,197,94,0.15)',
-      borderColor: 'rgba(34,197,94,0.3)',
-      color: '#4ade80',
+      backgroundColor: getAccent('green').bg,
+      borderWidth: 1,
+      borderColor: getAccent('green').border,
+      _textColor: getAccent('green').main,
+      _dotColor: getAccent('green').main,
+    },
+    warning: {
+      backgroundColor: getAccent('amber').bg,
+      borderWidth: 1,
+      borderColor: getAccent('amber').border,
+      _textColor: getAccent('amber').main,
+      _dotColor: getAccent('amber').main,
     },
     accent: accentPalette
       ? {
           backgroundColor: accentPalette.bg,
+          borderWidth: 1,
           borderColor: accentPalette.border,
-          color: accentPalette.main,
+          _textColor: accentPalette.main,
+          _dotColor: accentPalette.main,
         }
       : {
-          backgroundColor: theme.primary,
-          borderColor: theme.primary,
-          color: theme.primaryForeground,
+          backgroundColor: theme.secondary,
+          _textColor: theme.mutedForeground,
+          _dotColor: theme.mutedForeground,
         },
   };
 
   const chosen = variants[variant];
+  const { _textColor, _dotColor, ...viewStyle } = chosen;
 
   return (
-    <View style={cn(base, chosen, { color: undefined } as any, style)}>
+    <View style={[base, viewStyle, style]}>
+      {dot && (
+        <View
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: 2.5,
+            backgroundColor: _dotColor,
+          }}
+        />
+      )}
       <ThemedText
-        type="smallBold"
+        type="badge"
         style={{
-          color: chosen.color,
-          fontSize: FONT_SIZE.sm,
-          lineHeight: 18,
+          color: _textColor,
         }}
       >
         {children}

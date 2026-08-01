@@ -1,59 +1,29 @@
 /**
- * Lightweight toast (snackbar) system — a context provider + useToast() hook.
- * Mirrors the web's Sonner API shape (toast({ title, description, … })).
+ * Toast system — context provider + useToast() hook.
  */
-import { ThemedText } from "@/components/themed-text";
-import {
-  FONT_SIZE,
-  MAX_CONTENT_WIDTH,
-  RADIUS,
-  SPACING,
-} from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { cn } from "@/lib/style-utils";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Info,
-  X,
-  XCircle,
-} from "lucide-react-native";
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import {
-  Animated,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StatusBar,
-  StyleSheet,
-  View,
-} from "react-native";
+import { ThemedText } from '@/components/themed-text';
+import { FONT_SIZE, MAX_CONTENT_WIDTH, RADIUS, SPACING } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react-native';
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { Modal, Platform, Pressable, StatusBar, StyleSheet, View } from 'react-native';
+import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 
-export type ToastVariant = "default" | "success" | "error" | "warning" | "info";
+export type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info';
 
 export interface ToastOptions {
   id?: string;
   title: string;
   description?: string;
   variant?: ToastVariant;
-  duration?: number; // ms
+  duration?: number;
   action?: { label: string; onPress: () => void };
 }
 
-export interface ToastItem extends Required<
-  Pick<ToastOptions, "id" | "variant" | "duration">
-> {
+export interface ToastItem extends Required<Pick<ToastOptions, 'id' | 'variant' | 'duration'>> {
   title: string;
   description?: string;
-  action?: ToastOptions["action"];
+  action?: ToastOptions['action'];
   createdAt: number;
 }
 
@@ -79,12 +49,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = useCallback(
     (opts: ToastOptions): string => {
       const id = opts.id ?? Math.random().toString(36).slice(2);
-      const duration = opts.duration ?? 3800;
+      const duration = opts.duration ?? 3500;
       const item: ToastItem = {
         id,
         title: opts.title,
         description: opts.description,
-        variant: opts.variant ?? "default",
+        variant: opts.variant ?? 'default',
         duration,
         action: opts.action,
         createdAt: Date.now(),
@@ -110,97 +80,39 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export function useToast() {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used within ToastProvider");
+  if (!ctx) throw new Error('useToast must be used within ToastProvider');
   return ctx;
 }
 
-function ToastStack({
-  items,
-  onDismiss,
-}: {
-  items: ToastItem[];
-  onDismiss: (id: string) => void;
-}) {
-  const theme = useTheme();
+function ToastStack({ items, onDismiss }: { items: ToastItem[]; onDismiss: (id: string) => void }) {
   return (
-    <Modal
-      visible={items.length > 0}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={() => {}}
-    >
+    <Modal visible={items.length > 0} transparent animationType="none" statusBarTranslucent onRequestClose={() => {}}>
       <StatusBar backgroundColor="transparent" barStyle="light-content" />
       <View style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        <View
           style={{
-            position: "absolute",
-            top: Platform.OS === "android" ? 8 : 52,
+            position: 'absolute',
+            top: Platform.OS === 'android' ? 8 : 52,
             left: 0,
             right: 0,
-            alignItems: "center",
+            alignItems: 'center',
             paddingHorizontal: SPACING[3],
           }}
         >
-          <View
-            style={{
-              width: "100%",
-              maxWidth: MAX_CONTENT_WIDTH,
-              gap: SPACING[2],
-            }}
-          >
+          <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, gap: SPACING[2] }}>
             {items.map((t) => (
               <ToastCard key={t.id} item={t} onDismiss={onDismiss} />
             ))}
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </View>
     </Modal>
   );
 }
 
-function ToastCard({
-  item,
-  onDismiss,
-}: {
-  item: ToastItem;
-  onDismiss: (id: string) => void;
-}) {
+function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: string) => void }) {
   const theme = useTheme();
-  const opacity = React.useRef(new Animated.Value(0)).current;
-  const translateY = React.useRef(new Animated.Value(-10)).current;
-
-  React.useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 220,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 260,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    return () => {
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: 160,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: -8,
-          duration: 180,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    };
-  }, [opacity, translateY]);
-
-  const palette = getToastPalette(item.variant);
+  const palette = getToastPalette(item.variant, theme);
 
   const Icon = {
     default: Info,
@@ -211,70 +123,40 @@ function ToastCard({
   }[item.variant];
 
   return (
-    <Animated.View
-      style={{
-        opacity,
-        transform: [{ translateY }],
-      }}
-    >
+    <Animated.View entering={FadeInUp.duration(250).springify()} exiting={FadeOutUp.duration(200)}>
       <Pressable
         onPress={() => onDismiss(item.id)}
-        style={cn(
-          {
-            borderRadius: RADIUS.lg,
-            borderWidth: 1,
-            borderColor: palette.border,
-            backgroundColor: theme.card,
-            padding: SPACING[3],
-            paddingRight: SPACING[10],
-            gap: SPACING[1],
-            shadowColor: "#000",
-            shadowOpacity: 0.25,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 8,
-          },
-          styles.toastCard,
-        )}
+        style={{
+          borderRadius: RADIUS.xl,
+          borderWidth: 1,
+          borderColor: palette.border,
+          backgroundColor: theme.card,
+          padding: SPACING[3],
+          paddingRight: SPACING[10],
+          gap: SPACING[1],
+          shadowColor: '#000',
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 8,
+        }}
       >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "flex-start",
-            gap: SPACING[3],
-          }}
-        >
-          <View style={{ marginTop: 2 }}>
-            <Icon size={20} color={palette.icon} />
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACING[3] }}>
+          <View style={{ marginTop: 1 }}>
+            <Icon size={18} color={palette.icon} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
-            <ThemedText
-              type="smallBold"
-              style={{
-                fontSize: FONT_SIZE.md,
-                color: theme.foreground,
-              }}
-            >
+            <ThemedText type="label" style={{ fontSize: FONT_SIZE.md }}>
               {item.title}
             </ThemedText>
             {item.description ? (
-              <ThemedText
-                type="small"
-                style={{
-                  color: theme.mutedForeground,
-                  fontSize: FONT_SIZE.sm,
-                  lineHeight: 18,
-                }}
-              >
+              <ThemedText type="caption" muted>
                 {item.description}
               </ThemedText>
             ) : null}
           </View>
-          <Pressable
-            onPress={() => onDismiss(item.id)}
-            style={{ padding: 4, marginTop: -4 }}
-          >
-            <X size={16} color={theme.mutedForeground} />
+          <Pressable onPress={() => onDismiss(item.id)} style={{ padding: 4, marginTop: -4 }}>
+            <X size={14} color={theme.mutedForeground} />
           </Pressable>
         </View>
       </Pressable>
@@ -282,27 +164,24 @@ function ToastCard({
   );
 }
 
-function getToastPalette(variant: ToastVariant) {
+function getToastPalette(variant: ToastVariant, theme: any) {
   switch (variant) {
-    case "success":
-      return { border: "#22c55e33", icon: "#22c55e" };
-    case "error":
-      return { border: "#ef444433", icon: "#ef4444" };
-    case "warning":
-      return { border: "#f59e0b33", icon: "#f59e0b" };
-    case "info":
-      return { border: "#3b82f633", icon: "#3b82f6" };
+    case 'success':
+      return { border: 'rgba(34,197,94,0.20)', icon: '#22c55e' };
+    case 'error':
+      return { border: 'rgba(239,68,68,0.20)', icon: '#ef4444' };
+    case 'warning':
+      return { border: 'rgba(245,158,11,0.20)', icon: '#f59e0b' };
+    case 'info':
+      return { border: 'rgba(59,130,246,0.20)', icon: '#3b82f6' };
     default:
-      return { border: "#71717a33", icon: "#a1a1aa" };
+      return { border: theme.border, icon: theme.mutedForeground };
   }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
-  },
-  toastCard: {
-    maxWidth: "100%",
+    backgroundColor: 'transparent',
   },
 });

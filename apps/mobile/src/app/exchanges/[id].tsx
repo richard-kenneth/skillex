@@ -57,6 +57,8 @@ import {
   MessageCircle,
   MessageSquare,
   MoreHorizontal,
+  Play,
+  Send,
   ShieldCheck,
   Star,
   Video,
@@ -64,7 +66,7 @@ import {
   Zap,
 } from "lucide-react-native";
 import React from "react";
-import { Pressable, RefreshControl, ScrollView, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, ScrollView, TextInput, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -120,10 +122,10 @@ export default function ExchangeDetailScreen() {
         sessionId,
         status,
       });
-      toast.success(`Session marked as ${status.toLowerCase()}`);
+      toast.toast({ title: `Session marked as ${status.toLowerCase()}`, variant: 'success' });
       q.refetch();
     } catch (err) {
-      toast.error("Failed to update session status");
+      toast.toast({ title: "Failed to update session status", variant: 'error' });
     }
   };
 
@@ -132,7 +134,7 @@ export default function ExchangeDetailScreen() {
       const data = await recordingPlaybackQ.mutateAsync(recordingId);
       setPlaybackUrl(data.url);
     } catch (err) {
-      toast.error("Failed to load recording");
+      toast.toast({ title: "Failed to load recording", variant: 'error' });
     }
   };
 
@@ -250,7 +252,7 @@ export default function ExchangeDetailScreen() {
                       <View style={{ flex: 1, gap: 3 }}>
                         <ThemedText
                           type="title"
-                          style={{ fontSize: FONT_SIZE.xl, fontWeight: "800" }}
+                          style={{ fontSize: FONT_SIZE.xl, fontWeight: '600' }}
                         >
                           {other.name ?? "Peer"}
                         </ThemedText>

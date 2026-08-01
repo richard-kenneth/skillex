@@ -626,14 +626,14 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   }
 
   function useRecordingEstimate(
-    room: string,
-    options?: Omit<UseQueryOptions<RecordingEstimate, Error, RecordingEstimate>, "queryKey" | "queryFn">
+    options?: Omit<
+      UseMutationOptions<RecordingEstimate, Error, string>,
+      "mutationFn"
+    >
   ) {
-    return useQuery<RecordingEstimate, Error>({
-      queryKey: QUERY_KEYS.video.estimate(room),
-      queryFn: () => client.video.record.estimate(room),
-      enabled: !!room,
-      ...(options),
+    return useMutation<RecordingEstimate, Error, string>({
+      mutationFn: (r) => client.video.record.estimate(r),
+      ...options,
     });
   }
 

@@ -147,16 +147,17 @@ type RecordingSignal =
 
 function RecordingDataChannelHandler({ onInboundSignal, setSendSignal }: any) {
   const { send } = useDataChannel('recording', (message) => {
-    const rawString = new TextDecoder().decode(message.payload);
+    const Decoder = (globalThis as any).TextDecoder ?? String;
+    const rawString = typeof Decoder === 'function' ? new Decoder().decode(message.payload) : String.fromCharCode.apply(null, Array.from(message.payload));
     onInboundSignal(rawString);
   });
 
   React.useEffect(() => {
     if (send) {
-      // React state requires us to wrap functions in an anonymous function 
-      // so it doesn't execute it as a state updater
       setSendSignal(() => (signal: RecordingSignal) => {
-        const payload = new TextEncoder().encode(JSON.stringify(signal));
+        const Encoder = (globalThis as any).TextEncoder;
+        const str = JSON.stringify(signal);
+        const payload = Encoder ? new Encoder().encode(str) : new Uint8Array(str.split('').map(c => c.charCodeAt(0)));
         send(payload, { reliable: true });
       });
     }
@@ -314,7 +315,7 @@ export default function RoomScreen() {
   async function beginRecording() {
     try {
       setRecordingState('starting');
-      await startRecQ.mutateAsync(sessionId);
+      await startRecQ.mutateAsync({exchangeSessionId: sessionId});
       // Backend will emit recording_started signal. If not wired, guard it:
       setTimeout(() => {
         if (recordingStateRef.current === 'starting') {
@@ -388,7 +389,7 @@ export default function RoomScreen() {
 
   async function handleStopRecording() {
     try {
-      await stopRecQ.mutateAsync(sessionId);
+      await stopRecQ.mutateAsync({exchangeSessionId: sessionId});
       sendSignal({ type: 'recording_stopped' });
       setRecordingState('processing');
       setTimeout(() => {
@@ -419,7 +420,7 @@ export default function RoomScreen() {
     const text = chatText.trim();
     if (!text) return;
     try {
-      await sendMsgQ.mutateAsync({ sessionId, message: text });
+      await sendMsgQ.mutateAsync({ exchangeSessionId: sessionId, message: text });
       setChatText('');
       await chatMsgsQ.refetch();
       setTimeout(() => {
@@ -438,7 +439,7 @@ export default function RoomScreen() {
             <View style={{ width: 56, height: 56, borderRadius: RADIUS.pill, backgroundColor: getAccent('red').bg, alignItems: 'center', justifyContent: 'center' }}>
               <AlertCircle size={24} color={getAccent('red').main} />
             </View>
-            <ThemedText type="title" style={{ fontSize: FONT_SIZE.xl, fontWeight: '800' }}>
+            <ThemedText type="title" style={{ fontSize: FONT_SIZE.xl, fontWeight: '600' }}>
               {t('cantJoinSession')}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
@@ -466,7 +467,7 @@ export default function RoomScreen() {
         {loading ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[3] }}>
             <Loader2 size={32} color={theme.primary} />
-            <ThemedText type="small" style={{ color: '#a1a1aa' }}>
+            <ThemedText type="small" style={{ color: theme.mutedForeground }}>
               {t('connecting')}
             </ThemedText>
           </View>
@@ -477,7 +478,6 @@ export default function RoomScreen() {
             connect={true}
             audio={true}
             video={true}
-            camera={true}
             onDisconnected={() => handleLeave(false)}
           >
             {/* Bridges the LiveKit context data channel back to RoomScreen state */}
@@ -767,6 +767,7 @@ function TopBar({
   now,
 }: any) {
   const theme = useTheme();
+  const t = useT('room');
   const recRemain =
     recordingStopAt
       ? formatTimeRemaining(Math.max(0, recordingStopAt - now))
@@ -787,7 +788,7 @@ function TopBar({
             <ArrowLeft size={18} color="#fff" />
           </Pressable>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-            <CalendarClock size={14} color="#a1a1aa" />
+            <CalendarClock size={14} color={theme.mutedForeground} />
             <ThemedText type="smallBold" style={{ fontSize: 12, color: '#e4e4e7' }}>
               {sessionStartTime ? formatDateTimeShort(sessionStartTime) : t('session')}
             </ThemedText>
@@ -797,7 +798,7 @@ function TopBar({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
           {recordingState === 'recording' || recordingState === 'starting' ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.pill, backgroundColor: '#3f1414' }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#ef4444' }} />
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.destructive }} />
               <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fecaca' }}>
                 REC
               </ThemedText>
@@ -818,7 +819,7 @@ function TopBar({
           ) : null}
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.pill, backgroundColor: '#18181b' }}>
-            <Clock size={12} color="#a1a1aa" />
+            <Clock size={12} color={theme.mutedForeground} />
             <ThemedText type="smallBold" style={{ fontSize: 11, color: '#e4e4e7' }}>
               {remainingStr ?? '--:--'}
             </ThemedText>
@@ -838,6 +839,7 @@ function RoomBody({
   me,
 }: any) {
   const theme = useTheme();
+  const t = useT('room');
   const participants = useParticipants();
   const room = useRoomContext();
   const localParticipant = room?.localParticipant;
@@ -863,7 +865,7 @@ function RoomBody({
               <ThemedText type="smallBold" style={{ fontSize: 12 }}>
                 {t('liveSessionReady')}
               </ThemedText>
-              <ThemedText type="small" style={{ color: '#71717a', fontSize: 11 }}>
+              <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: 11 }}>
                 {session?.duration ? `${session.duration} ${t('minutes')} · ${session.taughtSkillName ?? t('skillExchange')}` : t('inSessionRoom')}
               </ThemedText>
             </View>
@@ -893,6 +895,7 @@ function RoomBody({
 }
 
 function ParticipantGrid({ participants, partner, me }: any) {
+  const t = useT('room');
   return (
     <View style={{ flex: 1, flexDirection: 'row', gap: SPACING[3] }}>
       {participants.map((participant: any) => {
@@ -954,6 +957,7 @@ function ParticipantGrid({ participants, partner, me }: any) {
 
 function ChatBody({ messages, loading, me, onRefresh, flatRef }: any) {
   const theme = useTheme();
+  const t = useT('room');
   const refreshing = React.useRef(false);
   return (
     <View style={{ flex: 1, backgroundColor: '#050505' }}>
@@ -969,7 +973,7 @@ function ChatBody({ messages, loading, me, onRefresh, flatRef }: any) {
           <ThemedText type="default" style={{ color: '#e4e4e7', fontWeight: '700' }}>
             {t('noMessagesYet')}
           </ThemedText>
-          <ThemedText type="small" style={{ color: '#71717a', textAlign: 'center' }}>
+          <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
             {t('noMessagesDesc')}
           </ThemedText>
         </View>
@@ -1028,6 +1032,7 @@ function ControlsBar({
   chatBadge,
 }: any) {
   const theme = useTheme();
+  const t = useT('room');
   const room = useRoomContext();
   const localParticipant = room?.localParticipant;
   

@@ -1,59 +1,25 @@
 import React from 'react';
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  View,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FlatList, RefreshControl, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/use-theme';
-import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
+import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH, ICON_SIZE } from '@/constants/theme';
 import { useT } from 'lib/i18n';
 import {
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  Separator,
-  SkeletonText,
-  Tabs,
-  Progress,
-  useToast,
+  Avatar, Badge, Button, PressableCard, SkeletonText, Tabs,
 } from '@/components/ui';
+import { Progress } from '@/components/ui/form';
+import { CustomHeader } from '@/components/ui/custom-header';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { useCurrentUser, useExchanges } from '@/lib/api-hooks';
 import {
-  useCurrentUser,
-  useExchanges,
-} from '@/lib/api-hooks';
-import {
-  getExchangeStatusColor,
-  calculateExchangeProgress,
-  calculatePointsBreakdown,
-  formatDateShort,
-  formatDateTimeShort,
+  getExchangeStatusColor, calculateExchangeProgress,
+  calculatePointsBreakdown, formatDateShort, formatDateTimeShort,
 } from '@skil-ex2/shared';
 import {
-  ArrowRightLeft,
-  Handshake,
-  Clock,
-  CalendarCheck,
-  Video,
-  CheckCircle2,
-  ChevronRight,
-  AlertCircle,
-  XCircle,
-  Coins,
-  Zap,
-  FileCheck2,
-  GraduationCap,
-  BookOpen,
+  ArrowRightLeft, Handshake, CalendarCheck, Video, ChevronRight, Coins, Users,
 } from 'lucide-react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 type Filter = 'all' | 'active' | 'completed' | 'cancelled';
 
@@ -61,7 +27,6 @@ export default function ExchangesListScreen() {
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const toast = useToast();
   const t = useT('exchanges');
 
   const exchangesQ = useExchanges();
@@ -72,289 +37,220 @@ export default function ExchangesListScreen() {
 
   const filtered = React.useMemo(() => {
     if (filter === 'active')
-      return all.filter((e: any) => ['COMMITTED', 'IN_PROGRESS'].includes(e.status));
+      return all.filter((e: any) => ['COMMITTED', 'IN_PROGRESS', 'ACCEPTED', 'SCHEDULED'].includes(e.status));
     if (filter === 'completed') return all.filter((e: any) => e.status === 'COMPLETED');
     if (filter === 'cancelled')
-      return all.filter((e: any) => ['CANCELLED'].includes(e.status));
+      return all.filter((e: any) => ['CANCELLED', 'REJECTED', 'EXPIRED'].includes(e.status));
     return all;
   }, [all, filter]);
 
   const activeCount = all.filter((e: any) =>
-    ['COMMITTED', 'IN_PROGRESS'].includes(e.status)
+    ['COMMITTED', 'IN_PROGRESS', 'ACCEPTED', 'SCHEDULED'].includes(e.status),
   ).length;
   const completedCount = all.filter((e: any) => e.status === 'COMPLETED').length;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={['top']}>
-      <ThemedView type="background" style={{ flex: 1, alignItems: 'center' }}>
-        <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, flex: 1 }}>
-          <View
-            style={{
-              paddingHorizontal: SPACING[5],
-              paddingTop: SPACING[2],
-              paddingBottom: SPACING[4],
-              gap: SPACING[3],
-            }}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View>
-                <ThemedText type="title" style={{ fontSize: FONT_SIZE['2xl'], fontWeight: '800', letterSpacing: -0.2 }}>
-                  {t('title')}
-                </ThemedText>
-                <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
-                  {activeCount} {t('statusActive')} · {completedCount} {t('statusCompleted')}
-                </ThemedText>
-              </View>
-              <Button
-                size="sm"
-                variant="outline"
-                onPress={() => router.push('/(tabs)/matches' as any)}
-                leftIcon={<Handshake size={14} color={theme.foreground} />}
-              >
-                Matches
-              </Button>
-            </View>
-            <Tabs<Filter>
-              variant="pills"
-              value={filter}
-              onChange={setFilter}
-              items={[
-                { value: 'all', label: t('statusAll') },
-                { value: 'active', label: t('statusActive'), badge: activeCount || undefined },
-                { value: 'completed', label: t('statusCompleted'), badge: completedCount || undefined },
-                { value: 'cancelled', label: t('statusCancelled') },
-              ]}
-            />
-          </View>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <CustomHeader
+        title="Exchanges"
+        subtitle={`${activeCount} Active · ${completedCount} Completed`}
+        showNotifications
+        showSearch
+      />
 
-          <FlatList
-            data={filtered}
-            keyExtractor={(e: any) => e.id}
-            contentContainerStyle={{
-              paddingHorizontal: SPACING[5],
-              paddingBottom: insets.bottom + SPACING[10],
-              gap: SPACING[3],
-            }}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={async () => {
-                  setRefreshing(true);
-                  await exchangesQ.refetch();
-                  setRefreshing(false);
+      <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: 'center' }}>
+        <View style={{ paddingHorizontal: SPACING[4], paddingVertical: SPACING[3] }}>
+          <Tabs<Filter>
+            variant="pills"
+            value={filter}
+            onChange={setFilter}
+            items={[
+              { value: 'all', label: t('statusAll') },
+              { value: 'active', label: t('statusActive'), badge: activeCount || undefined },
+              { value: 'completed', label: t('statusCompleted'), badge: completedCount || undefined },
+              { value: 'cancelled', label: t('statusCancelled') },
+            ]}
+          />
+        </View>
+
+        <FlatList
+          data={filtered}
+          keyExtractor={(e: any) => e.id}
+          contentContainerStyle={{
+            paddingHorizontal: SPACING[4],
+            paddingBottom: insets.bottom + 90,
+            gap: SPACING[3],
+          }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={async () => {
+                setRefreshing(true);
+                await exchangesQ.refetch();
+                setRefreshing(false);
+              }}
+              tintColor={theme.mutedForeground}
+              colors={[theme.mutedForeground]}
+            />
+          }
+          ListEmptyComponent={
+            exchangesQ.isLoading ? (
+              <View style={{ gap: SPACING[3] }}>
+                <SkeletonText lines={4} />
+                <SkeletonText lines={4} />
+              </View>
+            ) : (
+              <View
+                style={{
+                  padding: SPACING[6],
+                  borderRadius: RADIUS.xl,
+                  backgroundColor: theme.secondary,
+                  alignItems: 'center',
+                  gap: SPACING[3],
                 }}
-                tintColor={theme.primary}
-                colors={[theme.primary]}
-              />
-            }
-            ListEmptyComponent={
-              exchangesQ.isLoading ? (
-                <View style={{ gap: SPACING[3] }}>
-                  <SkeletonText lines={4} />
-                  <SkeletonText lines={4} />
-                </View>
-              ) : (
+              >
                 <View
                   style={{
-                    padding: SPACING[8],
-                    borderRadius: RADIUS.md,
-                    backgroundColor: theme.backgroundElement,
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: theme.background,
                     alignItems: 'center',
-                    gap: SPACING[3],
-                    marginHorizontal: SPACING[1],
+                    justifyContent: 'center',
                   }}
                 >
-                  <View
-                    style={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: RADIUS.pill,
-                      backgroundColor: getAccent('blue').bg,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Handshake size={28} color={getAccent('blue').main} />
-                  </View>
-                  <ThemedText type="default" style={{ fontWeight: '700', textAlign: 'center' }}>
-                    {t('noExchangesTitle')}
-                  </ThemedText>
-                  <ThemedText
-                    type="small"
-                    style={{ color: theme.mutedForeground, textAlign: 'center', fontSize: FONT_SIZE.sm }}
-                  >
-                    {t('noExchangesDesc')}
-                  </ThemedText>
-                  <Button
-                    size="sm"
-                    onPress={() => router.push('/(tabs)/matches' as any)}
-                    leftIcon={<Zap size={14} color="#fff" />}
-                  >
-                    {t('findMatches')}
-                  </Button>
+                  <Handshake size={ICON_SIZE.xl} color={theme.mutedForeground} />
                 </View>
-              )
-            }
-            renderItem={({ item }) => (
+                <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
+                  {t('noExchangesTitle')}
+                </ThemedText>
+                <ThemedText type="caption" muted style={{ textAlign: 'center' }}>
+                  {t('noExchangesDesc')}
+                </ThemedText>
+                <Button
+                  size="sm"
+                  variant="default"
+                  onPress={() => router.push('/(tabs)/matches' as any)}
+                  leftIcon={<Users size={14} color={theme.primaryForeground} />}
+                >
+                  {t('findMatches')}
+                </Button>
+              </View>
+            )
+          }
+          renderItem={({ item, index }) => (
+            <Animated.View entering={FadeInDown.duration(300).delay(index * 40)}>
               <ExchangeRowCard
                 exchange={item}
                 onPress={() => router.push(`/exchanges/${item.id}` as any)}
               />
-            )}
-          />
-        </View>
-      </ThemedView>
-    </SafeAreaView>
+            </Animated.View>
+          )}
+        />
+      </View>
+    </View>
   );
 }
 
-export function ExchangeRowCard({
-  exchange,
-  onPress,
-}: {
-  exchange: any;
-  onPress: () => void;
-}) {
+export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress: () => void }) {
   const theme = useTheme();
+  const t = useT('exchanges');
   const statusColor = getExchangeStatusColor(exchange.status);
   const userQ = useCurrentUser();
   const user = userQ.data;
-  const isSender = exchange.senderId === user.id;
-  
+  const isSender = exchange.senderId === user?.id;
   const otherUser = isSender ? exchange.receiver : exchange.sender;
-  
   const progress = calculateExchangeProgress(exchange);
-  const isActive = ['ACCEPTED', 'IN_PROGRESS', 'SCHEDULED'].includes(exchange.status);
-
+  const isActive = ['ACCEPTED', 'IN_PROGRESS', 'SCHEDULED', 'COMMITTED'].includes(exchange.status);
   const points = exchange.pointsValue ? calculatePointsBreakdown(exchange.pointsValue) : null;
   const nextSession = exchange.sessions?.find((s: any) => s.status === 'SCHEDULED');
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        borderRadius: RADIUS.md,
-        borderWidth: 1,
-        borderColor: isActive ? getAccent('indigo').border : theme.border,
-        backgroundColor: theme.card,
-        overflow: 'hidden',
-      }}
-    >
-      <View style={{ padding: SPACING[4], gap: SPACING[3] }}>
-        {/* User row */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
-          <Avatar uri={otherUser.image} fallback={otherUser.name} size={44} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <ThemedText type="default" style={{ fontSize: FONT_SIZE.lg, fontWeight: '700' }}>
-                {otherUser.name ?? 'Peer'}
-              </ThemedText>
-              <Badge variant="accent" accent={statusColor}>
-                {labelForStatus(exchange.status)}
-              </Badge>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2], marginTop: 2 }}>
-              <Badge variant="accent" accent="emerald">
-                <GraduationCap size={10} color={getAccent('emerald').main} />
-                {' '}
-                {exchange.taughtSkillName ?? exchange.taughtSkill?.name ?? '—'}
-              </Badge>
-              <ArrowRightLeft size={14} color={theme.mutedForeground} />
-              <Badge variant="accent" accent="blue">
-                <BookOpen size={10} color={getAccent('blue').main} />
-                {' '}
-                {exchange.receivedSkillName ?? exchange.receivedSkill?.name ?? '—'}
-              </Badge>
-            </View>
+    <PressableCard onPress={onPress} style={{ padding: SPACING[4], gap: SPACING[3] }}>
+      {/* User row */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
+        <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={42} />
+        <View style={{ flex: 1, gap: 3 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <ThemedText type="cardTitle">
+              {otherUser?.name ?? 'Peer Trader'}
+            </ThemedText>
+            <Badge variant="accent" accent={statusColor}>
+              {labelForStatus(exchange.status, t)}
+            </Badge>
           </View>
-        </View>
-
-        {/* Progress */}
-        {isActive ? (
-          <View style={{ gap: SPACING[1.5] }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
-                Progress
-              </ThemedText>
-              <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                {progress}%
-              </ThemedText>
-            </View>
-            <Progress value={progress} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1.5], marginTop: 2 }}>
+            <Badge variant="accent" accent="emerald">
+              {exchange.taughtSkillName ?? exchange.taughtSkill?.name ?? 'Skill'}
+            </Badge>
+            <ArrowRightLeft size={10} color={theme.mutedForeground} />
+            <Badge variant="accent" accent="indigo">
+              {exchange.receivedSkillName ?? exchange.receivedSkill?.name ?? 'Skill'}
+            </Badge>
           </View>
-        ) : null}
-
-        {/* Meta row */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
-          <MetaChip
-            icon={<Coins size={12} color={theme.mutedForeground} />}
-            label={
-              points
-                ? `${points.gross} pts (net ${points.net})`
-                : exchange.pointsAmount
-                ? `${exchange.pointsAmount} pts`
-                : 'No points'
-            }
-          />
-          {exchange.createdAt ? (
-            <MetaChip
-              icon={<CalendarCheck size={12} color={theme.mutedForeground} />}
-              label={`Started ${formatDateShort(exchange.createdAt)}`}
-            />
-          ) : null}
-          {nextSession?.startTime ? (
-            <MetaChip
-              accent="indigo"
-              icon={<Video size={12} color={getAccent('indigo').main} />}
-              label={`Session ${formatDateTimeShort(nextSession.startTime)}`}
-            />
-          ) : null}
-        </View>
-
-        {/* Footer */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flex: 1 }} />
-          <ChevronRight size={16} color={theme.mutedForeground} />
         </View>
       </View>
-    </Pressable>
+
+      {/* Progress bar */}
+      {isActive ? (
+        <View style={{ gap: SPACING[1.5] }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <ThemedText type="caption" muted>Progress</ThemedText>
+            <ThemedText type="caption">{progress}%</ThemedText>
+          </View>
+          <Progress value={progress} />
+        </View>
+      ) : null}
+
+      {/* Meta row */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
+        <MetaChip
+          icon={<Coins size={12} color={theme.mutedForeground} />}
+          label={
+            points ? `${points.gross} pts` : exchange.pointsAmount ? `${exchange.pointsAmount} pts` : 'No points'
+          }
+        />
+        {exchange.createdAt ? (
+          <MetaChip
+            icon={<CalendarCheck size={12} color={theme.mutedForeground} />}
+            label={`Started ${formatDateShort(exchange.createdAt)}`}
+          />
+        ) : null}
+        {nextSession?.startTime ? (
+          <MetaChip
+            accent="indigo"
+            icon={<Video size={12} color={getAccent('indigo').main} />}
+            label={`Session ${formatDateTimeShort(nextSession.startTime)}`}
+          />
+        ) : null}
+      </View>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 2 }}>
+        <ThemedText type="caption" muted>
+          View Details
+        </ThemedText>
+        <ChevronRight size={14} color={theme.mutedForeground} />
+      </View>
+    </PressableCard>
   );
 }
 
-function labelForStatus(s: string) {
-  const t = useT('exchanges');
+function labelForStatus(s: string, t: (k: string) => string) {
   switch (s) {
-    case 'IN_PROGRESS':
-      return t('in_progress');
-    case 'COMPLETED':
-      return t('completed');
-    case 'CANCELLED':
-      return t('cancelled');
-    case 'ACCEPTED':
-      return t('accepted');
-    case 'SCHEDULED':
-      return t('scheduled');
-    case 'PENDING':
-      return t('pending');
-    case 'REJECTED':
-      return t('rejected');
-    case 'EXPIRED':
-      return t('expired');
-    default:
-      return s.replace(/_/g, ' ');
+    case 'IN_PROGRESS': return t('in_progress');
+    case 'COMPLETED': return t('completed');
+    case 'CANCELLED': return t('cancelled');
+    case 'ACCEPTED': return t('accepted');
+    case 'SCHEDULED': return t('scheduled');
+    case 'PENDING': return t('pending');
+    case 'REJECTED': return t('rejected');
+    case 'EXPIRED': return t('expired');
+    default: return s.replace(/_/g, ' ');
   }
 }
 
-function MetaChip({
-  icon,
-  label,
-  accent,
-}: {
-  icon: React.ReactNode;
-  label: React.ReactNode;
-  accent?: string;
-}) {
+function MetaChip({ icon, label, accent }: { icon: React.ReactNode; label: React.ReactNode; accent?: string }) {
   const theme = useTheme();
   const palette = accent ? getAccent(accent) : null;
   return (
@@ -363,21 +259,18 @@ function MetaChip({
         flexDirection: 'row',
         alignItems: 'center',
         gap: SPACING[1.5],
-        paddingHorizontal: SPACING[2.5],
-        paddingVertical: 4,
-        borderRadius: RADIUS.pill,
-        backgroundColor: palette ? palette.bg : theme.backgroundElement,
+        paddingHorizontal: SPACING[2],
+        paddingVertical: 3,
+        borderRadius: RADIUS.md,
+        backgroundColor: palette ? palette.bg : theme.secondary,
         borderWidth: 1,
-        borderColor: palette ? palette.border : 'transparent',
+        borderColor: palette ? palette.border : theme.border,
       }}
     >
       {icon}
       <ThemedText
-        type="small"
-        style={{
-          fontSize: 11,
-          color: palette ? palette.main : theme.mutedForeground,
-        }}
+        type="badge"
+        style={{ color: palette ? palette.main : theme.mutedForeground }}
         numberOfLines={1}
       >
         {label}

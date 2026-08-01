@@ -1,28 +1,56 @@
-import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
-
-import { Fonts, ThemeColor } from '@/constants/theme';
+import { StyleSheet, Text, type TextProps } from 'react-native';
+import { TYPOGRAPHY } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
+export type TextVariant =
+  | 'body'
+  | 'bodySmall'
+  | 'caption'
+  | 'label'
+  | 'cardTitle'
+  | 'sectionTitle'
+  | 'screenTitle'
+  | 'display'
+  | 'overline'
+  | 'button'
+  | 'buttonSm'
+  | 'badge'
+  // Legacy compat
+  | 'default'
+  | 'title'
+  | 'small'
+  | 'smallBold'
+  | 'subtitle'
+  | 'link'
+  | 'linkPrimary'
+  | 'code';
+
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
-  themeColor?: ThemeColor;
+  type?: TextVariant;
+  themeColor?: string;
+  muted?: boolean;
 };
 
-export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
+export function ThemedText({
+  style,
+  type = 'body',
+  themeColor,
+  muted,
+  ...rest
+}: ThemedTextProps) {
   const theme = useTheme();
+
+  const color = themeColor
+    ? (theme as any)[themeColor] ?? theme.foreground
+    : muted
+      ? theme.mutedForeground
+      : theme.foreground;
 
   return (
     <Text
       style={[
-        { color: theme[themeColor ?? 'text'] },
-        type === 'default' && styles.default,
-        type === 'title' && styles.title,
-        type === 'small' && styles.small,
-        type === 'smallBold' && styles.smallBold,
-        type === 'subtitle' && styles.subtitle,
-        type === 'link' && styles.link,
-        type === 'linkPrimary' && styles.linkPrimary,
-        type === 'code' && styles.code,
+        { color },
+        variantStyles[type] ?? variantStyles.body,
         style,
       ]}
       {...rest}
@@ -30,44 +58,42 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   );
 }
 
-const styles = StyleSheet.create({
-  small: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 500,
-  },
+const variantStyles = StyleSheet.create({
+  // New semantic variants
+  body: TYPOGRAPHY.body,
+  bodySmall: TYPOGRAPHY.bodySmall,
+  caption: TYPOGRAPHY.caption,
+  label: TYPOGRAPHY.label,
+  cardTitle: TYPOGRAPHY.cardTitle,
+  sectionTitle: TYPOGRAPHY.sectionTitle,
+  screenTitle: TYPOGRAPHY.screenTitle,
+  display: TYPOGRAPHY.display,
+  overline: TYPOGRAPHY.overline,
+  button: TYPOGRAPHY.button,
+  buttonSm: TYPOGRAPHY.buttonSm,
+  badge: TYPOGRAPHY.badge,
+  // Legacy compat
+  default: TYPOGRAPHY.body,
+  title: TYPOGRAPHY.display,
+  small: TYPOGRAPHY.caption,
   smallBold: {
+    ...TYPOGRAPHY.caption,
+    fontWeight: '600',
+  },
+  subtitle: TYPOGRAPHY.sectionTitle,
+  link: {
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: 700,
-  },
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: 500,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: 600,
-    lineHeight: 52,
-  },
-  subtitle: {
-    fontSize: 32,
-    lineHeight: 44,
-    fontWeight: 600,
-  },
-  link: {
-    lineHeight: 30,
-    fontSize: 14,
+    fontWeight: '400',
   },
   linkPrimary: {
-    lineHeight: 30,
     fontSize: 14,
-    color: '#3c87f7',
+    lineHeight: 20,
+    fontWeight: '500',
   },
   code: {
-    fontFamily: Fonts.mono,
-    fontWeight: Platform.select({ android: 700 }) ?? 500,
+    fontFamily: 'monospace',
     fontSize: 12,
+    fontWeight: '500',
   },
 });

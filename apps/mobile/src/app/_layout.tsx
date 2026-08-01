@@ -1,28 +1,28 @@
-import { ToastProvider } from "@/components/ui/toast";
-import { ThemeProvider as AppThemeProvider } from "@/hooks/theme-context";
-import { useTheme } from "@/hooks/use-theme";
+import { ToastProvider } from '@/components/ui/toast';
+import { ThemeProvider as AppThemeProvider } from '@/hooks/theme-context';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemeContext } from '@/hooks/theme-context';
 import {
   registerForPushNotifications,
   setupNotificationListeners,
   setupRealtimeNotifications,
-} from "@/lib/push-notifications";
-import { registerGlobals } from "@livekit/react-native";
-import { QueryClientProvider } from "@tanstack/react-query";
-import * as Notifications from "expo-notifications";
-import { Stack, useRouter } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
-import { I18nProvider } from "lib/i18n";
-import { useEffect } from "react";
-import { KeyboardAvoidingView, Platform, View } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { queryClient } from "../../lib/query-client";
+} from '@/lib/push-notifications';
+import { registerGlobals } from '@livekit/react-native';
+import { QueryClientProvider } from '@tanstack/react-query';
+import * as Notifications from 'expo-notifications';
+import { Stack, useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { I18nProvider } from 'lib/i18n';
+import { useEffect } from 'react';
+import { KeyboardAvoidingView, Platform, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { queryClient } from '../../lib/query-client';
 
 SplashScreen.preventAutoHideAsync();
 registerGlobals();
 
-// Configure notification handler for foreground notifications
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -35,16 +35,19 @@ Notifications.setNotificationHandler({
 
 function AppInner() {
   const theme = useTheme();
+  const { resolvedTheme } = useThemeContext();
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={{ flex: 1, backgroundColor: theme.background }}>
         <Stack
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: theme.background },
+            animation: 'fade_from_bottom',
           }}
         >
           <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -54,59 +57,64 @@ function AppInner() {
             name="notifications"
             options={{
               headerShown: true,
-              headerTitle: "Notifications",
+              headerTitle: 'Notifications',
               headerTransparent: false,
               headerStyle: { backgroundColor: theme.background },
               headerTintColor: theme.foreground,
               headerShadowVisible: false,
+              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
             }}
           />
           <Stack.Screen
             name="users/[id]"
             options={{
               headerShown: true,
-              headerTitle: "Profile",
+              headerTitle: 'Profile',
               headerTransparent: false,
               headerStyle: { backgroundColor: theme.background },
               headerTintColor: theme.foreground,
               headerShadowVisible: false,
+              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
             }}
           />
           <Stack.Screen
             name="exchanges/[id]"
             options={{
               headerShown: true,
-              headerTitle: "Exchange",
+              headerTitle: 'Exchange',
               headerTransparent: false,
               headerStyle: { backgroundColor: theme.background },
               headerTintColor: theme.foreground,
               headerShadowVisible: false,
+              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
             }}
           />
           <Stack.Screen
             name="requests/[id]"
             options={{
               headerShown: true,
-              headerTitle: "Request",
+              headerTitle: 'Request',
               headerTransparent: false,
               headerStyle: { backgroundColor: theme.background },
               headerTintColor: theme.foreground,
               headerShadowVisible: false,
+              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
             }}
           />
           <Stack.Screen
             name="room/[id]"
             options={{
               headerShown: true,
-              headerTitle: "Session",
+              headerTitle: 'Session',
               headerTransparent: false,
               headerStyle: { backgroundColor: theme.background },
               headerTintColor: theme.foreground,
               headerShadowVisible: false,
+              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
             }}
           />
         </Stack>
-        <StatusBar style="auto" />
+        <StatusBar style={resolvedTheme === 'dark' ? 'light' : 'dark'} />
       </View>
     </KeyboardAvoidingView>
   );
@@ -118,43 +126,33 @@ export default function RootLayout() {
   useEffect(() => {
     SplashScreen.hideAsync();
 
-    // Register for push notifications on app launch
     registerForPushNotifications().catch(console.error);
 
-    // Set up notification listeners for foreground/tap
     const cleanupListeners = setupNotificationListeners(
       (notification) => {
-        // Handle foreground notification
-        console.log(
-          "Notification received:",
-          notification.request.content.title,
-        );
+        console.log('Notification received:', notification.request.content.title);
       },
       (response) => {
-        // Handle notification tap
         const data = response.notification.request.content.data;
         if (data?.exchangeId) {
           router.push(`/exchanges/${data.exchangeId}` as any);
         } else if (data?.requestId) {
           router.push(`/requests/${data.requestId}` as any);
-        } else if (data?.type === "notification") {
-          router.push("/notifications" as any);
+        } else if (data?.type === 'notification') {
+          router.push('/notifications' as any);
         }
       },
     );
 
-    // Set up SSE stream for real-time notifications (mirrors web)
     const cleanupStream = setupRealtimeNotifications(
       (notification) => {
-        // Show toast for real-time notification
-        console.log("Real-time notification:", notification.title);
+        console.log('Real-time notification:', notification.title);
       },
       () => {
-        // Unread count updated - could update badge here
-        console.log("Unread count updated");
+        console.log('Unread count updated');
       },
       (err) => {
-        console.warn("SSE notification stream error:", err);
+        console.warn('SSE notification stream error:', err);
       },
     );
 

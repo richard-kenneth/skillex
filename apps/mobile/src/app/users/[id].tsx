@@ -229,7 +229,7 @@ export default function PublicUserProfileScreen() {
                           type="title"
                           style={{
                             fontSize: FONT_SIZE["2xl"],
-                            fontWeight: "800",
+                            fontWeight: '600',
                           }}
                         >
                           {user?.name ?? t('user')}

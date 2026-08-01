@@ -1,79 +1,23 @@
 import React from 'react';
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  View,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FlatList, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/use-theme';
-import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
+import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH, ICON_SIZE } from '@/constants/theme';
 import { useT } from 'lib/i18n';
 import {
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  Dialog,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogContent,
-  DialogFooter,
-  Input,
-  Label,
-  Separator,
-  Skeleton,
-  SkeletonText,
-  Tabs,
-  Textarea,
-  useToast,
-  Alert as UIAlert,
-  AlertDialog,
+  Avatar, Badge, Button, Card, CardContent, CardHeader, CardTitle, CardDescription,
+  PressableCard, SkeletonText, Tabs, useToast, AlertDialog,
 } from '@/components/ui';
+import { CustomHeader } from '@/components/ui/custom-header';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { useMatches, useRequests, useAcceptRequest, useRejectRequest, useCancelRequest } from '@/lib/api-hooks';
+import { getRequestStatusColor, formatDateShort, calculateAverageRating } from '@skil-ex2/shared';
 import {
-  useMatches,
-  useRequests,
-  useAcceptRequest,
-  useRejectRequest,
-  useCancelRequest,
-  useCreateRequest,
-} from '@/lib/api-hooks';
-import {
-  getRequestStatusColor,
-  formatDateShort,
-  calculateAverageRating,
-} from '@skil-ex2/shared';
-import * as v from 'valibot';
-import {
-  Users,
-  Sparkles,
-  Handshake,
-  Inbox,
-  Send,
-  CheckCircle2,
-  XCircle,
-  Ban,
-  MessageSquare,
-  Clock,
-  ChevronRight,
-  GraduationCap,
-  BookOpen,
-  UserPlus,
-  Shield,
-  Star,
-  Target,
-  ArrowRightLeft,
+  Users, Handshake, Inbox, CheckCircle2, XCircle, Ban, MessageSquare, Clock,
+  ChevronRight, GraduationCap, BookOpen, UserPlus, Star, Target, ArrowRightLeft,
 } from 'lucide-react-native';
-import { cn } from '@/lib/style-utils';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 type SubTab = 'discover' | 'requests';
 
@@ -107,328 +51,192 @@ export default function MatchesScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={['top']}>
-      <ThemedView type="background" style={{ flex: 1, alignItems: 'center' }}>
-        <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, flex: 1 }}>
-          {/* Header */}
-          <View
-            style={{
-              paddingHorizontal: SPACING[5],
-              paddingTop: SPACING[2],
-              paddingBottom: SPACING[4],
-              gap: SPACING[3],
-            }}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View>
-                <ThemedText type="title" style={{ fontSize: FONT_SIZE['2xl'], fontWeight: '800', letterSpacing: -0.2 }}>
-                  {t('title')}
-                </ThemedText>
-                <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
-                  {t('description')}
-                </ThemedText>
-              </View>
-            </View>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <CustomHeader title="Matches" subtitle="Connect with peer experts" showNotifications showSearch />
 
-            <Tabs<SubTab>
-              variant="pills"
-              value={tab}
-              onChange={setTab}
-              items={[
-                {
-                  value: 'discover',
-                  label: t('discoverLabel'),
-                  icon: <Sparkles size={14} color={tab === 'discover' ? '#fff' : theme.mutedForeground} />,
-                  badge: perfect.length + partial.length || undefined,
-                },
-                {
-                  value: 'requests',
-                  label: t('requestsLabel'),
-                  icon: <Inbox size={14} color={tab === 'requests' ? '#fff' : theme.mutedForeground} />,
-                  badge: requestCounts.total || undefined,
-                },
-              ]}
-            />
-          </View>
-
-          {tab === 'discover' ? (
-            <ScrollView
-              contentContainerStyle={{
-                paddingHorizontal: SPACING[5],
-                paddingBottom: insets.bottom + SPACING[10],
-                gap: SPACING[4],
-              }}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={theme.primary} colors={[theme.primary]} />
-              }
-            >
-              <Card style={{ borderColor: getAccent('indigo').border }}>
-                <CardHeader>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: RADIUS.md,
-                        backgroundColor: getAccent('indigo').bg,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Sparkles size={18} color={getAccent('indigo').main} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <CardTitle>{t('perfectMatchesTitle')}</CardTitle>
-                      <CardDescription>{t('perfectMatchesDesc')}</CardDescription>
-                    </View>
-                    <Badge variant="default">{perfect.length}</Badge>
-                  </View>
-                </CardHeader>
-                <CardContent style={{ gap: SPACING[3] }}>
-                  {matchesQ.isLoading ? (
-                    <View style={{ gap: SPACING[3] }}>
-                      <SkeletonText lines={4} />
-                      <SkeletonText lines={4} />
-                    </View>
-                  ) : perfect.length === 0 ? (
-                    <EmptyMatches
-                      onAdd={() => router.push('/(tabs)/profile' as any)}
-                      title={t('noMatchesTitle')}
-                      description={t('noMatchesDesc')}
-                    />
-                  ) : (
-                    perfect.map((m: any) => (
-                      <MatchCard key={m.id} match={m} perfect onPress={() => router.push(`/users/${m.id}` as any)} />
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: RADIUS.md,
-                        backgroundColor: getAccent('blue').bg,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Target size={18} color={getAccent('blue').main} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <CardTitle>{t('moreMatchesTitle')}</CardTitle>
-                      <CardDescription>{t('moreMatchesDesc')}</CardDescription>
-                    </View>
-                    <Badge variant="outline">{partial.length}</Badge>
-                  </View>
-                </CardHeader>
-                <CardContent style={{ gap: SPACING[3] }}>
-                  {matchesQ.isLoading ? (
-                    <SkeletonText lines={4} />
-                  ) : partial.length === 0 ? (
-                    <EmptyMatches
-                      onAdd={() => router.push('/(tabs)/profile' as any)}
-                      title={t('noMatchesTitle')}
-                      description={t('noMatchesDesc')}
-                    />
-                  ) : (
-                    partial.map((m: any) => (
-                      <MatchCard key={m.id} match={m} onPress={() => router.push(`/users/${m.id}` as any)} />
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-            </ScrollView>
-          ) : (
-            <RequestsList
-              incoming={incoming}
-              outgoing={outgoing}
-              loading={requestsQ.isLoading}
-              refreshing={refreshing}
-              onRefresh={refresh}
-              insetsBottom={insets.bottom}
-            />
-          )}
+      <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: 'center' }}>
+        <View style={{ paddingHorizontal: SPACING[4], paddingVertical: SPACING[3] }}>
+          <Tabs<SubTab>
+            variant="pills"
+            value={tab}
+            onChange={setTab}
+            items={[
+              { value: 'discover', label: t('discoverLabel'), badge: perfect.length + partial.length || undefined },
+              { value: 'requests', label: t('requestsLabel'), badge: requestCounts.total || undefined },
+            ]}
+          />
         </View>
-      </ThemedView>
-    </SafeAreaView>
+
+        {tab === 'discover' ? (
+          <ScrollView
+            contentContainerStyle={{
+              paddingHorizontal: SPACING[4],
+              paddingBottom: insets.bottom + 90,
+              gap: SPACING[4],
+            }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={theme.mutedForeground} colors={[theme.mutedForeground]} />}
+          >
+            {/* Perfect Matches */}
+            <Card>
+              <CardHeader>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flex: 1 }}>
+                    <CardTitle>{t('perfectMatchesTitle')}</CardTitle>
+                    <CardDescription>{t('perfectMatchesDesc')}</CardDescription>
+                  </View>
+                  <Badge variant="secondary">{perfect.length}</Badge>
+                </View>
+              </CardHeader>
+              <CardContent style={{ gap: SPACING[3] }}>
+                {matchesQ.isLoading ? (
+                  <View style={{ gap: SPACING[3] }}><SkeletonText lines={4} /><SkeletonText lines={4} /></View>
+                ) : perfect.length === 0 ? (
+                  <EmptyMatches onAdd={() => router.push('/(tabs)/profile' as any)} title={t('noMatchesTitle')} description={t('noMatchesDesc')} />
+                ) : (
+                  perfect.map((m: any, i: number) => (
+                    <Animated.View key={m.id} entering={FadeInDown.duration(300).delay(i * 50)}>
+                      <MatchCard match={m} perfect onPress={() => router.push(`/users/${m.id}` as any)} />
+                    </Animated.View>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Partial Matches */}
+            <Card>
+              <CardHeader>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flex: 1 }}>
+                    <CardTitle>{t('moreMatchesTitle')}</CardTitle>
+                    <CardDescription>{t('moreMatchesDesc')}</CardDescription>
+                  </View>
+                  <Badge variant="secondary">{partial.length}</Badge>
+                </View>
+              </CardHeader>
+              <CardContent style={{ gap: SPACING[3] }}>
+                {matchesQ.isLoading ? (
+                  <SkeletonText lines={4} />
+                ) : partial.length === 0 ? (
+                  <EmptyMatches onAdd={() => router.push('/(tabs)/profile' as any)} title={t('noMatchesTitle')} description={t('noMatchesDesc')} />
+                ) : (
+                  partial.map((m: any, i: number) => (
+                    <Animated.View key={m.id} entering={FadeInDown.duration(300).delay(i * 50)}>
+                      <MatchCard match={m} onPress={() => router.push(`/users/${m.id}` as any)} />
+                    </Animated.View>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </ScrollView>
+        ) : (
+          <RequestsList
+            incoming={incoming}
+            outgoing={outgoing}
+            loading={requestsQ.isLoading}
+            refreshing={refreshing}
+            onRefresh={refresh}
+            insetsBottom={insets.bottom}
+          />
+        )}
+      </View>
+    </View>
   );
 }
 
-/* ---------------- Match Card ---------------- */
-
-function MatchCard({
-  match,
-  perfect,
-  onPress,
-}: {
-  match: any;
-  perfect?: boolean;
-  onPress: () => void;
-}) {
+function MatchCard({ match, perfect, onPress }: { match: any; perfect?: boolean; onPress: () => void }) {
   const theme = useTheme();
   const t = useT('matches');
   const user = match as any;
-  const canTeachMe = match.canTeachMe ?? []; // they teach, I want
-  const canLearnFromMe = match.canLearnFromMe ?? []; // I teach, they want
+  const canTeachMe = match.canTeachMe ?? [];
+  const canLearnFromMe = match.canLearnFromMe ?? [];
   const avgRating = user.reviews?.length ? calculateAverageRating(user.reviews) : 0;
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        borderRadius: RADIUS.md,
-        borderWidth: perfect ? 1 : StyleSheet.hairlineWidth,
-        borderColor: perfect ? getAccent('indigo').border : theme.border,
-        backgroundColor: theme.backgroundElement,
-        padding: SPACING[4],
-        gap: SPACING[3],
-      }}
-    >
+    <PressableCard onPress={onPress} style={{ padding: SPACING[4], gap: SPACING[3] }}>
       <View style={{ flexDirection: 'row', gap: SPACING[3] }}>
-        <Avatar uri={user.image} fallback={user.name} size={48} />
+        <Avatar uri={user.image} fallback={user.name} size={44} />
         <View style={{ flex: 1, gap: 3 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <ThemedText type="default" style={{ fontSize: FONT_SIZE.lg, fontWeight: '700' }}>
-              {user.name}
-            </ThemedText>
-            {perfect ? (
-              <Badge variant="accent" accent="indigo">
-                <Sparkles size={12} color={getAccent('indigo').main} /> {t('perfectMatchBadge')}
-              </Badge>
-            ) : null}
+            <ThemedText type="cardTitle">{user.name}</ThemedText>
+            {perfect && <Badge variant="default">{t('perfectMatchBadge')}</Badge>}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-            <View style={{ flexDirection: 'row', gap: 2 }}>
-              <Star size={12} color={getAccent('amber').main} fill={getAccent('amber').main} />
-              <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                {avgRating.toFixed(1)}
-              </ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              <Star size={12} color="#f59e0b" fill="#f59e0b" />
+              <ThemedText type="caption">{avgRating > 0 ? avgRating.toFixed(1) : 'New'}</ThemedText>
             </View>
             {user.exchangesCompleted ? (
-              <Badge variant="outline">{user.exchangesCompleted} exchanges</Badge>
+              <Badge variant="secondary">{user.exchangesCompleted} exchanges</Badge>
             ) : null}
           </View>
         </View>
       </View>
 
       <View style={{ gap: SPACING[2] }}>
-        {canTeachMe.length > 0 ? (
-          <View style={{ gap: SPACING[1.5] }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1.5] }}>
-              <GraduationCap size={14} color={getAccent('emerald').main} />
-              <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                {t('canTeach')}
-              </ThemedText>
+        {canTeachMe.length > 0 && (
+          <View style={{ gap: SPACING[1] }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1] }}>
+              <GraduationCap size={12} color={getAccent('emerald').main} />
+              <ThemedText type="caption" style={{ color: getAccent('emerald').main }}>{t('canTeach')}</ThemedText>
             </View>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2], paddingLeft: SPACING[5] }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[1] }}>
               {canTeachMe.slice(0, 4).map((s: any) => (
-                <Badge key={s.id} variant="accent" accent="emerald">
-                  {s.name}
-                </Badge>
+                <Badge key={s.id} variant="accent" accent="emerald">{s.name}</Badge>
               ))}
             </View>
           </View>
-        ) : null}
-
-        {canLearnFromMe.length > 0 ? (
-          <View style={{ gap: SPACING[1.5] }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1.5] }}>
-              <BookOpen size={14} color={getAccent('blue').main} />
-              <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                {t('wantsToLearn')}
-              </ThemedText>
+        )}
+        {canLearnFromMe.length > 0 && (
+          <View style={{ gap: SPACING[1] }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1] }}>
+              <BookOpen size={12} color={getAccent('indigo').main} />
+              <ThemedText type="caption" style={{ color: getAccent('indigo').main }}>{t('wantsToLearn')}</ThemedText>
             </View>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2], paddingLeft: SPACING[5] }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[1] }}>
               {canLearnFromMe.slice(0, 4).map((s: any) => (
-                <Badge key={s.id} variant="accent" accent="blue">
-                  {s.name}
-                </Badge>
+                <Badge key={s.id} variant="accent" accent="indigo">{s.name}</Badge>
               ))}
             </View>
           </View>
-        ) : null}
+        )}
       </View>
 
       <View style={{ flexDirection: 'row', gap: SPACING[2] }}>
-        <Button style={{ flex: 1 }} size="sm" leftIcon={<Handshake size={14} color="#fff" />} onPress={onPress}>
+        <Button style={{ flex: 1 }} size="sm" variant="default" leftIcon={<Handshake size={14} color={theme.primaryForeground} />} onPress={onPress}>
           {t('requestExchange')}
         </Button>
-        <Button variant="outline" size="sm" leftIcon={<MessageSquare size={14} color={theme.foreground} />} onPress={onPress}>
+        <Button variant="outline" size="sm" onPress={onPress}>
           {t('viewProfile')}
         </Button>
       </View>
-    </Pressable>
+    </PressableCard>
   );
 }
-
-import { StyleSheet } from 'react-native';
 
 function EmptyMatches({ onAdd, title, description }: { onAdd: () => void; title: string; description: string }) {
   const theme = useTheme();
   const t = useT('matches');
   return (
-    <View
-      style={{
-        padding: SPACING[6],
-        borderRadius: RADIUS.md,
-        backgroundColor: theme.background,
-        alignItems: 'center',
-        gap: SPACING[3],
-      }}
-    >
-      <View
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: RADIUS.pill,
-          backgroundColor: getAccent('blue').bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Users size={24} color={getAccent('blue').main} />
+    <View style={{ padding: SPACING[6], alignItems: 'center', gap: SPACING[3] }}>
+      <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: theme.secondary, alignItems: 'center', justifyContent: 'center' }}>
+        <Users size={ICON_SIZE.xl} color={theme.mutedForeground} />
       </View>
-      <ThemedText type="default" style={{ fontWeight: '700', textAlign: 'center' }}>
-        {title}
-      </ThemedText>
-      <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center', fontSize: FONT_SIZE.sm }}>
-        {description}
-      </ThemedText>
-      <Button size="sm" onPress={onAdd} leftIcon={<UserPlus size={14} color="#fff" />}>
-        {t('manageSkills')}
-      </Button>
+      <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>{title}</ThemedText>
+      <ThemedText type="caption" muted style={{ textAlign: 'center' }}>{description}</ThemedText>
+      <Button size="sm" variant="default" onPress={onAdd} leftIcon={<UserPlus size={14} color={theme.primaryForeground} />}>{t('manageSkills')}</Button>
     </View>
   );
 }
 
-/* ---------------- Requests list ---------------- */
-
-function RequestsList({
-  incoming,
-  outgoing,
-  loading,
-  refreshing,
-  onRefresh,
-  insetsBottom,
-}: {
-  incoming: any[];
-  outgoing: any[];
-  loading: boolean;
-  refreshing: boolean;
-  onRefresh: () => Promise<void>;
-  insetsBottom: number;
+function RequestsList({ incoming, outgoing, loading, refreshing, onRefresh, insetsBottom }: {
+  incoming: any[]; outgoing: any[]; loading: boolean; refreshing: boolean;
+  onRefresh: () => Promise<void>; insetsBottom: number;
 }) {
   const theme = useTheme();
   const t = useT('matches');
   const [sub, setSub] = React.useState<'incoming' | 'outgoing'>('incoming');
   const list = sub === 'incoming' ? incoming : outgoing;
-
   const acceptQ = useAcceptRequest();
   const rejectQ = useRejectRequest();
   const cancelQ = useCancelRequest();
@@ -437,11 +245,9 @@ function RequestsList({
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ paddingHorizontal: SPACING[5], paddingBottom: SPACING[3] }}>
+      <View style={{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[3] }}>
         <Tabs<'incoming' | 'outgoing'>
-          value={sub}
-          onChange={setSub}
-          variant="pills"
+          value={sub} onChange={setSub} variant="pills"
           items={[
             { value: 'incoming', label: t('received'), badge: incoming.length || undefined },
             { value: 'outgoing', label: t('sent'), badge: outgoing.length || undefined },
@@ -451,86 +257,31 @@ function RequestsList({
       <FlatList
         data={list}
         keyExtractor={(r) => r.id}
-        contentContainerStyle={{
-          paddingHorizontal: SPACING[5],
-          paddingBottom: insetsBottom + SPACING[10],
-          gap: SPACING[3],
-        }}
+        contentContainerStyle={{ paddingHorizontal: SPACING[4], paddingBottom: insetsBottom + 90, gap: SPACING[3] }}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.mutedForeground} colors={[theme.mutedForeground]} />}
         ListEmptyComponent={
           loading ? (
-            <View style={{ gap: SPACING[3] }}>
-              <SkeletonText lines={5} />
-              <SkeletonText lines={5} />
-            </View>
+            <View style={{ gap: SPACING[3] }}><SkeletonText lines={5} /><SkeletonText lines={5} /></View>
           ) : (
-            <View
-              style={{
-                padding: SPACING[6],
-                alignItems: 'center',
-                gap: SPACING[3],
-              }}
-            >
-              <View
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: RADIUS.pill,
-                  backgroundColor: theme.backgroundElement,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Inbox size={22} color={theme.mutedForeground} />
+            <View style={{ padding: SPACING[6], alignItems: 'center', gap: SPACING[3] }}>
+              <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: theme.secondary, alignItems: 'center', justifyContent: 'center' }}>
+                <Inbox size={ICON_SIZE.xl} color={theme.mutedForeground} />
               </View>
-              <ThemedText type="default" style={{ fontWeight: '700' }}>
-                {sub === 'incoming' ? t('noReceivedRequests') : t('noSentRequests')}
+              <ThemedText type="cardTitle">{sub === 'incoming' ? t('noReceivedRequests') : t('noSentRequests')}</ThemedText>
+              <ThemedText type="caption" muted style={{ textAlign: 'center' }}>
+                {sub === 'incoming' ? t('noReceivedRequestsDesc') : t('noSentRequestsDesc')}
               </ThemedText>
-              <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center', fontSize: FONT_SIZE.sm }}>
-                {sub === 'incoming'
-                  ? t('noReceivedRequestsDesc')
-                  : t('noSentRequestsDesc')}
-              </ThemedText>
-              {sub === 'outgoing' ? (
-                <Button size="sm" onPress={() => router.push('/(tabs)/index' as any)} leftIcon={<Sparkles size={14} color="#fff" />}>
-                  {t('explorePotentialMatches')}
-                </Button>
-              ) : null}
             </View>
           )
         }
         renderItem={({ item }) => (
           <RequestCard
-            request={item}
-            direction={sub}
+            request={item} direction={sub}
             onOpen={() => router.push(`/requests/${item.id}` as any)}
-            onAccept={async () => {
-              try {
-                await acceptQ.mutateAsync(item.id);
-                toast.toast({ title: 'Request accepted', variant: 'success' });
-              } catch (e: any) {
-                toast.toast({ title: 'Could not accept', description: e?.message ?? 'Try again', variant: 'error' });
-              }
-            }}
-            onReject={async () => {
-              try {
-                await rejectQ.mutateAsync(item.id);
-                toast.toast({ title: 'Request rejected', variant: 'info' });
-              } catch (e: any) {
-                toast.toast({ title: 'Could not reject', variant: 'error' });
-              }
-            }}
-            onCancel={async () => {              
-              try {
-                await cancelQ.mutateAsync(item.id);
-                toast.toast({ title: 'Request cancelled', variant: 'info' });
-              } catch (e: any) {
-                toast.toast({ title: 'Could not cancel', variant: 'error' });
-              }
-            }}
+            onAccept={async () => { try { await acceptQ.mutateAsync(item.id); toast.toast({ title: 'Request accepted', variant: 'success' }); } catch (e: any) { toast.toast({ title: 'Could not accept', description: e?.message ?? 'Try again', variant: 'error' }); } }}
+            onReject={async () => { try { await rejectQ.mutateAsync(item.id); toast.toast({ title: 'Request rejected', variant: 'info' }); } catch (e: any) { toast.toast({ title: 'Could not reject', variant: 'error' }); } }}
+            onCancel={async () => { try { await cancelQ.mutateAsync(item.id); toast.toast({ title: 'Request cancelled', variant: 'info' }); } catch (e: any) { toast.toast({ title: 'Could not cancel', variant: 'error' }); } }}
           />
         )}
       />
@@ -538,20 +289,9 @@ function RequestsList({
   );
 }
 
-export function RequestCard({
-  request,
-  direction,
-  onOpen,
-  onAccept,
-  onReject,
-  onCancel,
-}: {
-  request: any;
-  direction: 'incoming' | 'outgoing';
-  onOpen: () => void;
-  onAccept?: () => Promise<void>;
-  onReject?: () => Promise<void>;
-  onCancel?: () => Promise<void>;
+export function RequestCard({ request, direction, onOpen, onAccept, onReject, onCancel }: {
+  request: any; direction: 'incoming' | 'outgoing'; onOpen: () => void;
+  onAccept?: () => Promise<void>; onReject?: () => Promise<void>; onCancel?: () => Promise<void>;
 }) {
   const theme = useTheme();
   const t = useT('matches');
@@ -561,113 +301,51 @@ export function RequestCard({
   const [confirmCancel, setConfirmCancel] = React.useState(false);
 
   return (
-    <Pressable
-      onPress={onOpen}
-      style={{
-        borderRadius: RADIUS.md,
-        borderWidth: 1,
-        borderColor: theme.border,
-        backgroundColor: theme.card,
-        overflow: 'hidden',
-      }}
-    >
-      <View style={{ padding: SPACING[4], gap: SPACING[3] }}>
-        <View style={{ flexDirection: 'row', gap: SPACING[3], alignItems: 'center' }}>
-          <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={44} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-                {direction === 'incoming' ? `From ${otherUser?.name ?? 'User'}` : `To ${otherUser?.name ?? 'User'}`}
-              </ThemedText>
-              <Badge variant="accent" accent={statusColor}>
-                {request.status.replace('_', ' ')}
-              </Badge>
-            </View>
-            <View style={{ flexDirection: 'row', gap: SPACING[2], marginTop: 2 }}>
-              <Badge variant="accent" accent="emerald">
-                <GraduationCap size={10} color={getAccent('emerald').main} />
-                {' '}
-                {request.offeredSkill?.name ?? request.offeredSkillName ?? '—'}
-              </Badge>
-              <ArrowRightLeft size={14} color={theme.mutedForeground} />
-              <Badge variant="accent" accent="blue">
-                <BookOpen size={10} color={getAccent('blue').main} />
-                {' '}
-                {request.requestedSkill?.name ?? request.requestedSkillName ?? '—'}
-              </Badge>
-            </View>
-          </View>
-        </View>
-
-        {request.message ? (
-          <ThemedText
-            type="small"
-            style={{
-              color: theme.foreground,
-              fontSize: FONT_SIZE.sm,
-              lineHeight: 20,
-              padding: SPACING[3],
-              backgroundColor: theme.backgroundElement,
-              borderRadius: RADIUS.md,
-            }}
-          >
-            “{request.message}”
-          </ThemedText>
-        ) : null}
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1.5] }}>
-            <Clock size={12} color={theme.mutedForeground} />
-            <ThemedText type="small" style={{ fontSize: 11, color: theme.mutedForeground }}>
-              {formatDateShort(request.createdAt)}
+    <PressableCard onPress={onOpen} style={{ padding: SPACING[4], gap: SPACING[3] }}>
+      <View style={{ flexDirection: 'row', gap: SPACING[3], alignItems: 'center' }}>
+        <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={40} />
+        <View style={{ flex: 1, gap: 3 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <ThemedText type="label" style={{ fontSize: FONT_SIZE.md }}>
+              {direction === 'incoming' ? `From ${otherUser?.name ?? 'User'}` : `To ${otherUser?.name ?? 'User'}`}
             </ThemedText>
+            <Badge variant="accent" accent={statusColor}>{request.status.replace('_', ' ')}</Badge>
           </View>
-          <ChevronRight size={16} color={theme.mutedForeground} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1], marginTop: 2 }}>
+            <Badge variant="accent" accent="emerald">{request.offeredSkill?.name ?? request.offeredSkillName ?? '—'}</Badge>
+            <ArrowRightLeft size={10} color={theme.mutedForeground} />
+            <Badge variant="accent" accent="indigo">{request.requestedSkill?.name ?? request.requestedSkillName ?? '—'}</Badge>
+          </View>
         </View>
-
-        {direction === 'incoming' && request.status === 'PENDING' ? (
-          <View style={{ flexDirection: 'row', gap: SPACING[2] }}>
-            <Button
-              style={{ flex: 1 }}
-              size="sm"
-              onPress={() => onAccept?.()}
-              loading={onAccept && false}
-              leftIcon={<CheckCircle2 size={14} color="#fff" />}
-            >
-              Accept
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onPress={() => setConfirmReject(true)}
-              leftIcon={<XCircle size={14} color="#fff" />}
-            >
-              Reject
-            </Button>
-          </View>
-        ) : direction === 'outgoing' && request.status === 'PENDING' ? (
-          <Button size="sm" variant="outline" onPress={() => setConfirmCancel(true)} leftIcon={<Ban size={14} color={theme.foreground} />}>
-            {t('decline')}
-          </Button>
-        ) : null}
       </View>
-      <AlertDialog
-        open={confirmReject}
-        onOpenChange={setConfirmReject}
-        title={t('decline')}
-        description={t('decline')}
-        confirmLabel={t('decline')}
-        destructive
-        onConfirm={() => onReject?.()}
-      />
-      <AlertDialog
-        open={confirmCancel}
-        onOpenChange={setConfirmCancel}
-        title={t('decline')}
-        confirmLabel={t('decline')}
-        destructive
-        onConfirm={() => onCancel?.()}
-      />
-    </Pressable>
+
+      {request.message && (
+        <ThemedText type="bodySmall" muted style={{
+          padding: SPACING[3], backgroundColor: theme.secondary, borderRadius: RADIUS.lg,
+        }}>
+          "{request.message}"
+        </ThemedText>
+      )}
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1] }}>
+          <Clock size={12} color={theme.mutedForeground} />
+          <ThemedText type="caption" muted>{formatDateShort(request.createdAt)}</ThemedText>
+        </View>
+        <ChevronRight size={14} color={theme.mutedForeground} />
+      </View>
+
+      {direction === 'incoming' && request.status === 'PENDING' ? (
+        <View style={{ flexDirection: 'row', gap: SPACING[2] }}>
+          <Button style={{ flex: 1 }} size="sm" variant="default" onPress={() => onAccept?.()} leftIcon={<CheckCircle2 size={14} color={theme.primaryForeground} />}>Accept</Button>
+          <Button size="sm" variant="destructive" onPress={() => setConfirmReject(true)} leftIcon={<XCircle size={14} color="#fff" />}>Reject</Button>
+        </View>
+      ) : direction === 'outgoing' && request.status === 'PENDING' ? (
+        <Button size="sm" variant="outline" onPress={() => setConfirmCancel(true)} leftIcon={<Ban size={14} color={theme.foreground} />}>{t('decline')}</Button>
+      ) : null}
+
+      <AlertDialog open={confirmReject} onOpenChange={setConfirmReject} title={t('decline')} description={t('decline')} confirmLabel={t('decline')} destructive onConfirm={() => onReject?.()} />
+      <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel} title={t('decline')} confirmLabel={t('decline')} destructive onConfirm={() => onCancel?.()} />
+    </PressableCard>
   );
 }

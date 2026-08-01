@@ -9,18 +9,21 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  PressableCard,
   Separator,
   Skeleton,
   Switch,
   Tabs,
   useToast,
 } from "@/components/ui";
+import { CustomHeader } from "@/components/ui/custom-header";
 import {
   FONT_SIZE,
   MAX_CONTENT_WIDTH,
   RADIUS,
   SPACING,
   getAccent,
+  SHADOWS,
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import {
@@ -55,10 +58,7 @@ import {
 } from "lucide-react-native";
 import React from "react";
 import { FlatList, Pressable, RefreshControl, View } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type FilterTab = "all" | "exchanges" | "points" | "system";
 
@@ -86,7 +86,6 @@ const iconFor = (type: string, color: string) => {
 export default function NotificationsScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const nav = useNavigation();
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const t = useT('notifications');
@@ -132,370 +131,248 @@ export default function NotificationsScreen() {
     (n: any) => !n.read && POINTS_NOTIFICATION_TYPES.includes(n.type),
   ).length;
 
-  React.useEffect(() => {
-    nav.setOptions({
-      headerLeft: () => (
-        <Pressable
-          onPress={() => router.back()}
-          style={{
-            paddingHorizontal: SPACING[2],
-            paddingVertical: SPACING[1],
-            borderRadius: RADIUS.md,
-          }}
-          hitSlop={10}
-        >
-          <ArrowLeft size={20} color={theme.foreground} />
-        </Pressable>
-      ),
-      headerTitle: t('title'),
-    });
-  }, [nav, router, theme]);
-
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: theme.background }}
-      edges={["bottom"]}
-    >
-      <ThemedView type="background" style={{ flex: 1, alignItems: "center" }}>
-        <View
-          style={{
-            width: "100%",
-            maxWidth: MAX_CONTENT_WIDTH,
-            flex: 1,
-            paddingHorizontal: SPACING[5],
-            gap: SPACING[3],
-            paddingTop: SPACING[3],
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: SPACING[2],
-              }}
-            >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: getAccent("blue").bg,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Bell size={18} color={getAccent("blue").main} />
-              </View>
-              <View>
-                <ThemedText
-                  type="default"
-                  style={{ fontSize: FONT_SIZE.lg, fontWeight: "800" }}
-                >
-                  {unreadCount} {t('unread')}
-                </ThemedText>
-                <ThemedText
-                  type="small"
-                  style={{
-                    color: theme.mutedForeground,
-                    fontSize: FONT_SIZE.sm,
-                  }}
-                >
-                  {notifQ.data?.length ?? 0} {t('total')}
-                </ThemedText>
-              </View>
-            </View>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <CustomHeader
+        title="Notifications 🔔"
+        subtitle={unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
+        showBack={true}
+        showNotifications={false}
+        rightAction={
+          unreadCount > 0 ? (
             <Button
               size="sm"
               variant="outline"
-              disabled={markAllQ.isPending || unreadCount === 0}
-              onPress={async () => {
-                await markAllQ.mutateAsync();
-                toast.toast({
-                  title: t('allMarkedRead'),
-                  variant: "success",
-                });
-              }}
               leftIcon={<CheckCheck size={14} color={theme.foreground} />}
+              onPress={async () => {
+                try {
+                  await markAllQ.mutateAsync();
+                  toast.toast({ title: t('markedAllRead'), variant: 'success' });
+                } catch {
+                  toast.toast({ title: t('couldNotMarkAllRead'), variant: 'error' });
+                }
+              }}
             >
-              {t('markAll')}
+              Mark all
             </Button>
-          </View>
+          ) : undefined
+        }
+      />
 
+      <View style={{ width: "100%", maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: "center" }}>
+        <View style={{ paddingHorizontal: SPACING[4], paddingVertical: SPACING[3] }}>
           <Tabs<FilterTab>
             variant="pills"
             value={tab}
             onChange={setTab}
             items={[
-              { value: "all", label: t('all'), badge: unreadCount || undefined },
+              { value: "all", label: t('filterAll'), badge: unreadCount || undefined },
               {
                 value: "exchanges",
-                label: t('exchanges'),
+                label: t('filterExchanges'),
                 badge: unexchCount || undefined,
               },
               {
                 value: "points",
-                label: t('points'),
+                label: t('filterPoints'),
                 badge: unptsCount || undefined,
               },
-              { value: "system", label: t('system') },
+              { value: "system", label: t('filterSystem') },
             ]}
           />
+        </View>
 
-          <FlatList
-            data={items as any[]}
-            keyExtractor={(it) => it.id}
-            contentContainerStyle={{
-              paddingBottom: insets.bottom + SPACING[10],
-              gap: SPACING[2],
-            }}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={refresh}
-                tintColor={theme.primary}
-                colors={[theme.primary]}
-              />
-            }
-            ItemSeparatorComponent={() => (
-              <Separator style={{ marginVertical: SPACING[1] }} />
-            )}
-            ListEmptyComponent={
-              notifQ.isLoading ? (
-                <View style={{ gap: SPACING[3], padding: SPACING[2] }}>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} width="100%" height={72} />
-                  ))}
-                </View>
-              ) : (
+        <FlatList
+          data={items as any[]}
+          keyExtractor={(it) => it.id}
+          contentContainerStyle={{
+            paddingHorizontal: SPACING[4],
+            paddingBottom: insets.bottom + 90,
+            gap: SPACING[2.5],
+          }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={refresh}
+              tintColor={theme.mutedForeground}
+              colors={["#6366f1"]}
+            />
+          }
+          ListEmptyComponent={
+            notifQ.isLoading ? (
+              <View style={{ gap: SPACING[2] }}>
+                <Skeleton width="100%" height={70} rounded />
+                <Skeleton width="100%" height={70} rounded />
+              </View>
+            ) : (
+              <View
+                style={{
+                  padding: SPACING[8],
+                  borderRadius: RADIUS.xl,
+                  backgroundColor: "rgba(24, 24, 27, 0.6)",
+                  borderWidth: 1,
+                  borderColor: "rgba(63, 63, 70, 0.4)",
+                  alignItems: "center",
+                  gap: SPACING[3],
+                }}
+              >
                 <View
                   style={{
-                    padding: SPACING[8],
+                    width: 56,
+                    height: 56,
+                    borderRadius: RADIUS.pill,
+                    backgroundColor: getAccent("indigo").bg,
                     alignItems: "center",
-                    gap: SPACING[3],
+                    justifyContent: "center",
                   }}
                 >
+                  <Bell size={24} color={theme.foreground} />
+                </View>
+                <ThemedText type="default" style={{ fontWeight: '600', color: theme.foreground }}>
+                  {t('noNotificationsTitle')}
+                </ThemedText>
+                <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: "center" }}>
+                  {t('noNotificationsDesc')}
+                </ThemedText>
+              </View>
+            )
+          }
+          renderItem={({ item: n }) => {
+            const meta = getNotificationMeta(n.type);
+            const palette = getAccent(meta.colorClass);
+            const isUnread = !n.read;
+
+            return (
+              <PressableCard
+                key={n.id}
+                onPress={() => {
+                  if (!n.read) markReadQ.mutate(n.id);
+                  if (n.link) router.push(n.link as any);
+                }}
+                style={{
+                  padding: SPACING[3.5],
+                  flexDirection: "row",
+                  gap: SPACING[3],
+                  alignItems: "center",
+                  borderColor: isUnread ? "rgba(99, 102, 241, 0.4)" : "rgba(63, 63, 70, 0.4)",
+                  backgroundColor: isUnread ? "rgba(99, 102, 241, 0.08)" : "rgba(24, 24, 27, 0.7)",
+                }}
+              >
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: RADIUS.xl,
+                    backgroundColor: palette.bg,
+                    borderWidth: 1,
+                    borderColor: palette.border,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {iconFor(n.type, palette.main)}
+                </View>
+
+                <View style={{ flex: 1, gap: 2 }}>
                   <View
                     style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: RADIUS.pill,
-                      backgroundColor: theme.backgroundElement,
+                      flexDirection: "row",
                       alignItems: "center",
-                      justifyContent: "center",
+                      justifyContent: "space-between",
                     }}
                   >
-                    <Bell size={22} color={theme.mutedForeground} />
+                    <ThemedText
+                      type="smallBold"
+                      style={{
+                        fontSize: FONT_SIZE.md,
+                        color: theme.foreground,
+                        fontWeight: isUnread ? "800" : "600",
+                      }}
+                      numberOfLines={1}
+                    >
+                      {n.title}
+                    </ThemedText>
+                    {isUnread && (
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: "#6366f1",
+                        }}
+                      />
+                    )}
                   </View>
-                  <ThemedText type="default" style={{ fontWeight: "700" }}>
-                    {t('nothingHere')}
+                  <ThemedText
+                    type="small"
+                    style={{
+                      color: theme.mutedForeground,
+                      fontSize: FONT_SIZE.sm,
+                      lineHeight: 18,
+                    }}
+                    numberOfLines={2}
+                  >
+                    {n.message}
                   </ThemedText>
                   <ThemedText
                     type="small"
                     style={{
                       color: theme.mutedForeground,
-                      textAlign: "center",
-                      fontSize: FONT_SIZE.sm,
+                      fontSize: 11,
+                      marginTop: 2,
                     }}
                   >
-                    {t('nothingHereDesc')}
+                    {formatDateTimeShort(n.createdAt)}
                   </ThemedText>
                 </View>
-              )
-            }
-            renderItem={({ item: n }) => {
-              const meta = getNotificationMeta(n.type as any);
-              const accentColor = getAccent(
-                meta.colorClass.replace("text-", "") as any,
-              );
-              const palette = meta.colorClass
-                ? accentColor
-                : { main: theme.foreground, bg: theme.muted };
-              return (
-                <Pressable
-                  onPress={async () => {
-                    if (!n.read) {
-                      try {
-                        await markReadQ.mutateAsync(n.id);
-                      } catch {}
-                    }
-                    // Navigate based on type
-                    if (n.data?.exchangeId) {
-                      router.push(`/exchanges/${n.data.exchangeId}` as any);
-                    } else if (n.data?.exchangeRequestId) {
-                      router.push(
-                        `/requests/${n.data.exchangeRequestId}` as any,
-                      );
-                    } else if (n.data?.userId) {
-                      router.push(`/users/${n.data.userId}` as any);
-                    }
-                  }}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "flex-start",
-                    gap: SPACING[3],
-                    padding: SPACING[3],
-                    borderRadius: RADIUS.md,
-                    backgroundColor: n.read
-                      ? "transparent"
-                      : `${getAccent("indigo").bg}`,
-                    borderWidth: n.read ? 0 : 1,
-                    borderColor: n.read
-                      ? "transparent"
-                      : getAccent("indigo").border,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: RADIUS.pill,
-                      backgroundColor: palette.bg,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {iconFor(n.type, palette.main)}
-                  </View>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <ThemedText
-                        type="smallBold"
-                        style={{ fontSize: FONT_SIZE.md }}
-                      >
-                        {n.title}
-                      </ThemedText>
-                      {!n.read ? (
-                        <CircleDot
-                          size={12}
-                          color={theme.primary}
-                          fill={theme.primary}
-                        />
-                      ) : null}
-                    </View>
-                    {n.message ? (
-                      <ThemedText
-                        type="small"
-                        style={{
-                          color: theme.mutedForeground,
-                          fontSize: FONT_SIZE.sm,
-                          lineHeight: 18,
-                        }}
-                        numberOfLines={3}
-                      >
-                        {n.message}
-                      </ThemedText>
-                    ) : null}
-                    <ThemedText
-                      type="small"
-                      style={{
-                        fontSize: 11,
-                        color: theme.mutedForeground,
-                        marginTop: 4,
-                      }}
-                    >
-                      {formatDateTimeShort(n.createdAt)}
-                    </ThemedText>
-                  </View>
-                  <Pressable
-                    hitSlop={10}
-                    style={{ padding: SPACING[1] }}
-                    onPress={() => setSheetOpen(n.id)}
-                  >
-                    <MoreHorizontal size={16} color={theme.mutedForeground} />
-                  </Pressable>
-                  <ActionSheet
-                    open={sheetOpen === n.id}
-                    onClose={() => setSheetOpen(null)}
-                    title={t('notificationOptions')}
-                    options={[
-                      {
-                        label: n.read ? t('markAsUnread') : t('markAsRead'),
-                        icon: <CheckCheck size={18} color={theme.foreground} />,
-                        onPress: async () => {
-                          if (n.read) {
-                            // Unread not available on API — noop
-                          } else {
-                            await markReadQ.mutateAsync(n.id);
-                          }
-                        },
-                      },
-                      {
-                        label: t('delete'),
-                        icon: (
-                          <Trash2 size={18} color={theme.destructive as any} />
-                        ),
-                        destructive: true,
-                        onPress: async () => {
-                          await deleteQ.mutateAsync(n.id);
-                          await notifQ.refetch();
-                          toast.toast({ title: t('deleted'), variant: "success" });
-                        },
-                      },
-                    ]}
-                  />
-                </Pressable>
-              );
-            }}
-          />
 
-          {/* Prefs panel */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('preferences')}</CardTitle>
-              <CardDescription>{t('preferencesDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent style={{ gap: SPACING[4] }}>
-              <Switch
-                label={t('inAppNotifications')}
-                description={t('inAppNotificationsDesc')}
-                value={userQ.data?.inAppNotifications ?? true}
-                onValueChange={async (v) => {
-                  await updatePrefsQ.mutateAsync({
-                    inAppNotifications: v,
-                  });
-                  await userQ.refetch();
-                }}
-              />
-              <Switch
-                label={t('emailNotifications')}
-                description={t('emailNotificationsDesc')}
-                value={userQ.data?.emailNotifications ?? true}
-                onValueChange={async (v) => {
-                  await updatePrefsQ.mutateAsync({
-                    emailNotifications: v,
-                  });
-                  await userQ.refetch();
-                }}
-              />
-              <Switch
-                label={t('pushNotifications')}
-                description={t('pushNotificationsDesc')}
-                value={userQ.data?.pushNotifications ?? true}
-                onValueChange={async (v) => {
-                  await updatePrefsQ.mutateAsync({
-                    pushNotifications: v,
-                  });
-                  await userQ.refetch();
-                }}
-              />
-            </CardContent>
-          </Card>
-        </View>
-      </ThemedView>
-    </SafeAreaView>
-  )
+                <Pressable
+                  onPress={() => setSheetOpen(n.id)}
+                  hitSlop={10}
+                  style={{ padding: SPACING[1] }}
+                >
+                  <MoreHorizontal size={18} color="#71717a" />
+                </Pressable>
+
+                <ActionSheet
+                  open={sheetOpen === n.id}
+                  onClose={() => setSheetOpen(null)}
+                  title={t('actionsTitle')}
+                  options={[
+                    ...(!n.read
+                      ? [
+                          {
+                            label: t('markAsRead'),
+                            icon: (
+                              <CheckCheck
+                                size={16}
+                                color={theme.foreground}
+                              />
+                            ),
+                            onPress: () => {
+                              markReadQ.mutate(n.id);
+                              toast.toast({ title: t('markedRead') });
+                            },
+                          },
+                        ]
+                      : []),
+                    {
+                      label: t('delete'),
+                      destructive: true,
+                      icon: <Trash2 size={16} color="#ef4444" />,
+                      onPress: () => {
+                        deleteQ.mutate(n.id);
+                        toast.toast({ title: t('deleted') });
+                      },
+                    },
+                  ]}
+                />
+              </PressableCard>
+            );
+          }}
+        />
+      </View>
+    </View>
+  );
 }

@@ -97,7 +97,7 @@ export function ReferralApplyPrompt({
                 paddingVertical: SPACING[3],
                 color: '#fff',
                 fontSize: FONT_SIZE.md,
-                fontWeight: '800',
+                fontWeight: '600',
                 letterSpacing: 2,
               }}
               onSubmitEditing={apply}

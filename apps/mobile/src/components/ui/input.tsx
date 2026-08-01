@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -6,12 +6,17 @@ import {
   View,
   Text,
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  interpolateColor,
+} from 'react-native-reanimated';
 import { useTheme } from '@/hooks/use-theme';
-import { FONT_SIZE, RADIUS, SPACING, FONT_WEIGHT } from '@/constants/theme';
-import { cn } from '@/lib/style-utils';
+import { FONT_SIZE, RADIUS, SPACING, TYPOGRAPHY, ANIMATION } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 
-export interface InputProps extends Omit<TextInputProps, 'placeholderTextColor'> {
+export interface InputProps extends TextInputProps {
   label?: string;
   error?: string | null;
   containerStyle?: any;
@@ -34,46 +39,46 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
     placeholderTextColor,
     multiline,
     numberOfLines,
+    onFocus,
+    onBlur,
     ...rest
   },
   ref
 ) {
   const theme = useTheme();
   const hasError = !!error;
+  const [isFocused, setIsFocused] = useState(false);
+
+  const borderColor = hasError
+    ? theme.destructive
+    : isFocused
+      ? theme.foreground
+      : theme.border;
 
   return (
-    <View style={cn({ gap: SPACING[2] }, containerStyle)}>
+    <View style={[{ gap: SPACING[1.5] }, containerStyle]}>
       {label ? (
-        <ThemedText
-          type="smallBold"
-          style={{
-            fontSize: FONT_SIZE.sm,
-            color: theme.foreground,
-            marginLeft: SPACING[0.5],
-          }}
-        >
+        <ThemedText type="label" style={{ marginLeft: SPACING[0.5] }}>
           {label}
         </ThemedText>
       ) : null}
       <View
-        style={cn(
+        style={[
           {
             flexDirection: 'row',
             alignItems: 'center',
-            borderRadius: RADIUS.md,
+            borderRadius: RADIUS.lg,
             borderWidth: 1,
-            borderColor: hasError ? '#ef4444' : theme.input,
+            borderColor,
             backgroundColor: theme.background,
             paddingHorizontal: SPACING[3],
             minHeight: multiline ? 100 : 44,
             gap: SPACING[2],
           },
-          inputWrapperStyle
-        )}
+          inputWrapperStyle,
+        ]}
       >
-        {leftSlot ? (
-          <View style={styles.slot}>{leftSlot}</View>
-        ) : null}
+        {leftSlot ? <View style={styles.slot}>{leftSlot}</View> : null}
         <TextInput
           ref={ref}
           placeholderTextColor={placeholderTextColor ?? theme.mutedForeground}
@@ -82,7 +87,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
               flex: 1,
               color: theme.foreground,
               fontSize: FONT_SIZE.md,
-              paddingVertical: SPACING[2],
+              fontWeight: '400',
+              paddingVertical: SPACING[2.5],
               textAlignVertical: multiline ? 'top' : 'center',
               minHeight: multiline ? 100 : undefined,
             },
@@ -90,32 +96,25 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           ]}
           multiline={multiline}
           numberOfLines={numberOfLines}
+          onFocus={(e) => {
+            setIsFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            onBlur?.(e);
+          }}
           {...rest}
         />
-        {rightSlot ? (
-          <View style={styles.slot}>{rightSlot}</View>
-        ) : null}
+        {rightSlot ? <View style={styles.slot}>{rightSlot}</View> : null}
       </View>
       {description && !hasError ? (
-        <ThemedText
-          type="small"
-          style={{
-            fontSize: FONT_SIZE.sm,
-            color: theme.mutedForeground,
-            marginLeft: SPACING[0.5],
-          }}
-        >
+        <ThemedText type="caption" muted style={{ marginLeft: SPACING[0.5] }}>
           {description}
         </ThemedText>
       ) : null}
       {hasError ? (
-        <Text
-          style={{
-            fontSize: FONT_SIZE.sm,
-            color: '#f87171',
-            marginLeft: SPACING[0.5],
-          }}
-        >
+        <Text style={{ fontSize: FONT_SIZE.sm, color: theme.destructive, marginLeft: SPACING[0.5] }}>
           {error}
         </Text>
       ) : null}
@@ -123,41 +122,21 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   );
 });
 
-export const Textarea = forwardRef<TextInput, InputProps>(function Textarea(
-  props,
-  ref
-) {
-  return (
-    <Input
-      ref={ref}
-      multiline
-      numberOfLines={6}
-      textAlignVertical="top"
-      {...props}
-    />
-  );
+export const Textarea = forwardRef<TextInput, InputProps>(function Textarea(props, ref) {
+  return <Input ref={ref} multiline numberOfLines={6} textAlignVertical="top" {...props} />;
 });
 
 export interface LabelProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  label?: string;
   style?: any;
   htmlFor?: string;
 }
 
-export function Label({ children, style }: LabelProps) {
-  const theme = useTheme();
+export function Label({ children, label, style }: LabelProps) {
   return (
-    <ThemedText
-      type="smallBold"
-      style={{
-        fontSize: FONT_SIZE.sm,
-        color: theme.foreground,
-        fontWeight: FONT_WEIGHT.semibold,
-        marginLeft: SPACING[0.5],
-        marginBottom: SPACING[1],
-      }}
-    >
-      {children}
+    <ThemedText type="label" style={style}>
+      {label ?? children}
     </ThemedText>
   );
 }

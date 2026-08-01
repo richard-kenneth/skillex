@@ -1,96 +1,37 @@
 import React from 'react';
-import { StyleSheet, View, ViewProps } from 'react-native';
+import { Pressable, PressableProps, StyleSheet, View, ViewProps } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { RADIUS, SPACING, SHADOWS } from '@/constants/theme';
-import { cn } from '@/lib/style-utils';
+import { RADIUS, SPACING, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
 
-export interface CardProps extends ViewProps {}
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function Card({ style, children, ...rest }: CardProps) {
+// ─── Card ───────────────────────────────────────────────────────────────────
+
+export interface CardProps extends ViewProps {
+  variant?: 'default' | 'glass' | 'accent' | 'outline';
+  glow?: boolean;
+}
+
+export function Card({ style, children, variant = 'default', glow, ...rest }: CardProps) {
   const theme = useTheme();
   return (
     <View
-      style={cn(
+      style={[
         {
-          borderRadius: RADIUS.lg,
+          borderRadius: RADIUS['2xl'],
           borderWidth: 1,
           borderColor: theme.border,
           backgroundColor: theme.card,
+          overflow: 'hidden',
         },
-        SHADOWS.sm,
-        style
-      )}
-      {...rest}
-    >
-      {children}
-    </View>
-  );
-}
-
-export interface CardHeaderProps extends ViewProps {}
-
-export function CardHeader({ style, children, ...rest }: CardHeaderProps) {
-  return (
-    <View style={cn({ padding: SPACING[5], gap: SPACING[1.5] }, style)} {...rest}>
-      {children}
-    </View>
-  );
-}
-
-export interface CardTitleProps {
-  children: React.ReactNode;
-  style?: any;
-  numberOfLines?: number;
-}
-
-export function CardTitle({ children, style, numberOfLines }: CardTitleProps) {
-  return (
-    <ThemedText
-      type="default"
-      style={[
-        { fontSize: 18, fontWeight: '700', lineHeight: 26, letterSpacing: -0.2 },
         style,
       ]}
-      numberOfLines={numberOfLines}
-    >
-      {children}
-    </ThemedText>
-  );
-}
-
-export interface CardDescriptionProps {
-  children: React.ReactNode;
-  style?: any;
-  numberOfLines?: number;
-}
-
-export function CardDescription({
-  children,
-  style,
-  numberOfLines,
-}: CardDescriptionProps) {
-  return (
-    <ThemedText
-      type="small"
-      themeColor="textSecondary"
-      style={[{ fontSize: 13, lineHeight: 20 }, style]}
-      numberOfLines={numberOfLines}
-    >
-      {children}
-    </ThemedText>
-  );
-}
-
-export interface CardContentProps extends ViewProps {}
-
-export function CardContent({ style, children, ...rest }: CardContentProps) {
-  return (
-    <View
-      style={cn(
-        { paddingHorizontal: SPACING[5], paddingBottom: SPACING[5] },
-        style
-      )}
       {...rest}
     >
       {children}
@@ -98,21 +39,118 @@ export function CardContent({ style, children, ...rest }: CardContentProps) {
   );
 }
 
-export interface CardFooterProps extends ViewProps {}
+// ─── PressableCard ──────────────────────────────────────────────────────────
 
-export function CardFooter({ style, children, ...rest }: CardFooterProps) {
+export interface PressableCardProps extends PressableProps {
+  variant?: 'default' | 'glass' | 'accent' | 'outline';
+  glow?: boolean;
+}
+
+export function PressableCard({
+  style,
+  children,
+  variant = 'default',
+  glow,
+  onPressIn,
+  onPressOut,
+  ...rest
+}: PressableCardProps) {
+  const theme = useTheme();
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = (e: any) => {
+    scale.value = withSpring(0.985, { damping: 15, stiffness: 300 });
+    onPressIn?.(e);
+  };
+
+  const handlePressOut = (e: any) => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    onPressOut?.(e);
+  };
+
+  return (
+    <AnimatedPressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[
+        {
+          borderRadius: RADIUS['2xl'],
+          borderWidth: 1,
+          borderColor: theme.border,
+          backgroundColor: theme.card,
+          overflow: 'hidden',
+        },
+        animatedStyle,
+        style as any,
+      ]}
+      {...rest}
+    >
+      {children}
+    </AnimatedPressable>
+  );
+}
+
+// ─── Card sub-components ────────────────────────────────────────────────────
+
+export function CardHeader({ style, children, ...rest }: ViewProps) {
+  return (
+    <View style={[{ padding: SPACING[4], paddingBottom: SPACING[2], gap: SPACING[0.5] }, style]} {...rest}>
+      {children}
+    </View>
+  );
+}
+
+export function CardTitle({ children, style, numberOfLines }: {
+  children: React.ReactNode;
+  style?: any;
+  numberOfLines?: number;
+}) {
+  return (
+    <ThemedText type="cardTitle" style={style} numberOfLines={numberOfLines}>
+      {children}
+    </ThemedText>
+  );
+}
+
+export function CardDescription({ children, style, numberOfLines }: {
+  children: React.ReactNode;
+  style?: any;
+  numberOfLines?: number;
+}) {
+  return (
+    <ThemedText type="caption" muted style={[{ marginTop: 2 }, style]} numberOfLines={numberOfLines}>
+      {children}
+    </ThemedText>
+  );
+}
+
+export function CardContent({ style, children, ...rest }: ViewProps) {
+  return (
+    <View style={[{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[4] }, style]} {...rest}>
+      {children}
+    </View>
+  );
+}
+
+export function CardFooter({ style, children, ...rest }: ViewProps) {
+  const theme = useTheme();
   return (
     <View
-      style={cn(
+      style={[
         {
-          padding: SPACING[5],
+          padding: SPACING[4],
           borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: theme.border,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
         },
-        style
-      )}
+        style,
+      ]}
       {...rest}
     >
       {children}
