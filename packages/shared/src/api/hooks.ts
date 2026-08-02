@@ -22,6 +22,7 @@ import type {
   PointsTransaction,
   RecordingEstimate,
   Review,
+  SessionChatHistory,
   Skill,
   SkillCategory,
   UserSkill
@@ -790,9 +791,9 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
 
   function useSessionChatMessages(
     exchangeSessionId: string,
-    options?: Omit<UseQueryOptions<any, Error, any>, "queryKey" | "queryFn">
+    options?: Omit<UseQueryOptions<SessionChatHistory, Error, SessionChatHistory>, "queryKey" | "queryFn">
   ) {
-    return useQuery<any, Error>({
+    return useQuery<SessionChatHistory, Error>({
       queryKey: QUERY_KEYS.video.chat(exchangeSessionId),
       queryFn: () => client.video.chat.list(exchangeSessionId),
       enabled: !!exchangeSessionId,

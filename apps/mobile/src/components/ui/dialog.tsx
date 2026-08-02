@@ -7,8 +7,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { RADIUS, SPACING, FONT_SIZE, MAX_CONTENT_WIDTH, TYPOGRAPHY } from '@/constants/theme';
 import { Button } from './button';
 import { X } from 'lucide-react-native';
+import { useT } from 'lib/i18n';
 
 // ─── Dialog ─────────────────────────────────────────────────────────────────
+
 
 export interface DialogProps {
   open: boolean;
@@ -56,11 +58,13 @@ export function Dialog({ open, onOpenChange, children, dismissable = true }: Dia
 }
 
 export function DialogHeader({ children, style, onClose }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   style?: any;
   onClose?: () => void;
 }) {
   const theme = useTheme();
+  const t = useT('common');
+
   return (
     <View
       style={[
@@ -84,7 +88,7 @@ export function DialogHeader({ children, style, onClose }: {
             padding: SPACING[2],
             zIndex: 5,
           }}
-          accessibilityLabel="Close"
+          accessibilityLabel={t('close')}
         >
           <X size={16} color={theme.mutedForeground} />
         </Pressable>

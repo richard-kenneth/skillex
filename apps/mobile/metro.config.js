@@ -15,4 +15,9 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
+config.resolver.extraNodeModules = {
+  ...(config.resolver.extraNodeModules || {}),
+  'audio-device-detector': path.resolve(projectRoot, 'modules/audio-device-detector'),
+};
+
 module.exports = config;

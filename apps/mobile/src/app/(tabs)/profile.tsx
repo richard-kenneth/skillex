@@ -140,8 +140,8 @@ export default function ProfileScreen() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       {/* Custom Header */}
       <CustomHeader
-        title="Profile"
-        subtitle="Manage account, skills & preferences"
+        title={t('title')}
+        subtitle={t('manageAccountDesc')}
         showNotifications={true}
         showSearch={true}
         rightAction={
@@ -369,7 +369,7 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                       type="smallBold"
                       style={{ fontSize: FONT_SIZE.sm, color: "#fafafa" }}
                     >
-                      {avg > 0 ? avg.toFixed(1) : 'New'}
+                      {avg > 0 ? avg.toFixed(1) : t('new')}
                     </ThemedText>
                     <ThemedText
                       type="small"
@@ -431,6 +431,7 @@ function AvatarUploader({
   fallback?: string;
 }) {
   const theme = useTheme();
+  const t = useT('profile');
   const userQ = useCurrentUser();
   const toast = useToast();
   const [preview, setPreview] = React.useState<string | null>(null);
@@ -441,8 +442,8 @@ function AvatarUploader({
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         toast.toast({
-          title: "Permission denied",
-          description: "Allow access to pick a photo",
+          title: t('permissionDenied'),
+          description: t('allowAccessPhoto'),
           variant: "error",
         });
         return;
@@ -459,12 +460,12 @@ function AvatarUploader({
       // Note: Full upload implementation would require presigned URL flow
       // For now, show preview. Backend upload to be implemented.
       toast.toast({
-        title: "Photo selected",
-        description: "Upload will be implemented with presigned URLs",
+        title: t('photoSelected'),
+        description: t('photoSelectedDesc'),
         variant: "info",
       });
     } catch (err: any) {
-      toast.toast({ title: "Could not pick image", variant: "error" });
+      toast.toast({ title: t("couldNotPickImage"), variant: "error" });
     }
   };
 
@@ -595,7 +596,7 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
         const map: Record<string, string> = {};
         const issues = v.flatten(e.issues);
         Object.entries(issues.nested ?? {}).forEach(([k, v]) => {
-          map[k] = (v as any)[0] ?? "Invalid";
+          map[k] = (v as any)[0] ?? t('invalid');
         });
         setErrors(map);
         return;
@@ -674,7 +675,7 @@ function AppPreferencesCard() {
               marginLeft: SPACING[0.5],
             }}
           >
-            Language
+            {t('language')}
           </ThemedText>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}>
             {localeOpts.map((opt) => (
@@ -1514,10 +1515,12 @@ export function ReviewCard({ review }: { review: any }) {
 /* ---------------------------- Referrals Pane ---------------------------- */
 
 function ReferralsPane() {
+  const t = useT('profile');
   const refCodeQ = useReferralCode();
   const refStatsQ = useReferralStats();
   const toast = useToast();
   const theme = useTheme();
+
   const loading = refCodeQ.isLoading || refStatsQ.isLoading;
   const code = refCodeQ.data;
   const stats = refStatsQ.data;
@@ -1561,7 +1564,7 @@ function ReferralsPane() {
               <Gift size={20} color={getAccent("violet").main} />
             </View>
             <View style={{ flex: 1 }}>
-              <CardTitle>Invite friends</CardTitle>
+              <CardTitle>{t('inviteFriends')}</CardTitle>
               <CardDescription>
                 Earn 200 pts per referral. Your code:
               </CardDescription>
@@ -1627,19 +1630,19 @@ function ReferralsPane() {
           <View style={{ flexDirection: "row", gap: SPACING[2] }}>
             <MiniStat
               icon={<Users size={16} color={getAccent("indigo").main} />}
-              label="Referrals"
+              label={t('referrals')}
               value={stats?.totalReferrals ?? 0}
               accent="indigo"
             />
             <MiniStat
               icon={<TrendingUp size={16} color={getAccent("emerald").main} />}
-              label="Active"
+              label={t('referralsActive')}
               value={stats?.activeReferrals ?? 0}
               accent="emerald"
             />
             <MiniStat
               icon={<HandCoins size={16} color={getAccent("amber").main} />}
-              label="Points earned"
+              label={t('referralsPointsEarned')}
               value={stats?.pointsEarned ?? 0}
               accent="amber"
             />
@@ -1649,7 +1652,7 @@ function ReferralsPane() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent referrals</CardTitle>
+          <CardTitle>{t('recentReferrals')}</CardTitle>
           <CardDescription>
             Everyone who signed up using your code.
           </CardDescription>
@@ -1726,7 +1729,7 @@ function ReferralsPane() {
                     </Badge>
                   </View>
                 ) : (
-                  <Badge variant="outline">Pending</Badge>
+                  <Badge variant="outline">{t('pending')}</Badge>
                 )}
               </View>
             ))
@@ -1788,7 +1791,9 @@ function MiniStat({
 
 function NotificationsPrefsPane() {
   const theme = useTheme();
+  const t = useT('profile');
   const updateQ = useUpdateNotificationPreferences();
+
   const userQ = useCurrentUser();
 
   const loading = userQ.isLoading || updateQ.isPending;
@@ -1802,31 +1807,31 @@ function NotificationsPrefsPane() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notification preferences</CardTitle>
-        <CardDescription>Choose what reaches you.</CardDescription>
+        <CardTitle>{t('notificationPreferences')}</CardTitle>
+        <CardDescription>{t('notificationPreferencesDesc')}</CardDescription>
       </CardHeader>
       <CardContent style={{ gap: SPACING[4] }}>
         {loading && !user ? <SkeletonText lines={6} /> : null}
         <View style={{ gap: SPACING[3] }}>
           <Switch
-            label="In-app"
-            description="Show a toast inside the app."
+            label={t('inApp')}
+            description={t('inAppDesc')}
             value={user.inAppNotifications ?? true}
             onValueChange={(v) => {
               set({ inAppNotifications: v });
             }}
           />
           <Switch
-            label="Email digests"
-            description="Daily or weekly email updates."
+            label={t('emailDigests')}
+            description={t('emailDigestsDesc')}
             value={user.emailNotifications ?? true}
             onValueChange={(v) => {
               set({ emailNotifications: v });
             }}
           />
           <Switch
-            label="Push notifications"
-            description="Send to your device lock screen."
+            label={t('pushNotificationsLabel')}
+            description={t('pushNotificationsDesc')}
             value={user.pushNotifications ?? true}
             onValueChange={(v) => {
               set({ pushNotifications: v });

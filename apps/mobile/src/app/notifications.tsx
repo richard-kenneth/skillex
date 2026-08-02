@@ -134,8 +134,8 @@ export default function NotificationsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <CustomHeader
-        title="Notifications 🔔"
-        subtitle={unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
+        title={t('title') + ' 🔔'}
+        subtitle={unreadCount > 0 ? t('unreadCount', { count: unreadCount }) : t('allCaughtUp')}
         showBack={true}
         showNotifications={false}
         rightAction={

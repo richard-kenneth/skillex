@@ -23,6 +23,9 @@
       "@/assets/*": [
         "./assets/*"
       ],
+      "audio-device-detector": [
+        "./modules/audio-device-detector/index.ts"
+      ],
       "@skil-ex2/shared": [
         "../../packages/shared/index.ts"
       ],

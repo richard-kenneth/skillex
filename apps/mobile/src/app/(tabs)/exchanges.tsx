@@ -52,8 +52,8 @@ export default function ExchangesListScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <CustomHeader
-        title="Exchanges"
-        subtitle={`${activeCount} Active · ${completedCount} Completed`}
+        title={t('title')}
+        subtitle={t('activeCompletedCount', { active: activeCount, completed: completedCount })}
         showNotifications
         showSearch
       />
@@ -128,10 +128,10 @@ export default function ExchangesListScreen() {
                   <Handshake size={28} color={theme.mutedForeground} />
                 </View>
                 <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
-                  {t('noExchangesTitle') ?? 'No Exchanges Yet'}
+                  {t('noExchangesTitle')}
                 </ThemedText>
                 <ThemedText type="caption" muted style={{ textAlign: 'center', maxWidth: 280 }}>
-                  {t('noExchangesDesc') ?? 'Connect with peers to exchange skills and boost your expertise.'}
+                  {t('noExchangesDesc')}
                 </ThemedText>
                 <Button
                   size="sm"
@@ -139,7 +139,7 @@ export default function ExchangesListScreen() {
                   onPress={() => router.push('/(tabs)/matches' as any)}
                   leftIcon={<Users size={14} color={theme.primaryForeground} />}
                 >
-                  {t('findMatches') ?? 'Find Matches'}
+                  {t('findMatches')}
                 </Button>
               </View>
             )
@@ -210,7 +210,7 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
             <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.sm }}>
               {isSender ? 'Learning from' : 'Teaching'}{' '}
               <ThemedText type="caption" style={{ fontWeight: '600', color: theme.foreground }}>
-                {otherUser?.name ?? 'Peer Trader'}
+                {otherUser?.name ?? t('peerTrader')}
               </ThemedText>
             </ThemedText>
           </View>
@@ -225,7 +225,7 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
       <View style={{ gap: SPACING[1.5], marginTop: 2 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
-            Progress
+            {t('progress')}
           </ThemedText>
           <ThemedText type="caption" style={{ fontWeight: '700', fontSize: FONT_SIZE.xs, color: theme.primary }}>
             {progress}%
@@ -268,7 +268,7 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
       {/* Card footer link */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: SPACING[1], borderTopWidth: 1, borderTopColor: theme.border + '60' }}>
         <ThemedText type="caption" style={{ color: theme.primary, fontWeight: '600', fontSize: FONT_SIZE.xs }}>
-          View exchange details
+          {t('viewExchangeDetails')}
         </ThemedText>
         <ChevronRight size={14} color={theme.primary} />
       </View>
@@ -278,7 +278,7 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
 
 function labelForStatus(s: string, t: (k: string) => string) {
   switch (s) {
-    case 'COMMITTED': return 'Committed';
+    case 'COMMITTED': return t('committed');
     case 'IN_PROGRESS': return t('in_progress') ?? 'In Progress';
     case 'COMPLETED': return t('completed') ?? 'Completed';
     case 'CANCELLED': return t('cancelled') ?? 'Cancelled';
@@ -287,7 +287,7 @@ function labelForStatus(s: string, t: (k: string) => string) {
     case 'PENDING': return t('pending') ?? 'Pending';
     case 'REJECTED': return t('rejected') ?? 'Rejected';
     case 'EXPIRED': return t('expired') ?? 'Expired';
-    default: return s ? s.replace(/_/g, ' ') : 'Active';
+    default: return s ? s.replace(/_/g, ' ') : t('active');
   }
 }
 

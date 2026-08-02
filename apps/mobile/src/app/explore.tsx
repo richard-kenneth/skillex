@@ -8,9 +8,12 @@ import { ThemedText } from '@/components/themed-text';
 import { Collapsible } from '@/components/ui/collapsible';
 import { SPACING, MAX_CONTENT_WIDTH, RADIUS } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from 'lib/i18n';
 
 export default function TabTwoScreen() {
+  const t = useT('common');
   const safeAreaInsets = useSafeAreaInsets();
+
   const insets = {
     ...safeAreaInsets,
     bottom: safeAreaInsets.bottom + 60 + SPACING[3],
@@ -55,7 +58,7 @@ export default function TabTwoScreen() {
         </View>
 
         <View style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
+          <Collapsible title={t('fileBasedRouting')}>
             <ThemedText type="body">
               This app has two screens:{' '}
               <ThemedText type="label">app/(tabs)/index.tsx</ThemedText> and{' '}
@@ -70,14 +73,14 @@ export default function TabTwoScreen() {
             </ExternalLink>
           </Collapsible>
 
-          <Collapsible title="Android, iOS, and web support">
+          <Collapsible title={t('androidIosWebSupport')}>
             <ThemedText type="body">
               You can open this project on Android, iOS, and the web. To open the web version, press{' '}
               <ThemedText type="label">w</ThemedText> in the terminal running this project.
             </ThemedText>
           </Collapsible>
 
-          <Collapsible title="Images">
+          <Collapsible title={t('images')}>
             <ThemedText type="body">
               For static images, you can use the <ThemedText type="label">@2x</ThemedText> and{' '}
               <ThemedText type="label">@3x</ThemedText> suffixes to provide files for
@@ -92,7 +95,7 @@ export default function TabTwoScreen() {
             </ExternalLink>
           </Collapsible>
 
-          <Collapsible title="Custom fonts">
+          <Collapsible title={t('customFonts')}>
             <ThemedText type="body">
               Open <ThemedText type="label">app/_layout.tsx</ThemedText> to see how to load{' '}
               <ThemedText type="body">custom fonts such as Inter.</ThemedText>
@@ -102,7 +105,7 @@ export default function TabTwoScreen() {
             </ExternalLink>
           </Collapsible>
 
-          <Collapsible title="Light and dark mode components">
+          <Collapsible title={t('lightDarkMode')}>
             <ThemedText type="body">
               This template has light and dark mode support. The{' '}
               <ThemedText type="label">useTheme</ThemedText> hook lets you inspect

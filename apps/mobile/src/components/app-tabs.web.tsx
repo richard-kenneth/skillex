@@ -15,18 +15,20 @@ import { ThemedView } from './themed-view';
 
 import { SPACING, MAX_CONTENT_WIDTH } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from 'lib/i18n';
 
 export default function AppTabs() {
+  const t = useT('nav');
   return (
     <Tabs>
       <TabSlot style={{ height: '100%' }} />
       <TabList asChild>
         <CustomTabList>
           <TabTrigger name="home" href="/" asChild>
-            <TabButton>Home</TabButton>
+            <TabButton>{t('home')}</TabButton>
           </TabTrigger>
           <TabTrigger name="explore" href="/explore" asChild>
-            <TabButton>Explore</TabButton>
+            <TabButton>{t('explore')}</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>
@@ -50,6 +52,8 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
 
 export function CustomTabList(props: TabListProps) {
   const theme = useTheme();
+  const t = useT('common');
+
 
   return (
     <View {...props} style={styles.tabListContainer}>
@@ -62,7 +66,7 @@ export function CustomTabList(props: TabListProps) {
 
         <ExternalLink href="https://docs.expo.dev" asChild>
           <Pressable style={styles.externalPressable}>
-            <ThemedText type="link">Docs</ThemedText>
+            <ThemedText type="link">{t('docs')}</ThemedText>
             <SymbolView
               tintColor={theme.foreground}
               name={{ ios: 'arrow.up.right.square', web: 'link' }}

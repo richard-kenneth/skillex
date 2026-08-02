@@ -69,6 +69,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const t = useT('dashboard');
+  const navT = useT('nav')
 
   const userQ = useCurrentUser();
   const exchangesQ = useExchanges();
@@ -163,9 +164,9 @@ export default function DashboardScreen() {
                   <Search size={ICON_SIZE.md} color={theme.foreground} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <ThemedText type="cardTitle">Find Skill Match</ThemedText>
+                  <ThemedText type="cardTitle">{t('findSkillMatch')}</ThemedText>
                   <ThemedText type="caption" muted style={{ marginTop: 2 }}>
-                    Connect with peer experts to trade skills
+                    {t('findSkillMatchDesc')}
                   </ThemedText>
                 </View>
                 <ArrowUpRight size={ICON_SIZE.md} color={theme.mutedForeground} />
@@ -178,22 +179,22 @@ export default function DashboardScreen() {
             <View style={{ flexDirection: 'row', gap: SPACING[2] }}>
               <QuickAction
                 icon={<Users size={ICON_SIZE.md} color={theme.foreground} />}
-                label="Matches"
+                label={navT('matches')}
                 onPress={() => router.push('/(tabs)/matches' as any)}
               />
               <QuickAction
                 icon={<Repeat2 size={ICON_SIZE.md} color={theme.foreground} />}
-                label="Exchanges"
+                label={navT('exchanges')}
                 onPress={() => router.push('/(tabs)/exchanges' as any)}
               />
               <QuickAction
                 icon={<Coins size={ICON_SIZE.md} color={theme.foreground} />}
-                label="Points"
+                label={navT('points')}
                 onPress={() => router.push('/(tabs)/points' as any)}
               />
               <QuickAction
                 icon={<User size={ICON_SIZE.md} color={theme.foreground} />}
-                label="Profile"
+                label={navT('profile')}
                 onPress={() => router.push('/(tabs)/profile' as any)}
               />
             </View>
@@ -366,7 +367,7 @@ export default function DashboardScreen() {
                           <View style={{ flex: 1 }}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                               <ThemedText type="label" style={{ fontSize: FONT_SIZE.md }}>
-                                {other.name ?? 'Peer Trader'}
+                                {other.name ?? t('peerTrader')}
                               </ThemedText>
                               <Badge variant="accent" accent={colorName}>
                                 {ex.status.replace('_', ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
@@ -634,6 +635,7 @@ function OnboardingRow({
 
 function EmptySkillsRow({ variant, onAdd }: { variant: 'offering' | 'seeking'; onAdd: () => void }) {
   const theme = useTheme();
+  const t = useT('home');
   return (
     <Pressable
       onPress={onAdd}
@@ -653,15 +655,17 @@ function EmptySkillsRow({ variant, onAdd }: { variant: 'offering' | 'seeking'; o
     >
       <Plus size={14} color={theme.mutedForeground} />
       <ThemedText type="caption" muted style={{ flex: 1 }}>
-        No {variant === 'offering' ? 'teaching' : 'learning'} skills yet
+        {variant === 'offering' ? t('noTeachingSkillsYet') : t('noLearningSkillsYet')}
       </ThemedText>
-      <Button size="sm" variant="ghost">Add</Button>
+      <Button size="sm" variant="ghost">{t('add')}</Button>
     </Pressable>
   );
 }
 
 function EmptyExchanges({ onExplore }: { onExplore: () => void }) {
   const theme = useTheme();
+  const t = useT('home');
+
   return (
     <View
       style={{
@@ -685,13 +689,13 @@ function EmptyExchanges({ onExplore }: { onExplore: () => void }) {
         <Handshake size={ICON_SIZE.xl} color={theme.mutedForeground} />
       </View>
       <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
-        No active exchanges yet
+        {t('noActiveExchangesYet')}
       </ThemedText>
       <ThemedText type="caption" muted style={{ textAlign: 'center', maxWidth: 240 }}>
-        Find your perfect skill match and start learning today.
+        {t('noActiveExchangesDesc')}
       </ThemedText>
       <Button onPress={onExplore} variant="default" leftIcon={<Users size={14} color={theme.primaryForeground} />}>
-        Browse matches
+        {t('browseMatches')}
       </Button>
     </View>
   );

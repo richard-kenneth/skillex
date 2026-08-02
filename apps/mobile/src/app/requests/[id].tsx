@@ -14,7 +14,9 @@ import {
 } from "react-native-safe-area-context";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useT } from "lib/i18n";
 import {
+
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
@@ -124,7 +126,9 @@ const POINT_PRESETS = [0, 10, 25, 50, 100];
 export default function RequestDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
+  const t = useT('requests');
   const router = useRouter();
+
   const insets = useSafeAreaInsets();
   const toast = useToast();
 
@@ -666,11 +670,11 @@ export default function RequestDetailScreen() {
                       }}
                     >
                       <FeeRow
-                        label="Gross proposal amount"
+                        label={t("grossProposalAmount")}
                         value={`${bd.gross} pts`}
                       />
                       <FeeRow
-                        label="Platform fee (10%)"
+                        label={t("platformFeePercent")}
                         value={`-${bd.fee} pts`}
                         danger
                       />
@@ -736,7 +740,7 @@ export default function RequestDetailScreen() {
       <ActionSheet
         open={actionsOpen}
         onClose={() => setActionsOpen(false)}
-        title="Request Actions"
+        title={t('requestActions')}
         options={[
           {
             label: "View partner profile",
@@ -812,9 +816,9 @@ Both parties will commit to this schedule and an active exchange room will be op
       <AlertDialog
         open={confirmReject}
         onOpenChange={setConfirmReject}
-        title="Reject this request?"
-        description="This will decline the request and end negotiation. This cannot be undone."
-        confirmLabel="Reject Request"
+        title={t('rejectRequest')}
+        description={t('rejectRequestDesc')}
+        confirmLabel={t('reject')}
         destructive
         onConfirm={async () => {
           try {
@@ -835,9 +839,9 @@ Both parties will commit to this schedule and an active exchange room will be op
       <AlertDialog
         open={confirmCancel}
         onOpenChange={setConfirmCancel}
-        title="Cancel your request?"
-        description="The request will be withdrawn and closed."
-        confirmLabel="Cancel Request"
+        title={t('cancelYourRequest')}
+        description={t('cancelYourRequestDesc')}
+        confirmLabel={t('cancelRequest')}
         destructive
         onConfirm={async () => {
           try {
@@ -2049,6 +2053,8 @@ function PointsNegotiationCard({
   onOpenBreakdown,
 }: any) {
   const theme = useTheme();
+  const t = useT('requests');
+
 
   return (
     <View
@@ -2265,11 +2271,11 @@ function PointsNegotiationCard({
           }}
         >
           <FeeRow
-            label="Gross proposal"
+            label={t("grossProposal")}
             value={`${pointsBreakdown.gross} pts`}
           />
           <FeeRow
-            label="Platform fee (10%)"
+            label={t("platformFeePercent")}
             value={`-${pointsBreakdown.fee} pts`}
             danger
           />
@@ -2340,6 +2346,8 @@ function AvailabilityTabSection({
   updatingAvail,
 }: any) {
   const theme = useTheme();
+  const t = useT('requests');
+
 
   if (loading) {
     return (
@@ -2439,7 +2447,7 @@ function AvailabilityTabSection({
               </ThemedText>
 
               <View style={{ gap: SPACING[2] }}>
-                <Label label="My Free Days" />
+                <Label label={t("myFreeDays")} />
                 <View
                   style={{
                     flexDirection: "row",
@@ -2474,7 +2482,7 @@ function AvailabilityTabSection({
               </View>
 
               <View style={{ gap: SPACING[2] }}>
-                <Label label="My Free Times" />
+                <Label label={t("myFreeTimes")} />
                 <View
                   style={{
                     flexDirection: "row",
@@ -2551,6 +2559,8 @@ function SkillTermCard({
   maxDays,
 }: any) {
   const theme = useTheme();
+  const t = useT('requests');
+
 
   const toggleDay = (idx: number) => {
     const s = idx.toString();
@@ -2600,7 +2610,7 @@ function SkillTermCard({
       {/* Steppers for Sessions & Duration */}
       <View style={{ flexDirection: "row", gap: SPACING[2.5] }}>
         <View style={{ flex: 1, gap: 4 }}>
-          <Label label="Sessions" />
+          <Label label={t("sessions")} />
           <View
             style={{
               flexDirection: "row",
@@ -2650,7 +2660,7 @@ function SkillTermCard({
         </View>
 
         <View style={{ flex: 1, gap: 4 }}>
-          <Label label="Minutes each" />
+          <Label label={t("minutesEach")} />
           <View
             style={{
               flexDirection: "row",
@@ -2709,7 +2719,7 @@ function SkillTermCard({
             alignItems: "center",
           }}
         >
-          <Label label="Select Days" />
+          <Label label={t("selectDays")} />
           <ThemedText
             type="small"
             style={{ fontSize: 10, color: theme.mutedForeground }}
@@ -2754,7 +2764,7 @@ function SkillTermCard({
       <NativeTimePickerField
         value={time}
         onChange={setTime}
-        label="Start Time"
+        label={t("startTime")}
       />
     </View>
   );

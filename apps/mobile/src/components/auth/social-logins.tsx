@@ -4,9 +4,12 @@ import { signIn, useSession } from '../../../lib/auth';
 import { Globe, Briefcase } from 'lucide-react-native';
 import { getAuthCallbackUrl } from '../../../lib/utils';
 import { router } from 'expo-router';
+import { useT } from 'lib/i18n';
 
 export function SocialLogins() {
   const { data: session, refetch } = useSession();
+  const t = useT('auth');
+
 
   useEffect(()=>{
     if(session?.user){
@@ -26,7 +29,7 @@ export function SocialLogins() {
       }
       await refetch();
     } catch (err: any) {
-      Alert.alert('Sign In Failed', err.message || `Could not sign in with ${provider}`);
+      Alert.alert(t('signInFailed'), err.message || t('failedToSendExchangeRequest'));
     }
   };
 
@@ -37,7 +40,7 @@ export function SocialLogins() {
         onPress={() => handleSocialSignIn('google')}
       >
         <Globe size={18} color="#ffffff" />
-        <Text style={styles.buttonText}>Google</Text>
+        <Text style={styles.buttonText}>{t('continueWithGoogle')}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -45,7 +48,7 @@ export function SocialLogins() {
         onPress={() => handleSocialSignIn('linkedin')}
       >
         <Briefcase size={18} color="#0a66c2" />
-        <Text style={styles.buttonText}>LinkedIn</Text>
+        <Text style={styles.buttonText}>{t('continueWithLinkedin')}</Text>
       </TouchableOpacity>
     </View>
   );

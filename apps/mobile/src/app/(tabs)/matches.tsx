@@ -65,8 +65,8 @@ import {
   useCurrentUser,
   useCreateRequest,
   useAcceptRequest,
-  useRejectRequest,
   useCancelRequest,
+  useRejectRequest,
 } from '@/lib/api-hooks';
 import {
   getRequestStatusColor,
@@ -144,7 +144,7 @@ export default function MatchesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <CustomHeader title="Matches & Requests" subtitle="Exchange skills & learn from peer experts" showNotifications showSearch />
+      <CustomHeader title={t('matchesAndRequests')} subtitle={t('matchesAndRequestsDesc')} showNotifications showSearch />
 
       <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: 'center' }}>
         {/* Primary Top Tab Bar: Matches vs Requests */}
@@ -198,7 +198,7 @@ export default function MatchesScreen() {
                 <TextInput
                   value={search}
                   onChangeText={setSearch}
-                  placeholder={t('searchPlaceholder') ?? 'Search matches by name or skill...'}
+                  placeholder={t('searchPlaceholder')}
                   placeholderTextColor={theme.mutedForeground}
                   style={{
                     flex: 1,
@@ -232,10 +232,10 @@ export default function MatchesScreen() {
                         <Sparkles size={24} color={getAccent('amber').main} />
                       </View>
                       <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
-                        {t('addSkillsTitle') ?? 'Add Skills You Want to Learn'}
+                        {t('addSkillsTitle')}
                       </ThemedText>
                       <ThemedText type="caption" muted style={{ textAlign: 'center', maxWidth: 300 }}>
-                        {t('addSkillsDesc') ?? 'Add skills you want to learn to your profile so we can match you with peers who offer them!'}
+                        {t('addSkillsDesc')}
                       </ThemedText>
                       <Button
                         size="sm"
@@ -243,7 +243,7 @@ export default function MatchesScreen() {
                         onPress={() => router.push('/(tabs)/profile' as any)}
                         leftIcon={<UserPlus size={14} color={theme.primaryForeground} />}
                       >
-                        {t('manageSkills') ?? 'Add Skills to Profile'}
+                        {t('manageSkills')}
                       </Button>
                     </CardContent>
                   </Card>
@@ -272,16 +272,16 @@ export default function MatchesScreen() {
                       <Users size={24} color={theme.mutedForeground} />
                     </View>
                     <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
-                      {search ? 'No Matching Results' : (t('noMatchesTitle') ?? 'No Matches Found')}
+                      {search ? t('noMatchingResults') : t('noMatchesTitle')}
                     </ThemedText>
                     <ThemedText type="caption" muted style={{ textAlign: 'center', maxWidth: 300 }}>
                       {search
-                        ? `No match users or skills found matching "${search}".`
+                        ? t('noMatchingResultsDesc', { query: search })
                         : (t('noMatchesDesc') ?? 'We couldn\'t find any matches based on your skills right now. Try adding more skills!')}
                     </ThemedText>
                     {search ? (
                       <Button size="sm" variant="outline" onPress={() => setSearch('')}>
-                        Clear Search
+                        {t('clearSearch')}
                       </Button>
                     ) : (
                       <Button
@@ -290,7 +290,7 @@ export default function MatchesScreen() {
                         onPress={() => router.push('/(tabs)/profile' as any)}
                         leftIcon={<UserPlus size={14} color={theme.primaryForeground} />}
                       >
-                        {t('manageSkills') ?? 'Update My Skills'}
+                        {t('manageSkills')}
                       </Button>
                     )}
                   </CardContent>
@@ -303,14 +303,14 @@ export default function MatchesScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2], marginBottom: 4 }}>
                         <Sparkles size={20} color="#f59e0b" />
                         <ThemedText type="sectionTitle">
-                          {t('perfectMatchesTitle') ?? 'Perfect Matches'}
+                          {t('perfectMatchesTitle')}
                         </ThemedText>
                         <Badge variant="accent" accent="amber">
                           {filteredPerfect.length}
                         </Badge>
                       </View>
                       <ThemedText type="caption" muted style={{ marginBottom: SPACING[3] }}>
-                        {t('perfectMatchesDesc') ?? 'Mutual match — you teach what they want to learn, and vice versa!'}
+                        {t('perfectMatchesDesc')}
                       </ThemedText>
 
                       {filteredPerfect.map((m: any) => (
@@ -333,14 +333,14 @@ export default function MatchesScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2], marginBottom: 4 }}>
                         <Users size={20} color={theme.primary} />
                         <ThemedText type="sectionTitle">
-                          {t('moreMatchesTitle') ?? 'More Matches'}
+                          {t('moreMatchesTitle')}
                         </ThemedText>
                         <Badge variant="secondary">
                           {filteredPartial.length}
                         </Badge>
                       </View>
                       <ThemedText type="caption" muted style={{ marginBottom: SPACING[3] }}>
-                        {t('moreMatchesDesc') ?? 'Peers who offer skills you are looking to learn.'}
+                        {t('moreMatchesDesc')}
                       </ThemedText>
 
                       {filteredPartial.map((m: any) => (
@@ -526,14 +526,14 @@ function MatchCard({
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: SPACING[1.5] }}>
             <View style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.md }}>
-                {user.name ?? 'Anonymous User'}
+                {user.name ?? t('anonymousUser')}
               </ThemedText>
               <ChevronRight size={16} color={theme.mutedForeground} />
             </View>
 
             {perfect && (
               <Badge variant="accent" accent="amber" dot style={{ paddingVertical: 2 }}>
-                {t('perfectMatchBadge') ?? 'Perfect Match'}
+                {t('perfectMatchBadge')}
               </Badge>
             )}
           </View>
@@ -543,12 +543,12 @@ function MatchCard({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
               <Star size={12} color="#f59e0b" fill="#f59e0b" />
               <ThemedText type="caption" style={{ fontWeight: '600', color: theme.foreground }}>
-                {avgRating > 0 ? avgRating.toFixed(1) : 'New'}
+                {avgRating > 0 ? avgRating.toFixed(1) : t('new')}
               </ThemedText>
             </View>
             {user.exchangesCompleted ? (
               <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                · {user.exchangesCompleted} exchanges
+                · {t('exchangesCompleted', { count: user.exchangesCompleted })}
               </ThemedText>
             ) : null}
           </View>
@@ -569,7 +569,7 @@ function MatchCard({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1] }}>
               <GraduationCap size={13} color={getAccent('emerald').main} />
               <ThemedText type="caption" style={{ color: getAccent('emerald').main, fontWeight: '600', textTransform: 'uppercase', fontSize: 11, letterSpacing: 0.5 }}>
-                {t('canTeach') ?? 'CAN TEACH'}
+                {t('canTeach')}
               </ThemedText>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -612,7 +612,7 @@ function MatchCard({
                           />
                         ) : null}
                         <ThemedText type="caption" style={{ fontSize: 9, color: getAccent('indigo').main, fontWeight: '600' }}>
-                          Sponsored by {sponsorName}
+                          {t('sponsoredByName', { name: sponsorName })}
                         </ThemedText>
                       </View>
                     ) : null}
@@ -629,7 +629,7 @@ function MatchCard({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1] }}>
               <BookOpen size={13} color={getAccent('indigo').main} />
               <ThemedText type="caption" style={{ color: getAccent('indigo').main, fontWeight: '600', textTransform: 'uppercase', fontSize: 11, letterSpacing: 0.5 }}>
-                {t('wantsToLearn') ?? 'WANTS TO LEARN'}
+                {t('wantsToLearn')}
               </ThemedText>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -666,7 +666,7 @@ function MatchCard({
             onPressRequest();
           }}
         >
-          {t('requestExchange') ?? 'Request Exchange'}
+          {t('requestExchange')}
         </Button>
       </View>
     </PressableCard>
@@ -687,8 +687,10 @@ function RequestDialogModal({
   currentUser: any;
 }) {
   const theme = useTheme();
+  const t = useT('matches');
   const toast = useToast();
   const createRequestMutation = useCreateRequest();
+
 
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
@@ -707,7 +709,7 @@ function RequestDialogModal({
 
   const handleSend = async () => {
     if (!selectedSkillId) {
-      setErrorMsg('Please select a skill you want to learn.');
+      setErrorMsg(t('selectSkillToLearn'));
       return;
     }
 
@@ -723,12 +725,12 @@ function RequestDialogModal({
 
       toast.toast({
         title: 'Exchange Request Sent!',
-        description: `Your request was sent to ${matchUser.name ?? 'the user'}.`,
+        description: t('exchangeRequestSentDesc', { name: matchUser.name ?? t('user') }),
         variant: 'success',
       });
       onOpenChange(false);
     } catch (e: any) {
-      setErrorMsg(e?.message ?? 'Failed to send exchange request. Please try again.');
+      setErrorMsg(e?.message ?? t('failedToSendExchangeRequest'));
     }
   };
 
@@ -741,10 +743,10 @@ function RequestDialogModal({
           <Avatar uri={matchUser.image} fallback={matchUser.name} size={36} />
           <View style={{ flex: 1 }}>
             <DialogTitle style={{ fontSize: FONT_SIZE.md }}>
-              Request Skill Exchange
+              {t('requestSkillExchange')}
             </DialogTitle>
             <DialogDescription style={{ marginTop: 0 }}>
-              Connect with {matchUser.name ?? 'User'}
+              {t('connectWithName', { name: matchUser.name ?? t('user') })}
             </DialogDescription>
           </View>
         </View>
@@ -755,7 +757,7 @@ function RequestDialogModal({
           {/* Step 1: Select skill to learn */}
           <View style={{ gap: SPACING[2] }}>
             <ThemedText type="label">
-              1. What do you want to learn? <ThemedText style={{ color: theme.destructive }}>*</ThemedText>
+              1. {t('whatToLearnQuestion')} <ThemedText style={{ color: theme.destructive }}>*</ThemedText>
             </ThemedText>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
               {availableToLearn.map((item: any) => {
@@ -786,7 +788,7 @@ function RequestDialogModal({
           {myOfferings.length > 0 && (
             <View style={{ gap: SPACING[2] }}>
               <ThemedText type="label">
-                2. What can you teach in return?{' '}
+                2. {t('whatToOfferQuestion')}{' '}
                 <ThemedText type="caption" muted>
                   (Optional)
                 </ThemedText>
@@ -818,7 +820,7 @@ function RequestDialogModal({
             </View>
           )}
 
-          {/* Step 3: Points Proposal for Uneven Exchanges */}
+          {/* Step 3: {t('pointsProposal')} for Uneven Exchanges */}
           <View
             style={{
               gap: SPACING[3],
@@ -833,10 +835,10 @@ function RequestDialogModal({
               <Coins size={18} color="#f59e0b" />
               <View style={{ flex: 1 }}>
                 <ThemedText type="label" style={{ fontSize: 13 }}>
-                  Points Proposal
+                  {t('pointsProposal')}
                 </ThemedText>
                 <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                  For uneven skill exchanges
+                  {t('forUnevenExchangesShort')}
                 </ThemedText>
               </View>
             </View>
@@ -922,7 +924,7 @@ function RequestDialogModal({
                         fontWeight: '600',
                       }}
                     >
-                      I will pay
+                      {t('iWillPay')}
                     </ThemedText>
                   </Pressable>
 
@@ -945,7 +947,7 @@ function RequestDialogModal({
                         fontWeight: '600',
                       }}
                     >
-                      They will pay
+                      {t('theyWillPay')}
                     </ThemedText>
                   </Pressable>
                 </View>
@@ -961,7 +963,7 @@ function RequestDialogModal({
                 >
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <ThemedText type="caption" muted>
-                      {payerIsMe ? 'Gross Payment' : 'Gross Received'}:
+                      {payerIsMe ? t('grossPayment') : t('grossReceived')}:
                     </ThemedText>
                     <ThemedText type="caption" style={{ fontWeight: '600' }}>
                       {pointsBreakdown.gross} pts
@@ -969,7 +971,7 @@ function RequestDialogModal({
                   </View>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <ThemedText type="caption" muted style={{ color: getAccent('red').main }}>
-                      Platform Fee (10%):
+                      {t('platformFeePercent', { percent: 10 })}:
                     </ThemedText>
                     <ThemedText type="caption" style={{ color: getAccent('red').main }}>
                       -{pointsBreakdown.fee} pts
@@ -987,7 +989,7 @@ function RequestDialogModal({
                     }}
                   >
                     <ThemedText type="label" style={{ fontSize: 12 }}>
-                      {payerIsMe ? 'Total You Pay' : 'Net You Receive'}:
+                      {payerIsMe ? t('totalYouPay') : t('netYouReceive')}:
                     </ThemedText>
                     <ThemedText
                       type="label"
@@ -1030,7 +1032,7 @@ function RequestDialogModal({
           onPress={() => onOpenChange(false)}
           disabled={createRequestMutation.isPending}
         >
-          Cancel
+          {t('cancel')}
         </Button>
         <Button
           variant="default"
@@ -1045,7 +1047,7 @@ function RequestDialogModal({
             )
           }
         >
-          {createRequestMutation.isPending ? 'Sending...' : 'Send Request'}
+          {createRequestMutation.isPending ? t('sending') : t('sendRequest')}
         </Button>
       </DialogFooter>
     </Dialog>
@@ -1145,11 +1147,11 @@ function RequestsList({
               onAccept={async () => {
                 try {
                   await acceptQ.mutateAsync(item.id);
-                  toast.toast({ title: 'Request Accepted!', variant: 'success' });
+                  toast.toast({ title: t('requestAccepted'), variant: 'success' });
                 } catch (e: any) {
                   toast.toast({
-                    title: 'Could not accept',
-                    description: e?.message ?? 'Please try again',
+                    title: t('couldNotAccept'),
+                    description: e?.message ?? t('tryAgain'),
                     variant: 'error',
                   });
                 }
@@ -1157,17 +1159,17 @@ function RequestsList({
               onReject={async () => {
                 try {
                   await rejectQ.mutateAsync(item.id);
-                  toast.toast({ title: 'Request Rejected', variant: 'info' });
+                  toast.toast({ title: t('requestRejected'), variant: 'info' });
                 } catch (e: any) {
-                  toast.toast({ title: 'Could not reject request', variant: 'error' });
+                  toast.toast({ title: t('couldNotRejectRequest'), variant: 'error' });
                 }
               }}
               onCancel={async () => {
                 try {
                   await cancelQ.mutateAsync(item.id);
-                  toast.toast({ title: 'Request Cancelled', variant: 'info' });
+                  toast.toast({ title: t('requestCancelled'), variant: 'info' });
                 } catch (e: any) {
-                  toast.toast({ title: 'Could not cancel request', variant: 'error' });
+                  toast.toast({ title: t('couldNotCancelRequest'), variant: 'error' });
                 }
               }}
             />
@@ -1233,8 +1235,8 @@ export function RequestCard({
           >
             <ThemedText type="label" style={{ fontSize: FONT_SIZE.md }}>
               {direction === 'received'
-                ? `From ${otherUser?.name ?? 'User'}`
-                : `To ${otherUser?.name ?? 'User'}`}
+                ? t('fromName', { name: otherUser?.name ?? t('user') })
+                : t('toName', { name: otherUser?.name ?? t('user') })}
             </ThemedText>
             <Badge variant="accent" accent={statusColor}>
               {request.status?.replace('_', ' ')}
@@ -1245,7 +1247,7 @@ export function RequestCard({
           <View style={{ gap: 4, marginTop: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                {direction === 'received' ? 'Wants to learn:' : 'Requested:'}
+                {direction === 'received' ? t('wantsToLearn') : t('requested')}
               </ThemedText>
               <Badge variant="accent" accent="emerald">
                 {requestedSkillName}
@@ -1258,7 +1260,7 @@ export function RequestCard({
             {offeredSkillName && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                  Offering:
+                  {t('offering')}:
                 </ThemedText>
                 <Badge variant="accent" accent="indigo">
                   {offeredSkillName}
@@ -1295,7 +1297,7 @@ export function RequestCard({
               color: request.senderAgreed ? getAccent('emerald').main : getAccent('amber').main,
             }}
           >
-            {request.senderAgreed ? 'Agreed ✓' : 'Reviewing'}
+            {request.senderAgreed ? t('agreedCheck') : t('reviewing')}
           </ThemedText>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1310,7 +1312,7 @@ export function RequestCard({
               color: request.receiverAgreed ? getAccent('emerald').main : getAccent('amber').main,
             }}
           >
-            {request.receiverAgreed ? 'Agreed ✓' : 'Reviewing'}
+            {request.receiverAgreed ? t('agreedCheck') : t('reviewing')}
           </ThemedText>
         </View>
       </View>
@@ -1332,8 +1334,8 @@ export function RequestCard({
         >
           <Coins size={14} color={getAccent('amber').main} />
           <ThemedText type="caption" style={{ color: getAccent('amber').main, fontWeight: '600' }}>
-            {request.pointsProposal} Points paid by{' '}
-            {request.pointsPayerId === currentUserId ? 'You' : (otherUser?.name ?? 'Them')}
+            {t('pointsPaidBy', { points: request.pointsProposal, payer: '' })} {' '}
+            {request.pointsPayerId === currentUserId ? t('you') : (otherUser?.name ?? t('them'))}
           </ThemedText>
         </View>
       )}
@@ -1345,7 +1347,7 @@ export function RequestCard({
         onPress={onOpen}
         leftIcon={<MessageSquare size={14} color={theme.foreground} />}
       >
-        View Exchange & Negotiate
+        {t('viewExchange')}
       </Button>
 
       {/* Date & Link */}
@@ -1371,7 +1373,7 @@ export function RequestCard({
             }}
             leftIcon={<CheckCircle2 size={14} color={theme.primaryForeground} />}
           >
-            Accept
+            {t('accept')}
           </Button>
           <Button
             size="sm"
@@ -1382,7 +1384,7 @@ export function RequestCard({
             }}
             leftIcon={<XCircle size={14} color="#fff" />}
           >
-            Reject
+            {t('reject')}
           </Button>
         </View>
       ) : direction === 'sent' && request.status === 'PENDING' ? (
@@ -1396,7 +1398,7 @@ export function RequestCard({
             }}
             leftIcon={<Ban size={14} color={theme.foreground} />}
           >
-            Cancel Request
+            {t('cancelRequest')}
           </Button>
         </View>
       ) : null}
@@ -1404,18 +1406,18 @@ export function RequestCard({
       <AlertDialog
         open={confirmReject}
         onOpenChange={setConfirmReject}
-        title="Reject Exchange Request"
-        description="Are you sure you want to reject this exchange request?"
-        confirmLabel="Reject"
+        title={t('rejectExchangeRequest')}
+        description={t('rejectExchangeRequestDesc')}
+        confirmLabel={t('reject')}
         destructive
         onConfirm={() => onReject?.()}
       />
       <AlertDialog
         open={confirmCancel}
         onOpenChange={setConfirmCancel}
-        title="Cancel Exchange Request"
-        description="Are you sure you want to cancel your exchange request?"
-        confirmLabel="Cancel Request"
+        title={t('cancelExchangeRequest')}
+        description={t('cancelExchangeRequestDesc')}
+        confirmLabel={t('cancelRequest')}
         destructive
         onConfirm={() => onCancel?.()}
       />

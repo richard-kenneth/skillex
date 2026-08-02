@@ -22,6 +22,8 @@ import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { RADIUS, SPACING, SHADOWS, ICON_SIZE, ANIMATION } from '@/constants/theme';
 import { Input } from './input';
+import { useT } from 'lib/i18n';
+
 
 // ─── Skeleton ───────────────────────────────────────────────────────────────
 
@@ -396,7 +398,7 @@ export interface SelectOption {
 
 export function SelectField({
   label,
-  placeholder = 'Select option...',
+  placeholder,
   value,
   onChange,
   options,
@@ -414,6 +416,8 @@ export function SelectField({
   searchable?: boolean;
 }) {
   const theme = useTheme();
+  const t = useT('common');
+  const displayPlaceholder = placeholder ?? t('selectOption');
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
 
@@ -448,7 +452,7 @@ export function SelectField({
             flex: 1,
           }}
         >
-          {selectedOpt ? selectedOpt.label : placeholder}
+          {selectedOpt ? selectedOpt.label : displayPlaceholder}
         </ThemedText>
         <ChevronDown size={16} color={theme.mutedForeground} />
       </Pressable>
@@ -496,7 +500,7 @@ export function SelectField({
                 {searchable && (
                   <View style={{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[3] }}>
                     <Input
-                      placeholder="Search options..."
+                      placeholder={t('searchOptions')}
                       value={search}
                       onChangeText={setSearch}
                     />

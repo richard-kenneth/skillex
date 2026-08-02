@@ -21,7 +21,9 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useT } from "lib/i18n";
 import * as v from "valibot";
+
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { File, Paths } from "expo-file-system";
@@ -127,7 +129,8 @@ type SessionFilter = "all" | "taught" | "received";
 function InAppVideoPlayer({ url }: { url: string }) {
   const videoViewRef = useRef<VideoView>(null);
   const isPiPSupported = isPictureInPictureSupported();
-  const fullscreenIntervalRef = useRef<NodeJS.Timeout>(null);
+  const fullscreenIntervalRef = useRef<any>(null);
+
   
   
   const player = useVideoPlayer(url, (p) => {
@@ -186,7 +189,9 @@ function InAppVideoPlayer({ url }: { url: string }) {
 export default function ExchangeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
+  const t = useT('exchanges');
   const router = useRouter();
+
   const insets = useSafeAreaInsets();
   const toast = useToast();
 
@@ -701,10 +706,10 @@ export default function ExchangeDetailScreen() {
 
             {points ? (
               <View style={{ gap: SPACING[3] }}>
-                <Row label="Gross Amount" value={`${points.gross} pts`} />
-                <Row label="Platform Fee (15%)" value={`-${points.fee} pts`} dim />
+                <Row label={t("grossAmount")} value={`${points.gross} pts`} />
+                <Row label={t("platformFee")} value={`-${points.fee} pts`} dim />
                 <Separator />
-                <Row label="Net Gain" value={`${points.net} pts`} strong accent="emerald" main />
+                <Row label={t("netGain")} value={`${points.net} pts`} strong accent="emerald" main />
               </View>
             ) : (
               <ThemedText type="small" muted>No points details available.</ThemedText>
@@ -755,7 +760,7 @@ export default function ExchangeDetailScreen() {
 
             {sessionChatQ.isLoading ? (
               <SkeletonText lines={5} />
-            ) : !(sessionChatQ.data?.messages?.length ?? sessionChatQ.data?.length) ? (
+            ) : !(sessionChatQ.data?.messages?.length) ? (
               <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: SPACING[2] }}>
                 <MessageCircle size={32} color={theme.mutedForeground} />
                 <ThemedText type="default" style={{ fontWeight: "700" }}>
@@ -848,7 +853,7 @@ export default function ExchangeDetailScreen() {
       <ActionSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        title="Exchange Actions"
+        title={t('exchangeActions')}
         options={[
           {
             label: "View partner profile",
@@ -873,9 +878,9 @@ export default function ExchangeDetailScreen() {
       <AlertDialog
         open={confirmComplete}
         onOpenChange={setConfirmComplete}
-        title="Mark exchange complete?"
-        description="Both partners will be able to leave a review and points will be finalized."
-        confirmLabel="Mark complete"
+        title={t('markExchangeComplete')}
+        description={t('markCompleteDesc')}
+        confirmLabel={t('markComplete')}
         onConfirm={async () => {
           await completeQ.mutateAsync(id!);
           toast.toast({ title: "Exchange completed", variant: "success" });
@@ -887,8 +892,8 @@ export default function ExchangeDetailScreen() {
       <ActionSheet
         open={tagSheet}
         onClose={() => setTagSheet(false)}
-        title="Review qualities"
-        description="Select all that apply."
+        title={t('reviewQualities')}
+        description={t('selectAllApply')}
         options={(
           Object.keys(REVIEW_TAG_LABELS) as (keyof typeof REVIEW_TAG_LABELS)[]
         ).map((k) => {
@@ -1378,7 +1383,9 @@ const ChatMessageItem = React.memo(
 
 function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; currentUserId: string }) {
   const theme = useTheme();
+  const t = useT('exchanges');
   const toast = useToast();
+
   const scrollViewRef = React.useRef<ScrollView>(null);
 
   const [text, setText] = React.useState("");
@@ -1703,7 +1710,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
             <TextInput
               value={text}
               onChangeText={setText}
-              placeholder="Type a message…"
+              placeholder={t('typeMessagePlaceholder')}
               placeholderTextColor={theme.mutedForeground}
               style={{
                 flex: 1,
@@ -1745,8 +1752,8 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
         <ActionSheet
           open={attachmentSheetOpen}
           onClose={() => setAttachmentSheetOpen(false)}
-          title="Share Attachment"
-          description="Select attachment source"
+          title={t('shareAttachment')}
+          description={t('selectAttachmentSource')}
           options={[
             {
               label: "Take photo",
@@ -1929,6 +1936,8 @@ function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loa
 
 function OverviewBody({ exchange, loading, points, other }: any) {
   const theme = useTheme();
+  const t = useT('exchanges');
+
   if (loading)
     return (
       <Card>
@@ -1965,10 +1974,10 @@ function OverviewBody({ exchange, loading, points, other }: any) {
         <CardContent style={{ gap: SPACING[3] }}>
           {points ? (
             <>
-              <Row label="Gross value" value={`${points.gross} pts`} />
-              <Row label="Platform fee (15%)" value={`-${points.fee} pts`} dim />
+              <Row label={t("grossValue")} value={`${points.gross} pts`} />
+              <Row label={t("platformFee")} value={`-${points.fee} pts`} dim />
               <Separator />
-              <Row label="Net to facilitator" value={`${points.net} pts`} strong accent="amber" main />
+              <Row label={t("netToFacilitator")} value={`${points.net} pts`} strong accent="amber" main />
             </>
           ) : (
             <ThemedText type="small" style={{ color: theme.mutedForeground }}>
@@ -2080,6 +2089,8 @@ function ReviewBody({
   openTags,
 }: any) {
   const theme = useTheme();
+  const t = useT('exchanges');
+
   const theirReview = exchange?.theirReview;
   const myReview = exchange?.myReview;
 
@@ -2129,10 +2140,10 @@ function ReviewBody({
             </View>
 
             <Textarea
-              label="How did it go?"
+              label={t("howDidItGo")}
               value={comment}
               onChangeText={setComment}
-              placeholder="Share what you liked or feedback for improvement…"
+              placeholder={t('shareFeedback')}
               numberOfLines={4}
               description={`${comment.length}/500`}
             />

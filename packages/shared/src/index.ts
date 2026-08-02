@@ -9,3 +9,7 @@ export * from "./constants";
 // Notifications
 export * from "./notifications";
 
+// Translations
+export * from "./translations";
+
+

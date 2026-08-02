@@ -21,6 +21,7 @@ import type {
   ReferralStats,
   ResolveAccountResult,
   Review,
+  SessionChatHistory,
   SessionChatMessage, Skill,
   SkillCategory,
   UserSkill,
@@ -359,7 +360,7 @@ export function createApiClient(config: ApiClientConfig) {
     },
     chat: {
       list: (exchangeSessionId: string) =>
-        request<{ messages: SessionChatMessage[]; unreadCount: number }>(
+        request<SessionChatHistory>(
           `/video/chat/${exchangeSessionId}`
         ),
       send: (exchangeSessionId: string, message: string) =>

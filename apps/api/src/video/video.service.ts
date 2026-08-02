@@ -114,14 +114,33 @@ export class VideoService {
     // Try to find as a session first
     let session = await this.prisma.exchangeSession.findUnique({
       where: { id },
-      include: { exchange: true },
+      include: {
+        exchange: {
+          include: {
+            sender: {
+              select: { id: true, name: true, image: true },
+            },
+            receiver: {
+              select: { id: true, name: true, image: true },
+            },
+          },
+        },
+      },
     });
 
     // If not found, try to find as an exchange and get the best session
     if (!session) {
       const exchange = await this.prisma.exchange.findUnique({
         where: { id },
-        include: { sessions: true },
+        include: {
+          sessions: true,
+          sender: {
+            select: { id: true, name: true, image: true },
+          },
+          receiver: {
+            select: { id: true, name: true, image: true },
+          },
+        },
       });
 
       if (!exchange) {
@@ -143,7 +162,18 @@ export class VideoService {
       const bestSession = sorted[0];
       session = await this.prisma.exchangeSession.findUnique({
         where: { id: bestSession.id },
-        include: { exchange: true },
+        include: {
+          exchange: {
+            include: {
+              sender: {
+                select: { id: true, name: true, image: true },
+              },
+              receiver: {
+                select: { id: true, name: true, image: true },
+              },
+            },
+          },
+        },
       });
     }
 
@@ -157,6 +187,7 @@ export class VideoService {
     const scheduledAt = new Date(session.scheduledAt);
     const duration = session.duration || 60;
     const endsAt = new Date(scheduledAt.getTime() + duration * 60 * 1000);
+    const partnerUser = session.exchange.senderId === userId ? session.exchange.receiver : session.exchange.sender;
 
     return {
       exchangeId: session.exchangeId,
@@ -164,6 +195,13 @@ export class VideoService {
       scheduledAt: session.scheduledAt,
       duration: session.duration,
       endsAt,
+      partner: partnerUser
+        ? {
+            id: partnerUser.id,
+            name: partnerUser.name,
+            image: partnerUser.image,
+          }
+        : null,
     };
   }
 

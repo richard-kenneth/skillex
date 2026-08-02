@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useAudioDeviceDetector } from 'audio-device-detector';
 import {
   Pressable,
   ScrollView,
@@ -10,6 +11,10 @@ import {
   Modal,
   StyleSheet,
   Dimensions,
+  Keyboard,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  DeviceEventEmitter
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -38,6 +43,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useT } from 'lib/i18n';
 import {
   useVideoSessionDetails,
+  useExchangeById,
   useVideoToken,
   useRecordingEstimate,
   useSubmitRecordingConsent,
@@ -85,6 +91,11 @@ import {
   SquareX,
   Volume2,
   VolumeX,
+  Bluetooth,
+  Headphones,
+  Smartphone,
+  Speaker,
+  ChevronDown,
 } from 'lucide-react-native';
 import { cn } from '@/lib/style-utils';
 import {
@@ -122,18 +133,6 @@ interface RecordingEstimateData {
   userBalance: number;
   maxAffordableMinutes: number;
   remainingSessionMinutes: number;
-}
-
-interface ChatMessageItem {
-  id: string;
-  senderId: string;
-  message: string;
-  timestamp: string;
-  sender?: {
-    id: string;
-    name: string;
-    image: string | null;
-  };
 }
 
 /* ─── LiveKit Data Channel Signal Handler ─────────────── */
@@ -199,6 +198,10 @@ export default function RoomScreen() {
 
   const exchangeSessionId = detailsQ.data?.session?.id ?? detailsQ.data?.sessionId ?? detailsQ.data?.id ?? roomNameOrId;
   const exchangeId = detailsQ.data?.exchangeId ?? detailsQ.data?.session?.exchangeId ?? '';
+  const exchangeQ = useExchangeById(exchangeId);
+  const exchange = exchangeQ.data;
+
+  const partner = detailsQ.data?.partner ?? (exchange ? (exchange.senderId === currentUser?.id ? exchange.receiver : exchange.sender) : null);
 
   const tokenQ = useVideoToken(exchangeSessionId);
   const token = (tokenQ.data as any)?.token ?? '';
@@ -220,10 +223,63 @@ export default function RoomScreen() {
   /* ─── Chat & Drawer State ──── */
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [initialUnreadCountForDrawer, setInitialUnreadCountForDrawer] = useState(0);
   const isChatOpenRef = useRef(isChatOpen);
   useEffect(() => {
     isChatOpenRef.current = isChatOpen;
   }, [isChatOpen]);
+
+  const chatMsgsQ = useSessionChatMessages(exchangeSessionId, {
+    refetchInterval: 3000,
+    enabled: !!exchangeSessionId,
+  });
+  const markReadQ = useMarkSessionChatRead();
+  const prevMsgCountRef = useRef<number>(0);
+
+  // Sync unreadCount deterministically: when closed, unreadCount = totalMsgs - msgsSeenWhenOpen
+  useEffect(() => {
+    const data = chatMsgsQ.data;
+    if (!data) return;
+    const msgCount = data.messages?.length ?? 0;
+
+    if (isChatOpen) {
+      setUnreadCount(0);
+      prevMsgCountRef.current = msgCount;
+      if (data.unreadCount > 0 && exchangeSessionId) {
+        markReadQ.mutate(exchangeSessionId);
+      }
+    } else {
+      // If we haven't established baseline yet (initial load while closed), use backend unreadCount or initial count
+      if (prevMsgCountRef.current === 0) {
+        prevMsgCountRef.current = Math.max(0, msgCount - (data.unreadCount ?? 0));
+      }
+      const unread = Math.max(0, msgCount - prevMsgCountRef.current);
+      setUnreadCount(unread);
+    }
+  }, [chatMsgsQ.data, isChatOpen, exchangeSessionId]);
+
+  const handleToggleChat = useCallback(() => {
+    setIsChatOpen((prev) => {
+      const next = !prev;
+      const currentMsgCount = chatMsgsQ.data?.messages?.length ?? 0;
+      if (next) {
+        setInitialUnreadCountForDrawer(unreadCount);
+        setUnreadCount(0);
+        prevMsgCountRef.current = currentMsgCount;
+        if (exchangeSessionId) {
+          markReadQ.mutate(exchangeSessionId);
+          chatMsgsQ.refetch();
+        }
+      } else {
+        setUnreadCount(0);
+        prevMsgCountRef.current = currentMsgCount;
+        if (exchangeSessionId) {
+          markReadQ.mutate(exchangeSessionId);
+        }
+      }
+      return next;
+    });
+  }, [unreadCount, exchangeSessionId, markReadQ, chatMsgsQ]);
 
   const [confirmLeave, setConfirmLeave] = useState(false);
 
@@ -300,6 +356,11 @@ export default function RoomScreen() {
             }
             if (!isChatOpenRef.current) {
               setUnreadCount((cnt) => cnt + 1);
+            } else {
+              setUnreadCount(0);
+              if (exchangeSessionId) {
+                markReadQ.mutate(exchangeSessionId);
+              }
             }
             break;
           case 'consent_request':
@@ -516,7 +577,7 @@ export default function RoomScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top']}>
       <LiveKitRoom
         token={token}
         serverUrl={serverUrl}
@@ -534,23 +595,14 @@ export default function RoomScreen() {
         <View style={{ flex: 1, backgroundColor: '#000', position: 'relative' }}>
           {/* Top Bar Header */}
           <TopHeaderBar
-            roomName={roomNameOrId}
             details={detailsQ.data}
             onBack={() => handleLeave(true)}
             isChatOpen={isChatOpen}
-            onToggleChat={() => {
-              setIsChatOpen((prev) => {
-                const next = !prev;
-                if (next) setUnreadCount(0);
-                return next;
-              });
-            }}
+            onToggleChat={handleToggleChat}
             unreadCount={unreadCount}
             recordingState={recordingState}
-            onCheckEstimate={handleCheckEstimate}
             onStopRecording={handleStopRecording}
             onCancelRecordingRequest={handleCancelRecordingRequest}
-            isCheckingEstimate={isCheckingEstimate}
             recordingStopAt={recordingStopAt}
             now={now}
           />
@@ -558,51 +610,47 @@ export default function RoomScreen() {
           {/* Main Video View */}
           <View style={{ flex: 1, backgroundColor: '#050506' }}>
             <RoomBody
-              partner={detailsQ.data?.partner}
+              partner={partner}
               me={currentUser}
               insets={insets}
             />
           </View>
 
-          {/* Persistent Chat Drawer Overlay */}
+          {/* Persistent Chat Drawer Modal */}
           {isChatOpen ? (
             <PersistentChatDrawer
               exchangeSessionId={exchangeSessionId}
               onClose={() => setIsChatOpen(false)}
               me={currentUser}
+              partner={partner}
+              initialUnreadCount={initialUnreadCountForDrawer}
+              history={chatMsgsQ.data}
+              isLoading={chatMsgsQ.isLoading}
               onSendMessage={() => {
                 sendSignal({ type: 'chat_sent' });
-              }}
-              onNewMessage={() => {
-                if (!isChatOpenRef.current) {
-                  setUnreadCount((count) => count + 1);
-                }
               }}
             />
           ) : null}
 
-          {/* Bottom Floating Control Bar */}
-          <ControlsBar
-            insets={insets}
-            recordingState={recordingState}
-            onRecording={
-              recordingState === 'recording' || recordingState === 'processing'
-                ? handleStopRecording
-                : recordingState === 'idle'
-                ? handleCheckEstimate
-                : undefined
-            }
-            onToggleChat={() => {
-              setIsChatOpen((prev) => {
-                const next = !prev;
-                if (next) setUnreadCount(0);
-                return next;
-              });
-            }}
-            isChatOpen={isChatOpen}
-            unreadCount={unreadCount}
-            onLeave={() => handleLeave(true)}
-          />
+          {/* Bottom Floating Control Bar (hidden while chat is open to avoid keyboard interference) */}
+          {!isChatOpen ? (
+            <ControlsBar
+              insets={insets}
+              recordingState={recordingState}
+              onRecording={
+                recordingState === 'recording' || recordingState === 'processing'
+                  ? handleStopRecording
+                  : recordingState === 'idle'
+                  ? handleCheckEstimate
+                  : undefined
+              }
+              isCheckingEstimate={isCheckingEstimate}
+              onToggleChat={handleToggleChat}
+              isChatOpen={isChatOpen}
+              unreadCount={unreadCount}
+              onLeave={() => handleLeave(true)}
+            />
+          ) : null}
         </View>
 
         {/* Modals */}
@@ -638,23 +686,18 @@ export default function RoomScreen() {
 
 /* ─── Top Header Bar Component ─────────────────────────── */
 function TopHeaderBar({
-  roomName,
   details,
   onBack,
   isChatOpen,
   onToggleChat,
   unreadCount,
   recordingState,
-  onCheckEstimate,
   onStopRecording,
   onCancelRecordingRequest,
-  isCheckingEstimate,
   recordingStopAt,
   now,
 }: any) {
-  const theme = useTheme();
   const t = useT('room');
-  const c = useT('common');
 
   const endsAt = details?.endsAt ?? details?.session?.endsAt;
   const duration = details?.duration ?? details?.session?.duration;
@@ -672,49 +715,34 @@ function TopHeaderBar({
         justifyContent: 'space-between',
       }}
     >
+      {/* Left: Back + Timer */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
         <Pressable
           onPress={onBack}
           hitSlop={8}
           style={{
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             borderRadius: RADIUS.pill,
-            backgroundColor: 'rgba(0,0,0,0.65)',
+            backgroundColor: 'rgba(0,0,0,0.55)',
             alignItems: 'center',
             justifyContent: 'center',
             borderWidth: 1,
-            borderColor: 'rgba(255,255,255,0.15)',
+            borderColor: 'rgba(255,255,255,0.10)',
           }}
         >
           <ArrowLeft size={18} color="#fff" />
         </Pressable>
 
-        <View
-          style={{
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: RADIUS.pill,
-            backgroundColor: 'rgba(0,0,0,0.65)',
-            borderWidth: 1,
-            borderColor: 'rgba(255,255,255,0.15)',
-          }}
-        >
-          <ThemedText type="smallBold" style={{ fontSize: 12, color: '#fff' }}>
-            {t('roomLabel', { name: roomName }) ?? `Room: ${roomName.slice(0, 8)}`}
-          </ThemedText>
-        </View>
-
         {endsAt ? <SessionTimer endsAt={endsAt} duration={duration} now={now} /> : null}
       </View>
 
+      {/* Right: Recording status + Chat toggle */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
         <RecordingHeaderBadge
           recordingState={recordingState}
-          onCheckEstimate={onCheckEstimate}
           onStopRecording={onStopRecording}
           onCancelRecordingRequest={onCancelRecordingRequest}
-          isCheckingEstimate={isCheckingEstimate}
           recordingStopAt={recordingStopAt}
           now={now}
         />
@@ -723,12 +751,12 @@ function TopHeaderBar({
           onPress={onToggleChat}
           hitSlop={8}
           style={{
-            height: 36,
+            height: 38,
             paddingHorizontal: 12,
             borderRadius: RADIUS.pill,
-            backgroundColor: isChatOpen ? getAccent('indigo').main : 'rgba(0,0,0,0.65)',
+            backgroundColor: isChatOpen ? getAccent('indigo').main : 'rgba(0,0,0,0.55)',
             borderWidth: 1,
-            borderColor: 'rgba(255,255,255,0.15)',
+            borderColor: 'rgba(255,255,255,0.10)',
             flexDirection: 'row',
             alignItems: 'center',
             gap: 6,
@@ -812,13 +840,11 @@ function SessionTimer({ endsAt, duration, now }: { endsAt: string; duration?: nu
   );
 }
 
-/* ─── Recording Header Badge ────────────────────────────── */
+/* ─── Recording Header Badge (status only) ──────────────── */
 function RecordingHeaderBadge({
   recordingState,
-  onCheckEstimate,
   onStopRecording,
   onCancelRecordingRequest,
-  isCheckingEstimate,
   recordingStopAt,
   now,
 }: any) {
@@ -839,9 +865,9 @@ function RecordingHeaderBadge({
             paddingHorizontal: 10,
             paddingVertical: 6,
             borderRadius: RADIUS.pill,
-            backgroundColor: '#3f1414',
+            backgroundColor: 'rgba(127,29,29,0.85)',
             borderWidth: 1,
-            borderColor: '#7f1d1d',
+            borderColor: 'rgba(239,68,68,0.5)',
           }}
         >
           <View
@@ -856,15 +882,15 @@ function RecordingHeaderBadge({
           onPress={onStopRecording}
           hitSlop={6}
           style={{
-            width: 32,
-            height: 32,
+            width: 30,
+            height: 30,
             borderRadius: RADIUS.pill,
             backgroundColor: '#ef4444',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Square size={12} color="#fff" fill="#fff" />
+          <Square size={11} color="#fff" fill="#fff" />
         </Pressable>
       </View>
     );
@@ -887,12 +913,10 @@ function RecordingHeaderBadge({
       >
         <Loader2 size={12} color="#fcd34d" />
         <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fcd34d' }}>
-          {t('waitingPartner') ?? 'Waiting partner'}
+          {t('waitingPartner') ?? 'Waiting…'}
         </ThemedText>
         <Pressable onPress={onCancelRecordingRequest} hitSlop={6}>
-          <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fcd34d', textDecorationLine: 'underline' }}>
-            {c('cancel') ?? 'Cancel'}
-          </ThemedText>
+          <X size={12} color="#fcd34d" />
         </Pressable>
       </View>
     );
@@ -915,41 +939,15 @@ function RecordingHeaderBadge({
       >
         <Loader2 size={12} color="#93c5fd" />
         <ThemedText type="smallBold" style={{ fontSize: 11, color: '#93c5fd' }}>
-          {recordingState === 'starting' ? t('starting') ?? 'Starting...' : t('processing') ?? 'Processing...'}
+          {recordingState === 'starting' ? t('startingRecording') : t('processing') }
         </ThemedText>
       </View>
     );
   }
 
-  return (
-    <Pressable
-      onPress={onCheckEstimate}
-      disabled={isCheckingEstimate}
-      hitSlop={8}
-      style={{
-        height: 36,
-        paddingHorizontal: 12,
-        borderRadius: RADIUS.pill,
-        backgroundColor: 'rgba(0,0,0,0.65)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.15)',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-      }}
-    >
-      {isCheckingEstimate ? (
-        <Loader2 size={14} color="#fff" />
-      ) : (
-        <Video size={14} color="#fff" />
-      )}
-      <ThemedText type="smallBold" style={{ fontSize: 12, color: '#fff' }}>
-        {t('recordSession') ?? 'Record'}
-      </ThemedText>
-    </Pressable>
-  );
+  // Idle — nothing shown in header (record button is in controls bar)
+  return null;
 }
-
 /* ─── Room Body Video Conference ───────────────────────── */
 function RoomBody({ partner, me, insets }: any) {
   const participants = useParticipants();
@@ -959,9 +957,9 @@ function RoomBody({ partner, me, insets }: any) {
       style={{
         flex: 1,
         backgroundColor: '#050506',
-        paddingHorizontal: SPACING[3],
-        paddingTop: 54,
-        paddingBottom: Math.max(90, (insets?.bottom ?? 0) + 75),
+        paddingHorizontal: SPACING[2],
+        paddingTop: 50,
+        paddingBottom: Math.max(80, (insets?.bottom ?? 0) + 70),
       }}
     >
       <ParticipantGrid participants={participants} partner={partner} me={me} />
@@ -975,12 +973,35 @@ function ParticipantGrid({ participants, partner, me }: any) {
 
   if (participants.length === 0) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[3] }}>
-        <Avatar uri={partner?.image ?? ''} fallback={partner?.name ?? 'P'} size={80} />
-        <ThemedText type="default" style={{ color: '#fff', fontWeight: '700' }}>
-          {partner?.name ?? t('waitingForPartnerToJoin') ?? 'Waiting for partner…'}
-        </ThemedText>
-        <Loader2 size={24} color="#a1a1aa" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[4] }}>
+        <View style={{ position: 'relative' }}>
+          <Avatar uri={partner?.image ?? ''} fallback={partner?.name ?? 'P'} size={88} />
+          <View
+            style={{
+              position: 'absolute',
+              bottom: -2,
+              right: -2,
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              backgroundColor: getAccent('indigo').main,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 2,
+              borderColor: '#050506',
+            }}
+          >
+            <Loader2 size={12} color="#fff" />
+          </View>
+        </View>
+        <View style={{ alignItems: 'center', gap: SPACING[1] }}>
+          <ThemedText type="default" style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+            {partner?.name ?? t('waitingForPartnerToJoin')}
+          </ThemedText>
+          <ThemedText type="small" style={{ color: '#71717a', fontSize: 12 }}>
+            {t('partnerWillAppear')}
+          </ThemedText>
+        </View>
       </View>
     );
   }
@@ -997,13 +1018,13 @@ function ParticipantGrid({ participants, partner, me }: any) {
   };
 
   return (
-    <View style={{ flex: 1, gap: SPACING[3] }}>
+    <View style={{ flex: 1, gap: SPACING[2] }}>
       {/* Screen Share Prominent Display */}
       {screenShareTrackPub?.videoTrack ? (
         <View
           style={{
             height: 230,
-            borderRadius: RADIUS.xl,
+            borderRadius: RADIUS['2xl'],
             backgroundColor: '#000',
             overflow: 'hidden',
             borderWidth: 2,
@@ -1035,11 +1056,11 @@ function ParticipantGrid({ participants, partner, me }: any) {
           >
             <MonitorUp size={12} color="#fff" />
             <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fff' }}>
-              {t('sharing') ?? 'Sharing'} • {screenShareParticipant.isLocal ? t('you') ?? 'You' : partner?.name ?? screenShareParticipant.identity}
+              {t('sharing') ?? 'Sharing'} • {screenShareParticipant.isLocal ? t('you') ?? 'You' : partner?.name || screenShareParticipant.name || screenShareParticipant.identity}
             </ThemedText>
           </View>
 
-          {/* End Screen Share UI Button for local sharer */}
+          {/* End Screen Share Button */}
           {screenShareParticipant.isLocal ? (
             <Pressable
               onPress={handleStopScreenShare}
@@ -1071,15 +1092,18 @@ function ParticipantGrid({ participants, partner, me }: any) {
         style={{
           flex: 1,
           flexDirection: screenShareTrackPub?.videoTrack ? 'row' : 'column',
-          gap: SPACING[3],
+          gap: SPACING[2],
         }}
       >
         {participants.map((participant: any) => {
           const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
           const isMe = participant.isLocal;
-          const fallbackName = isMe ? t('you') ?? 'You' : partner?.name ?? participant.identity;
+          const fallbackName = isMe
+            ? (t('you') ?? 'You')
+            : (partner?.name || participant.name || (participant.identity ? `User ${participant.identity.slice(0, 6)}` : 'Partner'));
           const isMicEnabled = participant.isMicrophoneEnabled;
           const isCamEnabled = participant.isCameraEnabled;
+          const isSpeaking = participant.isSpeaking;
 
           return (
             <View
@@ -1087,11 +1111,11 @@ function ParticipantGrid({ participants, partner, me }: any) {
               style={{
                 flex: 1,
                 minHeight: screenShareTrackPub?.videoTrack ? 120 : 160,
-                borderRadius: RADIUS.xl,
+                borderRadius: RADIUS['2xl'],
                 backgroundColor: '#18181b',
                 overflow: 'hidden',
-                borderWidth: 1,
-                borderColor: '#27272a',
+                borderWidth: isSpeaking ? 2 : 1,
+                borderColor: isSpeaking ? getAccent('indigo').main : '#1f1f23',
                 position: 'relative',
               }}
             >
@@ -1111,46 +1135,64 @@ function ParticipantGrid({ participants, partner, me }: any) {
                     fallback={fallbackName}
                     size={screenShareTrackPub?.videoTrack ? 44 : 72}
                   />
-                  <ThemedText type="smallBold" style={{ fontSize: 13, color: '#fff' }}>
+                  <ThemedText type="smallBold" style={{ fontSize: 13, color: '#e4e4e7' }}>
                     {fallbackName}
                   </ThemedText>
                 </View>
               )}
 
-              {/* Bottom Info Bar Overlay */}
+              {/* Bottom gradient overlay for readability */}
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 56,
+                  backgroundColor: 'transparent',
+                }}
+              >
+                {/* Stacked opacity layers to simulate gradient */}
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.0)' }} />
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)' }} />
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' }} />
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' }} />
+              </View>
+
+              {/* Bottom Info Bar */}
               <View
                 style={{
                   position: 'absolute',
                   bottom: 8,
-                  left: 8,
-                  right: 8,
+                  left: 10,
+                  right: 10,
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                 }}
               >
-                <View
-                  style={{
-                    paddingHorizontal: 8,
-                    paddingVertical: 3,
-                    borderRadius: RADIUS.pill,
-                    backgroundColor: 'rgba(0,0,0,0.65)',
-                  }}
-                >
-                  <ThemedText type="smallBold" style={{ fontSize: 10, color: '#fff' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fff' }}>
                     {fallbackName}
                   </ThemedText>
+                  {isSpeaking && (
+                    <View style={{ flexDirection: 'row', gap: 2, alignItems: 'flex-end' }}>
+                      {[3, 5, 3].map((h, i) => (
+                        <View key={i} style={{ width: 2, height: h, borderRadius: 1, backgroundColor: getAccent('indigo').main }} />
+                      ))}
+                    </View>
+                  )}
                 </View>
 
                 {!isMicEnabled && (
                   <View
                     style={{
-                      backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                      padding: 5,
+                      backgroundColor: 'rgba(239, 68, 68, 0.85)',
+                      padding: 4,
                       borderRadius: RADIUS.pill,
                     }}
                   >
-                    <MicOff size={12} color="#fff" />
+                    <MicOff size={10} color="#fff" />
                   </View>
                 )}
               </View>
@@ -1167,251 +1209,403 @@ function PersistentChatDrawer({
   exchangeSessionId,
   onClose,
   me,
+  partner,
   onSendMessage,
-  onNewMessage,
+  initialUnreadCount,
+  history,
+  isLoading,
 }: {
   exchangeSessionId: string;
   onClose: () => void;
   me: any;
+  partner?: any;
   onSendMessage?: () => void;
-  onNewMessage: () => void;
+  initialUnreadCount: number;
+  history?: any;
+  isLoading: boolean;
 }) {
   const theme = useTheme();
   const t = useT('room');
-  const c = useT('common');
+  const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   const [inputVal, setInputVal] = useState('');
-  const chatMsgsQ = useSessionChatMessages(exchangeSessionId, {
-    refetchInterval: 3000,
-    enabled: !!exchangeSessionId,
-  });
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const sendMsgQ = useSendSessionChatMessage();
-  const markReadQ = useMarkSessionChatRead();
   const flatRef = useRef<any>(null);
-  const initialCountRef = useRef<number>(-1);
 
-  // Sync mark read on open and unmount
-  useEffect(() => {
-    if (exchangeSessionId) {
-      markReadQ.mutate(exchangeSessionId);
+  const rawMessages = history?.messages ?? [];
+
+  // Invert messages array so newest message is index 0 (rendered at bottom of inverted FlatList)
+  const reversedMessages = useMemo(() => {
+    return [...rawMessages].reverse();
+  }, [rawMessages]);
+
+  // Index in reversed array where the "New Messages" banner should render.
+  const [unreadStartIndex, setUnreadStartIndex] = useState<number>(() => {
+    if (initialUnreadCount > 0 && rawMessages.length >= initialUnreadCount) {
+      return initialUnreadCount - 1;
     }
-  }, [exchangeSessionId]);
+    return -1;
+  });
 
-  const messages: ChatMessageItem[] = chatMsgsQ.data ?? [];
+  const isAtBottomRef = useRef(true);
+  const prevTotalMsgsRef = useRef(rawMessages.length);
 
+  // Track incoming new messages: if at bottom, auto scroll to index 0 (bottom of inverted list)
   useEffect(() => {
-    if (messages.length > 0 && initialCountRef.current === -1) {
-      initialCountRef.current = messages.length;
+    const currentLen = rawMessages.length;
+    const prevLen = prevTotalMsgsRef.current;
+    if (currentLen > prevLen && prevLen > 0) {
+      const diff = currentLen - prevLen;
+      if (!isAtBottomRef.current) {
+        // User is scrolled up! Update unread marker to indicate newly arrived messages
+        setUnreadStartIndex((prev) => (prev > -1 ? prev + diff : diff - 1));
+      } else {
+        setUnreadStartIndex(-1);
+        setTimeout(() => {
+          flatRef.current?.scrollToOffset({ offset: 0, animated: true });
+        }, 50);
+      }
     }
-  }, [messages]);
+    prevTotalMsgsRef.current = currentLen;
+  }, [rawMessages.length]);
+
+  // In an inverted list, offset.y < 30 means the user is viewing the newest messages at the bottom
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset } = e.nativeEvent;
+    const atBottom = contentOffset.y < 30;
+    isAtBottomRef.current = atBottom;
+    if (atBottom) {
+      setUnreadStartIndex(-1);
+    }
+  }, []);
 
   const handleSend = async () => {
     const text = inputVal.trim();
-    if (!text || sendMsgQ.isPending) return;
+    if (!text) return;
     setInputVal('');
+    setUnreadStartIndex(-1); // Clear separator on send!
+    isAtBottomRef.current = true;
+
+    // 1. Emit LiveKit Data Channel signal IMMEDIATELY (0ms delay to partner!)
+    onSendMessage?.();
+
+    // 2. Optimistic local update for 0ms local render
+    const optimisticMsg = {
+      id: 'opt_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      exchangeSessionId,
+      senderId: me?.id,
+      message: text,
+      timestamp: new Date().toISOString(),
+      sender: {
+        id: me?.id,
+        name: me?.name || 'Me',
+        image: me?.image || '',
+      },
+    };
+
+    if (exchangeSessionId) {
+      queryClient.setQueryData(QUERY_KEYS.video.chat(exchangeSessionId), (old: any) => {
+        if (!old) return { messages: [optimisticMsg], unreadCount: 0 };
+        return {
+          ...old,
+          messages: [...(old.messages || []), optimisticMsg],
+        };
+      });
+    }
+
+    // Scroll to bottom
+    setTimeout(() => {
+      flatRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }, 50);
+
+    // 3. Persist REST API request in background
     try {
       await sendMsgQ.mutateAsync({ exchangeSessionId, message: text });
-      await chatMsgsQ.refetch();
-      onSendMessage?.();
-      setTimeout(() => {
-        flatRef.current?.scrollToEnd?.({ animated: true });
-      }, 50);
+      if (exchangeSessionId) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.video.chat(exchangeSessionId) });
+      }
     } catch (e: any) {
-      // Handled silently or toast
+      console.warn('[Chat] Send failed:', e);
     }
   };
 
   return (
-    <View
-      style={{
-        position: 'absolute',
-        top: 60,
-        bottom: 95,
-        right: 0,
-        left: 0,
-        zIndex: 30,
-        backgroundColor: '#09090b',
-        borderTopLeftRadius: RADIUS.xl,
-        borderTopRightRadius: RADIUS.xl,
-        borderWidth: 1,
-        borderColor: '#27272a',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Header */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: SPACING[4],
-          paddingVertical: SPACING[3],
-          borderBottomWidth: 1,
-          borderBottomColor: '#1f1f23',
-        }}
+    <View style={[StyleSheet.absoluteFill, { zIndex: 50 }]}>
+      {/* Dark backdrop touch dismiss */}
+      <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} onPress={onClose} />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1, justifyContent: 'flex-end' }}
+        pointerEvents="box-none"
       >
-        <ThemedText type="subtitle" style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
-          {t('chat') ?? 'In-Session Chat'}
-        </ThemedText>
-        <Pressable onPress={onClose} hitSlop={8}>
-          <X size={20} color="#a1a1aa" />
-        </Pressable>
-      </View>
-
-      {/* Messages List */}
-      <View style={{ flex: 1 }}>
-        {chatMsgsQ.isLoading ? (
-          <View style={{ padding: SPACING[4] }}>
-            <SkeletonText lines={5} />
-          </View>
-        ) : messages.length === 0 ? (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: SPACING[6], gap: SPACING[2] }}>
-            <MessageSquare size={28} color="#52525b" />
-            <ThemedText type="default" style={{ color: '#a1a1aa', fontWeight: '600' }}>
-              {t('noMessages') ?? 'No messages yet'}
-            </ThemedText>
-            <ThemedText type="small" style={{ color: '#71717a', textAlign: 'center' }}>
-              {t('typeMessagePrompt') ?? 'Send a message to start chatting during your video session.'}
-            </ThemedText>
-          </View>
-        ) : (
-          <FlatList
-            ref={flatRef}
-            data={messages}
-            keyExtractor={(m) => m.id}
-            contentContainerStyle={{ padding: SPACING[4], gap: SPACING[3] }}
-            renderItem={({ item: m, index }) => {
-              const isMine = m.senderId === me?.id;
-              const isNewMarker = initialCountRef.current > 0 && index === initialCountRef.current;
-
-              return (
-                <View style={{ gap: SPACING[2] }}>
-                  {isNewMarker ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: SPACING[2], gap: SPACING[2] }}>
-                      <View style={{ flex: 1, height: 1, backgroundColor: getAccent('indigo').main + '60' }} />
-                      <View
-                        style={{
-                          backgroundColor: getAccent('indigo').main + '20',
-                          paddingHorizontal: 10,
-                          paddingVertical: 2,
-                          borderRadius: RADIUS.pill,
-                          borderWidth: 1,
-                          borderColor: getAccent('indigo').main + '40',
-                        }}
-                      >
-                        <ThemedText type="smallBold" style={{ fontSize: 10, color: getAccent('indigo').main }}>
-                          New Messages
-                        </ThemedText>
-                      </View>
-                      <View style={{ flex: 1, height: 1, backgroundColor: getAccent('indigo').main + '60' }} />
-                    </View>
-                  ) : null}
-
-                  <View style={{ alignItems: isMine ? 'flex-end' : 'flex-start', gap: 4 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACING[2] }}>
-                      {!isMine ? (
-                        <Avatar uri={m.sender?.image ?? ''} fallback={m.sender?.name ?? 'P'} size={26} />
-                      ) : null}
-                      <View
-                        style={{
-                          maxWidth: '82%',
-                          padding: SPACING[3],
-                          borderRadius: RADIUS.lg,
-                          borderTopRightRadius: isMine ? 4 : RADIUS.lg,
-                          borderTopLeftRadius: isMine ? RADIUS.lg : 4,
-                          backgroundColor: isMine ? theme.primary : '#18181b',
-                          borderWidth: isMine ? 0 : 1,
-                          borderColor: '#27272a',
-                        }}
-                      >
-                        {!isMine && m.sender?.name ? (
-                          <ThemedText type="smallBold" style={{ color: getAccent('indigo').main, fontSize: 11, marginBottom: 2 }}>
-                            {m.sender.name}
-                          </ThemedText>
-                        ) : null}
-                        <ThemedText type="small" style={{ color: isMine ? '#fff' : '#e4e4e7', fontSize: 14, lineHeight: 20 }}>
-                          {m.message}
-                        </ThemedText>
-                      </View>
-                    </View>
-                    <ThemedText type="small" style={{ color: '#52525b', fontSize: 10, paddingHorizontal: 4 }}>
-                      {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </ThemedText>
-                  </View>
-                </View>
-              );
-            }}
-          />
-        )}
-      </View>
-
-      {/* Input row */}
-      <View
-        style={{
-          padding: SPACING[3],
-          borderTopWidth: 1,
-          borderTopColor: '#1f1f23',
-          flexDirection: 'row',
-          gap: SPACING[2],
-          backgroundColor: '#09090b',
-        }}
-      >
-        <TextInput
-          value={inputVal}
-          onChangeText={setInputVal}
-          placeholder={t('typeMessage') ?? 'Type a message…'}
-          placeholderTextColor="#52525b"
+        <View
           style={{
-            flex: 1,
-            borderRadius: RADIUS.pill,
-            backgroundColor: '#18181b',
-            color: '#fff',
-            paddingHorizontal: SPACING[4],
-            paddingVertical: SPACING[2],
-            fontSize: FONT_SIZE.sm,
-          }}
-          onSubmitEditing={handleSend}
-          returnKeyType="send"
-        />
-        <Pressable
-          onPress={handleSend}
-          disabled={!inputVal.trim() || sendMsgQ.isPending}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: RADIUS.pill,
-            backgroundColor: !inputVal.trim() ? '#27272a' : theme.primary,
-            alignItems: 'center',
-            justifyContent: 'center',
+            height: '82%',
+            backgroundColor: '#09090b',
+            borderTopLeftRadius: RADIUS['3xl'],
+            borderTopRightRadius: RADIUS['3xl'],
+            borderWidth: 1,
+            borderBottomWidth: 0,
+            borderColor: 'rgba(255,255,255,0.08)',
+            flexDirection: 'column',
+            overflow: 'hidden',
           }}
         >
-          {sendMsgQ.isPending ? (
-            <Loader2 size={16} color="#fff" />
-          ) : (
-            <Send size={16} color="#fff" />
-          )}
-        </Pressable>
-      </View>
+          {/* Handle + Header */}
+          <View style={{ alignItems: 'center', paddingTop: SPACING[2.5] }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#3f3f46' }} />
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: SPACING[4],
+              paddingVertical: SPACING[2],
+              borderBottomWidth: 1,
+              borderBottomColor: 'rgba(255,255,255,0.06)',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
+              <MessageSquare size={16} color={getAccent('indigo').main} />
+              <ThemedText type="smallBold" style={{ color: '#fff', fontSize: 14 }}>
+                {t('chat') ?? 'Chat'}
+              </ThemedText>
+              {partner?.name ? (
+                <ThemedText type="small" style={{ color: '#71717a', fontSize: 12 }}>
+                  • {partner.name}
+                </ThemedText>
+              ) : null}
+            </View>
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: RADIUS.pill,
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <X size={16} color="#a1a1aa" />
+            </Pressable>
+          </View>
+
+          {/* Messages List */}
+          <View style={{ flex: 1 }}>
+            {isLoading && reversedMessages.length === 0 ? (
+              <View style={{ padding: SPACING[4] }}>
+                <SkeletonText lines={5} />
+              </View>
+            ) : reversedMessages.length === 0 ? (
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: SPACING[6], gap: SPACING[3] }}>
+                <View
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: RADIUS.pill,
+                    backgroundColor: 'rgba(99,102,241,0.1)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <MessageSquare size={24} color={getAccent('indigo').main} />
+                </View>
+                <ThemedText type="default" style={{ color: '#a1a1aa', fontWeight: '600', fontSize: 14 }}>
+                  {t('noMessages') ?? 'No messages yet'}
+                </ThemedText>
+                <ThemedText type="small" style={{ color: '#52525b', textAlign: 'center', fontSize: 12 }}>
+                  {t('typeMessagePrompt') ?? 'Send a message during your video session'}
+                </ThemedText>
+              </View>
+            ) : (
+              <FlatList
+                ref={flatRef}
+                data={reversedMessages}
+                inverted
+                keyExtractor={(m) => m.id}
+                contentContainerStyle={{ padding: SPACING[3], gap: SPACING[2] }}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                renderItem={({ item: m, index }) => {
+                  const isMine = m.senderId === me?.id;
+                  const isNewMarker = unreadStartIndex > -1 && index === unreadStartIndex;
+
+                  return (
+                    <View style={{ gap: SPACING[1] }}>
+                      {isNewMarker ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: SPACING[2], gap: SPACING[2] }}>
+                          <View style={{ flex: 1, height: 1, backgroundColor: getAccent('indigo').main + '40' }} />
+                          <View
+                            style={{
+                              backgroundColor: getAccent('indigo').main + '15',
+                              paddingHorizontal: 10,
+                              paddingVertical: 2,
+                              borderRadius: RADIUS.pill,
+                            }}
+                          >
+                            <ThemedText type="smallBold" style={{ fontSize: 10, color: getAccent('indigo').main }}>
+                              New Messages
+                            </ThemedText>
+                          </View>
+                          <View style={{ flex: 1, height: 1, backgroundColor: getAccent('indigo').main + '40' }} />
+                        </View>
+                      ) : null}
+
+                      <View style={{ alignItems: isMine ? 'flex-end' : 'flex-start', gap: 2 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: SPACING[1.5] }}>
+                          {!isMine ? (
+                            <Avatar uri={m.sender?.image ?? partner?.image ?? ''} fallback={m.sender?.name ?? partner?.name ?? 'P'} size={24} />
+                          ) : null}
+                          <View
+                            style={{
+                              maxWidth: '78%',
+                              paddingHorizontal: SPACING[3],
+                              paddingVertical: SPACING[2],
+                              borderRadius: RADIUS.xl,
+                              borderBottomRightRadius: isMine ? 4 : RADIUS.xl,
+                              borderBottomLeftRadius: isMine ? RADIUS.xl : 4,
+                              backgroundColor: isMine ? getAccent('indigo').main : '#1c1c1f',
+                            }}
+                          >
+                            {!isMine && (m.sender?.name || partner?.name) ? (
+                              <ThemedText type="smallBold" style={{ color: getAccent('indigo').main, fontSize: 10, marginBottom: 2 }}>
+                                {m.sender?.name || partner?.name}
+                              </ThemedText>
+                            ) : null}
+                            <ThemedText type="small" style={{ color: isMine ? '#fff' : '#e4e4e7', fontSize: 13, lineHeight: 18 }}>
+                              {m.message}
+                            </ThemedText>
+                          </View>
+                        </View>
+                        <ThemedText type="small" style={{ color: '#3f3f46', fontSize: 9, paddingHorizontal: !isMine ? 32 : 4 }}>
+                          {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </ThemedText>
+                      </View>
+                    </View>
+                  );
+                }}
+              />
+            )}
+          </View>
+
+          {/* Input row flush against keyboard */}
+          <View
+            style={{
+              paddingHorizontal: SPACING[3],
+              paddingTop: SPACING[2.5],
+              paddingBottom: isKeyboardVisible ? SPACING[2.5] : Math.max(SPACING[3], insets.bottom),
+              borderTopWidth: 1,
+              borderTopColor: 'rgba(255,255,255,0.06)',
+              flexDirection: 'row',
+              gap: SPACING[2],
+              backgroundColor: '#09090b',
+            }}
+          >
+            <TextInput
+              value={inputVal}
+              onChangeText={setInputVal}
+              placeholder={t('typeMessage') ?? 'Type a message…'}
+              placeholderTextColor="#3f3f46"
+              style={{
+                flex: 1,
+                borderRadius: RADIUS.xl,
+                backgroundColor: '#141416',
+                color: '#fff',
+                paddingHorizontal: SPACING[4],
+                paddingVertical: SPACING[2],
+                fontSize: 13,
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.05)',
+              }}
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+            />
+            <Pressable
+              onPress={handleSend}
+              disabled={!inputVal.trim()}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: RADIUS.pill,
+                backgroundColor: !inputVal.trim() ? '#1c1c1f' : getAccent('indigo').main,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Send size={15} color={!inputVal.trim() ? '#52525b' : '#fff'} />
+            </Pressable>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
 /* ─── Bottom Controls Bar Component ────────────────────── */
+
+/** Maps audio output device id/type to an icon and label */
+function getAudioOutputInfo(output: string) {
+  if (output === 'bluetooth') return { icon: Bluetooth, label: 'Bluetooth' };
+  if (output === 'headset' || output === 'wired_headset' || output === 'wired_headphones' || output === 'usb_headset') return { icon: Headphones, label: 'Headset' };
+  if (output === 'earpiece' || output === 'default' || output === 'builtin_earpiece') return { icon: Smartphone, label: 'Earpiece' };
+  // speaker, force_speaker, or anything else
+  return { icon: Volume2, label: 'Speaker' };
+}
+
+function mapDeviceTypeToAudioOutput(type: string): string {
+  switch (type) {
+    case 'bluetooth':
+      return 'bluetooth';
+    case 'wired_headset':
+    case 'wired_headphones':
+    case 'usb_headset':
+      return 'headset';
+    case 'builtin_earpiece':
+      return 'earpiece';
+    case 'builtin_speaker':
+    default:
+      return 'speaker';
+  }
+}
+
 function ControlsBar({
   insets,
   recordingState,
   onRecording,
+  isCheckingEstimate,
   onToggleChat,
   isChatOpen,
   unreadCount,
   onLeave,
 }: any) {
-  const theme = useTheme();
   const t = useT('room');
   const toast = useToast();
   const room = useRoomContext();
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
-  const [audioOutput, setAudioOutput] = useState<string>('speaker');
+  const [audioOutput, setAudioOutput] = useState<string>(Platform.OS === 'ios' ? 'force_speaker' : 'speaker');
+  const [availableOutputs, setAvailableOutputs] = useState<string[]>([]);
   const isSwitchingRef = useRef(false);
   const localParticipant = room?.localParticipant;
 
@@ -1421,7 +1615,64 @@ function ControlsBar({
 
   const recDisabled = !onRecording;
   const recActive = recordingState === 'recording' || recordingState === 'processing';
-  const recLoading = recordingState === 'starting' || recordingState === 'processing';
+  const recLoading = recordingState === 'starting' || recordingState === 'processing' || isCheckingEstimate;
+
+  const { latestConnectedDevice, latestDisconnectedDevice } = useAudioDeviceDetector();
+
+  // Automatically switch audio output & update icon when OS connects a new device
+  useEffect(() => {
+    if (latestConnectedDevice) {
+      const targetOutput = mapDeviceTypeToAudioOutput(latestConnectedDevice.type);
+      setAudioOutput(targetOutput);
+      AudioSession.selectAudioOutput(targetOutput).catch(() => {});
+      AudioSession.getAudioOutputs().then(setAvailableOutputs).catch(() => {});
+    }
+  }, [latestConnectedDevice]);
+
+  // Re-sync on device disconnection
+  useEffect(() => {
+    if (latestDisconnectedDevice) {
+      const fallbackOutput = 'speaker';
+      setAudioOutput(fallbackOutput);
+      AudioSession.selectAudioOutput(fallbackOutput).catch(() => {});
+      AudioSession.getAudioOutputs().then(setAvailableOutputs).catch(() => {});
+    }
+  }, [latestDisconnectedDevice]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+  const initAudio = async () => {
+    try {
+      await AudioSession.startAudioSession();
+
+      const outputs = await AudioSession.getAudioOutputs();
+      if (!isMounted) return;
+  
+      setAvailableOutputs(outputs);
+    } catch (e) {
+      console.warn('[AudioSession] setup failed:', e);
+    }
+  };
+
+  initAudio();
+
+  return () => {
+    isMounted = false;
+    AudioSession.stopAudioSession().catch((e) =>
+      console.warn('[AudioSession] Stop failed:', e)
+    );
+  };
+}, []);
+
+
+  // // Fetch available outputs on mount
+  // useEffect(() => {
+  //   AudioSession.startAudioSession()
+  //     .then(() => AudioSession.getAudioOutputs())
+  //       .then(setAvailableOutputs)
+  //       .catch(() => { });
+  // }, []);
 
   const handleToggleAudio = () => {
     localParticipant?.setMicrophoneEnabled(!isAudioEnabled);
@@ -1440,29 +1691,54 @@ function ControlsBar({
     }
   };
 
-  const handleToggleAudioOutput = async () => {
+  // Cycle through available audio outputs in priority order
+  const handleCycleAudioOutput = async () => {
     try {
-      const outputs = await AudioSession.getAudioOutputs();
-      const nextOutput =
-        audioOutput === 'speaker' || audioOutput === 'force_speaker'
-          ? outputs.includes('earpiece')
-            ? 'earpiece'
-            : 'default'
-          : outputs.includes('force_speaker')
-          ? 'force_speaker'
-          : 'speaker';
+      // 1. Fetch available devices directly
+      const outputs = await AudioSession.getAudioOutputs();      
+      setAvailableOutputs(outputs);
 
+      if (!outputs || outputs.length === 0) return;
+
+      // 2. Platform-specific target cycle order using valid LiveKit / WebRTC enums
+      const cycleOrder = Platform.OS === 'ios'
+        ? ['speaker', 'default'] 
+        : ['speaker', 'earpiece', 'headset', 'bluetooth'];
+
+      // 3. Filter order against actual available hardware
+      const available = cycleOrder.filter((type) => outputs.includes(type));
+      
+      // Fallback: If no matched predefined order, use raw returned outputs directly
+      const validOutputs = available.length > 0 ? available : outputs;
+
+      // 4. Determine current position defensively
+      const currentIdx = validOutputs.indexOf(audioOutput);
+      const nextIdx = currentIdx === -1 ? 0 : (currentIdx + 1) % validOutputs.length;
+      const nextOutput = validOutputs[nextIdx];
+
+      // 5. Apply native route selection
       await AudioSession.selectAudioOutput(nextOutput);
       setAudioOutput(nextOutput);
-      const isSpeaker = nextOutput.includes('speaker');
-      toast.toast({
-        title: `${t('audioOutput') ?? 'Audio'}: ${
-          isSpeaker ? t('speaker') ?? 'Speaker' : t('earpiece') ?? 'Earpiece'
-        }`,
-        variant: 'info',
-      });
+
+      const info = getAudioOutputInfo(nextOutput);
+      if (info?.label) {
+        toast.toast({ title: info.label, variant: 'info' });
+      }
     } catch (e) {
-      console.warn('[AudioSession] Output toggle failed:', e);
+      console.log('[AudioSession] Output cycle failed:', e);
+    }
+  };
+
+  // iOS route picker
+  const handleShowRoutePicker = async () => {
+    if (Platform.OS === 'ios') {
+      try {
+        await AudioSession.showAudioRoutePicker();
+      } catch (e) {
+        console.warn('[AudioSession] Route picker failed:', e);
+      }
+    } else {
+      await handleCycleAudioOutput();
     }
   };
 
@@ -1489,6 +1765,8 @@ function ControlsBar({
     }
   };
 
+  const AudioIcon = getAudioOutputInfo(audioOutput).icon;
+
   return (
     <View
       style={{
@@ -1497,13 +1775,14 @@ function ControlsBar({
         left: 0,
         right: 0,
         zIndex: 20,
-        paddingTop: SPACING[2],
-        paddingBottom: Math.max(SPACING[3], insets.bottom),
-        backgroundColor: 'rgba(15, 15, 18, 0.95)',
+        paddingTop: SPACING[3],
+        paddingBottom: Math.max(SPACING[2], insets.bottom),
+        backgroundColor: 'rgba(9, 9, 11, 0.92)',
         borderTopWidth: 1,
-        borderTopColor: '#1f1f23',
+        borderTopColor: 'rgba(255,255,255,0.06)',
       }}
     >
+      {/* Primary row: Mic, Video, Leave + secondary actions */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -1513,166 +1792,138 @@ function ControlsBar({
           justifyContent: 'space-around',
           flexGrow: 1,
           paddingHorizontal: SPACING[3],
-          gap: SPACING[2],
+          gap: SPACING[2.5],
         }}
       >
-        {/* Mic Toggle */}
-        <CtrlBtn
-          onPress={handleToggleAudio}
-          active={!isAudioEnabled}
-          destructive={!isAudioEnabled}
-          label={isAudioEnabled ? t('mute') ?? 'Mute' : t('unmute') ?? 'Unmute'}
+        {/* Secondary: Flip */}
+        <CtrlBtn onPress={handleFlipCamera} size={40}>
+          <RefreshCw size={17} color="#a1a1aa" />
+        </CtrlBtn>
+
+        {/* Secondary: Screen Share */}
+        <CtrlBtn onPress={handleToggleScreenShare} active={isScreenShareEnabled} size={40}>
+          <MonitorUp size={17} color={isScreenShareEnabled ? '#fff' : '#a1a1aa'} />
+        </CtrlBtn>
+
+        {/* Primary: Mic */}
+        <CtrlBtn onPress={handleToggleAudio} active={!isAudioEnabled} destructive={!isAudioEnabled} size={48} primary>
+          {isAudioEnabled ? <Mic size={22} color="#fff" /> : <MicOff size={22} color="#fff" />}
+        </CtrlBtn>
+
+        {/* Primary: Video */}
+        <CtrlBtn onPress={handleToggleVideo} active={!isVideoEnabled} destructive={!isVideoEnabled} size={48} primary>
+          {isVideoEnabled ? <Video size={22} color="#fff" /> : <VideoOff size={22} color="#fff" />}
+        </CtrlBtn>
+
+        {/* Primary: Leave */}
+        <Pressable
+          onPress={onLeave}
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: RADIUS.pill,
+            backgroundColor: '#dc2626',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          {isAudioEnabled ? <Mic size={18} color="#fff" /> : <MicOff size={18} color="#fff" />}
-        </CtrlBtn>
+          <PhoneOff size={22} color="#fff" />
+        </Pressable>
 
-        {/* Camera Toggle */}
+        {/* Secondary: Audio Output */}
         <CtrlBtn
-          onPress={handleToggleVideo}
-          active={!isVideoEnabled}
-          destructive={!isVideoEnabled}
-          label={isVideoEnabled ? t('video') ?? 'Video' : t('off') ?? 'Off'}
+          onPress={handleCycleAudioOutput}
+          onLongPress={handleShowRoutePicker}
+          size={40}
         >
-          {isVideoEnabled ? <Video size={18} color="#fff" /> : <VideoOff size={18} color="#fff" />}
+          <AudioIcon size={17} color="#a1a1aa" />
         </CtrlBtn>
 
-        {/* Flip Camera */}
-        <CtrlBtn onPress={handleFlipCamera} label={t('flip') ?? 'Flip'}>
-          <RefreshCw size={18} color="#fff" />
-        </CtrlBtn>
-
-        {/* Screen Share */}
+        {/* Secondary: Record */}
         <CtrlBtn
-          onPress={handleToggleScreenShare}
-          active={isScreenShareEnabled}
-          label={isScreenShareEnabled ? t('sharing') ?? 'Sharing' : t('screenShare') ?? 'Share'}
+          onPress={onRecording}
+          disabled={recDisabled}
+          size={40}
+          style={recActive ? { backgroundColor: 'rgba(239,68,68,0.2)', borderColor: 'rgba(239,68,68,0.4)' } : undefined}
         >
-          <MonitorUp size={18} color="#fff" />
+          {recLoading ? (
+            <Loader2 size={17} color="#a1a1aa" />
+          ) : recActive ? (
+            <Square size={13} color="#ef4444" fill="#ef4444" />
+          ) : (
+            <Circle size={15} color="#ef4444" fill="#ef4444" />
+          )}
         </CtrlBtn>
 
-        {/* Audio Output Switcher */}
-        <CtrlBtn
-          onPress={handleToggleAudioOutput}
-          active={audioOutput.includes('speaker')}
-          label={audioOutput.includes('speaker') ? t('speaker') ?? 'Speaker' : t('earpiece') ?? 'Earpiece'}
-        >
-          {audioOutput.includes('speaker') ? <Volume2 size={18} color="#fff" /> : <VolumeX size={18} color="#fff" />}
-        </CtrlBtn>
-
-        {/* Record Trigger */}
-        <View style={{ alignItems: 'center', gap: 4 }}>
-          <Pressable
-            onPress={onRecording}
-            disabled={recDisabled}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: RADIUS.pill,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: recDisabled
-                ? '#27272a'
-                : recActive
-                ? '#ef4444'
-                : '#3f1414',
-              borderWidth: 2,
-              borderColor: recDisabled ? '#3f3f46' : '#ef4444',
-              opacity: recDisabled ? 0.5 : 1,
-            }}
-          >
-            {recLoading ? (
-              <Loader2 size={16} color="#fff" />
-            ) : recActive ? (
-              <Square size={14} color="#fff" fill="#fff" />
-            ) : (
-              <Circle size={16} color="#ef4444" fill="#ef4444" />
-            )}
-          </Pressable>
-          <ThemedText type="caption" style={{ fontSize: 10, color: recActive ? '#ef4444' : '#a1a1aa' }}>
-            {recActive ? t('recording') ?? 'Recording' : t('record') ?? 'Record'}
-          </ThemedText>
-        </View>
-
-        {/* Chat Drawer Toggle */}
+        {/* Secondary: Chat */}
         <CtrlBtn
           onPress={onToggleChat}
           active={isChatOpen}
           badge={unreadCount > 0}
           badgeCount={unreadCount}
-          label={t('chat') ?? 'Chat'}
+          size={40}
         >
-          <MessageSquare size={18} color="#fff" />
-        </CtrlBtn>
-
-        {/* Leave Call Button */}
-        <CtrlBtn
-          onPress={onLeave}
-          destructive
-          label={t('leave') ?? 'Leave'}
-          style={{ backgroundColor: '#3f1414', borderColor: '#7f1d1d', borderWidth: 1 }}
-        >
-          <PhoneOff size={18} color="#fff" />
+          <MessageSquare size={17} color={isChatOpen ? '#fff' : '#a1a1aa'} />
         </CtrlBtn>
       </ScrollView>
     </View>
   );
 }
 
-function CtrlBtn({ children, onPress, active, destructive, badge, badgeCount, style, label }: any) {
+function CtrlBtn({ children, onPress, onLongPress, active, destructive, badge, badgeCount, style, size = 44, primary, disabled }: any) {
+  const btnSize = size;
   return (
-    <View style={{ alignItems: 'center', gap: 4 }}>
-      <Pressable
-        onPress={onPress}
-        hitSlop={8}
-        style={[
-          {
-            width: 44,
-            height: 44,
-            borderRadius: RADIUS.pill,
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      disabled={disabled}
+      hitSlop={6}
+      style={[
+        {
+          width: btnSize,
+          height: btnSize,
+          borderRadius: RADIUS.pill,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: active
+            ? destructive
+              ? '#ef4444'
+              : getAccent('indigo').main
+            : primary
+            ? '#27272a'
+            : '#18181b',
+          borderWidth: primary ? 0 : 1,
+          borderColor: active ? 'transparent' : '#1f1f23',
+          position: 'relative',
+          opacity: disabled ? 0.4 : 1,
+        },
+        style,
+      ]}
+    >
+      {badge ? (
+        <View
+          style={{
+            position: 'absolute',
+            top: -2,
+            right: -2,
+            minWidth: 16,
+            height: 16,
+            borderRadius: 8,
+            backgroundColor: '#ef4444',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: active
-              ? destructive
-                ? '#ef4444'
-                : getAccent('indigo').main
-              : '#18181b',
-            borderWidth: 1,
-            borderColor: active ? 'transparent' : '#27272a',
-            position: 'relative',
-          },
-          style,
-        ]}
-      >
-        {badge ? (
-          <View
-            style={{
-              position: 'absolute',
-              top: -3,
-              right: -3,
-              minWidth: 18,
-              height: 18,
-              borderRadius: 9,
-              backgroundColor: '#ef4444',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingHorizontal: 4,
-              borderWidth: 1.5,
-              borderColor: '#09090b',
-            }}
-          >
-            <ThemedText type="smallBold" style={{ fontSize: 9, color: '#fff' }}>
-              {badgeCount ? (badgeCount > 9 ? '9+' : badgeCount) : ''}
-            </ThemedText>
-          </View>
-        ) : null}
-        {children}
-      </Pressable>
-      {label ? (
-        <ThemedText type="caption" style={{ fontSize: 10, color: '#a1a1aa' }}>
-          {label}
-        </ThemedText>
+            paddingHorizontal: 3,
+            borderWidth: 1.5,
+            borderColor: '#09090b',
+          }}
+        >
+          <ThemedText type="smallBold" style={{ fontSize: 8, color: '#fff' }}>
+            {badgeCount ? (badgeCount > 9 ? '9+' : badgeCount) : ''}
+          </ThemedText>
+        </View>
       ) : null}
-    </View>
+      {children}
+    </Pressable>
   );
 }
 

@@ -14,6 +14,7 @@
     "@react-navigation/bottom-tabs": "^7.18.14",
     "@skil-ex2/shared": "workspace:*",
     "@tanstack/react-query": "^5.100.3",
+    "audio-device-detector": "file:./modules/audio-device-detector",
     "better-auth": "^1.6.25",
     "expo": "^57.0.8",
     "expo-build-properties": "~57.0.8",

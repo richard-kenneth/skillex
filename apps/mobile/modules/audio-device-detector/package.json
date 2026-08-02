@@ -1,0 +1,23 @@
+{
+  "name": "audio-device-detector",
+  "version": "1.0.0",
+  "description": "Local Expo module to detect connected audio devices and route changes on iOS, Android, and Web.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "expo",
+    "expo-module",
+    "audio",
+    "audio-devices",
+    "headphones",
+    "bluetooth"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "expo": "*"
+  }
+}

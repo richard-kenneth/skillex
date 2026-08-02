@@ -415,3 +415,8 @@ export interface ReferralStats {
   rewardPerReferral: number;
   isReferred: boolean;
 }
+
+export interface SessionChatHistory {
+  messages: SessionChatMessage[];
+  unreadCount: number;
+}

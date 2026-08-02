@@ -30,6 +30,7 @@ import {
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+
 type SubTab = 'all' | 'purchase' | 'withdraw' | 'exchange';
 const QUICK_BUY = [500, 1000, 5000, 10000];
 const WITHDRAWAL_CURRENCY = 'NGN';
@@ -124,14 +125,14 @@ export default function PointsScreen() {
           const r = await resolveQ.mutateAsync({ accountNumber: withdrawAccount, bankCode: withdrawBankCode });
           if ((r as any)?.success) setResolvedName((r as any).accountName);
           else setWithdrawError((r as any)?.message ?? 'Could not verify account');
-        } catch (e: any) { setWithdrawError(e?.message ?? 'Could not verify account'); }
+        } catch (e: any) { setWithdrawError(e?.message ?? t('couldNotVerifyAccount')); }
       }, 600);
     } else { setResolvedName(null); }
     return () => { if (resolveDebounceRef.current) clearTimeout(resolveDebounceRef.current); };
   }, [withdrawAccount, withdrawBankCode]);
 
   const handlePurchase = async () => {
-    if (!pAmount || pAmount < MIN_PURCHASE_POINTS) { setPurchaseError(`Minimum purchase is ${MIN_PURCHASE_POINTS} points`); return; }
+    if (!pAmount || pAmount < MIN_PURCHASE_POINTS) { setPurchaseError(t('minPurchasePoints', { amount: MIN_PURCHASE_POINTS })); return; }
     setPurchaseError(null);
     try {
       const redirectUrl = Platform.OS === 'web' && typeof (globalThis as any).window !== 'undefined'
@@ -141,18 +142,18 @@ export default function PointsScreen() {
       if (paymentLink) {
         if (Platform.OS === 'web' && typeof (globalThis as any).window !== 'undefined') { (globalThis as any).window.location.href = paymentLink; return; }
         const browserResult = await WebBrowser.openAuthSessionAsync(paymentLink, redirectUrl, { showTitle: true, enableBarCollapsing: true });
-        if (browserResult.type !== 'success' || !browserResult.url) { toast.toast({ title: 'Payment cancelled', variant: 'info' }); return; }
+        if (browserResult.type !== 'success' || !browserResult.url) { toast.toast({ title: t('paymentCancelled'), variant: 'info' }); return; }
         setPurchaseAmount('');
         setTimeout(() => { Promise.all([balanceQ.refetch(), txQ.refetch()]); }, 3000);
-      } else { toast.toast({ title: 'Payment initiated', variant: 'info' }); }
+      } else { toast.toast({ title: t('paymentInitiated'), variant: 'info' }); }
     } catch (e: any) { setPurchaseError(e?.message ?? 'Purchase failed'); }
   };
 
   const handleWithdraw = async () => {
-    if (!wAmount || wAmount < minWithdrawalPoints) { setWithdrawError(`Minimum withdrawal is ${minWithdrawalPoints} points`); return; }
-    if (!withdrawBankCode || !withdrawAccount) { setWithdrawError('Please select bank and enter account number'); return; }
-    if (balance < wAmount) { setWithdrawError('Insufficient balance'); return; }
-    if (!resolvedName) { setWithdrawError('Please wait for account verification'); return; }
+    if (!wAmount || wAmount < minWithdrawalPoints) { setWithdrawError(t('minWithdrawalPoints', { amount: minWithdrawalPoints })); return; }
+    if (!withdrawBankCode || !withdrawAccount) { setWithdrawError(t('selectBankAndAccount')); return; }
+    if (balance < wAmount) { setWithdrawError(t('insufficientBalance')); return; }
+    if (!resolvedName) { setWithdrawError(t('pleaseWaitVerification')); return; }
     setConfirmWithdraw(true);
   };
 
@@ -160,10 +161,10 @@ export default function PointsScreen() {
     setWithdrawError(null);
     try {
       await withdrawQ.mutateAsync({ amount: wAmount, bankCode: withdrawBankCode, accountNumber: withdrawAccount });
-      toast.toast({ title: 'Withdrawal request sent', description: 'Funds are typically paid within 24 hours.', variant: 'success' });
+      toast.toast({ title: t('withdrawalRequestSent'), description: t('withdrawalRequestSentDesc'), variant: 'success' });
       setWithdrawAmount(''); setWithdrawAccount(''); setWithdrawBankCode(''); setResolvedName(null);
       await Promise.all([balanceQ.refetch(), txQ.refetch()]);
-    } catch (e: any) { setWithdrawError(e?.message ?? 'Withdrawal failed'); }
+    } catch (e: any) { setWithdrawError(e?.message ?? t('withdrawalFailed')); }
   };
 
   const loading = balanceQ.isLoading || txQ.isLoading;
@@ -181,7 +182,7 @@ export default function PointsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <CustomHeader title="Points" subtitle="Trade skills, earn points & cash out" showNotifications showSearch />
+      <CustomHeader title={t('title')} subtitle={t('tradeSkillsDesc')} showNotifications showSearch />
 
       <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: 'center' }}>
         <ScrollView
@@ -474,6 +475,8 @@ function InfoStat({ loading, label, value, hint, Icon, accent }: {
 
 function TxRow({ tx }: { tx: any }) {
   const theme = useTheme();
+  const t = useT('points');
+
   const meta = getTransactionMeta(tx.type);
   const isPositive = tx.amount > 0;
   const palette = getAccent(meta.color);
@@ -485,7 +488,7 @@ function TxRow({ tx }: { tx: any }) {
         <Icon size={14} color={palette.main} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
-        <ThemedText type="label" style={{ fontSize: FONT_SIZE.md }}>{labelForTx(tx.type, tx.description)}</ThemedText>
+        <ThemedText type="label" style={{ fontSize: FONT_SIZE.md }}>{labelForTx(tx.type, tx.description, t)}</ThemedText>
         <ThemedText type="caption" muted>
           {formatDateShort(tx.createdAt)}{tx.status ? ` · ${tx.status}` : ''}
         </ThemedText>
@@ -518,20 +521,20 @@ function iconForType(type: string, isPositive: boolean): any {
   }
 }
 
-function labelForTx(type: string, desc: string | null): string {
+function labelForTx(type: string, desc: string | null, t: any): string {
   if (desc) return desc;
   const lookup: Record<string, string> = {
-    [TransactionType.PURCHASE]: 'Points purchase',
-    [TransactionType.WITHDRAWAL]: 'Bank withdrawal',
-    [TransactionType.ESCROW_LOCK]: 'Escrow held',
-    [TransactionType.ESCROW_RELEASE]: 'Escrow released',
-    [TransactionType.EXCHANGE_COMMISSION]: 'Platform commission',
-    [TransactionType.FACILITATION_FEE]: 'Facilitation fee',
-    [TransactionType.PENALTY]: 'Penalty',
-    [TransactionType.RECORDING_FEE]: 'Session recording',
-    [TransactionType.REFERRAL_REWARD]: 'Referral reward',
-    [TransactionType.REFERRAL_BONUS]: 'Referral bonus',
-    [TransactionType.CONVERSION]: 'Currency conversion',
+    [TransactionType.PURCHASE]: t('txPointsPurchase'),
+    [TransactionType.WITHDRAWAL]: t('txBankWithdrawal'),
+    [TransactionType.ESCROW_LOCK]: t('txEscrowHeld'),
+    [TransactionType.ESCROW_RELEASE]: t('txEscrowReleased'),
+    [TransactionType.EXCHANGE_COMMISSION]: t('txPlatformCommission'),
+    [TransactionType.FACILITATION_FEE]: t('txFacilitationFee'),
+    [TransactionType.PENALTY]: t('txPenalty'),
+    [TransactionType.RECORDING_FEE]: t('txSessionRecording'),
+    [TransactionType.REFERRAL_REWARD]: t('txReferralReward'),
+    [TransactionType.REFERRAL_BONUS]: t('txReferralBonus'),
+    [TransactionType.CONVERSION]: t('txCurrencyConversion'),
   };
   return lookup[type] ?? type.replace(/_/g, ' ');
 }

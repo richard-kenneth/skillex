@@ -48,3 +48,11 @@ example
 
 # Google services
 google-services.json
+
+
+# Local Expo Modules - ignore build artifacts and caches
+modules/**/build/
+modules/**/.gradle/
+modules/**/node_modules/
+modules/**/*.xcworkspace
+modules/**/*.xcodeproj
