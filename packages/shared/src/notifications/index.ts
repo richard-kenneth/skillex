@@ -110,12 +110,12 @@ export function createNotificationClient(
 export function createNotificationStream(
   baseUrl: string,
   getAuthHeaders: () => Promise<Record<string, string>>,
-  EventSourceImpl: typeof EventSource,
+  EventSourceImpl: any,
   onNotification: (notification: Notification) => void,
   onCountUpdate: () => void,
   onError?: (err: any) => void,
 ): () => void {
-  let eventSource: EventSource | null = null;
+  let eventSource: any = null;
   let closed = false;
 
   const connect = async () => {
@@ -124,9 +124,9 @@ export function createNotificationStream(
 
     // For web, EventSource doesn't support custom headers, so we use the URL with cookie auth
     // For mobile (react-native-sse), headers are supported
-    const EventSourceCtor = EventSourceImpl || EventSource;
+    const EventSourceCtor = EventSourceImpl || (globalThis as any).EventSource;
 
-    const isBrowserWeb = typeof window !== "undefined" && EventSourceCtor === window.EventSource;
+    const isBrowserWeb = typeof (globalThis as any).window !== "undefined" && EventSourceCtor === (globalThis as any).window?.EventSource;
 
     // react-native-sse supports headers in the constructor
     if (!isBrowserWeb) {      
@@ -141,7 +141,7 @@ export function createNotificationStream(
       });
     }
 
-    eventSource?.addEventListener("message", (event: MessageEvent) => {
+    eventSource?.addEventListener("message", (event: any) => {
       try {
         const data = JSON.parse(event.data) as NotificationStreamEvent;
         if (data.type === "NOTIFICATION_CREATED" && data.notification) {

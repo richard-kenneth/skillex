@@ -17,7 +17,7 @@ import {
   calculatePointsBreakdown, formatDateShort, formatDateTimeShort,
 } from '@skil-ex2/shared';
 import {
-  ArrowRightLeft, Handshake, CalendarCheck, Video, ChevronRight, Coins, Users,
+  ArrowRightLeft, Handshake, CalendarCheck, Video, ChevronRight, Coins, Users, Clock, Lock,
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -108,25 +108,30 @@ export default function ExchangesListScreen() {
                   backgroundColor: theme.secondary,
                   alignItems: 'center',
                   gap: SPACING[3],
+                  marginVertical: SPACING[4],
+                  borderWidth: 1,
+                  borderColor: theme.border,
                 }}
               >
                 <View
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
                     backgroundColor: theme.background,
                     alignItems: 'center',
                     justifyContent: 'center',
+                    borderWidth: 1,
+                    borderColor: theme.border,
                   }}
                 >
-                  <Handshake size={ICON_SIZE.xl} color={theme.mutedForeground} />
+                  <Handshake size={28} color={theme.mutedForeground} />
                 </View>
                 <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
-                  {t('noExchangesTitle')}
+                  {t('noExchangesTitle') ?? 'No Exchanges Yet'}
                 </ThemedText>
                 <ThemedText type="caption" muted style={{ textAlign: 'center', maxWidth: 280 }}>
-                  {t('noExchangesDesc')}
+                  {t('noExchangesDesc') ?? 'Connect with peers to exchange skills and boost your expertise.'}
                 </ThemedText>
                 <Button
                   size="sm"
@@ -134,7 +139,7 @@ export default function ExchangesListScreen() {
                   onPress={() => router.push('/(tabs)/matches' as any)}
                   leftIcon={<Users size={14} color={theme.primaryForeground} />}
                 >
-                  {t('findMatches')}
+                  {t('findMatches') ?? 'Find Matches'}
                 </Button>
               </View>
             )
@@ -160,77 +165,112 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
   const userQ = useCurrentUser();
   const user = userQ.data;
   const isSender = exchange.senderId === user?.id;
-  const otherUser = isSender ? exchange.receiver : exchange.sender;
+  const otherUser = isSender ? exchange.receiver : exchange.sender ?? exchange.otherUser;
+
+  // Skills
+  const taughtName = exchange.taughtSkillName ?? exchange.taughtSkill?.name ?? 'Skill';
+  const receivedName = exchange.receivedSkillName ?? exchange.receivedSkill?.name;
+  const isTwoWay = !!receivedName;
+
+  // Progress calculations
   const progress = calculateExchangeProgress(exchange);
-  const isActive = ['ACCEPTED', 'IN_PROGRESS', 'SCHEDULED', 'COMMITTED'].includes(exchange.status);
-  const points = exchange.pointsValue ? calculatePointsBreakdown(exchange.pointsValue) : null;
-  const nextSession = exchange.sessions?.find((s: any) => s.status === 'SCHEDULED');
+  const totalSessions = (exchange.requestedSkillSessions ?? 0) + (isTwoWay ? (exchange.offeredSkillSessions ?? 0) : 0);
+  const completedSessions = exchange.completedSessions ?? exchange.sessions?.filter((s: any) => s.status === 'COMPLETED').length ?? 0;
+  
+  // Points calculation
+  const pointsVal = exchange.pointsAmount ?? exchange.pointsValue ?? 0;
+  const isPayer = exchange.pointsPayerId ? exchange.pointsPayerId === user?.id : isSender;
+  const pointsBreakdown = pointsVal > 0 ? calculatePointsBreakdown(pointsVal) : null;
+  const displayPoints = pointsBreakdown ? (isPayer ? pointsBreakdown.gross : pointsBreakdown.net) : 0;
+
+  const nextSession = exchange.sessions?.find((s: any) => s.status === 'SCHEDULED' || s.status === 'IN_PROGRESS');
 
   return (
     <PressableCard onPress={onPress} style={{ padding: SPACING[4], gap: SPACING[3] }}>
-      {/* User row */}
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACING[3] }}>
-        <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={44} />
+      {/* Title & Skills header */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: SPACING[2] }}>
         <View style={{ flex: 1, gap: 4 }}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: SPACING[1.5] }}>
-            <ThemedText type="cardTitle">
-              {otherUser?.name ?? 'Peer Trader'}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg, fontWeight: '700' }}>
+              {taughtName}
             </ThemedText>
-            <Badge variant="accent" accent={statusColor}>
-              {labelForStatus(exchange.status, t)}
-            </Badge>
+            {isTwoWay ? (
+              <>
+                <ArrowRightLeft size={12} color={theme.primary} />
+                <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg, fontWeight: '700' }}>
+                  {receivedName}
+                </ThemedText>
+              </>
+            ) : null}
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
-            <Badge variant="accent" accent="emerald">
-              {exchange.taughtSkillName ?? exchange.taughtSkill?.name ?? 'Skill'}
-            </Badge>
-            <ArrowRightLeft size={10} color={theme.mutedForeground} />
-            <Badge variant="accent" accent="indigo">
-              {exchange.receivedSkillName ?? exchange.receivedSkill?.name ?? 'Skill'}
-            </Badge>
+
+          {/* Peer & Relationship */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
+            <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={22} />
+            <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.sm }}>
+              {isSender ? 'Learning from' : 'Teaching'}{' '}
+              <ThemedText type="caption" style={{ fontWeight: '600', color: theme.foreground }}>
+                {otherUser?.name ?? 'Peer Trader'}
+              </ThemedText>
+            </ThemedText>
           </View>
         </View>
+
+        <Badge variant="accent" accent={statusColor}>
+          {labelForStatus(exchange.status, t)}
+        </Badge>
       </View>
 
       {/* Progress bar */}
-      {isActive ? (
-        <View style={{ gap: SPACING[1.5] }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <ThemedText type="caption" muted>Progress</ThemedText>
-            <ThemedText type="caption">{progress}%</ThemedText>
-          </View>
-          <Progress value={progress} />
+      <View style={{ gap: SPACING[1.5], marginTop: 2 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
+            Progress
+          </ThemedText>
+          <ThemedText type="caption" style={{ fontWeight: '700', fontSize: FONT_SIZE.xs, color: theme.primary }}>
+            {progress}%
+          </ThemedText>
         </View>
-      ) : null}
+        <Progress value={progress} />
+      </View>
 
-      {/* Meta row */}
+      {/* Meta Chips Grid */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
-        <MetaChip
-          icon={<Coins size={12} color={theme.mutedForeground} />}
-          label={
-            points ? `${points.gross} pts` : exchange.pointsAmount ? `${exchange.pointsAmount} pts` : 'No points'
-          }
-        />
-        {exchange.createdAt ? (
+        {totalSessions > 0 ? (
           <MetaChip
-            icon={<CalendarCheck size={12} color={theme.mutedForeground} />}
-            label={`Started ${formatDateShort(exchange.createdAt)}`}
+            icon={<Clock size={12} color={theme.mutedForeground} />}
+            label={`${completedSessions}/${totalSessions} sessions`}
           />
         ) : null}
-        {nextSession?.startTime ? (
+
+        {pointsVal > 0 ? (
+          <MetaChip
+            accent="amber"
+            icon={<Coins size={12} color={getAccent('amber').main} />}
+            label={`${displayPoints} pts${exchange.escrowLocked ? ' (Escrowed)' : ''}`}
+          />
+        ) : null}
+
+        {nextSession?.scheduledAt || nextSession?.startTime ? (
           <MetaChip
             accent="indigo"
             icon={<Video size={12} color={getAccent('indigo').main} />}
-            label={`Session ${formatDateTimeShort(nextSession.startTime)}`}
+            label={`Session: ${formatDateTimeShort(nextSession.scheduledAt ?? nextSession.startTime)}`}
+          />
+        ) : exchange.committedAt || exchange.createdAt ? (
+          <MetaChip
+            icon={<CalendarCheck size={12} color={theme.mutedForeground} />}
+            label={`Started ${formatDateShort(exchange.committedAt ?? exchange.createdAt)}`}
           />
         ) : null}
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 2 }}>
-        <ThemedText type="caption" muted>
-          View Details
+      {/* Card footer link */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: SPACING[1], borderTopWidth: 1, borderTopColor: theme.border + '60' }}>
+        <ThemedText type="caption" style={{ color: theme.primary, fontWeight: '600', fontSize: FONT_SIZE.xs }}>
+          View exchange details
         </ThemedText>
-        <ChevronRight size={14} color={theme.mutedForeground} />
+        <ChevronRight size={14} color={theme.primary} />
       </View>
     </PressableCard>
   );
@@ -238,15 +278,16 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
 
 function labelForStatus(s: string, t: (k: string) => string) {
   switch (s) {
-    case 'IN_PROGRESS': return t('in_progress');
-    case 'COMPLETED': return t('completed');
-    case 'CANCELLED': return t('cancelled');
-    case 'ACCEPTED': return t('accepted');
-    case 'SCHEDULED': return t('scheduled');
-    case 'PENDING': return t('pending');
-    case 'REJECTED': return t('rejected');
-    case 'EXPIRED': return t('expired');
-    default: return s.replace(/_/g, ' ');
+    case 'COMMITTED': return 'Committed';
+    case 'IN_PROGRESS': return t('in_progress') ?? 'In Progress';
+    case 'COMPLETED': return t('completed') ?? 'Completed';
+    case 'CANCELLED': return t('cancelled') ?? 'Cancelled';
+    case 'ACCEPTED': return t('accepted') ?? 'Accepted';
+    case 'SCHEDULED': return t('scheduled') ?? 'Scheduled';
+    case 'PENDING': return t('pending') ?? 'Pending';
+    case 'REJECTED': return t('rejected') ?? 'Rejected';
+    case 'EXPIRED': return t('expired') ?? 'Expired';
+    default: return s ? s.replace(/_/g, ' ') : 'Active';
   }
 }
 
@@ -270,7 +311,7 @@ function MetaChip({ icon, label, accent }: { icon: React.ReactNode; label: React
       {icon}
       <ThemedText
         type="badge"
-        style={{ color: palette ? palette.main : theme.mutedForeground }}
+        style={{ color: palette ? palette.main : theme.mutedForeground, fontSize: FONT_SIZE.xs }}
       >
         {label}
       </ThemedText>

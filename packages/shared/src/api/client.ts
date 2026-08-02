@@ -1,4 +1,4 @@
-import type { CreateExchangeRequestPayload, CreateReviewPayload, ProposeSlotsDto } from "../schemas/exchange.schema";
+import type { CreateExchangeRequestPayload, CreateReviewPayload, ProposeSlotsDto, ProposeTermsAndSlotsDto, UpdateAvailabilityDto } from "../schemas/exchange.schema";
 import { SendMessageDto } from "../schemas/exchange.schema";
 import { PurchasePointsDto, WithdrawPointsDto } from "../schemas/points.schema";
 import type { ProfileFormPayload, UpdateProfileDto } from "../schemas/profile.schema";
@@ -35,7 +35,7 @@ export type FetchImpl = (
 export interface ApiClientConfig {
   baseUrl: string;
   fetchImpl?: FetchImpl;
-  getAuthHeaders?: () => Promise<HeadersInit> | HeadersInit;
+  getAuthHeaders?: () => Promise<Record<string, string>> | Record<string, string>;
   withCredentials?: boolean;
 }
 
@@ -180,10 +180,25 @@ export function createApiClient(config: ApiClientConfig) {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    acceptSlots: (requestId: string, slotIds: string[]) =>
-      request<void>(`/exchanges/requests/${requestId}/slots/accept`, {
+    proposeTermsAndSlots: (requestId: string, payload: ProposeTermsAndSlotsDto) =>
+      request<void>(`/exchanges/requests/${requestId}/propose`, {
         method: "POST",
-        body: JSON.stringify({ slotIds }),
+        body: JSON.stringify(payload),
+      }),
+    acceptSlots: (requestId: string, slotIds: string[]) =>
+      request<void>(`/exchanges/requests/${requestId}/accept-slots`, {
+        method: "POST",
+        body: JSON.stringify({ requestId, slotIds }),
+      }),
+    acceptTermsAndSlots: (requestId: string, slotIds: string[]) =>
+      request<void>(`/exchanges/requests/${requestId}/accept-slots`, {
+        method: "POST",
+        body: JSON.stringify({ requestId, slotIds }),
+      }),
+    updateAvailability: (requestId: string, payload: UpdateAvailabilityDto) =>
+      request<void>(`/exchanges/requests/${requestId}/availability`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
       }),
     markComplete: (id: string) =>
       request<void>(`/exchanges/${id}/complete`, { method: "POST" }),
@@ -194,11 +209,22 @@ export function createApiClient(config: ApiClientConfig) {
       }),
     chat: {
       list: (exchangeId: string) =>
-        request<ExchangeChatMessage[]>(`/exchanges/${exchangeId}/chat`),
-      send: (exchangeId: string, content: string) =>
-        request<ExchangeChatMessage>(`/exchanges/${exchangeId}/chat`, {
+        request<any[]>(`/exchanges/${exchangeId}/chat`),
+      send: (
+        exchangeId: string,
+        payload: { content?: string; fileKey?: string; fileName?: string; fileType?: string } | string
+      ) =>
+        request<any>(`/exchanges/${exchangeId}/chat`, {
           method: "POST",
-          body: JSON.stringify({ content }),
+          body: JSON.stringify(typeof payload === "string" ? { content: payload } : payload),
+        }),
+      uploadUrl: (
+        exchangeId: string,
+        payload: { fileName: string; contentType: string }
+      ) =>
+        request<{ uploadUrl: string; key: string }>(`/exchanges/${exchangeId}/chat/upload`, {
+          method: "POST",
+          body: JSON.stringify(payload),
         }),
     },
   };

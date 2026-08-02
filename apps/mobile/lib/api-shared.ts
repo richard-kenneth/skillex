@@ -9,7 +9,7 @@ const API_BASE = `${process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:30
 
 export const api = createApiClient({
   baseUrl: API_BASE,
-  getAuthHeaders: async () => {
+  getAuthHeaders: async (): Promise<Record<string, string>> => {
     try {
       const session = await authClient.getSession();
       const token = (session as any)?.data?.session?.token;

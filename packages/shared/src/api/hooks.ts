@@ -5,7 +5,7 @@ import type {
 } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../constants";
-import type { CreateExchangeRequestPayload, CreateReviewPayload, ProposeSlotsDto } from "../schemas/exchange.schema";
+import type { CreateExchangeRequestPayload, CreateReviewPayload, ProposeSlotsDto, ProposeTermsAndSlotsDto, UpdateAvailabilityDto } from "../schemas/exchange.schema";
 import { SendMessageDto } from "../schemas/exchange.schema";
 import { PurchasePointsDto, WithdrawPointsDto } from "../schemas/points.schema";
 import type { UpdateProfileDto } from "../schemas/profile.schema";
@@ -305,6 +305,58 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     });
   }
 
+  function useProposeTermsAndSlots(
+    options?: Omit<
+      UseMutationOptions<void, Error, { requestId: string; payload: ProposeTermsAndSlotsDto }>,
+      "mutationFn"
+    >
+  ) {
+    return useMutation<void, Error, { requestId: string; payload: ProposeTermsAndSlotsDto }>({
+      mutationFn: ({ requestId, payload }) =>
+        client.exchanges.proposeTermsAndSlots(requestId, payload),
+      onSuccess: (...args) => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exchanges.requests });
+        return options?.onSuccess?.(...args);
+      },
+      ...options,
+    });
+  }
+
+  function useAcceptTermsAndSlots(
+    options?: Omit<
+      UseMutationOptions<void, Error, { requestId: string; slotIds: string[] }>,
+      "mutationFn"
+    >
+  ) {
+    return useMutation<void, Error, { requestId: string; slotIds: string[] }>({
+      mutationFn: ({ requestId, slotIds }) =>
+        client.exchanges.acceptTermsAndSlots(requestId, slotIds),
+      onSuccess: (...args) => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exchanges.requests });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.points.balance });
+        return options?.onSuccess?.(...args);
+      },
+      ...options,
+    });
+  }
+
+  function useUpdateAvailability(
+    options?: Omit<
+      UseMutationOptions<void, Error, { requestId: string; payload: UpdateAvailabilityDto }>,
+      "mutationFn"
+    >
+  ) {
+    return useMutation<void, Error, { requestId: string; payload: UpdateAvailabilityDto }>({
+      mutationFn: ({ requestId, payload }) =>
+        client.exchanges.updateAvailability(requestId, payload),
+      onSuccess: (...args) => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exchanges.requests });
+        return options?.onSuccess?.(...args);
+      },
+      ...options,
+    });
+  }
+
   function useMarkExchangeComplete(
     options?: Omit<UseMutationOptions<void, Error, string>, "mutationFn">
   ) {
@@ -340,6 +392,67 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
   ) {
     return useMutation<any, Error, string>({
       mutationFn: (recordingId) => client.video.record.playback(recordingId),
+      ...options,
+    });
+  }
+
+  function useExchangeChatMessages(
+    exchangeId: string,
+    options?: Omit<UseQueryOptions<any[], Error, any[]>, "queryKey" | "queryFn">
+  ) {
+    return useQuery<any[], Error>({
+      queryKey: ["exchanges", exchangeId, "chat"],
+      queryFn: () => client.exchanges.chat.list(exchangeId),
+      enabled: !!exchangeId,
+      ...(options),
+    });
+  }
+
+  function useSendExchangeChatMessage(
+    options?: Omit<
+      UseMutationOptions<
+        any,
+        Error,
+        { exchangeId: string; payload: { content?: string; fileKey?: string; fileName?: string; fileType?: string } | string }
+      >,
+      "mutationFn"
+    >
+  ) {
+    return useMutation<
+      any,
+      Error,
+      { exchangeId: string; payload: { content?: string; fileKey?: string; fileName?: string; fileType?: string } | string }
+    >({
+      mutationFn: ({ exchangeId, payload }) =>
+        client.exchanges.chat.send(exchangeId, payload),
+      onSuccess: (...args) => {
+        const [, vars] = args;
+        queryClient.invalidateQueries({
+          queryKey: ["exchanges", vars.exchangeId, "chat"],
+        });
+        return options?.onSuccess?.(...args);
+      },
+      ...options,
+    });
+  }
+
+  function useExchangeChatUploadUrl(
+    options?: Omit<
+      UseMutationOptions<
+        { uploadUrl: string; key: string },
+        Error,
+        { exchangeId: string; fileName: string; contentType: string }
+      >,
+      "mutationFn"
+    >
+  ) {
+    return useMutation<
+      { uploadUrl: string; key: string },
+      Error,
+      { exchangeId: string; fileName: string; contentType: string }
+    >({
+      mutationFn: ({ exchangeId, fileName, contentType }) =>
+        client.exchanges.chat.uploadUrl(exchangeId, { fileName, contentType }),
       ...options,
     });
   }
@@ -740,9 +853,15 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     useCancelRequest,
     useSendRequestMessage,
     useProposeSlots,
+    useProposeTermsAndSlots,
+    useAcceptTermsAndSlots,
+    useUpdateAvailability,
     useMarkExchangeComplete,
     useUpdateSessionStatus,
     useRecordingPlayback,
+    useExchangeChatMessages,
+    useSendExchangeChatMessage,
+    useExchangeChatUploadUrl,
     // Points
     usePointsBalance,
     usePointsTransactions,

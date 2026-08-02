@@ -33,7 +33,9 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.WAKE_LOCK",
-        "android.permission.BLUETOOTH"
+        "android.permission.BLUETOOTH",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE"
       ],
       "googleServicesFile": "./google-services.json"
     },
@@ -64,8 +66,27 @@
         "expo-localization",
         {
           "supportedLocales": {
-            "ios": ["en", "fr", "es", "pt"],
-            "android": ["en", "fr", "es", "pt"]
+            "ios": [
+              "en",
+              "fr",
+              "es",
+              "pt"
+            ],
+            "android": [
+              "en",
+              "fr",
+              "es",
+              "pt"
+            ]
+          }
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "requestLegacyExternalStorage": true
           }
         }
       ]

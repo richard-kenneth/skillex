@@ -1,18 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Pressable,
-  RefreshControl,
   ScrollView,
   View,
   TextInput,
   KeyboardAvoidingView,
   Platform,
   FlatList,
-  AppState,
-  AppStateStatus,
+  Modal,
+  StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/use-theme';
 import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH } from '@/constants/theme';
 import {
@@ -21,29 +21,20 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   Dialog,
   DialogHeader,
   DialogTitle,
   DialogDescription,
   DialogContent,
   DialogFooter,
-  Input,
-  Label,
   Separator,
   Tabs,
   SkeletonText,
   useToast,
   AlertDialog,
-  ActionSheet,
-  SelectField,
-  Skeleton,
   Progress,
 } from '@/components/ui';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { useT } from 'lib/i18n';
 import {
   useVideoSessionDetails,
@@ -56,13 +47,14 @@ import {
   useSendSessionChatMessage,
   useMarkSessionChatRead,
   useCurrentUser,
+  usePointsBalance,
 } from '@/lib/api-hooks';
 import {
   formatTimeRemaining,
   formatDateTimeShort,
-  formatDateShort,
-  POINT_TO_USD_RATE,
-  calculatePointsBreakdown,
+  type RecordingConsentPayload,
+  type StartRecordingPayload,
+  type StopRecordingPayload,
 } from '@skil-ex2/shared';
 import {
   Video,
@@ -76,57 +68,29 @@ import {
   Clock,
   ShieldCheck,
   AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  Send,
-  Sparkles,
-  Info,
   ArrowLeft,
   RefreshCw,
-  User,
-  Users,
   Loader2,
   X,
+  Send,
+  Sparkles,
   CheckCircle2,
-  HandCoins,
   CalendarClock,
-  Zap,
+  Info,
+  Coins,
+  Users,
 } from 'lucide-react-native';
 import { cn } from '@/lib/style-utils';
-import { 
-  LiveKitRoom, 
-  useRoomContext, 
-  useParticipants, 
-  useDataChannel, 
-  VideoTrack 
+import {
+  LiveKitRoom,
+  useRoomContext,
+  useParticipants,
+  useDataChannel,
+  VideoTrack,
 } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 
-/*
- * ─── LiveKit integration note ─────────────────────────────────────────
- * When ready, install the native package:
- *   pnpm --filter mobile add @livekit/react-native
- *   (iOS: pod install)
- * Then:
- *   1. import { LiveKitRoom, useRoomContext, useParticipants, useDataChannel } from "@livekit/react-native";
- *   2. Wrap the RoomBody in:
- *        <LiveKitRoom
- *          token={token}
- *          serverUrl={serverUrl}
- *          audio={audioOn}
- *          video={videoOn}
- *          onDisconnected={handleLeave}
- *        >
- *          <RoomBody ... />
- *        </LiveKitRoom>
- *   3. Swap <ParticipantPlaceholderGrid /> for <ParticipantGrid /> using useParticipants()
- *   4. Wire useDataChannel("recording") signals to the existing recording state machine
- *      handlers (handleSignalInbound / sendSignal are already implemented below as no-ops).
- * ──────────────────────────────────────────────────────────────────────
- */
-
-type RoomTab = 'room' | 'chat';
-
+/* ─── Recording & Signal Types ───────────────────────── */
 type RecordingState =
   | 'idle'
   | 'requesting_consent'
@@ -145,20 +109,59 @@ type RecordingSignal =
   | { type: 'recording_completed' }
   | { type: 'recording_failed' };
 
-function RecordingDataChannelHandler({ onInboundSignal, setSendSignal }: any) {
+interface RecordingEstimateData {
+  rate: number;
+  userBalance: number;
+  maxAffordableMinutes: number;
+  remainingSessionMinutes: number;
+}
+
+interface ChatMessageItem {
+  id: string;
+  senderId: string;
+  message: string;
+  timestamp: string;
+  sender?: {
+    id: string;
+    name: string;
+    image: string | null;
+  };
+}
+
+/* ─── LiveKit Data Channel Signal Handler ─────────────── */
+function RecordingDataChannelHandler({
+  onInboundSignal,
+  setSendSignal,
+}: {
+  onInboundSignal: (rawString: string) => void;
+  setSendSignal: (fn: (signal: RecordingSignal) => void) => void;
+}) {
   const { send } = useDataChannel('recording', (message) => {
-    const Decoder = (globalThis as any).TextDecoder ?? String;
-    const rawString = typeof Decoder === 'function' ? new Decoder().decode(message.payload) : String.fromCharCode.apply(null, Array.from(message.payload));
-    onInboundSignal(rawString);
+    try {
+      const Decoder = (globalThis as any).TextDecoder ?? String;
+      const rawString =
+        typeof Decoder === 'function' && Decoder !== String
+          ? new Decoder().decode(message.payload)
+          : String.fromCharCode.apply(null, Array.from(message.payload));
+      onInboundSignal(rawString);
+    } catch (e) {
+      console.warn('[DataChannel] Error decoding message:', e);
+    }
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (send) {
-      setSendSignal(() => (signal: RecordingSignal) => {
-        const Encoder = (globalThis as any).TextEncoder;
-        const str = JSON.stringify(signal);
-        const payload = Encoder ? new Encoder().encode(str) : new Uint8Array(str.split('').map(c => c.charCodeAt(0)));
-        send(payload, { reliable: true });
+      setSendSignal((signal: RecordingSignal) => {
+        try {
+          const Encoder = (globalThis as any).TextEncoder;
+          const str = JSON.stringify(signal);
+          const payload = Encoder
+            ? new Encoder().encode(str)
+            : new Uint8Array(str.split('').map((c) => c.charCodeAt(0)));
+          send(payload, { reliable: true });
+        } catch (e) {
+          console.warn('[DataChannel] Error sending signal:', e);
+        }
       });
     }
   }, [send, setSendSignal]);
@@ -166,292 +169,328 @@ function RecordingDataChannelHandler({ onInboundSignal, setSendSignal }: any) {
   return null;
 }
 
+/* ─── Main Room Screen ────────────────────────────────── */
 export default function RoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const nav = useNavigation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const t = useT('room');
+  const c = useT('common');
 
-  const sessionId = id!;
-  const detailsQ = useVideoSessionDetails(sessionId);
-  const tokenQ = useVideoToken(sessionId);
+  const roomNameOrId = id!;
+
+  /* ─── Session Details & Token queries ──── */
+  const detailsQ = useVideoSessionDetails(roomNameOrId);
   const userQ = useCurrentUser();
+  const pointsQ = usePointsBalance();
+  const currentUser = userQ.data as any;
 
-  /* ------ Media state ------ */
-  // Media state is now managed by LiveKit via useRoomContext
+  const exchangeSessionId = detailsQ.data?.sessionId ?? detailsQ.data?.id ?? roomNameOrId;
+  const exchangeId = detailsQ.data?.exchangeId ?? '';
 
-  /* ------ Recording state machine ------ */
-  const [recordingState, setRecordingState] = React.useState<RecordingState>('idle');
-  const [recordingStopAt, setRecordingStopAt] = React.useState<number | null>(null);
-  const [consentDialog, setConsentDialog] = React.useState<{
-    mode: 'outbound_request' | 'inbound_request' | 'estimate';
-  } | null>(null);
-  const [estimate, setEstimate] = React.useState<{ rate: number; userBalance: number; maxAffordableMinutes: number; remainingSessionMinutes: number } | null>(null);
-  const [confirmLeave, setConfirmLeave] = React.useState(false);
+  const tokenQ = useVideoToken(exchangeSessionId);
+  const token = (tokenQ.data as any)?.token ?? '';
+  const serverUrl = (tokenQ.data as any)?.url ?? '';
+
+  /* ─── Recording State Machine ──── */
+  const [recordingState, setRecordingState] = useState<RecordingState>('idle');
+  const [recordingStopAt, setRecordingStopAt] = useState<number | null>(null);
+  const [showEstimateModal, setShowEstimateModal] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [estimate, setEstimate] = useState<RecordingEstimateData | null>(null);
+  const [isCheckingEstimate, setIsCheckingEstimate] = useState(false);
+
   const estimateQ = useRecordingEstimate();
   const consentQ = useSubmitRecordingConsent();
   const startRecQ = useStartRecording();
   const stopRecQ = useStopRecording();
 
-  /* ------ Chat state ------ */
-  const [tab, setTab] = React.useState<RoomTab>('room');
-  const [chatText, setChatText] = React.useState('');
-  const chatMsgsQ = useSessionChatMessages(sessionId);
-  const sendMsgQ = useSendSessionChatMessage();
-  const markReadQ = useMarkSessionChatRead();
-  const flatRef = React.useRef<any>(null);
-  const currentUser = userQ.data as any;
+  /* ─── Chat & Drawer State ──── */
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const isChatOpenRef = useRef(isChatOpen);
+  useEffect(() => {
+    isChatOpenRef.current = isChatOpen;
+  }, [isChatOpen]);
 
-  /* ------ Session timer ------ */
-  const [now, setNow] = React.useState(Date.now());
-  React.useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+
+  /* ─── Real-time Timer ──── */
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  // Auto-disconnect if session ended + 5m grace
-  React.useEffect(() => {
-    const endsAt = detailsQ.data?.session?.endsAt;
-    if (!endsAt) return;
-    const endMs = new Date(endsAt).getTime() + 5 * 60 * 1000;
-    if (now > endMs) {
-      toast.toast({ title: t('sessionEnded'), description: t('sessionEndedDesc'), variant: 'info' });
-      handleLeave(false);
+  // Safety processing timeout
+  useEffect(() => {
+    if (recordingState === 'processing') {
+      const timer = setTimeout(() => {
+        setRecordingState('idle');
+        toast.toast({ title: t('processingTimeout'), variant: 'error' });
+      }, 60000);
+      return () => clearTimeout(timer);
     }
-  }, [now, detailsQ.data?.session?.endsAt]);
+  }, [recordingState, t, toast]);
 
-  // Auto-mark chat read when user views chat tab
-  React.useEffect(() => {
-    if (tab === 'chat') {
-      markReadQ.mutate(sessionId);
+  /* ─── Data Channel Signal Emitter ──── */
+  const sendSignalRef = useRef<((signal: RecordingSignal) => void) | null>(null);
+  const setSendSignal = useCallback((fn: (signal: RecordingSignal) => void) => {
+    sendSignalRef.current = fn;
+  }, []);
+
+  const sendSignal = useCallback((signal: RecordingSignal) => {
+    if (sendSignalRef.current) {
+      sendSignalRef.current(signal);
+    } else {
+      console.log('[Recording] Signal buffer (not connected):', signal);
     }
-  }, [tab]);
+  }, []);
 
-  /* ------ Derived ------ */
-  const session = detailsQ.data?.session;
-  const exchangeId = detailsQ.data?.exchangeId;
-  const scheduledAt = session?.scheduledAt ? new Date(session.scheduledAt) : null;
-  const endsAt = session?.endsAt ? new Date(session.endsAt) : null;
-  const totalDuration = scheduledAt && endsAt ? endsAt.getTime() - scheduledAt.getTime() : 0;
-  const elapsed = scheduledAt ? Math.min(Math.max(now - scheduledAt.getTime(), 0), totalDuration) : 0;
-  const progressPct = totalDuration > 0 ? (elapsed / totalDuration) * 100 : 0;
-  const remainingMs = totalDuration - elapsed;
-  const remainingStr = formatTimeRemaining(remainingMs);
-
-  const token = (tokenQ.data as any)?.token ?? '';
-  const serverUrl = (tokenQ.data as any)?.url ?? '';
-
-  const loading = detailsQ.isLoading || tokenQ.isLoading;
-  const error = (detailsQ.error as any)?.message || (tokenQ.error as any)?.message || null;
-
-  /* ------ Recording signal sender ------ */
-  const [sendSignalRef, setSendSignalRef] = React.useState<any>(null);
-
-  const sendSignal = React.useCallback(
-    (signal: RecordingSignal) => {
-      if (sendSignalRef) {
-        sendSignalRef(signal);
-      } else {
-        console.log('send (not connected):', signal);
+  /* ─── Recording Action Handlers ──── */
+  const handleStartRecording = useCallback(async () => {
+    if (!exchangeSessionId) return;
+    try {
+      setRecordingState('starting');
+      const data = await startRecQ.mutateAsync({ exchangeSessionId });
+      setRecordingState('recording');
+      setShowConsentModal(false);
+      const approvedMinutes = data.approvedMinutes || 0;
+      let stopAt = approvedMinutes ? Date.now() + approvedMinutes * 60 * 1000 : undefined;
+      const sessionEndsAt = detailsQ.data?.endsAt ?? detailsQ.data?.session?.endsAt;
+      if (stopAt && sessionEndsAt) {
+        stopAt = Math.min(stopAt, new Date(sessionEndsAt).getTime());
       }
-    },
-    [sendSignalRef]
-  );
+      sendSignal({ type: 'recording_started', approvedMinutes, stopAt });
+      if (stopAt) {
+        setRecordingStopAt(stopAt);
+      }
+      toast.toast({ title: t('recordingSuccess') ?? 'Recording started', variant: 'success' });
+    } catch (err: any) {
+      setRecordingState('idle');
+      sendSignal({ type: 'consent_error' });
+      toast.toast({
+        title: t('startRecordingFailed') ?? 'Could not start recording',
+        description: err?.message,
+        variant: 'error',
+      });
+    }
+  }, [exchangeSessionId, startRecQ, sendSignal, detailsQ.data, t, toast]);
 
-  /* ------ Recording signal receiver (LiveKit data channel ready) ------ */
-  const handleSignalInbound = React.useCallback(
-    (raw: string) => {
+  const handleSignalInbound = useCallback(
+    (rawString: string) => {
       try {
-        const s = JSON.parse(raw) as RecordingSignal;
-        switch (s.type) {
+        const signal: RecordingSignal = JSON.parse(rawString);
+        switch (signal.type) {
           case 'consent_request':
-            if (recordingState === 'idle') {
-              setRecordingState('requesting_consent');
-              setConsentDialog({ mode: 'inbound_request' });
-            }
+            setShowConsentModal(true);
+            setRecordingState('requesting_consent');
             break;
           case 'consent_accept':
-            if (recordingState === 'waiting_for_partner') {
-              beginRecording();
-            }
+            setRecordingState('starting');
+            handleStartRecording();
             break;
           case 'consent_decline':
-            if (recordingState === 'waiting_for_partner' || recordingState === 'requesting_consent') {
-              setRecordingState('idle');
-              setConsentDialog(null);
-              toast.toast({ title: 'Partner declined recording', variant: 'warning' });
-            }
+            setRecordingState('idle');
+            setShowConsentModal(false);
+            toast.toast({ title: t('partnerDeclined') ?? 'Partner declined recording', variant: 'warning' });
+            break;
+          case 'consent_error':
+            setRecordingState('idle');
+            setShowConsentModal(false);
+            toast.toast({ title: t('partnerConsentFailed') ?? 'Partner consent failed', variant: 'error' });
             break;
           case 'recording_started':
             setRecordingState('recording');
-            setRecordingStopAt(s.stopAt ?? null);
-            setConsentDialog(null);
-            toast.toast({ title: 'Recording started', variant: 'success' });
+            setShowConsentModal(false);
+            if (signal.stopAt) {
+              let stopAt = signal.stopAt;
+              const sessionEndsAt = detailsQ.data?.endsAt ?? detailsQ.data?.session?.endsAt;
+              if (sessionEndsAt) {
+                stopAt = Math.min(stopAt, new Date(sessionEndsAt).getTime());
+              }
+              setRecordingStopAt(stopAt);
+            }
+            toast.toast({ title: t('recordingStarted') ?? 'Recording is now active', variant: 'success' });
             break;
           case 'recording_stopped':
-          case 'recording_completed':
             setRecordingState('processing');
             setRecordingStopAt(null);
-            setTimeout(() => {
-              setRecordingState('idle');
-              toast.toast({ title: 'Recording saved', description: 'Available in your exchange details soon.', variant: 'success' });
-            }, 4000);
+            break;
+          case 'recording_completed':
+            setRecordingState('idle');
+            setRecordingStopAt(null);
+            toast.toast({ title: t('recordingSaved') ?? 'Recording saved successfully', variant: 'success' });
             break;
           case 'recording_failed':
             setRecordingState('idle');
-            toast.toast({ title: 'Recording failed', variant: 'error' });
+            setRecordingStopAt(null);
+            toast.toast({ title: t('recordingFailed') ?? 'Recording failed', variant: 'error' });
             break;
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.warn('[Recording] Signal parse error:', err);
       }
     },
-    [recordingState, toast],
+    [handleStartRecording, detailsQ.data, t, toast]
   );
 
-  async function beginRecording() {
+  const handleCheckEstimate = useCallback(async () => {
+    if (!exchangeSessionId) return;
+    setIsCheckingEstimate(true);
     try {
-      setRecordingState('starting');
-      await startRecQ.mutateAsync({exchangeSessionId: sessionId});
-      // Backend will emit recording_started signal. If not wired, guard it:
-      setTimeout(() => {
-        if (recordingStateRef.current === 'starting') {
-          setRecordingState('recording');
-        }
-      }, 4000);
-    } catch (e: any) {
+      const data = await estimateQ.mutateAsync(exchangeSessionId);
+      setEstimate(data as RecordingEstimateData);
+      setShowEstimateModal(true);
+    } catch (err: any) {
+      toast.toast({
+        title: t('failedGetEstimate') ?? 'Failed to check estimate',
+        description: err?.message,
+        variant: 'error',
+      });
+    } finally {
+      setIsCheckingEstimate(false);
+    }
+  }, [exchangeSessionId, estimateQ, t, toast]);
+
+  const handleRequestRecording = useCallback(async () => {
+    if (!exchangeSessionId) return;
+    setShowEstimateModal(false);
+    try {
+      await consentQ.mutateAsync({ exchangeSessionId, consented: true });
+    } catch (err: any) {
+      toast.toast({ title: t('consentInitFailed') ?? 'Consent init failed', variant: 'error' });
       setRecordingState('idle');
-      setConsentDialog(null);
-      toast.toast({ title: 'Could not start', description: e?.message ?? 'Try again', variant: 'error' });
-    }
-  }
-
-  // Ref to avoid stale closures in timeouts
-  const recordingStateRef = React.useRef(recordingState);
-  React.useEffect(() => {
-    recordingStateRef.current = recordingState;
-  }, [recordingState]);
-
-  /* ------ Handlers ------ */
-
-  async function handleInitiateRecording() {
-    try {
-      // 1. Show estimate
-      setConsentDialog({ mode: 'estimate' });
-      const est = await estimateQ.mutateAsync(sessionId);
-      setEstimate(est as any);
-    } catch (e: any) {
-      toast.toast({ title: 'Estimate unavailable', description: e?.message ?? 'Try again', variant: 'error' });
-    }
-  }
-
-  async function confirmAfterEstimate() {
-    setConsentDialog({ mode: 'outbound_request' });
-  }
-
-  async function consentAndRequest() {
-    try {
-      await consentQ.mutateAsync({ exchangeSessionId: sessionId, consented: true });
-      setRecordingState('waiting_for_partner');
-      setConsentDialog(null);
-      sendSignal({ type: 'consent_request' });
-      toast.toast({ title: 'Awaiting partner consent…', variant: 'info' });
-    } catch (e: any) {
-      toast.toast({ title: 'Consent failed', description: e?.message ?? 'Try again', variant: 'error' });
-    }
-  }
-
-  async function acceptInboundConsent() {
-    try {
-      await consentQ.mutateAsync({ exchangeSessionId: sessionId, consented: true });
-      sendSignal({ type: 'consent_accept' });
-      beginRecording();
-    } catch (e: any) {
-      sendSignal({ type: 'consent_error' });
-      toast.toast({ title: 'Consent failed', variant: 'error' });
-    }
-    setConsentDialog(null);
-  }
-
-  async function declineInboundConsent() {
-    try {
-      await consentQ.mutateAsync({ exchangeSessionId: sessionId, consented: false });
-    } catch {
-      // ignore
-    }
-    sendSignal({ type: 'consent_decline' });
-    setRecordingState('idle');
-    setConsentDialog(null);
-  }
-
-  async function handleStopRecording() {
-    try {
-      await stopRecQ.mutateAsync({exchangeSessionId: sessionId});
-      sendSignal({ type: 'recording_stopped' });
-      setRecordingState('processing');
-      setTimeout(() => {
-        setRecordingState('idle');
-        toast.toast({ title: 'Recording saved', variant: 'success' });
-      }, 3500);
-    } catch (e: any) {
-      toast.toast({ title: 'Could not stop', variant: 'error' });
-    }
-  }
-
-  function handleLeave(confirm = true) {
-    if (confirm) {
-      setConfirmLeave(true);
       return;
     }
-    if (recordingState === 'recording') {
-      handleStopRecording();
-    }
-    if (exchangeId) {
-      router.replace(`/exchanges/${exchangeId}` as any);
-    } else {
-      router.back();
-    }
-  }
+    sendSignal({ type: 'consent_request' });
+    setRecordingState('waiting_for_partner');
+    toast.toast({ title: t('waitingPartner') ?? 'Awaiting partner consent…', variant: 'info' });
+  }, [exchangeSessionId, consentQ, sendSignal, t, toast]);
 
-  async function handleSendChat() {
-    const text = chatText.trim();
-    if (!text) return;
+  const handleConsentSubmit = useCallback(
+    async (consented: boolean) => {
+      setShowConsentModal(false);
+      if (!consented) {
+        sendSignal({ type: 'consent_decline' });
+        setRecordingState('idle');
+        return;
+      }
+      try {
+        await consentQ.mutateAsync({ exchangeSessionId, consented: true });
+      } catch (err: any) {
+        toast.toast({ title: t('submitConsentFailed') ?? 'Consent submission failed', variant: 'error' });
+        sendSignal({ type: 'consent_error' });
+        setRecordingState('idle');
+        return;
+      }
+      sendSignal({ type: 'consent_accept' });
+      setRecordingState('starting');
+    },
+    [exchangeSessionId, consentQ, sendSignal, t, toast]
+  );
+
+  const handleCancelRecordingRequest = useCallback(() => {
+    setRecordingState('idle');
+    sendSignal({ type: 'consent_decline' });
+  }, [sendSignal]);
+
+  const handleStopRecording = useCallback(async () => {
+    if (!exchangeSessionId) return;
     try {
-      await sendMsgQ.mutateAsync({ exchangeSessionId: sessionId, message: text });
-      setChatText('');
-      await chatMsgsQ.refetch();
-      setTimeout(() => {
-        flatRef.current?.scrollToEnd?.({ animated: true });
-      }, 50);
-    } catch (e: any) {
-      toast.toast({ title: 'Failed to send', variant: 'error' });
+      await stopRecQ.mutateAsync({ exchangeSessionId });
+      setRecordingState('processing');
+      setRecordingStopAt(null);
+      sendSignal({ type: 'recording_stopped' });
+    } catch (err: any) {
+      toast.toast({ title: t('stopRecordingFailed') ?? 'Could not stop recording', variant: 'error' });
     }
+  }, [exchangeSessionId, stopRecQ, sendSignal, t, toast]);
+
+  const handleLeave = useCallback(
+    (confirm = true) => {
+      if (confirm) {
+        setConfirmLeave(true);
+        return;
+      }
+      if (recordingState === 'recording') {
+        handleStopRecording();
+      }
+      if (exchangeId) {
+        router.replace(`/exchanges/${exchangeId}` as any);
+      } else {
+        router.back();
+      }
+    },
+    [recordingState, handleStopRecording, exchangeId, router]
+  );
+
+  /* ─── Derived Loading & Error ──── */
+  const loading = detailsQ.isLoading || tokenQ.isLoading;
+  const error =
+    (detailsQ.error as any)?.message || (tokenQ.error as any)?.message || null;
+
+  if (loading) {
+    return (
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: theme.background }}
+        edges={['top', 'bottom']}
+      >
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[4] }}>
+          <Loader2 size={36} color={theme.primary} />
+          <ThemedText type="default" style={{ color: theme.mutedForeground }}>
+            {t('connectingToRoom') ?? 'Connecting to session...'}
+          </ThemedText>
+        </View>
+      </SafeAreaView>
+    );
   }
 
-  if (error) {
+  if (error || !token || !serverUrl) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={['top', 'bottom']}>
-        <View style={{ flex: 1, padding: SPACING[5], gap: SPACING[4], justifyContent: 'center', maxWidth: MAX_CONTENT_WIDTH, width: '100%', alignSelf: 'center' }}>
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: theme.background }}
+        edges={['top', 'bottom']}
+      >
+        <View
+          style={{
+            flex: 1,
+            padding: SPACING[6],
+            gap: SPACING[4],
+            justifyContent: 'center',
+            maxWidth: MAX_CONTENT_WIDTH,
+            width: '100%',
+            alignSelf: 'center',
+          }}
+        >
           <View style={{ alignItems: 'center', gap: SPACING[3] }}>
-            <View style={{ width: 56, height: 56, borderRadius: RADIUS.pill, backgroundColor: getAccent('red').bg, alignItems: 'center', justifyContent: 'center' }}>
-              <AlertCircle size={24} color={getAccent('red').main} />
+            <View
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: RADIUS.pill,
+                backgroundColor: getAccent('red').bg,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <AlertCircle size={28} color={getAccent('red').main} />
             </View>
-            <ThemedText type="title" style={{ fontSize: FONT_SIZE.xl, fontWeight: '600' }}>
-              {t('cantJoinSession')}
+            <ThemedText type="title" style={{ fontSize: FONT_SIZE.xl, fontWeight: '700' }}>
+              {t('videoConnectionError') ?? 'Connection Error'}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
-              {error}
+              {error ?? t('failedGetVideoToken') ?? 'Unable to connect to video session.'}
             </ThemedText>
           </View>
           <Button
             variant="outline"
-            onPress={() => (exchangeId ? router.back() : router.back())}
+            onPress={() => (exchangeId ? router.replace(`/exchanges/${exchangeId}` as any) : router.back())}
             leftIcon={<ArrowLeft size={16} color={theme.foreground} />}
           >
-            {t('goBack')}
+            {c('goBack') ?? 'Go Back'}
           </Button>
         </View>
       </SafeAreaView>
@@ -460,492 +499,536 @@ export default function RoomScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+      <LiveKitRoom
+        token={token}
+        serverUrl={serverUrl}
+        connect={true}
+        audio={true}
+        video={true}
+        onDisconnected={() => handleLeave(false)}
       >
-        {loading ? (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[3] }}>
-            <Loader2 size={32} color={theme.primary} />
-            <ThemedText type="small" style={{ color: theme.mutedForeground }}>
-              {t('connecting')}
-            </ThemedText>
-          </View>
-        ) : (
-          <LiveKitRoom
-            token={token}
-            serverUrl={serverUrl}
-            connect={true}
-            audio={true}
-            video={true}
-            onDisconnected={() => handleLeave(false)}
-          >
-            {/* Bridges the LiveKit context data channel back to RoomScreen state */}
-            <RecordingDataChannelHandler 
-              onInboundSignal={handleSignalInbound} 
-              setSendSignal={setSendSignalRef} 
+        {/* Data Channel Handler */}
+        <RecordingDataChannelHandler
+          onInboundSignal={handleSignalInbound}
+          setSendSignal={setSendSignal}
+        />
+
+        <View style={{ flex: 1, backgroundColor: '#000', position: 'relative' }}>
+          {/* Top Bar Header */}
+          <TopHeaderBar
+            roomName={roomNameOrId}
+            details={detailsQ.data}
+            onBack={() => handleLeave(true)}
+            isChatOpen={isChatOpen}
+            onToggleChat={() => {
+              setIsChatOpen((prev) => {
+                const next = !prev;
+                if (next) setUnreadCount(0);
+                return next;
+              });
+            }}
+            unreadCount={unreadCount}
+            recordingState={recordingState}
+            onCheckEstimate={handleCheckEstimate}
+            onStopRecording={handleStopRecording}
+            onCancelRecordingRequest={handleCancelRecordingRequest}
+            isCheckingEstimate={isCheckingEstimate}
+            recordingStopAt={recordingStopAt}
+            now={now}
+          />
+
+          {/* Main Video View */}
+          <View style={{ flex: 1, backgroundColor: '#050506' }}>
+            <RoomBody
+              partner={detailsQ.data?.partner}
+              me={currentUser}
             />
+          </View>
 
-            <View style={{ flex: 1, backgroundColor: '#000' }}>
-              {/* Top bar: timer & status */}
-              <TopBar
-                onBack={() => handleLeave(true)}
-                sessionStartTime={scheduledAt}
-                remainingStr={remainingStr}
-                progressPct={progressPct}
-                recordingState={recordingState}
-                recordingStopAt={recordingStopAt}
-                now={now}
-              />
-
-              {/* Main content: Video / Chat */}
-              <Tabs<RoomTab>
-                variant="underline"
-                value={tab}
-                onChange={setTab}
-                items={[
-                  { value: 'room', label: t('room'), icon: <Video size={14} color={tab === 'room' ? '#fff' : theme.mutedForeground} /> },
-                  {
-                    value: 'chat',
-                    label: t('chat'),
-                    badge: (chatMsgsQ.data ?? []).length || undefined,
-                    icon: <MessageSquare size={14} color={tab === 'chat' ? '#fff' : theme.mutedForeground} />,
-                  },
-                ]}
-                style={{ backgroundColor: '#0a0a0a', paddingHorizontal: SPACING[5], paddingVertical: SPACING[2] }}
-              />
-
-              {tab === 'room' ? (
-                <RoomBody
-                  session={session}
-                  partner={detailsQ.data?.partner as any}
-                  me={currentUser}
-                  onLeave={() => handleLeave(true)}
-                />
-              ) : (
-                <ChatBody
-                  messages={(chatMsgsQ.data ?? []) as any[]}
-                  loading={chatMsgsQ.isLoading}
-                  me={currentUser}
-                  onRefresh={() => chatMsgsQ.refetch()}
-                  flatRef={flatRef}
-                />
-              )}
-
-              {/* Bottom control bar */}
-              <ControlsBar
-                insets={insets}
-                recordingState={recordingState}
-                onRecording={
-                  recordingState === 'recording' || recordingState === 'processing'
-                    ? handleStopRecording
-                    : recordingState === 'idle'
-                      ? handleInitiateRecording
-                      : undefined
+          {/* Persistent Chat Drawer Overlay */}
+          {isChatOpen ? (
+            <PersistentChatDrawer
+              exchangeSessionId={exchangeSessionId}
+              onClose={() => setIsChatOpen(false)}
+              me={currentUser}
+              onNewMessage={() => {
+                if (!isChatOpenRef.current) {
+                  setUnreadCount((count) => count + 1);
                 }
-                onChat={() => setTab(tab === 'chat' ? 'room' : 'chat')}
-                onLeave={() => handleLeave(true)}
-                chatBadge={(chatMsgsQ.data ?? []).length > 0 && tab !== 'chat'}
-              />
-
-              {/* Chat input (only when chat) */}
-              {tab === 'chat' ? (
-                <View
-                  style={{
-                    paddingHorizontal: SPACING[3],
-                    paddingBottom: SPACING[3],
-                    paddingTop: SPACING[2],
-                    backgroundColor: '#0a0a0a',
-                    borderTopWidth: 1,
-                    borderTopColor: '#1f1f23',
-                    flexDirection: 'row',
-                    gap: SPACING[2],
-                  }}
-                >
-                  <TextInput
-                    value={chatText}
-                    onChangeText={setChatText}
-                    placeholder={t('sendMessagePlaceholder')}
-                    placeholderTextColor="#52525b"
-                    style={{
-                      flex: 1,
-                      borderRadius: RADIUS.pill,
-                      backgroundColor: '#18181b',
-                      color: '#fff',
-                      paddingHorizontal: SPACING[4],
-                      paddingVertical: SPACING[3],
-                      fontSize: FONT_SIZE.md,
-                    }}
-                    onSubmitEditing={handleSendChat}
-                    returnKeyType="send"
-                  />
-                  <Pressable
-                    onPress={handleSendChat}
-                    disabled={!chatText.trim() || sendMsgQ.isPending}
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: RADIUS.pill,
-                      backgroundColor: !chatText.trim() ? '#27272a' : theme.primary,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      alignSelf: 'flex-end',
-                    }}
-                  >
-                    {sendMsgQ.isPending ? (
-                      <Loader2 size={16} color="#fff" />
-                    ) : (
-                      <Send size={16} color="#fff" />
-                    )}
-                  </Pressable>
-                </View>
-              ) : null}
-            </View>
-          </LiveKitRoom>
-        )}
-      </KeyboardAvoidingView>
-
-      {/* Recording: estimate dialog */}
-      <Dialog open={!!consentDialog && consentDialog.mode === 'estimate'} onOpenChange={(o) => !o && setConsentDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('recordingEstimate')}</DialogTitle>
-            <DialogDescription>
-              {t('recordingEstimateDesc')}
-            </DialogDescription>
-          </DialogHeader>
-          {estimate ? (
-            <CardContent style={{ gap: SPACING[3] }}>
-              <Row label={t('rate')} value={`${estimate.rate} pts / min`} />
-              <Row label={t('yourBalance')} value={`${estimate.userBalance.toLocaleString()} pts`} />
-              <Row label={t('sessionTimeLeft')} value={`${estimate.remainingSessionMinutes} min`} />
-              <Separator />
-              <Row
-                label={t('maxAffordable')}
-                value={`${estimate.maxAffordableMinutes} min`}
-                strong
-                accent="indigo"
-              />
-              <View
-                style={{
-                  padding: SPACING[3],
-                  borderRadius: RADIUS.md,
-                  backgroundColor: getAccent('amber').bg,
-                  borderWidth: 1,
-                  borderColor: getAccent('amber').border,
-                  flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  gap: SPACING[2],
-                }}
-              >
-                <ShieldCheck size={16} color={getAccent('amber').main} style={{ marginTop: 2 }} />
-                <ThemedText type="small" style={{ color: getAccent('amber').main, flex: 1, lineHeight: 20 }}>
-                  {t('recordingConsentInfo')}
-                </ThemedText>
-              </View>
-            </CardContent>
-          ) : (
-            <CardContent>
-              <SkeletonText lines={4} />
-            </CardContent>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onPress={() => setConsentDialog(null)}>
-              {t('cancel')}
-            </Button>
-            <Button
-              onPress={confirmAfterEstimate}
-              leftIcon={<Sparkles size={16} color="#fff" />}
-            >
-              {t('requestConsent')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Recording: outbound consent pending dialog */}
-      <Dialog open={!!consentDialog && consentDialog.mode === 'outbound_request'} onOpenChange={(o) => !o && setConsentDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('waitingForPartner')}</DialogTitle>
-            <DialogDescription>
-              {t('waitingForPartnerDesc')}
-            </DialogDescription>
-          </DialogHeader>
-          <CardContent style={{ alignItems: 'center', gap: SPACING[3] }}>
-            <View
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: RADIUS.pill,
-                borderWidth: 2,
-                borderColor: theme.primary,
-                borderStyle: 'dashed',
-                alignItems: 'center',
-                justifyContent: 'center',
               }}
-            >
-              <Circle size={22} color={theme.primary} />
-            </View>
-            <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
-              {t('partnerDeclineInfo')}
-            </ThemedText>
-          </CardContent>
-          <DialogFooter>
-            <Button variant="outline" onPress={() => { setConsentDialog(null); setRecordingState('idle'); }}>
-              {t('cancelRequest')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            />
+          ) : null}
 
-      {/* Recording: inbound consent dialog */}
-      <Dialog open={!!consentDialog && consentDialog.mode === 'inbound_request'} onOpenChange={() => {}}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('partnerWantsToRecord')}</DialogTitle>
-            <DialogDescription>
-              {t('partnerWantsToRecordDesc')}
-            </DialogDescription>
-          </DialogHeader>
-          <CardContent style={{ gap: SPACING[3] }}>
-            {estimate ? (
-              <Row label="Rate" value={`${estimate.rate} pts / min`} />
-            ) : null}
-            <View
-              style={{
-                padding: SPACING[3],
-                borderRadius: RADIUS.md,
-                backgroundColor: getAccent('blue').bg,
-                borderWidth: 1,
-                borderColor: getAccent('blue').border,
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                gap: SPACING[2],
-              }}
-            >
-              <ShieldCheck size={16} color={getAccent('blue').main} style={{ marginTop: 2 }} />
-              <ThemedText type="small" style={{ color: getAccent('blue').main, flex: 1, lineHeight: 20 }}>
-                {t('recordingAgreement')}
-              </ThemedText>
-            </View>
-          </CardContent>
-          <DialogFooter>
-            <Button variant="outline" onPress={declineInboundConsent}>
-              {t('decline')}
-            </Button>
-            <Button onPress={acceptInboundConsent} leftIcon={<CheckCircle2 size={16} color="#fff" />}>
-              {t('iConsent')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {/* Bottom Floating Control Bar */}
+          <ControlsBar
+            insets={insets}
+            recordingState={recordingState}
+            onRecording={
+              recordingState === 'recording' || recordingState === 'processing'
+                ? handleStopRecording
+                : recordingState === 'idle'
+                ? handleCheckEstimate
+                : undefined
+            }
+            onToggleChat={() => setIsChatOpen((prev) => !prev)}
+            isChatOpen={isChatOpen}
+            unreadCount={unreadCount}
+            onLeave={() => handleLeave(true)}
+          />
+        </View>
 
-      {/* Leave confirmation */}
-      <AlertDialog
-        open={confirmLeave}
-        onOpenChange={setConfirmLeave}
-        title={t('leaveSession')}
-        description={recordingState === 'recording' ? t('leaveSessionRecordingDesc') : t('leaveSessionDesc')}
-        confirmLabel={t('leaveSession')}
-        destructive
-        onConfirm={() => handleLeave(false)}
-      />
+        {/* Modals */}
+        <EstimateModal
+          open={showEstimateModal}
+          estimate={estimate}
+          onClose={() => setShowEstimateModal(false)}
+          onConfirm={handleRequestRecording}
+        />
+
+        <ConsentModal
+          open={showConsentModal}
+          onSubmit={handleConsentSubmit}
+        />
+
+        <AlertDialog
+          open={confirmLeave}
+          onOpenChange={setConfirmLeave}
+          title={t('leaveSession') ?? 'Leave Video Session'}
+          description={
+            recordingState === 'recording'
+              ? t('leaveSessionRecordingDesc') ?? 'Recording is active. Leaving will stop the recording.'
+              : t('leaveSessionDesc') ?? 'Are you sure you want to leave this session?'
+          }
+          confirmLabel={t('leaveSession') ?? 'Leave'}
+          destructive
+          onConfirm={() => handleLeave(false)}
+        />
+      </LiveKitRoom>
     </SafeAreaView>
   );
 }
 
-/* ---------------- Top Bar ---------------- */
-
-function TopBar({
+/* ─── Top Header Bar Component ─────────────────────────── */
+function TopHeaderBar({
+  roomName,
+  details,
   onBack,
-  sessionStartTime,
-  remainingStr,
-  progressPct,
+  isChatOpen,
+  onToggleChat,
+  unreadCount,
   recordingState,
+  onCheckEstimate,
+  onStopRecording,
+  onCancelRecordingRequest,
+  isCheckingEstimate,
   recordingStopAt,
   now,
 }: any) {
   const theme = useTheme();
   const t = useT('room');
-  const recRemain =
-    recordingStopAt
-      ? formatTimeRemaining(Math.max(0, recordingStopAt - now))
-      : null;
+  const c = useT('common');
+
+  const endsAt = details?.endsAt ?? details?.session?.endsAt;
+  const duration = details?.duration ?? details?.session?.duration;
+
   return (
     <View
       style={{
-        paddingHorizontal: SPACING[5],
-        paddingTop: SPACING[3],
-        paddingBottom: SPACING[2],
-        gap: SPACING[2],
-        backgroundColor: '#0a0a0a',
+        position: 'absolute',
+        top: SPACING[2],
+        left: SPACING[3],
+        right: SPACING[3],
+        zIndex: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2], justifyContent: 'space-between' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-          <Pressable onPress={onBack} hitSlop={8} style={{ padding: SPACING[1] }}>
-            <ArrowLeft size={18} color="#fff" />
-          </Pressable>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-            <CalendarClock size={14} color={theme.mutedForeground} />
-            <ThemedText type="smallBold" style={{ fontSize: 12, color: '#e4e4e7' }}>
-              {sessionStartTime ? formatDateTimeShort(sessionStartTime) : t('session')}
-            </ThemedText>
-          </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
+        <Pressable
+          onPress={onBack}
+          hitSlop={8}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: RADIUS.pill,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.15)',
+          }}
+        >
+          <ArrowLeft size={18} color="#fff" />
+        </Pressable>
+
+        <View
+          style={{
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: RADIUS.pill,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.15)',
+          }}
+        >
+          <ThemedText type="smallBold" style={{ fontSize: 12, color: '#fff' }}>
+            {t('roomLabel', { name: roomName }) ?? `Room: ${roomName.slice(0, 8)}`}
+          </ThemedText>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-          {recordingState === 'recording' || recordingState === 'starting' ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.pill, backgroundColor: '#3f1414' }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.destructive }} />
-              <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fecaca' }}>
-                REC
-              </ThemedText>
-              {recRemain ? (
-                <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fecaca', marginLeft: 2 }}>
-                  · {recRemain}
-                </ThemedText>
-              ) : null}
-            </View>
-          ) : recordingState === 'processing' ? (
-            <Badge variant="accent" accent="purple">
-              {t('processing')}
-            </Badge>
-          ) : recordingState === 'waiting_for_partner' ? (
-            <Badge variant="accent" accent="amber">
-              {t('waitingConsent')}
-            </Badge>
-          ) : null}
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.pill, backgroundColor: '#18181b' }}>
-            <Clock size={12} color={theme.mutedForeground} />
-            <ThemedText type="smallBold" style={{ fontSize: 11, color: '#e4e4e7' }}>
-              {remainingStr ?? '--:--'}
-            </ThemedText>
-          </View>
-        </View>
+        {endsAt ? <SessionTimer endsAt={endsAt} duration={duration} now={now} /> : null}
       </View>
-      <Progress value={Math.min(100, Math.max(0, progressPct))} />
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
+        <RecordingHeaderBadge
+          recordingState={recordingState}
+          onCheckEstimate={onCheckEstimate}
+          onStopRecording={onStopRecording}
+          onCancelRecordingRequest={onCancelRecordingRequest}
+          isCheckingEstimate={isCheckingEstimate}
+          recordingStopAt={recordingStopAt}
+          now={now}
+        />
+
+        <Pressable
+          onPress={onToggleChat}
+          hitSlop={8}
+          style={{
+            height: 36,
+            paddingHorizontal: 12,
+            borderRadius: RADIUS.pill,
+            backgroundColor: isChatOpen ? getAccent('indigo').main : 'rgba(0,0,0,0.65)',
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.15)',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            position: 'relative',
+          }}
+        >
+          <MessageSquare size={16} color="#fff" />
+          <ThemedText type="smallBold" style={{ fontSize: 12, color: '#fff' }}>
+            {t('chat') ?? 'Chat'}
+          </ThemedText>
+          {unreadCount > 0 ? (
+            <View
+              style={{
+                position: 'absolute',
+                top: -4,
+                right: -4,
+                minWidth: 18,
+                height: 18,
+                borderRadius: 9,
+                backgroundColor: '#ef4444',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: 4,
+              }}
+            >
+              <ThemedText type="smallBold" style={{ fontSize: 10, color: '#fff' }}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </ThemedText>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
     </View>
   );
 }
 
-/* ---------------- Room Body ---------------- */
-
-function RoomBody({
-  session,
-  partner,
-  me,
-}: any) {
-  const theme = useTheme();
+/* ─── Session Timer Badge ──────────────────────────────── */
+function SessionTimer({ endsAt, duration, now }: { endsAt: string; duration?: number; now: number }) {
   const t = useT('room');
-  const participants = useParticipants();
-  const room = useRoomContext();
-  const localParticipant = room?.localParticipant;
-  const isAudioEnabled = localParticipant?.isMicrophoneEnabled ?? true;
-  const isVideoEnabled = localParticipant?.isCameraEnabled ?? true;
+  const endMs = new Date(endsAt).getTime();
+  const diff = endMs - now;
+  const isExpired = diff <= 0;
+  const minutes = Math.floor(Math.max(0, diff) / 60000);
+  const seconds = Math.floor((Math.max(0, diff) % 60000) / 1000);
+  const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  const isWarning = minutes < 5 && !isExpired;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#000', padding: SPACING[4], gap: SPACING[3] }}>
-      <ParticipantGrid
-        participants={participants}
-        partner={partner}
-        me={me}
-      />
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: RADIUS.pill,
+        backgroundColor: isExpired
+          ? 'rgba(239, 68, 68, 0.25)'
+          : isWarning
+          ? 'rgba(245, 158, 11, 0.25)'
+          : 'rgba(0, 0, 0, 0.65)',
+        borderWidth: 1,
+        borderColor: isExpired
+          ? 'rgba(239, 68, 68, 0.5)'
+          : isWarning
+          ? 'rgba(245, 158, 11, 0.5)'
+          : 'rgba(255,255,255,0.15)',
+      }}
+    >
+      <Clock size={12} color={isExpired ? '#fca5a5' : isWarning ? '#fcd34d' : '#e4e4e7'} />
+      <ThemedText
+        type="smallBold"
+        style={{
+          fontSize: 11,
+          color: isExpired ? '#fca5a5' : isWarning ? '#fcd34d' : '#e4e4e7',
+        }}
+      >
+        {isExpired ? t('sessionEnded') ?? 'Ended' : timeStr}
+      </ThemedText>
+    </View>
+  );
+}
 
-      {/* Session info strip */}
-      <Card style={{ backgroundColor: '#0a0a0a', borderColor: '#1f1f23' }}>
-        <CardContent style={{ gap: SPACING[3], paddingVertical: SPACING[4] }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-            <View style={{ width: 30, height: 30, borderRadius: RADIUS.sm, backgroundColor: getAccent('indigo').bg, alignItems: 'center', justifyContent: 'center' }}>
-              <Info size={14} color={getAccent('indigo').main} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="smallBold" style={{ fontSize: 12 }}>
-                {t('liveSessionReady')}
-              </ThemedText>
-              <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: 11 }}>
-                {session?.duration ? `${session.duration} ${t('minutes')} · ${session.taughtSkillName ?? t('skillExchange')}` : t('inSessionRoom')}
-              </ThemedText>
-            </View>
-          </View>
-          <Separator />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
-            <Badge variant="outline">
-              <Mic size={10} color={isAudioEnabled ? getAccent('green').main : getAccent('red').main} />
-              {'  '}
-              {isAudioEnabled ? t('micOn') : t('micMuted')}
-            </Badge>
-            <Badge variant="outline">
-              <Video size={10} color={isVideoEnabled ? getAccent('green').main : getAccent('red').main} />
-              {'  '}
-              {isVideoEnabled ? t('cameraOn') : t('cameraOff')}
-            </Badge>
-            <Badge variant="accent" accent="blue">
-              <ShieldCheck size={10} color={getAccent('blue').main} />
-              {'  '}
-              {t('encrypted')}
-            </Badge>
-          </View>
-        </CardContent>
-      </Card>
+/* ─── Recording Header Badge ────────────────────────────── */
+function RecordingHeaderBadge({
+  recordingState,
+  onCheckEstimate,
+  onStopRecording,
+  onCancelRecordingRequest,
+  isCheckingEstimate,
+  recordingStopAt,
+  now,
+}: any) {
+  const t = useT('room');
+  const c = useT('common');
+
+  if (recordingState === 'recording') {
+    const recRemainMs = recordingStopAt ? Math.max(0, recordingStopAt - now) : null;
+    const recRemainStr = recRemainMs !== null ? formatTimeRemaining(recRemainMs) : null;
+
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: RADIUS.pill,
+            backgroundColor: '#3f1414',
+            borderWidth: 1,
+            borderColor: '#7f1d1d',
+          }}
+        >
+          <View
+            style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#ef4444' }}
+          />
+          <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fecaca' }}>
+            REC {recRemainStr ? `· ${recRemainStr}` : ''}
+          </ThemedText>
+        </View>
+
+        <Pressable
+          onPress={onStopRecording}
+          hitSlop={6}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: RADIUS.pill,
+            backgroundColor: '#ef4444',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Square size={12} color="#fff" fill="#fff" />
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (recordingState === 'waiting_for_partner') {
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: RADIUS.pill,
+          backgroundColor: 'rgba(245, 158, 11, 0.2)',
+          borderWidth: 1,
+          borderColor: 'rgba(245, 158, 11, 0.4)',
+        }}
+      >
+        <Loader2 size={12} color="#fcd34d" />
+        <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fcd34d' }}>
+          {t('waitingPartner') ?? 'Waiting partner'}
+        </ThemedText>
+        <Pressable onPress={onCancelRecordingRequest} hitSlop={6}>
+          <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fcd34d', textDecorationLine: 'underline' }}>
+            {c('cancel') ?? 'Cancel'}
+          </ThemedText>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (recordingState === 'starting' || recordingState === 'processing') {
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: RADIUS.pill,
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderWidth: 1,
+          borderColor: 'rgba(59, 130, 246, 0.4)',
+        }}
+      >
+        <Loader2 size={12} color="#93c5fd" />
+        <ThemedText type="smallBold" style={{ fontSize: 11, color: '#93c5fd' }}>
+          {recordingState === 'starting' ? t('starting') ?? 'Starting...' : t('processing') ?? 'Processing...'}
+        </ThemedText>
+      </View>
+    );
+  }
+
+  return (
+    <Pressable
+      onPress={onCheckEstimate}
+      disabled={isCheckingEstimate}
+      hitSlop={8}
+      style={{
+        height: 36,
+        paddingHorizontal: 12,
+        borderRadius: RADIUS.pill,
+        backgroundColor: 'rgba(0,0,0,0.65)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      {isCheckingEstimate ? (
+        <Loader2 size={14} color="#fff" />
+      ) : (
+        <Video size={14} color="#fff" />
+      )}
+      <ThemedText type="smallBold" style={{ fontSize: 12, color: '#fff' }}>
+        {t('recordSession') ?? 'Record'}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+/* ─── Room Body Video Conference ───────────────────────── */
+function RoomBody({ partner, me }: any) {
+  const participants = useParticipants();
+
+  return (
+    <View style={{ flex: 1, backgroundColor: '#050506', padding: SPACING[3] }}>
+      <ParticipantGrid participants={participants} partner={partner} me={me} />
     </View>
   );
 }
 
 function ParticipantGrid({ participants, partner, me }: any) {
   const t = useT('room');
+
+  if (participants.length === 0) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[3] }}>
+        <Avatar uri={partner?.image ?? ''} fallback={partner?.name ?? 'P'} size={80} />
+        <ThemedText type="default" style={{ color: '#fff', fontWeight: '700' }}>
+          {partner?.name ?? t('waitingForPartnerToJoin') ?? 'Waiting for partner…'}
+        </ThemedText>
+        <Loader2 size={24} color="#a1a1aa" />
+      </View>
+    );
+  }
+
   return (
-    <View style={{ flex: 1, flexDirection: 'row', gap: SPACING[3] }}>
+    <View style={{ flex: 1, gap: SPACING[3] }}>
       {participants.map((participant: any) => {
-        // 1. Grab the publication reference
         const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
         const isMe = participant.isLocal;
-        const fallbackName = isMe ? t('you') : (partner?.name ?? participant.identity);
+        const fallbackName = isMe ? t('you') ?? 'You' : partner?.name ?? participant.identity;
         const isMicEnabled = participant.isMicrophoneEnabled;
+        const isCamEnabled = participant.isCameraEnabled;
 
         return (
-          <View 
+          <View
             key={participant.identity}
             style={{
               flex: 1,
-              borderRadius: RADIUS.lg,
+              borderRadius: RADIUS.xl,
               backgroundColor: '#18181b',
               overflow: 'hidden',
               borderWidth: 1,
               borderColor: '#27272a',
+              position: 'relative',
             }}
           >
-            {cameraPublication?.videoTrack ? (
-              <VideoTrack 
-                // 2. Pass publication into the trackRef object
-                trackRef={{ 
-                  participant, 
+            {isCamEnabled && cameraPublication?.videoTrack ? (
+              <VideoTrack
+                trackRef={{
+                  participant,
                   source: Track.Source.Camera,
-                  publication: cameraPublication 
-                }} 
-                style={{ flex: 1, width: '100%', height: '100%' }} 
+                  publication: cameraPublication,
+                }}
+                style={{ flex: 1, width: '100%', height: '100%' }}
               />
             ) : (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[3] }}>
-                <Avatar 
-                  uri={isMe ? me?.image : partner?.image} 
-                  fallback={fallbackName} 
-                  size={72} 
+                <Avatar
+                  uri={isMe ? me?.image : partner?.image}
+                  fallback={fallbackName}
+                  size={72}
                 />
-                <ThemedText type="smallBold" style={{ fontSize: 13, color: '#fff' }}>
+                <ThemedText type="smallBold" style={{ fontSize: 14, color: '#fff' }}>
                   {fallbackName}
                 </ThemedText>
               </View>
             )}
 
-            {/* Mute Indicator */}
-            {!isMicEnabled && (
-              <View style={{ position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 4, borderRadius: 12 }}>
-                <MicOff size={14} color="#ef4444" />
+            {/* Bottom Info Bar Overlay */}
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 10,
+                left: 10,
+                right: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: RADIUS.pill,
+                  backgroundColor: 'rgba(0,0,0,0.65)',
+                }}
+              >
+                <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fff' }}>
+                  {fallbackName}
+                </ThemedText>
               </View>
-            )}
+
+              {!isMicEnabled && (
+                <View
+                  style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    padding: 6,
+                    borderRadius: RADIUS.pill,
+                  }}
+                >
+                  <MicOff size={14} color="#fff" />
+                </View>
+              )}
+            </View>
           </View>
         );
       })}
@@ -953,94 +1036,222 @@ function ParticipantGrid({ participants, partner, me }: any) {
   );
 }
 
-/* ---------------- Chat Body ---------------- */
-
-function ChatBody({ messages, loading, me, onRefresh, flatRef }: any) {
+/* ─── Persistent Chat Drawer Overlay Component ─────────── */
+function PersistentChatDrawer({
+  exchangeSessionId,
+  onClose,
+  me,
+  onNewMessage,
+}: {
+  exchangeSessionId: string;
+  onClose: () => void;
+  me: any;
+  onNewMessage: () => void;
+}) {
   const theme = useTheme();
   const t = useT('room');
-  const refreshing = React.useRef(false);
+  const c = useT('common');
+
+  const [inputVal, setInputVal] = useState('');
+  const chatMsgsQ = useSessionChatMessages(exchangeSessionId);
+  const sendMsgQ = useSendSessionChatMessage();
+  const markReadQ = useMarkSessionChatRead();
+  const flatRef = useRef<any>(null);
+
+  // Sync mark read on open and unmount
+  useEffect(() => {
+    if (exchangeSessionId) {
+      markReadQ.mutate(exchangeSessionId);
+    }
+  }, [exchangeSessionId]);
+
+  const messages: ChatMessageItem[] = chatMsgsQ.data ?? [];
+
+  const handleSend = async () => {
+    const text = inputVal.trim();
+    if (!text || sendMsgQ.isPending) return;
+    setInputVal('');
+    try {
+      await sendMsgQ.mutateAsync({ exchangeSessionId, message: text });
+      await chatMsgsQ.refetch();
+      setTimeout(() => {
+        flatRef.current?.scrollToEnd?.({ animated: true });
+      }, 50);
+    } catch (e: any) {
+      // Handled silently or toast
+    }
+  };
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#050505' }}>
-      {loading ? (
-        <View style={{ padding: SPACING[4], gap: SPACING[3] }}>
-          <SkeletonText lines={6} />
-        </View>
-      ) : messages.length === 0 ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: SPACING[6], gap: SPACING[3] }}>
-          <View style={{ width: 56, height: 56, borderRadius: RADIUS.pill, backgroundColor: '#18181b', alignItems: 'center', justifyContent: 'center' }}>
-            <MessageSquare size={22} color="#52525b" />
+    <View
+      style={{
+        position: 'absolute',
+        top: 60,
+        bottom: 90,
+        right: 0,
+        left: 0,
+        zIndex: 30,
+        backgroundColor: '#09090b',
+        borderTopLeftRadius: RADIUS.xl,
+        borderTopRightRadius: RADIUS.xl,
+        borderWidth: 1,
+        borderColor: '#27272a',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Header */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: SPACING[4],
+          paddingVertical: SPACING[3],
+          borderBottomWidth: 1,
+          borderBottomColor: '#1f1f23',
+        }}
+      >
+        <ThemedText type="subtitle" style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
+          {t('chat') ?? 'In-Session Chat'}
+        </ThemedText>
+        <Pressable onPress={onClose} hitSlop={8}>
+          <X size={20} color="#a1a1aa" />
+        </Pressable>
+      </View>
+
+      {/* Messages List */}
+      <View style={{ flex: 1 }}>
+        {chatMsgsQ.isLoading ? (
+          <View style={{ padding: SPACING[4] }}>
+            <SkeletonText lines={5} />
           </View>
-          <ThemedText type="default" style={{ color: '#e4e4e7', fontWeight: '700' }}>
-            {t('noMessagesYet')}
-          </ThemedText>
-          <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
-            {t('noMessagesDesc')}
-          </ThemedText>
-        </View>
-      ) : (
-        <FlatList
-          ref={flatRef}
-          data={messages}
-          keyExtractor={(m: any) => m.id}
-          contentContainerStyle={{ padding: SPACING[4], gap: SPACING[3] }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item: m }: any) => {
-            const mine = m.senderId === me?.id;
-            return (
-              <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 4 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
-                  {!mine ? (
-                    <Avatar uri={m.sender?.image ?? ''} fallback={m.sender?.name ?? 'P'} size={24} />
-                  ) : null}
-                  <View
-                    style={{
-                      maxWidth: '80%',
-                      padding: SPACING[3],
-                      borderRadius: RADIUS.md,
-                      borderTopRightRadius: mine ? 4 : RADIUS.md,
-                      borderTopLeftRadius: mine ? RADIUS.md : 4,
-                      backgroundColor: mine ? theme.primary : '#18181b',
-                      borderWidth: mine ? 0 : 1,
-                      borderColor: '#27272a',
-                    }}
-                  >
-                    <ThemedText type="small" style={{ color: mine ? '#fff' : '#e4e4e7', fontSize: 14, lineHeight: 20 }}>
-                      {m.message}
-                    </ThemedText>
+        ) : messages.length === 0 ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: SPACING[6], gap: SPACING[2] }}>
+            <MessageSquare size={28} color="#52525b" />
+            <ThemedText type="default" style={{ color: '#a1a1aa', fontWeight: '600' }}>
+              {t('noMessages') ?? 'No messages yet'}
+            </ThemedText>
+            <ThemedText type="small" style={{ color: '#71717a', textAlign: 'center' }}>
+              {t('typeMessagePrompt') ?? 'Send a message to start chatting during your video session.'}
+            </ThemedText>
+          </View>
+        ) : (
+          <FlatList
+            ref={flatRef}
+            data={messages}
+            keyExtractor={(m) => m.id}
+            contentContainerStyle={{ padding: SPACING[4], gap: SPACING[3] }}
+            renderItem={({ item: m }) => {
+              const isMine = m.senderId === me?.id;
+              return (
+                <View style={{ alignItems: isMine ? 'flex-end' : 'flex-start', gap: 4 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACING[2] }}>
+                    {!isMine ? (
+                      <Avatar uri={m.sender?.image ?? ''} fallback={m.sender?.name ?? 'P'} size={26} />
+                    ) : null}
+                    <View
+                      style={{
+                        maxWidth: '82%',
+                        padding: SPACING[3],
+                        borderRadius: RADIUS.lg,
+                        borderTopRightRadius: isMine ? 4 : RADIUS.lg,
+                        borderTopLeftRadius: isMine ? RADIUS.lg : 4,
+                        backgroundColor: isMine ? theme.primary : '#18181b',
+                        borderWidth: isMine ? 0 : 1,
+                        borderColor: '#27272a',
+                      }}
+                    >
+                      {!isMine && m.sender?.name ? (
+                        <ThemedText type="smallBold" style={{ color: getAccent('indigo').main, fontSize: 11, marginBottom: 2 }}>
+                          {m.sender.name}
+                        </ThemedText>
+                      ) : null}
+                      <ThemedText type="small" style={{ color: isMine ? '#fff' : '#e4e4e7', fontSize: 14, lineHeight: 20 }}>
+                        {m.message}
+                      </ThemedText>
+                    </View>
                   </View>
+                  <ThemedText type="small" style={{ color: '#52525b', fontSize: 10, paddingHorizontal: 4 }}>
+                    {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </ThemedText>
                 </View>
-                <ThemedText type="small" style={{ color: '#52525b', fontSize: 10, paddingHorizontal: SPACING[1] }}>
-                  {formatTimeShort(m.timestamp)}
-                </ThemedText>
-              </View>
-            );
+              );
+            }}
+          />
+        )}
+      </View>
+
+      {/* Input row */}
+      <View
+        style={{
+          padding: SPACING[3],
+          borderTopWidth: 1,
+          borderTopColor: '#1f1f23',
+          flexDirection: 'row',
+          gap: SPACING[2],
+          backgroundColor: '#09090b',
+        }}
+      >
+        <TextInput
+          value={inputVal}
+          onChangeText={setInputVal}
+          placeholder={t('typeMessage') ?? 'Type a message…'}
+          placeholderTextColor="#52525b"
+          style={{
+            flex: 1,
+            borderRadius: RADIUS.pill,
+            backgroundColor: '#18181b',
+            color: '#fff',
+            paddingHorizontal: SPACING[4],
+            paddingVertical: SPACING[2],
+            fontSize: FONT_SIZE.sm,
           }}
+          onSubmitEditing={handleSend}
+          returnKeyType="send"
         />
-      )}
+        <Pressable
+          onPress={handleSend}
+          disabled={!inputVal.trim() || sendMsgQ.isPending}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: RADIUS.pill,
+            backgroundColor: !inputVal.trim() ? '#27272a' : theme.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {sendMsgQ.isPending ? (
+            <Loader2 size={16} color="#fff" />
+          ) : (
+            <Send size={16} color="#fff" />
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
 
-/* ---------------- Controls ---------------- */
-
+/* ─── Bottom Controls Bar Component ────────────────────── */
 function ControlsBar({
   insets,
   recordingState,
   onRecording,
-  onChat,
+  onToggleChat,
+  isChatOpen,
+  unreadCount,
   onLeave,
-  chatBadge,
 }: any) {
   const theme = useTheme();
   const t = useT('room');
   const room = useRoomContext();
   const localParticipant = room?.localParticipant;
-  
+
   const isAudioEnabled = localParticipant?.isMicrophoneEnabled ?? true;
   const isVideoEnabled = localParticipant?.isCameraEnabled ?? true;
-  
+
   const recDisabled = !onRecording;
-  const recRecording = recordingState === 'recording' || recordingState === 'processing';
+  const recActive = recordingState === 'recording' || recordingState === 'processing';
   const recLoading = recordingState === 'starting' || recordingState === 'processing';
 
   const handleToggleAudio = () => {
@@ -1051,24 +1262,13 @@ function ControlsBar({
     localParticipant?.setCameraEnabled(!isVideoEnabled);
   };
 
-  const handleToggleCamera = () => {
+  const handleFlipCamera = async () => {
     if (localParticipant) {
-      // Switch camera position (front/back)
-      const cameraPublication = localParticipant.getTrackPublication(Track.Source.Camera);
-      if (cameraPublication?.track) {
-        const track = cameraPublication.track as any;
-        // Toggle facingMode
-        if (track.mediaStreamTrack) {
-          const currentSettings = track.mediaStreamTrack.getSettings();
-          const newFacingMode = currentSettings?.facingMode === 'user' ? 'environment' : 'user';
-          
-          // Disable camera, restart with new facing mode
-          localParticipant.setCameraEnabled(false).then(() => {
-            // In React Native, camera switching is handled by the native layer
-            // This is a simplified version - actual implementation may need platform-specific code
-            localParticipant.setCameraEnabled(true);
-          });
-        }
+      try {
+        await localParticipant.setCameraEnabled(false);
+        await localParticipant.setCameraEnabled(true);
+      } catch (e) {
+        console.warn('[Camera] Flip failed:', e);
       }
     }
   };
@@ -1076,66 +1276,95 @@ function ControlsBar({
   return (
     <View
       style={{
-        paddingHorizontal: SPACING[3],
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 20,
+        paddingHorizontal: SPACING[4],
         paddingTop: SPACING[3],
-        paddingBottom: Math.max(SPACING[3], insets.bottom),
-        backgroundColor: '#0a0a0a',
+        paddingBottom: Math.max(SPACING[4], insets.bottom),
+        backgroundColor: 'rgba(9, 9, 11, 0.95)',
         borderTopWidth: 1,
         borderTopColor: '#1f1f23',
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: SPACING[2] }}>
-        <CtrlBtn onPress={handleToggleAudio} active={!isAudioEnabled} destructive={!isAudioEnabled} label={isAudioEnabled ? t('mute') : t('unmute')}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+        }}
+      >
+        {/* Mic Toggle */}
+        <CtrlBtn
+          onPress={handleToggleAudio}
+          active={!isAudioEnabled}
+          destructive={!isAudioEnabled}
+          label={isAudioEnabled ? t('mute') ?? 'Mute' : t('unmute') ?? 'Unmute'}
+        >
           {isAudioEnabled ? <Mic size={20} color="#fff" /> : <MicOff size={20} color="#fff" />}
         </CtrlBtn>
 
-        <CtrlBtn onPress={handleToggleVideo} active={!isVideoEnabled} destructive={!isVideoEnabled} label={isVideoEnabled ? t('video') : t('off')}>
+        {/* Camera Toggle */}
+        <CtrlBtn
+          onPress={handleToggleVideo}
+          active={!isVideoEnabled}
+          destructive={!isVideoEnabled}
+          label={isVideoEnabled ? t('video') ?? 'Video' : t('off') ?? 'Off'}
+        >
           {isVideoEnabled ? <Video size={20} color="#fff" /> : <VideoOff size={20} color="#fff" />}
         </CtrlBtn>
 
-        <CtrlBtn
-          onPress={handleToggleCamera}
-          label="Flip"
-        >
-          <RefreshCw size={20} color="#fff" />
+        {/* Flip Camera */}
+        <CtrlBtn onPress={handleFlipCamera} label={t('flip') ?? 'Flip'}>
+          <RefreshCw size={18} color="#fff" />
         </CtrlBtn>
 
+        {/* Record Trigger */}
         <Pressable
           onPress={onRecording}
           disabled={recDisabled}
           style={{
-            width: 58,
-            height: 58,
+            width: 54,
+            height: 54,
             borderRadius: RADIUS.pill,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: recDisabled
               ? '#27272a'
-              : recRecording
-                ? getAccent('red').main
-                : '#3f1414',
+              : recActive
+              ? '#ef4444'
+              : '#3f1414',
             borderWidth: 2,
-            borderColor: recDisabled ? '#3f3f46' : recRecording ? getAccent('red').main : '#ef4444',
+            borderColor: recDisabled ? '#3f3f46' : '#ef4444',
             opacity: recDisabled ? 0.5 : 1,
           }}
         >
           {recLoading ? (
             <Loader2 size={20} color="#fff" />
-          ) : recRecording ? (
-            <Square size={20} color="#fff" fill="#fff" />
+          ) : recActive ? (
+            <Square size={18} color="#fff" fill="#fff" />
           ) : (
-            <Circle size={22} color="#ef4444" fill="#ef4444" />
+            <Circle size={20} color="#ef4444" fill="#ef4444" />
           )}
         </Pressable>
 
-        <CtrlBtn onPress={onChat} label="Chat" badge={chatBadge}>
+        {/* Chat Drawer Toggle */}
+        <CtrlBtn
+          onPress={onToggleChat}
+          active={isChatOpen}
+          badge={unreadCount > 0}
+          label={t('chat') ?? 'Chat'}
+        >
           <MessageSquare size={20} color="#fff" />
         </CtrlBtn>
 
+        {/* Leave Call Button */}
         <CtrlBtn
           onPress={onLeave}
           destructive
-          label="Leave"
+          label={t('leave') ?? 'Leave'}
           style={{ backgroundColor: '#3f1414', borderColor: '#7f1d1d', borderWidth: 1 }}
         >
           <PhoneOff size={20} color="#fff" />
@@ -1145,30 +1374,22 @@ function ControlsBar({
   );
 }
 
-function CtrlBtn({
-  children,
-  onPress,
-  active,
-  destructive,
-  label,
-  badge,
-  style,
-}: any) {
+function CtrlBtn({ children, onPress, active, destructive, badge, style }: any) {
   return (
     <Pressable
       onPress={onPress}
       hitSlop={8}
       style={[
         {
-          width: 52,
-          height: 52,
+          width: 48,
+          height: 48,
           borderRadius: RADIUS.pill,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: active
             ? destructive
-              ? getAccent('red').main
-              : getAccent('zinc').main
+              ? '#ef4444'
+              : getAccent('indigo').main
             : '#18181b',
           borderWidth: 1,
           borderColor: active ? 'transparent' : '#27272a',
@@ -1183,12 +1404,10 @@ function CtrlBtn({
             position: 'absolute',
             top: -2,
             right: -2,
-            width: 14,
-            height: 14,
-            borderRadius: 7,
-            backgroundColor: getAccent('red').main,
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            backgroundColor: '#ef4444',
           }}
         />
       ) : null}
@@ -1197,30 +1416,202 @@ function CtrlBtn({
   );
 }
 
-/* ---------------- helpers ---------------- */
-
-function Row({ label, value, dim, strong, accent }: any) {
+/* ─── Estimate Dialog Modal ────────────────────────────── */
+function EstimateModal({
+  open,
+  estimate,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean;
+  estimate: RecordingEstimateData | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
   const theme = useTheme();
+  const t = useT('room');
+  const c = useT('common');
+
+  if (!estimate) return null;
+
+  const { rate, userBalance, maxAffordableMinutes, remainingSessionMinutes } = estimate;
+  const fullSessionCost = remainingSessionMinutes * rate;
+  const isInsufficient = maxAffordableMinutes < 1;
+  const isPartial = maxAffordableMinutes < remainingSessionMinutes && maxAffordableMinutes >= 1;
+  const isHealthy = maxAffordableMinutes >= remainingSessionMinutes;
+
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-      <ThemedText type="small" style={{ color: dim ? theme.mutedForeground : theme.foreground, fontSize: FONT_SIZE.sm }}>
-        {label}
-      </ThemedText>
-      <ThemedText
-        type={strong ? 'default' : 'small'}
-        style={{
-          color: accent ? getAccent(accent).main : theme.foreground,
-          fontSize: FONT_SIZE.sm,
-          fontWeight: strong ? '800' : '500',
-        }}
-      >
-        {value}
-      </ThemedText>
-    </View>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent style={{ backgroundColor: theme.card }}>
+        <DialogHeader>
+          <DialogTitle style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Video size={20} color={theme.primary} />
+            <ThemedText type="subtitle">{t('billingEstimateTitle') ?? 'Recording Billing Estimate'}</ThemedText>
+          </DialogTitle>
+          <DialogDescription>
+            <ThemedText type="small" style={{ color: theme.mutedForeground }}>
+              {t('billingEstimateDesc', { rate }) ?? `Recording costs ${rate} points per minute.`}
+            </ThemedText>
+          </DialogDescription>
+        </DialogHeader>
+
+        <View style={{ gap: SPACING[3], paddingVertical: SPACING[2] }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <ThemedText type="small" style={{ color: theme.mutedForeground }}>
+              {t('yourBalance') ?? 'Your Balance'}
+            </ThemedText>
+            <ThemedText type="smallBold">{userBalance.toLocaleString()} pts</ThemedText>
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <ThemedText type="small" style={{ color: theme.mutedForeground }}>
+              {t('sessionTimeLeft') ?? 'Session Time Left'}
+            </ThemedText>
+            <ThemedText type="smallBold">{remainingSessionMinutes} min</ThemedText>
+          </View>
+
+          <Separator />
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <ThemedText type="smallBold">{t('maxAffordable') ?? 'Max Affordable Time'}</ThemedText>
+            <ThemedText type="smallBold" style={{ color: getAccent('indigo').main }}>
+              {maxAffordableMinutes} min
+            </ThemedText>
+          </View>
+
+          {isHealthy && (
+            <View
+              style={{
+                padding: SPACING[3],
+                borderRadius: RADIUS.md,
+                backgroundColor: getAccent('green').bg,
+                borderWidth: 1,
+                borderColor: getAccent('green').border,
+              }}
+            >
+              <ThemedText type="smallBold" style={{ color: getAccent('green').main }}>
+                {t('estimateHealthyTitle') ?? 'Sufficient Balance'}
+              </ThemedText>
+              <ThemedText type="small" style={{ color: getAccent('green').main, marginTop: 4 }}>
+                {t('estimateHealthyDesc', { rate, minutes: remainingSessionMinutes, cost: fullSessionCost }) ??
+                  `You have enough points to record the entire remaining session (~${fullSessionCost} pts).`}
+              </ThemedText>
+            </View>
+          )}
+
+          {isPartial && (
+            <View
+              style={{
+                padding: SPACING[3],
+                borderRadius: RADIUS.md,
+                backgroundColor: getAccent('amber').bg,
+                borderWidth: 1,
+                borderColor: getAccent('amber').border,
+              }}
+            >
+              <ThemedText type="smallBold" style={{ color: getAccent('amber').main }}>
+                ⚠️ {t('estimatePartialTitle') ?? 'Partial Session Balance'}
+              </ThemedText>
+              <ThemedText type="small" style={{ color: getAccent('amber').main, marginTop: 4 }}>
+                {t('estimatePartialDesc', { minutes: maxAffordableMinutes }) ??
+                  `Your balance covers up to ${maxAffordableMinutes} minutes of recording.`}
+              </ThemedText>
+            </View>
+          )}
+
+          {isInsufficient && (
+            <View
+              style={{
+                padding: SPACING[3],
+                borderRadius: RADIUS.md,
+                backgroundColor: getAccent('red').bg,
+                borderWidth: 1,
+                borderColor: getAccent('red').border,
+              }}
+            >
+              <ThemedText type="smallBold" style={{ color: getAccent('red').main }}>
+                🚫 {t('estimateInsufficientTitle') ?? 'Insufficient Points Balance'}
+              </ThemedText>
+              <ThemedText type="small" style={{ color: getAccent('red').main, marginTop: 4 }}>
+                {t('estimateInsufficientDesc', { minRequired: rate }) ??
+                  `You need at least ${rate} points to start recording.`}
+              </ThemedText>
+            </View>
+          )}
+        </View>
+
+        <DialogFooter>
+          <Button variant="outline" onPress={onClose}>
+            {c('cancel') ?? 'Cancel'}
+          </Button>
+          {!isInsufficient ? (
+            <Button onPress={onConfirm} leftIcon={<Sparkles size={16} color="#fff" />}>
+              {t('proceed') ?? 'Request Recording'}
+            </Button>
+          ) : null}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function formatTimeShort(dateStr: string | Date) {
-  const d = new Date(dateStr);
-  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+/* ─── Consent Dialog Modal ─────────────────────────────── */
+function ConsentModal({
+  open,
+  onSubmit,
+}: {
+  open: boolean;
+  onSubmit: (consented: boolean) => void;
+}) {
+  const theme = useTheme();
+  const t = useT('room');
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onSubmit(false)}>
+      <DialogContent style={{ backgroundColor: theme.card }}>
+        <DialogHeader>
+          <DialogTitle style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <ShieldCheck size={20} color={getAccent('indigo').main} />
+            <ThemedText type="subtitle">
+              {t('partnerWantsToRecord') ?? 'Partner Requested Recording'}
+            </ThemedText>
+          </DialogTitle>
+          <DialogDescription>
+            <ThemedText type="small" style={{ color: theme.mutedForeground }}>
+              {t('consentDialogDesc') ??
+                'Your exchange partner would like to record this video session. Both participants must consent before recording can begin.'}
+            </ThemedText>
+          </DialogDescription>
+        </DialogHeader>
+
+        <View
+          style={{
+            padding: SPACING[3],
+            borderRadius: RADIUS.md,
+            backgroundColor: getAccent('indigo').bg,
+            borderWidth: 1,
+            borderColor: getAccent('indigo').border,
+            gap: 4,
+          }}
+        >
+          <ThemedText type="smallBold" style={{ color: getAccent('indigo').main }}>
+            {t('recordingConsentInfoTitle') ?? 'Privacy & Security'}
+          </ThemedText>
+          <ThemedText type="small" style={{ color: getAccent('indigo').main }}>
+            {t('recordingAgreement') ??
+              'The recording will be saved securely and made accessible in your exchange details once processed.'}
+          </ThemedText>
+        </View>
+
+        <DialogFooter>
+          <Button variant="outline" onPress={() => onSubmit(false)}>
+            {t('iDecline') ?? 'Decline'}
+          </Button>
+          <Button onPress={() => onSubmit(true)} leftIcon={<CheckCircle2 size={16} color="#fff" />}>
+            {t('iConsent') ?? 'I Consent'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }

@@ -16,7 +16,7 @@ import { Platform } from "react-native";
 import EventSource from "react-native-sse";
 
 const API_BASE = `${
-  process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3001"
+  process.env.EXPO_PUBLIC_API_BASE_URL!
 }/api`;
 
 // Configure notification behavior

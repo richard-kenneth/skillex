@@ -104,10 +104,12 @@ function TabPressable({
   onPress,
   children,
   style,
+  fullWidth,
 }: {
   onPress: () => void;
   children: React.ReactNode;
   style?: any;
+  fullWidth?: boolean;
 }) {
   const scale = useSharedValue(1);
 
@@ -116,7 +118,7 @@ function TabPressable({
   }));
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={[animatedStyle, fullWidth && { flex: 1 }]}>
       <Pressable
         onPress={onPress}
         onPressIn={() => { scale.value = withSpring(0.95, { damping: 15, stiffness: 250 }); }}
@@ -135,12 +137,14 @@ export function Tabs<T extends string>({
   items,
   style,
   variant = 'pills',
+  fullWidth = false,
 }: {
   value: T;
   onChange: (v: T) => void;
   items: TabItem<T>[];
   style?: any;
   variant?: 'pills' | 'underline' | 'scroll';
+  fullWidth?: boolean;
 }) {
   const theme = useTheme();
   const isScrollable = items.length > 3 || variant === 'scroll';
@@ -154,6 +158,7 @@ export function Tabs<T extends string>({
           padding: variant === 'pills' ? SPACING[1] : 0,
           backgroundColor: variant === 'pills' ? theme.secondary : 'transparent',
           borderRadius: variant === 'pills' ? RADIUS.xl : 0,
+          width: fullWidth ? '100%' : undefined,
         },
         style,
       ]}
@@ -164,6 +169,7 @@ export function Tabs<T extends string>({
           <TabPressable
             key={it.value}
             onPress={() => onChange(it.value)}
+            fullWidth={fullWidth}
           >
             {variant === 'underline' ? (
               <View
@@ -174,6 +180,7 @@ export function Tabs<T extends string>({
                   borderBottomColor: active ? theme.foreground : 'transparent',
                   flexDirection: 'row',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: SPACING[1.5],
                 }}
               >
