@@ -49,7 +49,9 @@ import {
   useCurrentUser,
   usePointsBalance,
 } from '@/lib/api-hooks';
+import { useQueryClient } from '@tanstack/react-query';
 import {
+  QUERY_KEYS,
   formatTimeRemaining,
   formatDateTimeShort,
   type RecordingConsentPayload,
@@ -79,6 +81,10 @@ import {
   Info,
   Coins,
   Users,
+  MonitorUp,
+  SquareX,
+  Volume2,
+  VolumeX,
 } from 'lucide-react-native';
 import { cn } from '@/lib/style-utils';
 import {
@@ -87,8 +93,9 @@ import {
   useParticipants,
   useDataChannel,
   VideoTrack,
+  AudioSession,
 } from '@livekit/react-native';
-import { Track } from 'livekit-client';
+import { Track, VideoCaptureOptions } from 'livekit-client';
 
 /* ─── Recording & Signal Types ───────────────────────── */
 type RecordingState =
@@ -107,7 +114,8 @@ type RecordingSignal =
   | { type: 'recording_started'; approvedMinutes?: number; stopAt?: number }
   | { type: 'recording_stopped' }
   | { type: 'recording_completed' }
-  | { type: 'recording_failed' };
+  | { type: 'recording_failed' }
+  | { type: 'chat_sent' };
 
 interface RecordingEstimateData {
   rate: number;
@@ -187,8 +195,10 @@ export default function RoomScreen() {
   const pointsQ = usePointsBalance();
   const currentUser = userQ.data as any;
 
-  const exchangeSessionId = detailsQ.data?.sessionId ?? detailsQ.data?.id ?? roomNameOrId;
-  const exchangeId = detailsQ.data?.exchangeId ?? '';
+  const queryClient = useQueryClient();
+
+  const exchangeSessionId = detailsQ.data?.session?.id ?? detailsQ.data?.sessionId ?? detailsQ.data?.id ?? roomNameOrId;
+  const exchangeId = detailsQ.data?.exchangeId ?? detailsQ.data?.session?.exchangeId ?? '';
 
   const tokenQ = useVideoToken(exchangeSessionId);
   const token = (tokenQ.data as any)?.token ?? '';
@@ -284,6 +294,14 @@ export default function RoomScreen() {
       try {
         const signal: RecordingSignal = JSON.parse(rawString);
         switch (signal.type) {
+          case 'chat_sent':
+            if (exchangeSessionId) {
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.video.chat(exchangeSessionId) });
+            }
+            if (!isChatOpenRef.current) {
+              setUnreadCount((cnt) => cnt + 1);
+            }
+            break;
           case 'consent_request':
             setShowConsentModal(true);
             setRecordingState('requesting_consent');
@@ -542,6 +560,7 @@ export default function RoomScreen() {
             <RoomBody
               partner={detailsQ.data?.partner}
               me={currentUser}
+              insets={insets}
             />
           </View>
 
@@ -551,6 +570,9 @@ export default function RoomScreen() {
               exchangeSessionId={exchangeSessionId}
               onClose={() => setIsChatOpen(false)}
               me={currentUser}
+              onSendMessage={() => {
+                sendSignal({ type: 'chat_sent' });
+              }}
               onNewMessage={() => {
                 if (!isChatOpenRef.current) {
                   setUnreadCount((count) => count + 1);
@@ -570,7 +592,13 @@ export default function RoomScreen() {
                 ? handleCheckEstimate
                 : undefined
             }
-            onToggleChat={() => setIsChatOpen((prev) => !prev)}
+            onToggleChat={() => {
+              setIsChatOpen((prev) => {
+                const next = !prev;
+                if (next) setUnreadCount(0);
+                return next;
+              });
+            }}
             isChatOpen={isChatOpen}
             unreadCount={unreadCount}
             onLeave={() => handleLeave(true)}
@@ -923,11 +951,19 @@ function RecordingHeaderBadge({
 }
 
 /* ─── Room Body Video Conference ───────────────────────── */
-function RoomBody({ partner, me }: any) {
+function RoomBody({ partner, me, insets }: any) {
   const participants = useParticipants();
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#050506', padding: SPACING[3] }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: '#050506',
+        paddingHorizontal: SPACING[3],
+        paddingTop: 54,
+        paddingBottom: Math.max(90, (insets?.bottom ?? 0) + 75),
+      }}
+    >
       <ParticipantGrid participants={participants} partner={partner} me={me} />
     </View>
   );
@@ -935,6 +971,7 @@ function RoomBody({ partner, me }: any) {
 
 function ParticipantGrid({ participants, partner, me }: any) {
   const t = useT('room');
+  const room = useRoomContext();
 
   if (participants.length === 0) {
     return (
@@ -948,90 +985,179 @@ function ParticipantGrid({ participants, partner, me }: any) {
     );
   }
 
+  const screenShareParticipant = participants.find((p: any) => p.getTrackPublication(Track.Source.ScreenShare)?.videoTrack);
+  const screenShareTrackPub = screenShareParticipant?.getTrackPublication(Track.Source.ScreenShare);
+
+  const handleStopScreenShare = async () => {
+    try {
+      await room?.localParticipant?.setScreenShareEnabled(false);
+    } catch (e) {
+      console.warn('[ScreenShare] Stop failed:', e);
+    }
+  };
+
   return (
     <View style={{ flex: 1, gap: SPACING[3] }}>
-      {participants.map((participant: any) => {
-        const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
-        const isMe = participant.isLocal;
-        const fallbackName = isMe ? t('you') ?? 'You' : partner?.name ?? participant.identity;
-        const isMicEnabled = participant.isMicrophoneEnabled;
-        const isCamEnabled = participant.isCameraEnabled;
-
-        return (
+      {/* Screen Share Prominent Display */}
+      {screenShareTrackPub?.videoTrack ? (
+        <View
+          style={{
+            height: 230,
+            borderRadius: RADIUS.xl,
+            backgroundColor: '#000',
+            overflow: 'hidden',
+            borderWidth: 2,
+            borderColor: getAccent('indigo').main,
+            position: 'relative',
+          }}
+        >
+          <VideoTrack
+            trackRef={{
+              participant: screenShareParticipant,
+              source: Track.Source.ScreenShare,
+              publication: screenShareTrackPub,
+            }}
+            style={{ flex: 1, width: '100%', height: '100%' }}
+          />
           <View
-            key={participant.identity}
             style={{
-              flex: 1,
-              borderRadius: RADIUS.xl,
-              backgroundColor: '#18181b',
-              overflow: 'hidden',
-              borderWidth: 1,
-              borderColor: '#27272a',
-              position: 'relative',
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              borderRadius: RADIUS.pill,
+              backgroundColor: 'rgba(79, 70, 229, 0.9)',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
-            {isCamEnabled && cameraPublication?.videoTrack ? (
-              <VideoTrack
-                trackRef={{
-                  participant,
-                  source: Track.Source.Camera,
-                  publication: cameraPublication,
-                }}
-                style={{ flex: 1, width: '100%', height: '100%' }}
-              />
-            ) : (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[3] }}>
-                <Avatar
-                  uri={isMe ? me?.image : partner?.image}
-                  fallback={fallbackName}
-                  size={72}
-                />
-                <ThemedText type="smallBold" style={{ fontSize: 14, color: '#fff' }}>
-                  {fallbackName}
-                </ThemedText>
-              </View>
-            )}
+            <MonitorUp size={12} color="#fff" />
+            <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fff' }}>
+              {t('sharing') ?? 'Sharing'} • {screenShareParticipant.isLocal ? t('you') ?? 'You' : partner?.name ?? screenShareParticipant.identity}
+            </ThemedText>
+          </View>
 
-            {/* Bottom Info Bar Overlay */}
-            <View
+          {/* End Screen Share UI Button for local sharer */}
+          {screenShareParticipant.isLocal ? (
+            <Pressable
+              onPress={handleStopScreenShare}
               style={{
                 position: 'absolute',
-                bottom: 10,
-                left: 10,
+                top: 10,
                 right: 10,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: RADIUS.pill,
+                backgroundColor: 'rgba(239, 68, 68, 0.95)',
                 flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                gap: 6,
+                elevation: 4,
               }}
             >
-              <View
-                style={{
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: RADIUS.pill,
-                  backgroundColor: 'rgba(0,0,0,0.65)',
-                }}
-              >
-                <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fff' }}>
-                  {fallbackName}
-                </ThemedText>
-              </View>
+              <SquareX size={14} color="#fff" />
+              <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fff' }}>
+                {t('stopShare') ?? 'Stop Sharing'}
+              </ThemedText>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
 
-              {!isMicEnabled && (
-                <View
-                  style={{
-                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                    padding: 6,
-                    borderRadius: RADIUS.pill,
+      {/* Participant Video Grid */}
+      <View
+        style={{
+          flex: 1,
+          flexDirection: screenShareTrackPub?.videoTrack ? 'row' : 'column',
+          gap: SPACING[3],
+        }}
+      >
+        {participants.map((participant: any) => {
+          const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
+          const isMe = participant.isLocal;
+          const fallbackName = isMe ? t('you') ?? 'You' : partner?.name ?? participant.identity;
+          const isMicEnabled = participant.isMicrophoneEnabled;
+          const isCamEnabled = participant.isCameraEnabled;
+
+          return (
+            <View
+              key={participant.identity}
+              style={{
+                flex: 1,
+                minHeight: screenShareTrackPub?.videoTrack ? 120 : 160,
+                borderRadius: RADIUS.xl,
+                backgroundColor: '#18181b',
+                overflow: 'hidden',
+                borderWidth: 1,
+                borderColor: '#27272a',
+                position: 'relative',
+              }}
+            >
+              {isCamEnabled && cameraPublication?.videoTrack ? (
+                <VideoTrack
+                  trackRef={{
+                    participant,
+                    source: Track.Source.Camera,
+                    publication: cameraPublication,
                   }}
-                >
-                  <MicOff size={14} color="#fff" />
+                  style={{ flex: 1, width: '100%', height: '100%' }}
+                />
+              ) : (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[2] }}>
+                  <Avatar
+                    uri={isMe ? me?.image : partner?.image}
+                    fallback={fallbackName}
+                    size={screenShareTrackPub?.videoTrack ? 44 : 72}
+                  />
+                  <ThemedText type="smallBold" style={{ fontSize: 13, color: '#fff' }}>
+                    {fallbackName}
+                  </ThemedText>
                 </View>
               )}
+
+              {/* Bottom Info Bar Overlay */}
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 8,
+                  left: 8,
+                  right: 8,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <View
+                  style={{
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: RADIUS.pill,
+                    backgroundColor: 'rgba(0,0,0,0.65)',
+                  }}
+                >
+                  <ThemedText type="smallBold" style={{ fontSize: 10, color: '#fff' }}>
+                    {fallbackName}
+                  </ThemedText>
+                </View>
+
+                {!isMicEnabled && (
+                  <View
+                    style={{
+                      backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                      padding: 5,
+                      borderRadius: RADIUS.pill,
+                    }}
+                  >
+                    <MicOff size={12} color="#fff" />
+                  </View>
+                )}
+              </View>
             </View>
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -1041,11 +1167,13 @@ function PersistentChatDrawer({
   exchangeSessionId,
   onClose,
   me,
+  onSendMessage,
   onNewMessage,
 }: {
   exchangeSessionId: string;
   onClose: () => void;
   me: any;
+  onSendMessage?: () => void;
   onNewMessage: () => void;
 }) {
   const theme = useTheme();
@@ -1053,10 +1181,14 @@ function PersistentChatDrawer({
   const c = useT('common');
 
   const [inputVal, setInputVal] = useState('');
-  const chatMsgsQ = useSessionChatMessages(exchangeSessionId);
+  const chatMsgsQ = useSessionChatMessages(exchangeSessionId, {
+    refetchInterval: 3000,
+    enabled: !!exchangeSessionId,
+  });
   const sendMsgQ = useSendSessionChatMessage();
   const markReadQ = useMarkSessionChatRead();
   const flatRef = useRef<any>(null);
+  const initialCountRef = useRef<number>(-1);
 
   // Sync mark read on open and unmount
   useEffect(() => {
@@ -1067,6 +1199,12 @@ function PersistentChatDrawer({
 
   const messages: ChatMessageItem[] = chatMsgsQ.data ?? [];
 
+  useEffect(() => {
+    if (messages.length > 0 && initialCountRef.current === -1) {
+      initialCountRef.current = messages.length;
+    }
+  }, [messages]);
+
   const handleSend = async () => {
     const text = inputVal.trim();
     if (!text || sendMsgQ.isPending) return;
@@ -1074,6 +1212,7 @@ function PersistentChatDrawer({
     try {
       await sendMsgQ.mutateAsync({ exchangeSessionId, message: text });
       await chatMsgsQ.refetch();
+      onSendMessage?.();
       setTimeout(() => {
         flatRef.current?.scrollToEnd?.({ animated: true });
       }, 50);
@@ -1087,7 +1226,7 @@ function PersistentChatDrawer({
       style={{
         position: 'absolute',
         top: 60,
-        bottom: 90,
+        bottom: 95,
         right: 0,
         left: 0,
         zIndex: 30,
@@ -1141,39 +1280,64 @@ function PersistentChatDrawer({
             data={messages}
             keyExtractor={(m) => m.id}
             contentContainerStyle={{ padding: SPACING[4], gap: SPACING[3] }}
-            renderItem={({ item: m }) => {
+            renderItem={({ item: m, index }) => {
               const isMine = m.senderId === me?.id;
+              const isNewMarker = initialCountRef.current > 0 && index === initialCountRef.current;
+
               return (
-                <View style={{ alignItems: isMine ? 'flex-end' : 'flex-start', gap: 4 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACING[2] }}>
-                    {!isMine ? (
-                      <Avatar uri={m.sender?.image ?? ''} fallback={m.sender?.name ?? 'P'} size={26} />
-                    ) : null}
-                    <View
-                      style={{
-                        maxWidth: '82%',
-                        padding: SPACING[3],
-                        borderRadius: RADIUS.lg,
-                        borderTopRightRadius: isMine ? 4 : RADIUS.lg,
-                        borderTopLeftRadius: isMine ? RADIUS.lg : 4,
-                        backgroundColor: isMine ? theme.primary : '#18181b',
-                        borderWidth: isMine ? 0 : 1,
-                        borderColor: '#27272a',
-                      }}
-                    >
-                      {!isMine && m.sender?.name ? (
-                        <ThemedText type="smallBold" style={{ color: getAccent('indigo').main, fontSize: 11, marginBottom: 2 }}>
-                          {m.sender.name}
+                <View style={{ gap: SPACING[2] }}>
+                  {isNewMarker ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: SPACING[2], gap: SPACING[2] }}>
+                      <View style={{ flex: 1, height: 1, backgroundColor: getAccent('indigo').main + '60' }} />
+                      <View
+                        style={{
+                          backgroundColor: getAccent('indigo').main + '20',
+                          paddingHorizontal: 10,
+                          paddingVertical: 2,
+                          borderRadius: RADIUS.pill,
+                          borderWidth: 1,
+                          borderColor: getAccent('indigo').main + '40',
+                        }}
+                      >
+                        <ThemedText type="smallBold" style={{ fontSize: 10, color: getAccent('indigo').main }}>
+                          New Messages
                         </ThemedText>
-                      ) : null}
-                      <ThemedText type="small" style={{ color: isMine ? '#fff' : '#e4e4e7', fontSize: 14, lineHeight: 20 }}>
-                        {m.message}
-                      </ThemedText>
+                      </View>
+                      <View style={{ flex: 1, height: 1, backgroundColor: getAccent('indigo').main + '60' }} />
                     </View>
+                  ) : null}
+
+                  <View style={{ alignItems: isMine ? 'flex-end' : 'flex-start', gap: 4 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACING[2] }}>
+                      {!isMine ? (
+                        <Avatar uri={m.sender?.image ?? ''} fallback={m.sender?.name ?? 'P'} size={26} />
+                      ) : null}
+                      <View
+                        style={{
+                          maxWidth: '82%',
+                          padding: SPACING[3],
+                          borderRadius: RADIUS.lg,
+                          borderTopRightRadius: isMine ? 4 : RADIUS.lg,
+                          borderTopLeftRadius: isMine ? RADIUS.lg : 4,
+                          backgroundColor: isMine ? theme.primary : '#18181b',
+                          borderWidth: isMine ? 0 : 1,
+                          borderColor: '#27272a',
+                        }}
+                      >
+                        {!isMine && m.sender?.name ? (
+                          <ThemedText type="smallBold" style={{ color: getAccent('indigo').main, fontSize: 11, marginBottom: 2 }}>
+                            {m.sender.name}
+                          </ThemedText>
+                        ) : null}
+                        <ThemedText type="small" style={{ color: isMine ? '#fff' : '#e4e4e7', fontSize: 14, lineHeight: 20 }}>
+                          {m.message}
+                        </ThemedText>
+                      </View>
+                    </View>
+                    <ThemedText type="small" style={{ color: '#52525b', fontSize: 10, paddingHorizontal: 4 }}>
+                      {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </ThemedText>
                   </View>
-                  <ThemedText type="small" style={{ color: '#52525b', fontSize: 10, paddingHorizontal: 4 }}>
-                    {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </ThemedText>
                 </View>
               );
             }}
@@ -1244,11 +1408,16 @@ function ControlsBar({
 }: any) {
   const theme = useTheme();
   const t = useT('room');
+  const toast = useToast();
   const room = useRoomContext();
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [audioOutput, setAudioOutput] = useState<string>('speaker');
+  const isSwitchingRef = useRef(false);
   const localParticipant = room?.localParticipant;
 
   const isAudioEnabled = localParticipant?.isMicrophoneEnabled ?? true;
   const isVideoEnabled = localParticipant?.isCameraEnabled ?? true;
+  const isScreenShareEnabled = localParticipant?.isScreenShareEnabled ?? false;
 
   const recDisabled = !onRecording;
   const recActive = recordingState === 'recording' || recordingState === 'processing';
@@ -1262,14 +1431,61 @@ function ControlsBar({
     localParticipant?.setCameraEnabled(!isVideoEnabled);
   };
 
+  const handleToggleScreenShare = async () => {
+    if (!localParticipant) return;
+    try {
+      await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
+    } catch (e) {
+      console.warn('[ScreenShare] Toggle failed:', e);
+    }
+  };
+
+  const handleToggleAudioOutput = async () => {
+    try {
+      const outputs = await AudioSession.getAudioOutputs();
+      const nextOutput =
+        audioOutput === 'speaker' || audioOutput === 'force_speaker'
+          ? outputs.includes('earpiece')
+            ? 'earpiece'
+            : 'default'
+          : outputs.includes('force_speaker')
+          ? 'force_speaker'
+          : 'speaker';
+
+      await AudioSession.selectAudioOutput(nextOutput);
+      setAudioOutput(nextOutput);
+      const isSpeaker = nextOutput.includes('speaker');
+      toast.toast({
+        title: `${t('audioOutput') ?? 'Audio'}: ${
+          isSpeaker ? t('speaker') ?? 'Speaker' : t('earpiece') ?? 'Earpiece'
+        }`,
+        variant: 'info',
+      });
+    } catch (e) {
+      console.warn('[AudioSession] Output toggle failed:', e);
+    }
+  };
+
   const handleFlipCamera = async () => {
-    if (localParticipant) {
-      try {
-        await localParticipant.setCameraEnabled(false);
-        await localParticipant.setCameraEnabled(true);
-      } catch (e) {
-        console.warn('[Camera] Flip failed:', e);
+    if (isSwitchingRef.current) return;
+    isSwitchingRef.current = true;
+
+    try {
+      if (localParticipant) {
+        const videoTrackPublication = localParticipant.getTrackPublication(Track.Source.Camera);
+        const videoTrack = videoTrackPublication?.videoTrack;
+        if (videoTrack) {
+          const nextFacingMode: VideoCaptureOptions['facingMode'] = facingMode === 'user' ? 'environment' : 'user';
+          await videoTrack.restartTrack({
+            facingMode: nextFacingMode,
+          });
+          setFacingMode(nextFacingMode);
+        }
       }
+    } catch (e) {
+      console.warn('[Camera] Flip failed:', e);
+    } finally {
+      isSwitchingRef.current = false;
     }
   };
 
@@ -1281,19 +1497,23 @@ function ControlsBar({
         left: 0,
         right: 0,
         zIndex: 20,
-        paddingHorizontal: SPACING[4],
-        paddingTop: SPACING[3],
-        paddingBottom: Math.max(SPACING[4], insets.bottom),
-        backgroundColor: 'rgba(9, 9, 11, 0.95)',
+        paddingTop: SPACING[2],
+        paddingBottom: Math.max(SPACING[3], insets.bottom),
+        backgroundColor: 'rgba(15, 15, 18, 0.95)',
         borderTopWidth: 1,
         borderTopColor: '#1f1f23',
       }}
     >
-      <View
-        style={{
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-around',
+          flexGrow: 1,
+          paddingHorizontal: SPACING[3],
+          gap: SPACING[2],
         }}
       >
         {/* Mic Toggle */}
@@ -1303,7 +1523,7 @@ function ControlsBar({
           destructive={!isAudioEnabled}
           label={isAudioEnabled ? t('mute') ?? 'Mute' : t('unmute') ?? 'Unmute'}
         >
-          {isAudioEnabled ? <Mic size={20} color="#fff" /> : <MicOff size={20} color="#fff" />}
+          {isAudioEnabled ? <Mic size={18} color="#fff" /> : <MicOff size={18} color="#fff" />}
         </CtrlBtn>
 
         {/* Camera Toggle */}
@@ -1313,7 +1533,7 @@ function ControlsBar({
           destructive={!isVideoEnabled}
           label={isVideoEnabled ? t('video') ?? 'Video' : t('off') ?? 'Off'}
         >
-          {isVideoEnabled ? <Video size={20} color="#fff" /> : <VideoOff size={20} color="#fff" />}
+          {isVideoEnabled ? <Video size={18} color="#fff" /> : <VideoOff size={18} color="#fff" />}
         </CtrlBtn>
 
         {/* Flip Camera */}
@@ -1321,43 +1541,67 @@ function ControlsBar({
           <RefreshCw size={18} color="#fff" />
         </CtrlBtn>
 
-        {/* Record Trigger */}
-        <Pressable
-          onPress={onRecording}
-          disabled={recDisabled}
-          style={{
-            width: 54,
-            height: 54,
-            borderRadius: RADIUS.pill,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: recDisabled
-              ? '#27272a'
-              : recActive
-              ? '#ef4444'
-              : '#3f1414',
-            borderWidth: 2,
-            borderColor: recDisabled ? '#3f3f46' : '#ef4444',
-            opacity: recDisabled ? 0.5 : 1,
-          }}
+        {/* Screen Share */}
+        <CtrlBtn
+          onPress={handleToggleScreenShare}
+          active={isScreenShareEnabled}
+          label={isScreenShareEnabled ? t('sharing') ?? 'Sharing' : t('screenShare') ?? 'Share'}
         >
-          {recLoading ? (
-            <Loader2 size={20} color="#fff" />
-          ) : recActive ? (
-            <Square size={18} color="#fff" fill="#fff" />
-          ) : (
-            <Circle size={20} color="#ef4444" fill="#ef4444" />
-          )}
-        </Pressable>
+          <MonitorUp size={18} color="#fff" />
+        </CtrlBtn>
+
+        {/* Audio Output Switcher */}
+        <CtrlBtn
+          onPress={handleToggleAudioOutput}
+          active={audioOutput.includes('speaker')}
+          label={audioOutput.includes('speaker') ? t('speaker') ?? 'Speaker' : t('earpiece') ?? 'Earpiece'}
+        >
+          {audioOutput.includes('speaker') ? <Volume2 size={18} color="#fff" /> : <VolumeX size={18} color="#fff" />}
+        </CtrlBtn>
+
+        {/* Record Trigger */}
+        <View style={{ alignItems: 'center', gap: 4 }}>
+          <Pressable
+            onPress={onRecording}
+            disabled={recDisabled}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: RADIUS.pill,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: recDisabled
+                ? '#27272a'
+                : recActive
+                ? '#ef4444'
+                : '#3f1414',
+              borderWidth: 2,
+              borderColor: recDisabled ? '#3f3f46' : '#ef4444',
+              opacity: recDisabled ? 0.5 : 1,
+            }}
+          >
+            {recLoading ? (
+              <Loader2 size={16} color="#fff" />
+            ) : recActive ? (
+              <Square size={14} color="#fff" fill="#fff" />
+            ) : (
+              <Circle size={16} color="#ef4444" fill="#ef4444" />
+            )}
+          </Pressable>
+          <ThemedText type="caption" style={{ fontSize: 10, color: recActive ? '#ef4444' : '#a1a1aa' }}>
+            {recActive ? t('recording') ?? 'Recording' : t('record') ?? 'Record'}
+          </ThemedText>
+        </View>
 
         {/* Chat Drawer Toggle */}
         <CtrlBtn
           onPress={onToggleChat}
           active={isChatOpen}
           badge={unreadCount > 0}
+          badgeCount={unreadCount}
           label={t('chat') ?? 'Chat'}
         >
-          <MessageSquare size={20} color="#fff" />
+          <MessageSquare size={18} color="#fff" />
         </CtrlBtn>
 
         {/* Leave Call Button */}
@@ -1367,52 +1611,68 @@ function ControlsBar({
           label={t('leave') ?? 'Leave'}
           style={{ backgroundColor: '#3f1414', borderColor: '#7f1d1d', borderWidth: 1 }}
         >
-          <PhoneOff size={20} color="#fff" />
+          <PhoneOff size={18} color="#fff" />
         </CtrlBtn>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
-function CtrlBtn({ children, onPress, active, destructive, badge, style }: any) {
+function CtrlBtn({ children, onPress, active, destructive, badge, badgeCount, style, label }: any) {
   return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      style={[
-        {
-          width: 48,
-          height: 48,
-          borderRadius: RADIUS.pill,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: active
-            ? destructive
-              ? '#ef4444'
-              : getAccent('indigo').main
-            : '#18181b',
-          borderWidth: 1,
-          borderColor: active ? 'transparent' : '#27272a',
-          position: 'relative',
-        },
-        style,
-      ]}
-    >
-      {badge ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: -2,
-            right: -2,
-            width: 12,
-            height: 12,
-            borderRadius: 6,
-            backgroundColor: '#ef4444',
-          }}
-        />
+    <View style={{ alignItems: 'center', gap: 4 }}>
+      <Pressable
+        onPress={onPress}
+        hitSlop={8}
+        style={[
+          {
+            width: 44,
+            height: 44,
+            borderRadius: RADIUS.pill,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: active
+              ? destructive
+                ? '#ef4444'
+                : getAccent('indigo').main
+              : '#18181b',
+            borderWidth: 1,
+            borderColor: active ? 'transparent' : '#27272a',
+            position: 'relative',
+          },
+          style,
+        ]}
+      >
+        {badge ? (
+          <View
+            style={{
+              position: 'absolute',
+              top: -3,
+              right: -3,
+              minWidth: 18,
+              height: 18,
+              borderRadius: 9,
+              backgroundColor: '#ef4444',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 4,
+              borderWidth: 1.5,
+              borderColor: '#09090b',
+            }}
+          >
+            <ThemedText type="smallBold" style={{ fontSize: 9, color: '#fff' }}>
+              {badgeCount ? (badgeCount > 9 ? '9+' : badgeCount) : ''}
+            </ThemedText>
+          </View>
+        ) : null}
+        {children}
+      </Pressable>
+      {label ? (
+        <ThemedText type="caption" style={{ fontSize: 10, color: '#a1a1aa' }}>
+          {label}
+        </ThemedText>
       ) : null}
-      {children}
-    </Pressable>
+    </View>
   );
 }
 

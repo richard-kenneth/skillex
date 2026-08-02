@@ -664,7 +664,17 @@
     "stop": "Arrêter",
     "record": "Enregistrer",
     "decline": "Refuser",
-    "waitingForPartner": "En attente du partenaire"
+    "waitingForPartner": "En attente du partenaire",
+    "screenShare": "Partager",
+    "sharing": "Partage en cours",
+    "stopShare": "Arrêter le partage",
+    "audioOutput": "Audio",
+    "speaker": "Haut-parleur",
+    "earpiece": "Écouteur",
+    "bluetooth": "Bluetooth",
+    "headset": "Casque",
+    "selectAudioOutput": "Sélectionner la sortie audio",
+    "newMessages": "Nouveaux messages"
   },
   "profile": {
     "title": "Profil",

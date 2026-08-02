@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
   Alert,
   FlatList,
@@ -13,6 +13,8 @@ import {
   ScrollView,
   TextInput,
   View,
+  StyleSheet,
+  StatusBar,
 } from "react-native";
 import {
   SafeAreaView,
@@ -25,6 +27,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { File, Paths } from "expo-file-system";
 import { StorageAccessFramework, readAsStringAsync, EncodingType } from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
+import { useVideoPlayer, VideoView, isPictureInPictureSupported } from "expo-video";
 import { Image as ExpoImage } from "expo-image";
 import {
   AlertTriangle,
@@ -116,9 +119,69 @@ import {
 import { ReviewCard } from "../(tabs)/profile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetch } from 'expo/fetch'
+import { useEvent } from "expo";
 
 type Tab = "overview" | "sessions" | "chat" | "details" | "review";
 type SessionFilter = "all" | "taught" | "received";
+
+function InAppVideoPlayer({ url }: { url: string }) {
+  const videoViewRef = useRef<VideoView>(null);
+  const isPiPSupported = isPictureInPictureSupported();
+  const fullscreenIntervalRef = useRef<NodeJS.Timeout>(null);
+  
+  
+  const player = useVideoPlayer(url, (p) => {
+    p.loop = false;
+    p.preservesPitch = true;
+    p.staysActiveInBackground = true;
+    p.play();
+  });
+
+  const handleStartPiP = async () => {
+    try {
+      if (videoViewRef.current) {
+        await videoViewRef.current.startPictureInPicture();
+      }
+    } catch (e) {
+      console.warn('[PiP] Could not start PiP:', e);
+    }
+  };
+
+  return (
+    <View style={{ gap: SPACING[2] }}>
+      <VideoView
+        ref={videoViewRef}
+        style={styles.video}
+        player={player}
+        fullscreenOptions={{ enable: true, orientation: 'landscape', autoExitOnRotate: true }}
+        allowsPictureInPicture
+        startsPictureInPictureAutomatically
+      />
+      {isPiPSupported ? (
+        <Pressable
+          onPress={handleStartPiP}
+          style={{
+            alignSelf: 'flex-start',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: RADIUS.pill,
+            backgroundColor: 'rgba(24, 24, 27, 0.8)',
+            borderWidth: 1,
+            borderColor: '#27272a',
+          }}
+        >
+          <ExternalLink size={14} color="#a1a1aa" />
+          <ThemedText type="smallBold" style={{ fontSize: 11, color: '#a1a1aa' }}>
+            Picture in Picture
+          </ThemedText>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
 
 export default function ExchangeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -176,7 +239,9 @@ export default function ExchangeDetailScreen() {
   const handleWatchRecording = async (recordingId: string) => {
     try {
       const data = await recordingPlaybackQ.mutateAsync(recordingId);
-      setPlaybackUrl(data.url);
+      if (data?.url) {
+        setPlaybackUrl(data.url);
+      }
     } catch {
       toast.toast({ title: "Failed to load recording", variant: "error" });
     }
@@ -768,22 +833,9 @@ export default function ExchangeDetailScreen() {
               </Pressable>
             </View>
 
-            <View style={{ padding: SPACING[4], borderRadius: RADIUS.lg, backgroundColor: "#000", alignItems: "center", gap: SPACING[3] }}>
-              <Play size={36} color={theme.primary} />
-              <ThemedText type="small" style={{ color: "#fff", textAlign: "center" }}>
-                Recording Ready
-              </ThemedText>
-              {playbackUrl ? (
-                <Button
-                  size="sm"
-                  variant="default"
-                  onPress={() => Linking.openURL(playbackUrl)}
-                  leftIcon={<ExternalLink size={14} color="#fff" />}
-                >
-                  Open Video Player
-                </Button>
-              ) : null}
-            </View>
+            {playbackUrl ? (
+              <InAppVideoPlayer url={playbackUrl} />
+            ) : null}
 
             <Button size="sm" variant="outline" onPress={() => setPlaybackUrl(null)}>
               Close
@@ -979,16 +1031,16 @@ function SessionsBody({
 
   return (
     <View style={{ gap: SPACING[4] }}>
-      {/* Skill Split Filter Pills (Matching Next Web!) */}
+      {/* Skill Split Filter Pills */}
       {isTwoWay && (
         <Tabs<SessionFilter>
           variant="pills"
           value={sessionFilter}
           onChange={setSessionFilter}
           items={[
-            { value: "all", label: `All (${sessions.length})` },
-            { value: "taught", label: `${taughtSkillName} (${taughtSessions.length})` },
-            { value: "received", label: `${receivedSkillName} (${receivedSessions.length})` },
+            { value: "all", label: `All (${sessions?.length ?? 0})` },
+            { value: "taught", label: `${taughtSkillName ?? 'Taught'} (${taughtSessions?.length ?? 0})` },
+            { value: "received", label: `${receivedSkillName ?? 'Received'} (${receivedSessions?.length ?? 0})` },
           ]}
         />
       )}
@@ -1088,7 +1140,7 @@ function SessionsBody({
                       </View>
                       <View style={{ flex: 1, gap: 2 }}>
                         <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.md, fontWeight: "700" }}>
-                          {s.skill?.name ?? (isTaughtSkill ? taughtSkillName : receivedSkillName)}
+                          {String(s.skill?.name ?? (isTaughtSkill ? taughtSkillName : receivedSkillName) ?? "")}
                         </ThemedText>
                         <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
                           {sessionDate ? formatDateTimeShort(sessionDate) : "Scheduled session"} • {durationMinutes} min
@@ -1097,7 +1149,7 @@ function SessionsBody({
                     </View>
 
                     <Badge variant={isCancelled ? "destructive" : isCompleted ? "accent" : "outline"} accent={isCompleted ? "green" : undefined}>
-                      {s.status}
+                      {String(s.status ?? "")}
                     </Badge>
                   </View>
 
@@ -1111,7 +1163,6 @@ function SessionsBody({
 
                   {/* Action Buttons Row */}
                   <View style={{ flexDirection: "row", gap: SPACING[2], flexWrap: "wrap", alignItems: "center" }}>
-                    {/* Read-Only Session Chat History Button */}
                     <Button
                       size="sm"
                       variant="outline"
@@ -1121,8 +1172,7 @@ function SessionsBody({
                       Session Chat
                     </Button>
 
-                    {/* Join Video Room (if live or scheduled) */}
-                    {!isDone ? (
+                    {!isDone && (
                       <Button
                         size="sm"
                         variant={isLive ? "default" : "secondary"}
@@ -1131,10 +1181,10 @@ function SessionsBody({
                       >
                         {isLive ? "Join Live" : "Join Room"}
                       </Button>
-                    ) : null}
+                    )}
                   </View>
 
-                  {/* Session Status Actions (for Scheduled sessions) */}
+                  {/* Session Status Actions */}
                   {isScheduled && (
                     <View style={{ flexDirection: "row", gap: SPACING[2], paddingTop: SPACING[1], borderTopWidth: 1, borderTopColor: theme.border + "40" }}>
                       {!isCurrentUserTeacher && (
@@ -1172,6 +1222,9 @@ function SessionsBody({
                           const isProcessing = rec.recordingStatus === "PROCESSING";
                           const isReady = rec.recordingStatus === "COMPLETED";
 
+                          // Formulate status label cleanly without returning empty string ""
+                          const statusSuffix = isProcessing ? " (Processing)" : isExpired ? " (Expired)" : "";
+
                           return (
                             <Button
                               key={rec.id}
@@ -1181,7 +1234,7 @@ function SessionsBody({
                               onPress={() => onWatchRecording(rec.id)}
                               leftIcon={<Play size={14} color={theme.foreground} />}
                             >
-                              Part {recordings.length - idx} {isProcessing ? "(Processing)" : isExpired ? "(Expired)" : ""}
+                              {`Part ${recordings.length - idx}${statusSuffix}`}
                             </Button>
                           );
                         })}
@@ -1529,7 +1582,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
             ? error.toString() 
             : String(error);
           if (errMsg.includes("isn't writable")) {
-            alert("Error: You cannot select this folder. Try creating a new folder inside the folder you selected, and choose that instead.");
+            Alert.alert("Error", "You cannot select this folder. Try creating a new folder inside the folder you selected, and choose that instead.");
           } else {
             // Fallback to Sharing dialog if SAF is declined or fails
           }
@@ -2238,3 +2291,12 @@ function labelForStatus(s: string) {
       return s ? s.replace(/_/g, " ") : "Active";
   }
 }
+
+const styles = StyleSheet.create({
+  video: {
+    width: "100%",
+    height: 240,
+    borderRadius: RADIUS.lg,
+    // backgroundColor: "#000",
+  },
+});

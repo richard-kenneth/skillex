@@ -657,7 +657,17 @@
     "stop": "Stop",
     "record": "Record",
     "decline": "Decline",
-    "waitingForPartner": "Waiting for partner"
+    "waitingForPartner": "Waiting for partner",
+    "screenShare": "Share",
+    "sharing": "Sharing",
+    "stopShare": "Stop Sharing",
+    "audioOutput": "Audio",
+    "speaker": "Speaker",
+    "earpiece": "Earpiece",
+    "bluetooth": "Bluetooth",
+    "headset": "Headset",
+    "selectAudioOutput": "Select Audio Output",
+    "newMessages": "New Messages"
   },
   "profile": {
     "title": "Profile",
