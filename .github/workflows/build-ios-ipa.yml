@@ -1,0 +1,102 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Build Unsigned iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm via Corepack
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Write .env file
+        working-directory: apps/mobile
+        run: |
+          cat <<EOF > .env
+          EXPO_PUBLIC_API_BASE_URL=${{ secrets.EXPO_PUBLIC_API_BASE_URL }}
+          EXPO_PUBLIC_SCHEME=${{ secrets.EXPO_PUBLIC_SCHEME }}
+          EXPO_PUBLIC_WEB_BASE_URL=${{ secrets.EXPO_PUBLIC_WEB_BASE_URL }}
+          EXPO_PUBLIC_BETTER_AUTH_URL=${{ secrets.EXPO_PUBLIC_BETTER_AUTH_URL }}
+          EOF
+
+      - name: Expo prebuild (generate iOS project)
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform ios --no-install --clean
+
+      - name: Install CocoaPods dependencies
+        working-directory: apps/mobile/ios
+        run: pod install
+
+      - name: Resolve Xcode project settings
+        id: xcode
+        working-directory: apps/mobile/ios
+        run: |
+          # Find the .xcworkspace
+          WORKSPACE=$(find . -maxdepth 1 -name "*.xcworkspace" -type d | head -1)
+          echo "workspace=$WORKSPACE" >> "$GITHUB_OUTPUT"
+
+          # Derive the scheme name (matches the workspace name without extension)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "scheme=$SCHEME" >> "$GITHUB_OUTPUT"
+
+          echo "Found workspace: $WORKSPACE"
+          echo "Using scheme: $SCHEME"
+
+      - name: Build iOS app archive
+        working-directory: apps/mobile/ios
+        run: |
+          xcodebuild archive \
+            -workspace "${{ steps.xcode.outputs.workspace }}" \
+            -scheme "${{ steps.xcode.outputs.scheme }}" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/app.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            | xcpretty || true
+
+      - name: Package .ipa for Sideloadly
+        run: |
+          # Locate the .app bundle inside the archive
+          APP_PATH=$(find "$RUNNER_TEMP/app.xcarchive/Products/Applications" -name "*.app" -type d | head -1)
+
+          if [ -z "$APP_PATH" ]; then
+            echo "::error::No .app bundle found in archive"
+            exit 1
+          fi
+
+          echo "Found app bundle: $APP_PATH"
+
+          # Create Payload structure and zip as .ipa
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
+          cd "$RUNNER_TEMP"
+          zip -r -9 "SkillExchange.ipa" Payload
+
+          echo "IPA created: $RUNNER_TEMP/SkillExchange.ipa"
+          ls -lh "$RUNNER_TEMP/SkillExchange.ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SkillExchange-iOS
+          path: ${{ runner.temp }}/SkillExchange.ipa
+          if-no-files-found: error
