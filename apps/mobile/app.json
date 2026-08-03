@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "com.skil_ex",
+      "bundleIdentifier": "com.skilex",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
