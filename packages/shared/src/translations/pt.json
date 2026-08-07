@@ -207,7 +207,7 @@
   "dashboard": {
     "title": "Painel",
     "welcomeBack": "Bem-vindo de volta!",
-    "welcomeBackWithName": "Bem-vindo de volta, {name}!",
+    "welcomeBackWithName": "Bem-vindo de volta, <bold>{name}</bold>!",
     "description": "Aqui está seu resumo de trocas de habilidades",
     "quickStats": "Estatísticas rápidas",
     "activeExchanges": "Trocas ativas",
@@ -265,7 +265,18 @@
     "noActiveExchangesDesc": "Encontre sua correspondência perfeita e comece a aprender hoje.",
     "browseMatches": "Explorar correspondências",
     "noTeachingSkillsYet": "Sem habilidades de ensino ainda",
-    "noLearningSkillsYet": "Sem habilidades de aprendizado ainda"
+    "noLearningSkillsYet": "Sem habilidades de aprendizado ainda",
+    "add": "Adicionar",
+    "peerTrader": "Parceiro",
+    "skillExchanger": "Trocador de habilidades",
+    "pts": "pts",
+    "statusAccepted": "Aceito",
+    "statusInProgress": "Em Progreso",
+    "statusScheduled": "Agendado",
+    "statusCompleted": "Concluído",
+    "statusCancelled": "Cancelado",
+    "statusDeclined": "Recusado",
+    "statusPending": "Pendente"
   },
   "matches": {
     "title": "Buscar correspondências",
@@ -307,7 +318,7 @@
     "noMatchingResultsDesc": "Nenhum usuário ou habilidade encontrado correspondendo a \"{query}\".",
     "clearSearch": "Limpar Busca",
     "anonymousUser": "Usuário Anônimo",
-    "exchangesCompleted": "{count} trocas",
+    "exchangesCompleted": "{count, plural, =1 {1 troca} other {# trocas}}",
     "sponsoredByName": "Patrocinado por {name}",
     "requestSkillExchange": "Solicitar Troca de Habilidades",
     "connectWithName": "Conectar com {name}",
@@ -342,7 +353,31 @@
     "selectSkillToLearn": "Por favor, selecione uma habilidade que você quer aprender.",
     "exchangeRequestSent": "Solicitação de Troca Enviada!",
     "exchangeRequestSentDesc": "Sua solicitação foi enviada para {name}.",
-    "failedToSendExchangeRequest": "Falha ao enviar a solicitação de troca. Tente novamente."
+    "failedToSendExchangeRequest": "Falha ao enviar a solicitação de troca. Tente novamente.",
+    "viewExchange": "Ver troca e negociar",
+    "optional": "Opcional",
+    "sessionCount": "{count, plural, =1 {1 sessão} other {# sessões}}, {duration}m",
+    "cancel": "Cancelar",
+    "you": "você",
+    "them": "eles",
+    "new": "Novo",
+    "user": "Usuário",
+    "requested": "Solicitado:",
+    "offering": "Oferece:",
+    "youCap": "Você",
+    "sender": "Remetente",
+    "receiver": "Destinatário",
+    "requestedSkill": "Habilidade solicitada",
+    "reviewing": "Revisando",
+    "agreed": "Aceito",
+    "statusPending": "Pendente",
+    "statusCommitted": "Comprometido",
+    "statusRejected": "Recusado",
+    "statusCancelled": "Cancelado",
+    "pending": "Pendente",
+    "committed": "Comprometido",
+    "rejected": "Recusado",
+    "cancelled": "Cancelado"
   },
   "requests": {
     "title": "Minhas solicitações",
@@ -363,7 +398,11 @@
     "decline": "Recusar",
     "sender": "Remetente",
     "receiver": "Destinatário",
-    "paidBy": "Pago por"
+    "paidBy": "Pago por",
+    "statusPending": "Pendente",
+    "statusCommitted": "Comprometido",
+    "statusRejected": "Recusado",
+    "statusCancelled": "Cancelado"
   },
   "requestDialog": {
     "title": "Solicitar troca",
@@ -1073,7 +1112,10 @@
     "doneCtaLabel": "Encontrar combinações",
     "skipTitle": "Integração salva",
     "skipDesc": "Você pode retomar a qualquer momento pelo seu perfil.",
-    "skip": "Pular"
+    "skip": "Pular",
+    "done": "Concluído",
+    "toDo": "A fazer",
+    "welcomeTitleNoName": "Bem-vindo(a)! 🎉"
   },
   "userProfile": {
     "title": "Perfil do usuário",

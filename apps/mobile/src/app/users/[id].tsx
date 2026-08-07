@@ -58,12 +58,15 @@ import {
   Shield,
   Star,
 } from "lucide-react-native";
+import { Image as ExpoImage } from "expo-image";
 import React from "react";
 import {
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
   Share,
+  StatusBar,
   View,
 } from "react-native";
 import {
@@ -88,6 +91,7 @@ export default function PublicUserProfileScreen() {
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [requestOpen, setRequestOpen] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [fullscreenImage, setFullscreenImage] = React.useState<string | null>(null);
 
   const [skillTeachId, setSkillTeachId] = React.useState<string | undefined>();
   const [skillLearnId, setSkillLearnId] = React.useState<string | undefined>();
@@ -215,7 +219,12 @@ export default function PublicUserProfileScreen() {
                     alignItems: "center",
                   }}
                 >
-                  <Avatar uri={user?.image} fallback={user?.name} size={88} />
+                  <Pressable
+                    onPress={() => user?.image && setFullscreenImage(user.image)}
+                    hitSlop={4}
+                  >
+                    <Avatar uri={user?.image} fallback={user?.name} size={88} />
+                  </Pressable>
                   <View style={{ flex: 1, gap: SPACING[1] }}>
                     {userQ.isLoading ? (
                       <View style={{ gap: SPACING[1.5] }}>
@@ -802,6 +811,66 @@ export default function PublicUserProfileScreen() {
           },
         ]}
       />
+      {/* Fullscreen User Image Preview Modal */}
+      <Modal
+        visible={!!fullscreenImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFullscreenImage(null)}
+      >
+        <StatusBar backgroundColor="rgba(0,0,0,0.95)" barStyle="light-content" />
+        <SafeAreaView
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.95)",
+            justifyContent: "space-between",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: SPACING[4],
+              paddingVertical: SPACING[3],
+            }}
+          >
+            <ThemedText type="smallBold" style={{ color: "#fff", fontSize: FONT_SIZE.md }}>
+              {user?.name ?? 'User'}
+            </ThemedText>
+            <Pressable
+              onPress={() => setFullscreenImage(null)}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: "rgba(255,255,255,0.2)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              hitSlop={8}
+            >
+              <ThemedText style={{ color: "#fff", fontSize: 20 }}>×</ThemedText>
+            </Pressable>
+          </View>
+
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: SPACING[4] }}>
+            {fullscreenImage ? (
+              <ExpoImage
+                source={{ uri: fullscreenImage }}
+                style={{ width: "95%", height: 360, borderRadius: RADIUS.lg }}
+                contentFit="contain"
+              />
+            ) : null}
+          </View>
+
+          <View style={{ padding: SPACING[4] }}>
+            <Button variant="outline" onPress={() => setFullscreenImage(null)}>
+              Close
+            </Button>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }

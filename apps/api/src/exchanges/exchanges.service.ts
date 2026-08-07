@@ -790,13 +790,13 @@ export class ExchangesService {
   private getNextOccurrence(dayOfWeek: number, startTime: string): Date {
     const [hours, minutes] = startTime.split(':').map(Number);
     const now = new Date();
-    const todayDay = now.getDay();
+    const todayDay = now.getUTCDay();
     let daysUntil = dayOfWeek - todayDay;
     if (daysUntil <= 0) daysUntil += 7;
 
     const date = new Date(now);
-    date.setDate(date.getDate() + daysUntil);
-    date.setHours(hours, minutes, 0, 0);
+    date.setUTCDate(date.getUTCDate() + daysUntil);
+    date.setUTCHours(hours, minutes, 0, 0);
     return date;
   }
 
@@ -992,7 +992,14 @@ export class ExchangesService {
       throw new ForbiddenException('You are not part of this exchange');
     }
 
-    return exchange;
+    const myReview = exchange.reviews.find((r) => r.reviewerId === userId) || null;
+    const theirReview = exchange.reviews.find((r) => r.reviewerId !== userId) || null;
+
+    return {
+      ...exchange,
+      myReview,
+      theirReview,
+    };
   }
 
   async updateSessionStatus(

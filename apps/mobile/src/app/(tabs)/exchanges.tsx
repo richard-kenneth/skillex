@@ -18,6 +18,7 @@ import {
 } from '@skil-ex2/shared';
 import {
   ArrowRightLeft, Handshake, CalendarCheck, Video, ChevronRight, Coins, Users, Clock, Lock,
+  MessageCircle,
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -261,6 +262,14 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
           <MetaChip
             icon={<CalendarCheck size={12} color={theme.mutedForeground} />}
             label={`Started ${formatDateShort(exchange.committedAt ?? exchange.createdAt)}`}
+          />
+        ) : null}
+
+        {exchange.unreadCount || exchange.hasUnreadChat || exchange.unreadMessagesCount ? (
+          <MetaChip
+            accent="indigo"
+            icon={<MessageCircle size={12} color={getAccent('indigo').main} />}
+            label="New chat"
           />
         ) : null}
       </View>

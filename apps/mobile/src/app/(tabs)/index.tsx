@@ -69,7 +69,21 @@ export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const t = useT('dashboard');
-  const navT = useT('nav')
+  const navT = useT('nav');
+  const commonT = useT('common');
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'ACCEPTED': return t('statusAccepted');
+      case 'IN_PROGRESS': return t('statusInProgress');
+      case 'SCHEDULED': return t('statusScheduled');
+      case 'COMPLETED': return t('statusCompleted');
+      case 'CANCELLED': return t('statusCancelled');
+      case 'DECLINED': return t('statusDeclined');
+      case 'PENDING': return t('statusPending');
+      default: return status.replace('_', ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+    }
+  };
 
   const userQ = useCurrentUser();
   const exchangesQ = useExchanges();
@@ -299,7 +313,7 @@ export default function DashboardScreen() {
                         {offeringSkills.map((s: any) => (
                           <Badge key={s.id} variant="accent" accent="emerald">
                             {s.skill?.name ?? s.skillName}
-                            {s.level ? ` · ${s.level}` : ''}
+                            {s.level ? ` · ${s.level.toLowerCase() === 'beginner' ? commonT('beginner') : s.level.toLowerCase() === 'intermediate' ? commonT('intermediate') : s.level.toLowerCase() === 'advanced' ? commonT('advanced') : s.level}` : ''}
                           </Badge>
                         ))}
                       </View>
@@ -370,7 +384,7 @@ export default function DashboardScreen() {
                                 {other.name ?? t('peerTrader')}
                               </ThemedText>
                               <Badge variant="accent" accent={colorName}>
-                                {ex.status.replace('_', ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                                {getStatusLabel(ex.status)}
                               </Badge>
                             </View>
                             <ThemedText type="caption" muted style={{ marginTop: 2 }}>
@@ -439,7 +453,7 @@ export default function DashboardScreen() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: SPACING[2] }}>
                       <StatChip label={t('referrals')} value={referralStatsQ.data?.totalReferrals ?? 0} />
-                      <StatChip label={t('earned')} value={`${referralStatsQ.data?.pointsEarned ?? 0} pts`} />
+                      <StatChip label={t('earned')} value={`${referralStatsQ.data?.pointsEarned ?? 0} ${t('pts')}`} />
                     </View>
                     <Button
                       size="md"
@@ -635,7 +649,7 @@ function OnboardingRow({
 
 function EmptySkillsRow({ variant, onAdd }: { variant: 'offering' | 'seeking'; onAdd: () => void }) {
   const theme = useTheme();
-  const t = useT('home');
+  const t = useT('dashboard');
   return (
     <Pressable
       onPress={onAdd}
@@ -664,7 +678,7 @@ function EmptySkillsRow({ variant, onAdd }: { variant: 'offering' | 'seeking'; o
 
 function EmptyExchanges({ onExplore }: { onExplore: () => void }) {
   const theme = useTheme();
-  const t = useT('home');
+  const t = useT('dashboard');
 
   return (
     <View

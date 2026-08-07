@@ -38,7 +38,7 @@ import {
 
 import { useTheme } from '@/hooks/use-theme';
 import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH, ICON_SIZE } from '@/constants/theme';
-import { useT } from 'lib/i18n';
+import { useI18n, useT } from 'lib/i18n';
 import {
   Avatar,
   Badge,
@@ -394,7 +394,7 @@ export default function MatchesScreen() {
                         color: requestSubTab === 'received' ? theme.foreground : theme.mutedForeground,
                       }}
                     >
-                      Received
+                      {t('received')}
                     </ThemedText>
                     {incoming.length > 0 && (
                       <Badge variant="accent" accent="indigo" style={{ paddingHorizontal: 6, paddingVertical: 1 }}>
@@ -424,7 +424,7 @@ export default function MatchesScreen() {
                         color: requestSubTab === 'sent' ? theme.foreground : theme.mutedForeground,
                       }}
                     >
-                      Sent
+                      {t('sent')}
                     </ThemedText>
                     {outgoing.length > 0 && (
                       <Badge variant="secondary" style={{ paddingHorizontal: 6, paddingVertical: 1 }}>
@@ -724,7 +724,7 @@ function RequestDialogModal({
       });
 
       toast.toast({
-        title: 'Exchange Request Sent!',
+        title: t('exchangeRequestSent'),
         description: t('exchangeRequestSentDesc', { name: matchUser.name ?? t('user') }),
         variant: 'success',
       });
@@ -790,7 +790,7 @@ function RequestDialogModal({
               <ThemedText type="label">
                 2. {t('whatToOfferQuestion')}{' '}
                 <ThemedText type="caption" muted>
-                  (Optional)
+                  ({t('optional')})
                 </ThemedText>
               </ThemedText>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
@@ -869,7 +869,7 @@ function RequestDialogModal({
                 }}
               />
               <ThemedText type="bodySmall" style={{ fontWeight: '600' }}>
-                points
+                {t('points')}
               </ThemedText>
 
               {/* Quick Preset Buttons */}
@@ -1202,12 +1202,13 @@ export function RequestCard({
   const theme = useTheme();
   const t = useT('matches');
   const statusColor = getRequestStatusColor(request.status);
+  const { locale } = useI18n();
   const otherUser = direction === 'received' ? request.sender : request.receiver;
 
   const [confirmReject, setConfirmReject] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
 
-  const requestedSkillName = request.requestedSkill?.name || request.requestedSkillName || 'Requested Skill';
+  const requestedSkillName = request.requestedSkill?.name || request.requestedSkillName || t('requestedSkill');
   const requestedSessions = request.requestedSkillSessions ?? 1;
   const requestedDuration = request.requestedSkillDuration ?? 60;
 
@@ -1215,8 +1216,18 @@ export function RequestCard({
   const offeredSessions = request.offeredSkillSessions ?? 1;
   const offeredDuration = request.offeredSkillDuration ?? 60;
 
-  const senderName = request.sender?.name ?? 'Sender';
-  const receiverName = request.receiver?.name ?? 'Receiver';
+  const senderName = request.senderId === currentUserId ? t('youCap') : (request.sender?.name ?? t('sender'));
+  const receiverName = request.receiverId === currentUserId ? t('youCap') : (request.receiver?.name ?? t('receiver'));
+
+  const getRequestStatusText = (status: string) => {
+    switch (status) {
+      case 'PENDING': return t('statusPending');
+      case 'COMMITTED': return t('statusCommitted');
+      case 'REJECTED': return t('statusRejected');
+      case 'CANCELLED': return t('statusCancelled');
+      default: return status?.replace('_', ' ') ?? '';
+    }
+  };
 
   return (
     <PressableCard onPress={onOpen} variant="glass" style={{ padding: SPACING[4], gap: SPACING[3] }}>
@@ -1239,7 +1250,7 @@ export function RequestCard({
                 : t('toName', { name: otherUser?.name ?? t('user') })}
             </ThemedText>
             <Badge variant="accent" accent={statusColor}>
-              {request.status?.replace('_', ' ')}
+              {getRequestStatusText(request.status)}
             </Badge>
           </View>
 
@@ -1253,20 +1264,20 @@ export function RequestCard({
                 {requestedSkillName}
               </Badge>
               <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                ({requestedSessions} {requestedSessions === 1 ? 'session' : 'sessions'}, {requestedDuration}m)
+                ({t('sessionCount', { count: requestedSessions, duration: requestedDuration })})
               </ThemedText>
             </View>
 
             {offeredSkillName && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                  {t('offering')}:
+                  {t('offering')}
                 </ThemedText>
                 <Badge variant="accent" accent="indigo">
                   {offeredSkillName}
                 </Badge>
                 <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                  ({offeredSessions} {offeredSessions === 1 ? 'session' : 'sessions'}, {offeredDuration}m)
+                  ({t('sessionCount', { count: offeredSessions, duration: offeredDuration })})
                 </ThemedText>
               </View>
             )}
@@ -1334,8 +1345,10 @@ export function RequestCard({
         >
           <Coins size={14} color={getAccent('amber').main} />
           <ThemedText type="caption" style={{ color: getAccent('amber').main, fontWeight: '600' }}>
-            {t('pointsPaidBy', { points: request.pointsProposal, payer: '' })} {' '}
-            {request.pointsPayerId === currentUserId ? t('you') : (otherUser?.name ?? t('them'))}
+            {t('pointsPaidBy', {
+              points: request.pointsProposal,
+              payer: request.pointsPayerId === currentUserId ? t('you') : (otherUser?.name ?? t('them')),
+            })}
           </ThemedText>
         </View>
       )}
@@ -1355,7 +1368,7 @@ export function RequestCard({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1] }}>
           <Clock size={12} color={theme.mutedForeground} />
           <ThemedText type="caption" muted>
-            {formatDateShort(request.createdAt)}
+            {formatDateShort(request.createdAt, locale)}
           </ThemedText>
         </View>
       </View>

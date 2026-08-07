@@ -13,7 +13,6 @@ export const {
   useCurrentUser,
   useUserById,
   useUpdateProfile,
-  useUploadImage,
   // Skills
   useSkills,
   useSkillCategories,
@@ -73,4 +72,7 @@ export const {
   useSessionChatMessages,
   useSendSessionChatMessage,
   useMarkSessionChatRead,
+  // Uploads
+  useGetUploadPresignedUrl,
+  useConfirmAvatar,
 } = hooks;

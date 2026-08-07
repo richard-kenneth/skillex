@@ -265,7 +265,18 @@
     "noActiveExchangesDesc": "Find your perfect skill match and start learning today.",
     "browseMatches": "Browse matches",
     "noTeachingSkillsYet": "No teaching skills yet",
-    "noLearningSkillsYet": "No learning skills yet"
+    "noLearningSkillsYet": "No learning skills yet",
+    "add": "Add",
+    "peerTrader": "Peer Trader",
+    "skillExchanger": "Skill Exchanger",
+    "pts": "pts",
+    "statusAccepted": "Accepted",
+    "statusInProgress": "In Progress",
+    "statusScheduled": "Scheduled",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "statusDeclined": "Declined",
+    "statusPending": "Pending"
   },
   "matches": {
     "title": "Find Matches",
@@ -307,7 +318,7 @@
     "noMatchingResultsDesc": "No match users or skills found matching \"{query}\".",
     "clearSearch": "Clear Search",
     "anonymousUser": "Anonymous User",
-    "exchangesCompleted": "{count} exchanges",
+    "exchangesCompleted": "{count, plural, =1 {1 exchange} other {# exchanges}}",
     "sponsoredByName": "Sponsored by {name}",
     "requestSkillExchange": "Request Skill Exchange",
     "connectWithName": "Connect with {name}",
@@ -342,7 +353,31 @@
     "selectSkillToLearn": "Please select a skill you want to learn.",
     "exchangeRequestSent": "Exchange Request Sent!",
     "exchangeRequestSentDesc": "Your request was sent to {name}.",
-    "failedToSendExchangeRequest": "Failed to send exchange request. Please try again."
+    "failedToSendExchangeRequest": "Failed to send exchange request. Please try again.",
+    "viewExchange": "View Exchange & Negotiate",
+    "optional": "Optional",
+    "sessionCount": "{count, plural, =1 {1 session} other {# sessions}}, {duration}m",
+    "cancel": "Cancel",
+    "you": "you",
+    "them": "them",
+    "new": "New",
+    "user": "User",
+    "requested": "Requested:",
+    "offering": "Offering:",
+    "youCap": "You",
+    "sender": "Sender",
+    "receiver": "Receiver",
+    "requestedSkill": "Requested Skill",
+    "reviewing": "Reviewing",
+    "agreed": "Agreed",
+    "statusPending": "Pending",
+    "statusCommitted": "Committed",
+    "statusRejected": "Rejected",
+    "statusCancelled": "Cancelled",
+    "pending": "Pending",
+    "committed": "Committed",
+    "rejected": "Rejected",
+    "cancelled": "Cancelled"
   },
   "requests": {
     "title": "My Requests",
@@ -363,7 +398,11 @@
     "decline": "Decline",
     "sender": "Sender",
     "receiver": "Receiver",
-    "paidBy": "Paid by"
+    "paidBy": "Paid by",
+    "statusPending": "Pending",
+    "statusCommitted": "Committed",
+    "statusRejected": "Rejected",
+    "statusCancelled": "Cancelled"
   },
   "requestDialog": {
     "title": "Request Exchange",
@@ -1073,7 +1112,10 @@
     "doneCtaLabel": "Find Matches",
     "skipTitle": "Onboarding saved",
     "skipDesc": "You can pick this up any time from your profile.",
-    "skip": "Skip"
+    "skip": "Skip",
+    "done": "Done",
+    "toDo": "To do",
+    "welcomeTitleNoName": "Welcome! 🎉"
   },
   "users": {
     "profile": "Profile",

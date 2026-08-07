@@ -283,7 +283,7 @@ export default async function DashboardPage() {
 
       {/* Onboarding wizard — shown only when setup is incomplete; state derived from real user data */}
       <OnboardingWizard
-        userName={fullUser.name || "there"}
+        userName={fullUser.name || ""}
         hasName={!!fullUser.name}
         hasBio={!!fullUser.bio}
         hasImage={!!fullUser.image}

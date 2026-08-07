@@ -28,6 +28,8 @@ import type {
   UserSkill
 } from "../types";
 import type { ApiClient } from "./client";
+import { uploadAsync } from 'expo-file-system';
+import { FileSystemUploadType } from 'expo-file-system/legacy';
 
 export interface CreateApiHooksOptions {
   client: ApiClient;
@@ -91,16 +93,40 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     });
   }
 
-  function useUploadImage(
-    options?: Omit<UseMutationOptions<any, Error, FormData>, "mutationFn">
-  ) {
-    return useMutation<any, Error, FormData>({
-      mutationFn: (fd) => client.users.uploadImage(fd),
-      onSuccess: (...args) => {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.me });
-        return options?.onSuccess?.(...args);
+  function useGetUploadPresignedUrl() {
+    return useMutation({
+      mutationFn: async ({
+        fileName,
+        fileType,
+        type,
+      }: {
+        fileName: string;
+        fileType: string;
+        type: 'avatar' | 'exchange';
+      }) => {
+        const response = await client.uploads.getPresignedUrl({
+          fileName,
+          fileType,
+          type,
+        });
+        return response;
       },
-      ...options,
+    });
+  }
+
+  function useConfirmAvatar() {
+    return useMutation({
+      mutationFn: async ({
+        key,
+      }: {
+        key: string;
+      }) => {
+        const response = await client.uploads.confirmAvatar(key);
+        return response;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.me });
+      },
     });
   }
 
@@ -836,7 +862,6 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     useCurrentUser,
     useUserById,
     useUpdateProfile,
-    useUploadImage,
     // Skills
     useSkills,
     useSkillCategories,
@@ -896,6 +921,9 @@ export function createApiHooks({ client, queryClient }: CreateApiHooksOptions) {
     useSessionChatMessages,
     useSendSessionChatMessage,
     useMarkSessionChatRead,
+    // Uploads
+    useGetUploadPresignedUrl,
+    useConfirmAvatar,
   };
 }
 

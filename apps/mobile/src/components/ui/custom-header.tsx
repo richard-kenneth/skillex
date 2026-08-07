@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Avatar } from '@/components/ui/avatar';
 import { useTheme } from '@/hooks/use-theme';
 import { RADIUS, SPACING, ICON_SIZE, ANIMATION } from '@/constants/theme';
+import { useT } from 'lib/i18n';
 import { useCurrentUser, useNotifications } from '@/lib/api-hooks';
 
 interface CustomHeaderProps {
@@ -63,6 +64,7 @@ export function CustomHeader({
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useT('dashboard');
 
   const userQ = useCurrentUser();
   const user = userQ.data;
@@ -107,10 +109,10 @@ export function CustomHeader({
             />
             <View style={styles.userText}>
               <ThemedText type="cardTitle" numberOfLines={1}>
-                {user?.name?.split(' ')[0] || user?.username || 'Peer Trader'}
+                {user?.name?.split(' ')[0] || user?.username || t('peerTrader')}
               </ThemedText>
               <ThemedText type="caption" muted numberOfLines={1}>
-                {user?.role || 'Skill Exchanger'}
+                {user?.role || t('skillExchanger')}
               </ThemedText>
             </View>
           </Pressable>

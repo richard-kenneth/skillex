@@ -272,7 +272,8 @@ export function calculateExchangeProgress(exchange: {
     exchange.requestedSkillSessions +
     (exchange.receivedSkillId ? exchange.offeredSkillSessions : 0);
   if (totalSessions === 0) return 0;
-  return Math.round((exchange.completedSessions / totalSessions) * 100);
+  const percentage = Math.round((exchange.completedSessions / totalSessions) * 100);
+  return Math.min(100, Math.max(0, percentage));
 }
 
 export function calculateAverageRating(

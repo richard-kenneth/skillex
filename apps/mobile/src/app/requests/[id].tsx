@@ -181,7 +181,10 @@ export default function RequestDetailScreen() {
   const request = q.data as any;
   const loading = q.isLoading;
   const currentUserId = (userQ.data as any)?.id;
-  const balance = (balanceQ.data as any)?.balance ?? 0;
+  const balance =
+    typeof balanceQ.data === "number"
+      ? balanceQ.data
+      : (balanceQ.data as any)?.balance ?? 0;
   const isSender = request?.senderId === currentUserId;
   const otherUser = isSender ? request?.receiver : request?.sender;
   const amIAgreed = isSender

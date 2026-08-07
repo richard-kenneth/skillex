@@ -73,10 +73,29 @@ export class VideoService {
   /* ─── Session Time Validation ────────────────────────────── */
 
   private async validateSessionTimeForSession(exchangeSessionId: string, userId: string) {
-    const session = await this.prisma.exchangeSession.findUnique({
+    let session = await this.prisma.exchangeSession.findUnique({
       where: { id: exchangeSessionId },
       include: { exchange: true },
     });
+
+    if (!session) {
+      const exchange = await this.prisma.exchange.findUnique({
+        where: { id: exchangeSessionId },
+        include: { sessions: true },
+      });
+      if (exchange && exchange.sessions.length > 0) {
+        const now = new Date();
+        const sorted = [...exchange.sessions].sort((a, b) => {
+          const distA = Math.abs(new Date(a.scheduledAt).getTime() - now.getTime());
+          const distB = Math.abs(new Date(b.scheduledAt).getTime() - now.getTime());
+          return distA - distB;
+        });
+        session = await this.prisma.exchangeSession.findUnique({
+          where: { id: sorted[0].id },
+          include: { exchange: true },
+        });
+      }
+    }
 
     if (!session) {
       throw new NotFoundException('Session not found');

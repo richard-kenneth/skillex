@@ -340,7 +340,7 @@ function ProfileStep({
                 {it.label}
               </ThemedText>
               <Badge variant="accent" accent={it.done ? 'green' : 'blue'}>
-                {it.done ? 'Done' : 'To do'}
+                {it.done ? t('done') : t('toDo')}
               </Badge>
             </View>
           ))}

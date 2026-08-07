@@ -1287,14 +1287,11 @@ function PersistentChatDrawer({
     prevTotalMsgsRef.current = currentLen;
   }, [rawMessages.length]);
 
-  // In an inverted list, offset.y < 30 means the user is viewing the newest messages at the bottom
+  // Track scroll position to manage auto-scroll behavior
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset } = e.nativeEvent;
     const atBottom = contentOffset.y < 30;
     isAtBottomRef.current = atBottom;
-    if (atBottom) {
-      setUnreadStartIndex(-1);
-    }
   }, []);
 
   const handleSend = async () => {
@@ -1682,12 +1679,71 @@ function ControlsBar({
     localParticipant?.setCameraEnabled(!isVideoEnabled);
   };
 
+  /**
+   * ============================================================================
+   * iOS SYSTEM-WIDE SCREEN SHARING DOCUMENTATION & IMPLEMENTATION
+   * ============================================================================
+   * 
+   * To enable System-Wide Screen Sharing on iOS across all apps (ReplayKit Broadcast Extension):
+   * 
+   * REQUIREMENTS (When Apple Developer Account & Custom Native Build are ready):
+   * 1. Paid Apple Developer Account (required for App Group & Broadcast Extension Signing).
+   * 2. Configure App Group entitlement in app.json / Xcode:
+   *    - Main App Entitlement: "group.com.skilex.app"
+   *    - Extension Entitlement: "group.com.skilex.app"
+   * 3. Add Broadcast Upload Extension target in Xcode (or via @livekit/react-native-expo-plugin):
+   *    - Target Name: "SkilExBroadcastExtension"
+   *    - Bundle ID: "com.skilex.app.broadcast"
+   * 4. SampleHandler.swift in Broadcast Extension:
+   *    ```swift
+   *    import ReplayKit
+   *    import LiveKitWebRTC
+   *    class SampleHandler: RPBroadcastSampleHandler {
+   *      override func broadcastStarted(withSetupInfo setupInfo: [String : NSObject]?) {
+   *        LKWBRTCScreenCapturer.startBroadcast(self)
+   *      }
+   *      override func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, of sampleBufferType: RPSampleBufferType) {
+   *        LKWBRTCScreenCapturer.processSampleBuffer(sampleBuffer, of: sampleBufferType)
+   *      }
+   *    }
+   *    ```
+   * 5. Native RPSystemBroadcastPickerView trigger in React Native:
+   *    ```ts
+   *    // System-wide iOS Broadcast Trigger (Commented out until App Group & Provisioning Profile are ready):
+   *    // import { NativeModules } from 'react-native';
+   *    // const startSystemBroadcastIOS = () => {
+   *    //   NativeModules.ScreenCapturePicker?.showBroadcastPicker?.("com.skilex.app.broadcast");
+   *    // };
+   *    ```
+   * 
+   * CURRENT BEST WORKING APPROACH (Without Apple Developer Account):
+   * In-App Screen Capture via LiveKit `localParticipant.setScreenShareEnabled(true)`.
+   * This captures in-app session content, slides, notes, and webviews cleanly on iOS & Android
+   * without needing Apple Developer certificates or custom Xcode Broadcast Extensions.
+   * ============================================================================
+   */
   const handleToggleScreenShare = async () => {
     if (!localParticipant) return;
     try {
-      await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
-    } catch (e) {
+      const nextState = !isScreenShareEnabled;
+      
+      // SYSTEM-WIDE BROADCAST EXTENSION HOOK (Uncomment when Apple Dev Account target is ready):
+      // if (Platform.OS === 'ios' && nextState) {
+      //   // startSystemBroadcastIOS();
+      // }
+
+      await localParticipant.setScreenShareEnabled(nextState);
+      toast.toast({
+        title: nextState ? "Screen sharing started" : "Screen sharing stopped",
+        variant: "info",
+      });
+    } catch (e: any) {
       console.warn('[ScreenShare] Toggle failed:', e);
+      toast.toast({
+        title: "Screen share unavailable",
+        description: e?.message || "In-app screen capture failed",
+        variant: "error",
+      });
     }
   };
 

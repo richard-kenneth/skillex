@@ -38,7 +38,9 @@ import { useThemeContext } from "@/hooks/theme-context";
 import { useTheme } from "@/hooks/use-theme";
 import {
   useAddUserSkill,
+  useConfirmAvatar,
   useCurrentUser,
+  useGetUploadPresignedUrl,
   useMyReviews,
   useReferralCode,
   useReferralStats,
@@ -53,6 +55,7 @@ import {
   EXCHANGE_NOTIFICATION_TYPES,
   POINTS_NOTIFICATION_TYPES,
   ProfileFormSchema,
+  QUERY_KEYS,
   REVIEW_TAG_LABELS,
   SkillType,
 } from "@skil-ex2/shared";
@@ -101,6 +104,8 @@ import {
 } from "react-native-safe-area-context";
 import * as v from "valibot";
 import { authClient } from "../../../lib/auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { File } from "expo-file-system";
 
 type ProfileTab = "edit" | "skills" | "reviews" | "referrals" | "notifications";
 
@@ -435,6 +440,9 @@ function AvatarUploader({
   const userQ = useCurrentUser();
   const toast = useToast();
   const [preview, setPreview] = React.useState<string | null>(null);
+  const getPresignedUrlMutation = useGetUploadPresignedUrl();
+  const confirmMutation = useConfirmAvatar();
+  const queryClient = useQueryClient();
 
   const pick = async () => {
     try {
@@ -455,62 +463,98 @@ function AvatarUploader({
         quality: 0.7,
       });
       if (res.canceled || !res.assets?.[0]) return;
-      const uri = res.assets[0].uri;
-      setPreview(uri);
-      // Note: Full upload implementation would require presigned URL flow
-      // For now, show preview. Backend upload to be implemented.
-      toast.toast({
-        title: t('photoSelected'),
-        description: t('photoSelectedDesc'),
-        variant: "info",
-      });
+      const asset = res.assets[0];
+      setPreview(asset.uri);
     } catch (err: any) {
       toast.toast({ title: t("couldNotPickImage"), variant: "error" });
     }
   };
 
-  const showFullScreen = () => {
-    if (current || preview) {
-      setPreview(current || preview);
+  const handleSaveAvatar = async (uriToUpload: string) => {
+    try {
+      const filename = uriToUpload.split('/').pop() || `avatar_${Date.now()}.jpg`;
+      const match = /\.(\w+)$/.exec(filename);
+      const mimeType = match ? `image/${match[1]}` : `image/jpeg`;
+
+      const name = filename || uriToUpload.split('/').pop() || `avatar_${Date.now()}.jpg`;
+        const type = mimeType || (match ? `image/${match[1]}` : 'image/jpeg');
+
+        // 1. Request presigned URL from backend
+        const { uploadUrl, key } = await getPresignedUrlMutation.mutateAsync({
+          fileName: name,
+          fileType: type,
+          type: 'avatar',
+        });
+
+         // Step 2: Upload file
+      const file = new File(uriToUpload);
+      const fileUploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": mimeType,
+        },
+        body: file,
+      });
+
+      if (!fileUploadRes.ok || fileUploadRes.status < 200 || fileUploadRes.status >= 300) {
+        throw new Error("File upload to storage failed");
+      }
+
+      const { success } = await confirmMutation.mutateAsync({
+        key,
+      });
+      if (!success) throw new Error("Could not confirm avatar upload.");
+      // Dismiss preview modal upon success so toast renders visibly on the root screen
+      setPreview(null);
+      toast.toast({ title: "Profile picture updated!", variant: "success" });
+    } catch (err: any) {
+      setPreview(null);
+      toast.toast({
+        title: "Image upload failed",
+        description: err?.message || "Could not update profile picture",
+        variant: "error",
+      });
     }
   };
 
   return (
-    <View>
-      <Pressable onPress={pick}>
-        <Avatar uri={current} fallback={fallback} size={80} />
-        <View
+    <View style={{ alignItems: "center" }}>
+      <View style={{ position: "relative" }}>
+        <Pressable
+          onPress={() => (current || preview) && setPreview(current || preview)}
+          hitSlop={4}
+        >
+          <Avatar uri={preview || current} fallback={fallback} size={88} />
+        </Pressable>
+        <Pressable
+          onPress={pick}
+          hitSlop={8}
           style={{
             position: "absolute",
-            right: -2,
-            bottom: -2,
-            width: 30,
-            height: 30,
+            right: 0,
+            bottom: 0,
+            width: 32,
+            height: 32,
             borderRadius: RADIUS.pill,
             backgroundColor: theme.primary,
             alignItems: "center",
             justifyContent: "center",
-            borderWidth: 2,
+            borderWidth: 2.5,
             borderColor: theme.background,
+            zIndex: 10,
           }}
         >
-          <Camera size={14} color="#fff" />
-        </View>
-      </Pressable>
-      {(current || preview) && (
-        <Pressable
-          onPress={showFullScreen}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
-        />
-      )}
+          <Camera size={15} color="#fff" />
+        </Pressable>
+      </View>
       {preview && (
-        <ImagePreviewModal uri={preview} onClose={() => setPreview(null)} />
+        <ImagePreviewModal
+          uri={preview}
+          onClose={() => setPreview(null)}
+          onUpload={() => handleSaveAvatar(preview)}
+          uploading={getPresignedUrlMutation.isPending || confirmMutation.isPending}
+          isNewPick={preview !== current}
+        />
       )}
     </View>
   );
@@ -519,46 +563,74 @@ function AvatarUploader({
 function ImagePreviewModal({
   uri,
   onClose,
+  onUpload,
+  uploading,
+  isNewPick,
 }: {
   uri: string;
   onClose: () => void;
+  onUpload?: () => void;
+  uploading?: boolean;
+  isNewPick?: boolean;
 }) {
   const theme = useTheme();
   return (
     <Modal visible onRequestClose={onClose} transparent animationType="fade">
       <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: "rgba(0,0,0,0.95)",
+          justifyContent: "space-between",
+        }}
+      >
         <View
           style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.9)",
+            flexDirection: "row",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: SPACING[4],
+            paddingVertical: SPACING[3],
           }}
         >
-          <ExpoImage
-            source={{ uri }}
-            style={{ width: "100%", height: "100%" }}
-            contentFit="contain"
-          />
+          <ThemedText type="smallBold" style={{ color: "#fff", fontSize: FONT_SIZE.md }}>
+            Profile Picture
+          </ThemedText>
           <Pressable
             onPress={onClose}
             style={{
-              position: "absolute",
-              top: 50,
-              right: 20,
-              width: 40,
-              height: 40,
-              borderRadius: 20,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
               backgroundColor: "rgba(255,255,255,0.2)",
               alignItems: "center",
               justifyContent: "center",
             }}
+            hitSlop={8}
           >
-            <ThemedText style={{ color: "#fff", fontSize: 24 }}>×</ThemedText>
+            <ThemedText style={{ color: "#fff", fontSize: 20 }}>×</ThemedText>
           </Pressable>
         </View>
-      </Pressable>
+
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: SPACING[4] }}>
+          <ExpoImage
+            source={{ uri }}
+            style={{ width: 280, height: 280, borderRadius: 140 }}
+            contentFit="cover"
+          />
+        </View>
+
+        <View style={{ padding: SPACING[4], gap: SPACING[3] }}>
+          {isNewPick && onUpload ? (
+            <Button onPress={onUpload} loading={uploading}>
+              Save Profile Picture
+            </Button>
+          ) : null}
+          <Button variant="outline" onPress={onClose} disabled={uploading}>
+            Close
+          </Button>
+        </View>
+      </SafeAreaView>
     </Modal>
   );
 }
@@ -1525,11 +1597,12 @@ function ReferralsPane() {
   const code = refCodeQ.data;
   const stats = refStatsQ.data;
   const referrals = stats?.referrals ?? [];
-  const shareLink = `${process.env.EXPO_PUBLIC_WEB_BASE_URL!}?ref=${code}`;
+  const webBase = process.env.EXPO_PUBLIC_WEB_BASE_URL!.replace(/\/$/, "");
+  const shareLink = `${webBase}?ref=${code ?? ""}`;
 
   const copy = async () => {
-    const { Clipboard } = await import("react-native");
-    await Clipboard.setString(shareLink);
+    const Clipboard = await import("expo-clipboard");
+    await Clipboard.setStringAsync(shareLink);
     toast.toast({ title: "Link copied", variant: "success" });
   };
   const share = async () => {

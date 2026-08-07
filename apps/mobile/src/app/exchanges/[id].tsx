@@ -26,8 +26,8 @@ import * as v from "valibot";
 
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { File, Paths } from "expo-file-system";
-import { StorageAccessFramework, readAsStringAsync, EncodingType } from "expo-file-system/legacy";
+import { File, Paths, uploadAsync } from "expo-file-system";
+import { StorageAccessFramework, readAsStringAsync, EncodingType, FileSystemUploadType } from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { useVideoPlayer, VideoView, isPictureInPictureSupported } from "expo-video";
 import { Image as ExpoImage } from "expo-image";
@@ -283,8 +283,9 @@ export default function ExchangeDetailScreen() {
   const taughtSessions = sessions.filter((s: any) => s.skillId === exchange?.taughtSkillId);
   const receivedSessions = isTwoWay ? sessions.filter((s: any) => s.skillId !== exchange?.taughtSkillId) : [];
 
-  const totalSessionsCount = (exchange?.requestedSkillSessions ?? 0) + (isTwoWay ? (exchange?.offeredSkillSessions ?? 0) : 0);
   const completedSessionsCount = sessions.filter((s: any) => s.status === "COMPLETED").length;
+  const rawTotal = (exchange?.requestedSkillSessions ?? 0) + (isTwoWay ? (exchange?.offeredSkillSessions ?? 0) : 0);
+  const totalSessionsCount = Math.max(rawTotal || sessions.length, completedSessionsCount);
 
   const canComplete = exchange?.status === "IN_PROGRESS" || exchange?.status === "ACCEPTED" || exchange?.status === "SCHEDULED" || exchange?.status === "COMMITTED";
   const canReview = exchange?.status === "COMPLETED" && !exchange?.myReview;
@@ -628,7 +629,6 @@ export default function ExchangeDetailScreen() {
                   try {
                     const parsed = v.parse(CreateReviewSchema, {
                       exchangeId: id!,
-                      forUserId: other?.id,
                       rating,
                       comment: comment || undefined,
                       tags: tags.length ? tags : undefined,
@@ -888,31 +888,89 @@ export default function ExchangeDetailScreen() {
         }}
       />
 
-      {/* Quality Tag Selector Sheet */}
-      <ActionSheet
-        open={tagSheet}
-        onClose={() => setTagSheet(false)}
-        title={t('reviewQualities')}
-        description={t('selectAllApply')}
-        options={(
-          Object.keys(REVIEW_TAG_LABELS) as (keyof typeof REVIEW_TAG_LABELS)[]
-        ).map((k) => {
-          const active = tags.includes(k);
-          return {
-            label: REVIEW_TAG_LABELS[k],
-            onPress: () => {
-              setTags((prev) =>
-                prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k],
-              );
-            },
-            icon: active ? (
-              <CheckCircle2 size={18} color={theme.primary} />
-            ) : (
-              <CheckCircle2 size={18} color={theme.mutedForeground} />
-            ),
-          };
-        })}
-      />
+      {/* Quality Tag Selector Modal */}
+      <Modal
+        visible={tagSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setTagSheet(false)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" }}>
+          <View
+            style={{
+              backgroundColor: theme.card,
+              borderTopLeftRadius: RADIUS.xl,
+              borderTopRightRadius: RADIUS.xl,
+              padding: SPACING[5],
+              gap: SPACING[4],
+              maxHeight: "80%",
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View>
+                <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg }}>
+                  {t('reviewQualities') ?? 'Review Qualities'}
+                </ThemedText>
+                <ThemedText type="caption" muted>
+                  {t('selectAllApply') ?? 'Select all that apply'}
+                </ThemedText>
+              </View>
+              <Pressable onPress={() => setTagSheet(false)} hitSlop={8}>
+                <X size={20} color={theme.mutedForeground} />
+              </Pressable>
+            </View>
+
+            <ScrollView contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2.5], paddingVertical: SPACING[2] }}>
+              {(
+                Object.keys(REVIEW_TAG_LABELS) as (keyof typeof REVIEW_TAG_LABELS)[]
+              ).map((k) => {
+                const active = tags.includes(k);
+                return (
+                  <Pressable
+                    key={k}
+                    onPress={() => {
+                      setTags((prev) =>
+                        prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k],
+                      );
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: SPACING[2],
+                      paddingHorizontal: SPACING[3.5],
+                      paddingVertical: SPACING[2.5],
+                      borderRadius: RADIUS.pill,
+                      backgroundColor: active ? getAccent("indigo").bg : theme.background,
+                      borderWidth: 1.5,
+                      borderColor: active ? getAccent("indigo").main : theme.border,
+                    }}
+                  >
+                    <CheckCircle2
+                      size={16}
+                      color={active ? getAccent("indigo").main : theme.mutedForeground}
+                    />
+                    <ThemedText
+                      type="smallBold"
+                      style={{
+                        fontSize: FONT_SIZE.xs,
+                        color: active ? getAccent("indigo").main : theme.foreground,
+                      }}
+                    >
+                      {REVIEW_TAG_LABELS[k]}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <Button onPress={() => setTagSheet(false)}>
+              Done ({tags.length} selected)
+            </Button>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1277,7 +1335,10 @@ const ChatMessageItem = React.memo(
     onDownloadFile: (url: string, fileName?: string) => void;
   }) {
     const theme = useTheme();
-    const mine = m.senderId === currentUserId;
+    const mine =
+      !!m.senderId &&
+      !!currentUserId &&
+      String(m.senderId) === String(currentUserId);
     const isImage = m.fileType?.startsWith("image/");
 
     return (
@@ -1385,6 +1446,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
   const theme = useTheme();
   const t = useT('exchanges');
   const toast = useToast();
+  const insets = useSafeAreaInsets();
 
   const scrollViewRef = React.useRef<ScrollView>(null);
 
@@ -1439,17 +1501,16 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
       });
 
       
-      // Step 2: Upload file
-      const file = new File(fileUri);
-      const fileUploadRes = await fetch(uploadUrl, {
-        method: "PUT",
+      // Step 2: Upload file via FileSystem.uploadAsync
+      const uploadRes = await uploadAsync(uploadUrl, fileUri, {
+        httpMethod: "PUT",
+        uploadType: FileSystemUploadType.BINARY_CONTENT,
         headers: {
           "Content-Type": mimeType,
         },
-        body: file,
       });
 
-      if (!fileUploadRes.ok || fileUploadRes.status < 200 || fileUploadRes.status >= 300) {
+      if (uploadRes.status < 200 || uploadRes.status >= 300) {
         throw new Error("File upload to storage failed");
       }
 
@@ -1476,6 +1537,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
   // Pick from Photo Library
   const handlePickImage = async () => {
     setAttachmentSheetOpen(false);
+    await new Promise((r) => setTimeout(r, 400));
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,
@@ -1492,6 +1554,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
   // Take Photo via Camera
   const handleTakePhoto = async () => {
     setAttachmentSheetOpen(false);
+    await new Promise((r) => setTimeout(r, 400));
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       toast.toast({ title: "Camera permission required", variant: "error" });
@@ -1513,6 +1576,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
   // Pick Document / File
   const handlePickDocument = async () => {
     setAttachmentSheetOpen(false);
+    await new Promise((r) => setTimeout(r, 400));
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
@@ -1780,6 +1844,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
           animationType="fade"
           onRequestClose={() => setPreviewImageUrl(null)}
         >
+          <StatusBar backgroundColor="rgba(0,0,0,0.95)" barStyle="light-content" />
           <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.95)", justifyContent: "space-between" }}>
             {/* Header Bar with Download & Close */}
             <View
@@ -1788,7 +1853,8 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
                 alignItems: "center",
                 justifyContent: "space-between",
                 paddingHorizontal: SPACING[4],
-                paddingVertical: SPACING[3],
+                paddingTop: Math.max(insets.top, SPACING[3]),
+                paddingBottom: SPACING[3],
                 zIndex: 10,
               }}
             >
@@ -1827,16 +1893,19 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
               </View>
             </View>
 
-            {/* Centered Image */}
+            {/* Centered Image with backdrop tap dismiss */}
             {previewImageUrl && (
-              <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+              <Pressable
+                style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+                onPress={() => setPreviewImageUrl(null)}
+              >
                 <ExpoImage
                   source={{ uri: previewImageUrl }}
                   cachePolicy="memory-disk"
                   contentFit="contain"
                   style={{ width: "100%", height: "100%" }}
                 />
-              </View>
+              </Pressable>
             )}
           </SafeAreaView>
         </Modal>

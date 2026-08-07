@@ -40,6 +40,29 @@ function getSystemLocale(defaultLocale: Locale = "en"): Locale {
   return isValidLocale(code) ? code : defaultLocale;
 }
 
+/**
+ * Fully formats translation strings for i18n-js on mobile platforms:
+ * 1. Resolves ICU plural patterns `{count, plural, =1 {A} other {B}}`
+ * 2. Replaces `{varName}` placeholder variables
+ */
+function formatTranslationVars(str: string, vars?: Record<string, string | number>): string {
+  if (typeof str !== "string") return str;
+  let result = str;
+  if (vars) {
+    if (result.includes("plural,")) {
+      const countVal = vars.count !== undefined ? Number(vars.count) : 0;
+      result = result.replace(/\{(\w+),\s*plural,\s*=1\s*\{([^}]*)\}\s*other\s*\{([^}]*)\}\}/g, (_, varName, oneText, otherText) => {
+        const rawVal = vars[varName] !== undefined ? Number(vars[varName]) : countVal;
+        return rawVal === 1 ? oneText : otherText.replace(/#/g, String(rawVal));
+      });
+    }
+    Object.keys(vars).forEach((key) => {
+      result = result.replaceAll(`{${key}}`, String(vars[key]));
+    });
+  }
+  return result;
+}
+
 export function I18nProvider({
   children,
   defaultLocale = "en",
@@ -111,7 +134,8 @@ export function I18nProvider({
       t: (key, vars) => {
         // Force sync global instance to current state
         i18n.locale = locale;
-        return vars ? i18n.t(key, vars) : i18n.t(key);
+        const raw = vars ? i18n.t(key, vars) : i18n.t(key);
+        return formatTranslationVars(raw, vars);
       },
     };
   }, [locale]);
@@ -139,7 +163,8 @@ export function useI18n() {
       },
       t: (key: string, vars?: Record<string, string | number>) => {
         i18n.locale = currentLocale;
-        return vars ? i18n.t(key, vars) : i18n.t(key);
+        const raw = vars ? i18n.t(key, vars) : i18n.t(key);
+        return formatTranslationVars(raw, vars);
       },
     };
   }

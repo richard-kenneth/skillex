@@ -112,14 +112,21 @@ export function createApiClient(config: ApiClientConfig) {
     me: () => request<any>(`/users/me`),
     byId: (id: string) => request<any>(`/users/${id}`),
     updateProfile: (payload: UpdateProfileDto) =>
-      request<any>(`/users/me`, {
+      request<any>(`/users/profile`, {
         method: "PATCH",
         body: JSON.stringify(payload),
       }),
-    uploadImage: (formData: FormData) =>
-      request<any>(`/uploads`, {
+  };
+
+  const uploads = {
+    getPresignedUrl: (params: { fileName: string; fileType: string; type?: string }) => {
+      const qs = new URLSearchParams(params as any).toString();
+      return request<{ uploadUrl: string; key: string; publicUrl: string }>(`/uploads/presigned-url?${qs}`);
+    },
+    confirmAvatar: (key: string) =>
+      request<{ success: boolean; imageUrl: string }>(`/uploads/confirm-avatar`, {
         method: "POST",
-        body: formData as any,
+        body: JSON.stringify({ key }),
       }),
   };
 
@@ -396,6 +403,7 @@ export function createApiClient(config: ApiClientConfig) {
     reviews,
     referrals,
     video,
+    uploads,
     auth,
   };
 }

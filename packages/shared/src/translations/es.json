@@ -207,7 +207,7 @@
   "dashboard": {
     "title": "Panel",
     "welcomeBack": "¡Bienvenido de vuelta!",
-    "welcomeBackWithName": "¡Bienvenido de vuelta, {name}!",
+    "welcomeBackWithName": "¡Bienvenido de vuelta, <bold>{name}</bold>!",
     "description": "Aquí tienes un resumen de tus intercambios",
     "quickStats": "Estadísticas rápidas",
     "activeExchanges": "Intercambios activos",
@@ -265,7 +265,18 @@
     "noActiveExchangesDesc": "Encuentra tu coincidencia perfecta y comienza a aprender hoy.",
     "browseMatches": "Explorar coincidencias",
     "noTeachingSkillsYet": "Sin habilidades de enseñanza aún",
-    "noLearningSkillsYet": "Sin habilidades de aprendizaje aún"
+    "noLearningSkillsYet": "Sin habilidades de aprendizaje aún",
+    "add": "Agregar",
+    "peerTrader": "Compañero",
+    "skillExchanger": "Intercambiador de habilidades",
+    "pts": "pts",
+    "statusAccepted": "Aceptado",
+    "statusInProgress": "En Progreso",
+    "statusScheduled": "Programado",
+    "statusCompleted": "Completado",
+    "statusCancelled": "Cancelado",
+    "statusDeclined": "Rechazado",
+    "statusPending": "Pendiente"
   },
   "matches": {
     "title": "Buscar coincidencias",
@@ -307,7 +318,7 @@
     "noMatchingResultsDesc": "No se encontraron usuarios o habilidades que coincidan con \"{query}\".",
     "clearSearch": "Limpiar Búsqueda",
     "anonymousUser": "Usuario Anónimo",
-    "exchangesCompleted": "{count} intercambios",
+    "exchangesCompleted": "{count, plural, =1 {1 intercambio} other {# intercambios}}",
     "sponsoredByName": "Patrocinado por {name}",
     "requestSkillExchange": "Solicitar Intercambio de Habilidades",
     "connectWithName": "Conectar con {name}",
@@ -342,7 +353,31 @@
     "selectSkillToLearn": "Por favor selecciona una habilidad que quieras aprender.",
     "exchangeRequestSent": "¡Solicitud de Intercambio Enviada!",
     "exchangeRequestSentDesc": "Tu solicitud fue enviada a {name}.",
-    "failedToSendExchangeRequest": "Error al enviar la solicitud de intercambio. Inténtalo de nuevo."
+    "failedToSendExchangeRequest": "Error al enviar la solicitud de intercambio. Inténtalo de nuevo.",
+    "viewExchange": "Ver intercambio y negociar",
+    "optional": "Opcional",
+    "sessionCount": "{count, plural, =1 {1 sesión} other {# sesiones}}, {duration}m",
+    "cancel": "Cancelar",
+    "you": "tú",
+    "them": "ellos/ellas",
+    "new": "Nuevo",
+    "user": "Usuario",
+    "requested": "Solicitado:",
+    "offering": "Ofrece:",
+    "youCap": "Tú",
+    "sender": "Remitente",
+    "receiver": "Destinatario",
+    "requestedSkill": "Habilidad solicitada",
+    "reviewing": "Revisando",
+    "agreed": "Aceptado",
+    "statusPending": "Pendiente",
+    "statusCommitted": "Comprometido",
+    "statusRejected": "Rechazado",
+    "statusCancelled": "Cancelado",
+    "pending": "Pendiente",
+    "committed": "Comprometido",
+    "rejected": "Rechazado",
+    "cancelled": "Cancelado"
   },
   "requests": {
     "title": "Mis solicitudes",
@@ -363,7 +398,11 @@
     "decline": "Rechazar",
     "sender": "Remitente",
     "receiver": "Destinatario",
-    "paidBy": "Pagado por"
+    "paidBy": "Pagado por",
+    "statusPending": "Pendiente",
+    "statusCommitted": "Comprometido",
+    "statusRejected": "Rechazado",
+    "statusCancelled": "Cancelado"
   },
   "requestDialog": {
     "title": "Solicitar intercambio",
@@ -1073,7 +1112,10 @@
     "doneCtaLabel": "Buscar coincidencias",
     "skipTitle": "Incorporación guardada",
     "skipDesc": "Puedes retomarlo en cualquier momento desde tu perfil.",
-    "skip": "Omitir"
+    "skip": "Omitir",
+    "done": "Hecho",
+    "toDo": "Por hacer",
+    "welcomeTitleNoName": "¡Bienvenido/a! 🎉"
   },
   "userProfile": {
     "title": "Perfil de usuario",

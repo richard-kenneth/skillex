@@ -53,8 +53,12 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store",
-      "@livekit/react-native-expo-plugin",
+      [
+        "@livekit/react-native-expo-plugin",
+        {
+          "enableScreenShare": true
+        }
+      ],
       "@config-plugins/react-native-webrtc",
       [
         "expo-notifications",

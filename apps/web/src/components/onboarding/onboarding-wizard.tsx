@@ -99,7 +99,9 @@ function WelcomeStep({ userName, t }: { userName: string; t: ReturnType<typeof u
 
       <div className="space-y-2">
         <h2 className="text-2xl font-extrabold tracking-tight">
-          {t("welcomeTitle", { name: userName.split(" ")[0] })}
+          {userName && userName.trim() !== ""
+            ? t("welcomeTitle", { name: userName.split(" ")[0] })
+            : t("welcomeTitleNoName")}
         </h2>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
           {t("welcomeDesc")}

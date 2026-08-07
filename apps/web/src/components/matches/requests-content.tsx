@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Coins, Inbox, MessageSquare, Send } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
 
 interface RequestUser {
   id: string;
@@ -202,6 +202,7 @@ function RequestCard({
 }) {
   const t = useTranslations("requests");
   const tc = useTranslations("common");
+  const format = useFormatter();
   const otherUser = tab === "received" ? request.sender : request.receiver;
 
   return (
@@ -229,7 +230,15 @@ function RequestCard({
                 variant="outline"
                 className={statusColors[request.status] || ""}
               >
-                {request.status}
+                {request.status === "PENDING"
+                  ? t("statusPending")
+                  : request.status === "COMMITTED"
+                    ? t("statusCommitted")
+                    : request.status === "REJECTED"
+                      ? t("statusRejected")
+                      : request.status === "CANCELLED"
+                        ? t("statusCancelled")
+                        : request.status}
               </Badge>
             </div>
 
@@ -269,7 +278,7 @@ function RequestCard({
             <div className="flex flex-col gap-0.5 text-[11px] font-medium bg-muted/40 p-2 rounded border border-border/30">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">
-                  {request.sender?.name ?? t("sender")}
+                  {request.senderId === currentUserId ? tc("you") : (request.sender?.name ?? t("sender"))}
                 </span>
                 <span
                   className={
@@ -281,7 +290,7 @@ function RequestCard({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">
-                  {request.receiver?.name ?? t("receiver")}
+                  {request.receiverId === currentUserId ? tc("you") : (request.receiver?.name ?? t("receiver"))}
                 </span>
                 <span
                   className={
@@ -324,7 +333,7 @@ function RequestCard({
           <div className="flex flex-col items-end justify-between h-full shrink-0">
             <div className="text-right space-y-2">
               <p className="text-xs text-muted-foreground/60">
-                {new Date(request.createdAt).toLocaleDateString(undefined, {
+                {format.dateTime(new Date(request.createdAt), {
                   month: "short",
                   day: "numeric",
                   year: "numeric",

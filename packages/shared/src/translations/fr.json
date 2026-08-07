@@ -265,7 +265,18 @@
     "noActiveExchangesDesc": "Trouvez votre correspondance parfaite et commencez à apprendre dès aujourd'hui.",
     "browseMatches": "Parcourir les correspondances",
     "noTeachingSkillsYet": "Aucune compétence d'enseignement pour le moment",
-    "noLearningSkillsYet": "Aucune compétence d'apprentissage pour le moment"
+    "noLearningSkillsYet": "Aucune compétence d'apprentissage pour le moment",
+    "add": "Ajouter",
+    "peerTrader": "Pair",
+    "skillExchanger": "Échangeur de compétences",
+    "pts": "pts",
+    "statusAccepted": "Accepté",
+    "statusInProgress": "En cours",
+    "statusScheduled": "Programmé",
+    "statusCompleted": "Terminé",
+    "statusCancelled": "Annulé",
+    "statusDeclined": "Refusé",
+    "statusPending": "En attente"
   },
   "matches": {
     "title": "Trouver des correspondances",
@@ -307,7 +318,7 @@
     "noMatchingResultsDesc": "Aucun utilisateur ou compétence trouvé correspondant à \"{query}\".",
     "clearSearch": "Effacer la Recherche",
     "anonymousUser": "Utilisateur Anonyme",
-    "exchangesCompleted": "{count} échanges",
+    "exchangesCompleted": "{count, plural, =1 {1 échange} other {# échanges}}",
     "sponsoredByName": "Sponsorisé par {name}",
     "requestSkillExchange": "Demander un Échange de Compétences",
     "connectWithName": "Connecter avec {name}",
@@ -342,7 +353,31 @@
     "selectSkillToLearn": "Veuillez sélectionner une compétence que vous souhaitez apprendre.",
     "exchangeRequestSent": "Demande d'Échange Envoyée !",
     "exchangeRequestSentDesc": "Votre demande a été envoyée à {name}.",
-    "failedToSendExchangeRequest": "Échec de l'envoi de la demande d'échange. Veuillez réessayer."
+    "failedToSendExchangeRequest": "Échec de l'envoi de la demande d'échange. Veuillez réessayer.",
+    "viewExchange": "Voir l'échange et négocier",
+    "optional": "Optionnel",
+    "sessionCount": "{count, plural, =1 {1 session} other {# sessions}}, {duration}m",
+    "cancel": "Annuler",
+    "you": "vous",
+    "them": "eux",
+    "new": "Nouveau",
+    "user": "Utilisateur",
+    "requested": "Demandé :",
+    "offering": "Offre :",
+    "youCap": "Vous",
+    "sender": "Expéditeur",
+    "receiver": "Destinataire",
+    "requestedSkill": "Compétence demandée",
+    "reviewing": "En cours d'examen",
+    "agreed": "Accepté",
+    "statusPending": "En attente",
+    "statusCommitted": "Engagé",
+    "statusRejected": "Refusé",
+    "statusCancelled": "Annulé",
+    "pending": "En attente",
+    "committed": "Engagé",
+    "rejected": "Refusé",
+    "cancelled": "Annulé"
   },
   "requests": {
     "title": "Mes demandes",
@@ -363,7 +398,11 @@
     "decline": "Refuser",
     "sender": "Expéditeur",
     "receiver": "Destinataire",
-    "paidBy": "Payé par"
+    "paidBy": "Payé par",
+    "statusPending": "En attente",
+    "statusCommitted": "Engagé",
+    "statusRejected": "Refusé",
+    "statusCancelled": "Annulé"
   },
   "requestDialog": {
     "title": "Demander un échange",
@@ -1073,7 +1112,10 @@
     "doneCtaLabel": "Trouver des correspondances",
     "skipTitle": "Intégration enregistrée",
     "skipDesc": "Vous pouvez reprendre à tout moment depuis votre profil.",
-    "skip": "Ignorer"
+    "skip": "Ignorer",
+    "done": "Fait",
+    "toDo": "À faire",
+    "welcomeTitleNoName": "Bienvenue ! 🎉"
   },
   "userProfile": {
     "title": "Profil de l'utilisateur",

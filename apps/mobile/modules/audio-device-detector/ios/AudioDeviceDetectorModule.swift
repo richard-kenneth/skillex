@@ -36,15 +36,35 @@ public class AudioDeviceDetectorModule: Module {
 
   private func fetchCurrentDevices() -> [[String: Any]] {
     var devices: [[String: Any]] = []
+    var seenIds = Set<String>()
     let session = AVAudioSession.sharedInstance()
     let route = session.currentRoute
 
     for output in route.outputs {
-      devices.append(self.portToDict(output, isInput: false))
+      let dict = self.portToDict(output, isInput: false)
+      if let id = dict["id"] as? String {
+        seenIds.insert(id)
+      }
+      devices.append(dict)
     }
 
     for input in route.inputs {
-      devices.append(self.portToDict(input, isInput: true))
+      let dict = self.portToDict(input, isInput: true)
+      if let id = dict["id"] as? String {
+        seenIds.insert(id)
+      }
+      devices.append(dict)
+    }
+
+    // Include pre-connected devices (e.g. Bluetooth connected before joining room)
+    if let availableInputs = session.availableInputs {
+      for input in availableInputs {
+        let dict = self.portToDict(input, isInput: true)
+        if let id = dict["id"] as? String, !seenIds.contains(id) {
+          seenIds.insert(id)
+          devices.append(dict)
+        }
+      }
     }
 
     return devices
