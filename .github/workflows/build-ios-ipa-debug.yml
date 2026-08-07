@@ -56,7 +56,7 @@ jobs:
           echo "Found workspace: $WORKSPACE"
           echo "Using scheme: $SCHEME"
 
-      - name: Build iOS app archive
+      - name: Build iOS debug app archive
         working-directory: apps/mobile/ios
         run: |
           xcodebuild archive \
@@ -66,6 +66,9 @@ jobs:
             -sdk iphoneos \
             -destination "generic/platform=iOS" \
             -archivePath "$RUNNER_TEMP/app.xcarchive" \
+            SKIP_BUNDLING=1 \
+            GCC_PREPROCESSOR_DEFINITIONS='$(inherited) DEBUG=1 EX_DEV_CLIENT_ENABLED=1' \
+            SWIFT_ACTIVE_COMPILATION_CONDITIONS='DEBUG' \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
