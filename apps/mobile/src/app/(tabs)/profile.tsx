@@ -477,16 +477,16 @@ function AvatarUploader({
       const mimeType = match ? `image/${match[1]}` : `image/jpeg`;
 
       const name = filename || uriToUpload.split('/').pop() || `avatar_${Date.now()}.jpg`;
-        const type = mimeType || (match ? `image/${match[1]}` : 'image/jpeg');
+      const type = mimeType || (match ? `image/${match[1]}` : 'image/jpeg');
 
-        // 1. Request presigned URL from backend
-        const { uploadUrl, key } = await getPresignedUrlMutation.mutateAsync({
-          fileName: name,
-          fileType: type,
-          type: 'avatar',
-        });
+      // 1. Request presigned URL from backend
+      const { uploadUrl, key } = await getPresignedUrlMutation.mutateAsync({
+        fileName: name,
+        fileType: type,
+        type: 'avatar',
+      });
 
-         // Step 2: Upload file
+      // Step 2: Upload file
       const file = new File(uriToUpload);
       const fileUploadRes = await fetch(uploadUrl, {
         method: "PUT",
@@ -506,12 +506,12 @@ function AvatarUploader({
       if (!success) throw new Error("Could not confirm avatar upload.");
       // Dismiss preview modal upon success so toast renders visibly on the root screen
       setPreview(null);
-      toast.toast({ title: "Profile picture updated!", variant: "success" });
+      toast.toast({ title: t('profilePictureUpdated'), variant: "success" });
     } catch (err: any) {
       setPreview(null);
       toast.toast({
-        title: "Image upload failed",
-        description: err?.message || "Could not update profile picture",
+        title: t('imageUploadFailed'),
+        description: err?.message || t('couldNotUpdateProfilePicture'),
         variant: "error",
       });
     }
@@ -574,6 +574,7 @@ function ImagePreviewModal({
   isNewPick?: boolean;
 }) {
   const theme = useTheme();
+  const t = useT('profile');
   return (
     <Modal visible onRequestClose={onClose} transparent animationType="fade">
       <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
@@ -594,7 +595,7 @@ function ImagePreviewModal({
           }}
         >
           <ThemedText type="smallBold" style={{ color: "#fff", fontSize: FONT_SIZE.md }}>
-            Profile Picture
+            {t('profilePicture')}
           </ThemedText>
           <Pressable
             onPress={onClose}
@@ -623,11 +624,11 @@ function ImagePreviewModal({
         <View style={{ padding: SPACING[4], gap: SPACING[3] }}>
           {isNewPick && onUpload ? (
             <Button onPress={onUpload} loading={uploading}>
-              Save Profile Picture
+              {t('saveProfilePicture')}
             </Button>
           ) : null}
           <Button variant="outline" onPress={onClose} disabled={uploading}>
-            Close
+            {t('close')}
           </Button>
         </View>
       </SafeAreaView>
@@ -1177,6 +1178,7 @@ function SkillGroup({
   empty: string;
 }) {
   const theme = useTheme();
+  const t = useT('profile');
   return (
     <View style={{ gap: SPACING[2] }}>
       <View
@@ -1238,7 +1240,7 @@ function SkillGroup({
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-                  {s.skill?.name ?? s.skillName ?? "Skill"}
+                  {s.skill?.name ?? s.skillName ?? t('skill')}
                   {s.level ? (
                     <ThemedText
                       type="small"
@@ -1574,7 +1576,7 @@ export function ReviewCard({ review }: { review: any }) {
               type="small"
               style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}
             >
-              Exchange: {review.exchange.taughtSkillName} ↔{" "}
+              {t('exchangeLabel')}: {review.exchange.taughtSkillName} ↔{" "}
               {review.exchange.receivedSkillName}
             </ThemedText>
           </View>
@@ -1603,12 +1605,12 @@ function ReferralsPane() {
   const copy = async () => {
     const Clipboard = await import("expo-clipboard");
     await Clipboard.setStringAsync(shareLink);
-    toast.toast({ title: "Link copied", variant: "success" });
+    toast.toast({ title: t('linkCopied'), variant: "success" });
   };
   const share = async () => {
     try {
       await Share.share({
-        message: `Join Skil-Ex with my referral link to learn and earn points! ${shareLink}`,
+        message: t('shareReferralMessage', { link: shareLink }),
       });
     } catch {}
   };
@@ -1639,7 +1641,7 @@ function ReferralsPane() {
             <View style={{ flex: 1 }}>
               <CardTitle>{t('inviteFriends')}</CardTitle>
               <CardDescription>
-                Earn 200 pts per referral. Your code:
+                {t('inviteFriendsDesc')}
               </CardDescription>
             </View>
           </View>
@@ -1686,7 +1688,7 @@ function ReferralsPane() {
             >
               <Copy size={14} color={theme.foreground} />
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                Copy
+                {t('copy')}
               </ThemedText>
             </Pressable>
           </View>
@@ -1697,7 +1699,7 @@ function ReferralsPane() {
               leftIcon={<Share2 size={16} color={theme.foreground} />}
               onPress={share}
             >
-              Share link
+              {t('shareLink')}
             </Button>
           </View>
           <View style={{ flexDirection: "row", gap: SPACING[2] }}>
@@ -1727,7 +1729,7 @@ function ReferralsPane() {
         <CardHeader>
           <CardTitle>{t('recentReferrals')}</CardTitle>
           <CardDescription>
-            Everyone who signed up using your code.
+            {t('recentReferralsDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent style={{ gap: SPACING[2] }}>
@@ -1744,7 +1746,7 @@ function ReferralsPane() {
               }}
             >
               <ThemedText type="default" style={{ fontWeight: "700" }}>
-                No referrals yet
+                {t('noReferralsYet')}
               </ThemedText>
               <ThemedText
                 type="small"
@@ -1754,8 +1756,7 @@ function ReferralsPane() {
                   fontSize: FONT_SIZE.sm,
                 }}
               >
-                Share your link — you'll earn points when friends join and
-                complete their first exchange.
+                {t('noReferralsDesc')}
               </ThemedText>
             </View>
           ) : (
@@ -1777,7 +1778,7 @@ function ReferralsPane() {
                     type="smallBold"
                     style={{ fontSize: FONT_SIZE.md }}
                   >
-                    {r.user?.name ?? "Friend"}
+                    {r.user?.name ?? t('friend')}
                   </ThemedText>
                   <ThemedText
                     type="small"
@@ -1798,7 +1799,7 @@ function ReferralsPane() {
                     }}
                   >
                     <Badge variant="accent" accent="emerald">
-                      +200 pts
+                      {t('ptsBadge', { count: 200 })}
                     </Badge>
                   </View>
                 ) : (

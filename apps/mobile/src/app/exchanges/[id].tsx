@@ -26,8 +26,7 @@ import * as v from "valibot";
 
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { File, Paths, uploadAsync } from "expo-file-system";
-import { StorageAccessFramework, readAsStringAsync, EncodingType, FileSystemUploadType } from "expo-file-system/legacy";
+import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useVideoPlayer, VideoView, isPictureInPictureSupported } from "expo-video";
 import { Image as ExpoImage } from "expo-image";
@@ -121,7 +120,6 @@ import {
 import { ReviewCard } from "../(tabs)/profile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetch } from 'expo/fetch'
-import { useEvent } from "expo";
 
 type Tab = "overview" | "sessions" | "chat" | "details" | "review";
 type SessionFilter = "all" | "taught" | "received";
@@ -190,6 +188,8 @@ export default function ExchangeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
   const t = useT('exchanges');
+  const tc = useT('common');
+  const tr = useT('review');
   const router = useRouter();
 
   const insets = useSafeAreaInsets();
@@ -291,7 +291,7 @@ export default function ExchangeDetailScreen() {
   const canReview = exchange?.status === "COMPLETED" && !exchange?.myReview;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={["bottom"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={["top", "bottom"]}>
       <ThemedView type="background" style={{ flex: 1, alignItems: "center" }}>
         {/* Top Navbar */}
         <View
@@ -327,7 +327,7 @@ export default function ExchangeDetailScreen() {
               {taughtSkill.name} {isTwoWay ? `↔ ${receivedSkill?.name}` : ""}
             </ThemedText>
             <ThemedText type="caption" muted numberOfLines={1} style={{ fontSize: FONT_SIZE.xs }}>
-              with {other?.name ?? "Peer Trader"}
+              {tc("with", { name: other?.name ?? t("peerTrader") })}
             </ThemedText>
           </View>
 
@@ -386,16 +386,16 @@ export default function ExchangeDetailScreen() {
                         <Avatar uri={other?.image} fallback={other?.name} size={48} />
                         <View style={{ flex: 1 }}>
                           <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg, fontWeight: "700" }}>
-                            {other?.name ?? "Peer Trader"}
+                            {other?.name ?? t("peerTrader")}
                           </ThemedText>
                           <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
-                            {isSender ? "Learning from" : "Teaching"} • {totalSessionsCount} session{totalSessionsCount !== 1 ? "s" : ""}
+                            {isSender ? t("learningFrom") : t("teaching")} • {tc("sessions_count", { count: totalSessionsCount })}
                           </ThemedText>
                         </View>
                       </Pressable>
 
                       <Badge variant="accent" accent={statusColor}>
-                        {labelForStatus(exchange?.status)}
+                        {labelForStatus(exchange?.status, t)}
                       </Badge>
                     </View>
 
@@ -404,17 +404,17 @@ export default function ExchangeDetailScreen() {
                       <SkillRow
                         accent="emerald"
                         icon={<GraduationCap size={16} color={getAccent("emerald").main} />}
-                        title={isSender ? "You learn" : "You teach"}
+                        title={isSender ? t("youLearn") : t("youTeach")}
                         name={taughtSkill.name}
-                        detail={`${exchange?.requestedSkillSessions ?? 1} sessions × ${exchange?.requestedSkillDuration ?? 60}m`}
+                        detail={t("sessionsCountDuration", { sessions: exchange?.requestedSkillSessions ?? 1, duration: exchange?.requestedSkillDuration ?? 60 })}
                       />
                       {isTwoWay ? (
                         <SkillRow
                           accent="indigo"
                           icon={<BookOpen size={16} color={getAccent("indigo").main} />}
-                          title={isSender ? "You teach" : "You learn"}
+                          title={isSender ? t("youTeach") : t("youLearn")}
                           name={receivedSkill?.name}
-                          detail={`${exchange?.offeredSkillSessions ?? 1} sessions × ${exchange?.offeredSkillDuration ?? 60}m`}
+                          detail={t("sessionsCountDuration", { sessions: exchange?.offeredSkillSessions ?? 1, duration: exchange?.offeredSkillDuration ?? 60 })}
                         />
                       ) : null}
                     </View>
@@ -430,7 +430,7 @@ export default function ExchangeDetailScreen() {
                 <Card>
                   <CardHeader style={{ paddingBottom: 0 }}>
                     <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground }}>
-                      Exchange Progress
+                      {t("exchangeProgress")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent style={{ gap: SPACING[2] }}>
@@ -439,7 +439,7 @@ export default function ExchangeDetailScreen() {
                         {progress}%
                       </ThemedText>
                       <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
-                        {completedSessionsCount} of {totalSessionsCount || sessions.length} sessions completed
+                        {t("sessionsCompletedOf", { completed: completedSessionsCount, total: totalSessionsCount || sessions.length })}
                       </ThemedText>
                     </View>
                     <Progress value={progress} />
@@ -451,7 +451,7 @@ export default function ExchangeDetailScreen() {
                   <CardHeader style={{ paddingBottom: 0 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                       <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground }}>
-                        Points & Escrow
+                        {t("pointsAndEscrow")}
                       </CardTitle>
                       {points ? (
                         <Pressable
@@ -461,7 +461,7 @@ export default function ExchangeDetailScreen() {
                         >
                           <Info size={14} color={theme.primary} />
                           <ThemedText type="caption" style={{ color: theme.primary, fontWeight: "600", fontSize: FONT_SIZE.xs }}>
-                            Breakdown
+                            {t("breakdown")}
                           </ThemedText>
                         </Pressable>
                       ) : null}
@@ -490,17 +490,17 @@ export default function ExchangeDetailScreen() {
                         >
                           <Lock size={10} color={getAccent("amber").main} />
                           <ThemedText type="caption" style={{ fontSize: 10, color: getAccent("amber").main, fontWeight: "700" }}>
-                            Escrowed
+                            {t("escrowed")}
                           </ThemedText>
                         </View>
                       ) : null}
                     </View>
                     <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
                       {pointsVal === 0
-                        ? "Direct skill exchange with zero points"
+                        ? t("directSkillExchangeZeroPoints")
                         : isPayer
-                          ? "Gross cost deducted upon completion"
-                          : "Net gain credited upon completion (after 15% fee)"}
+                          ? t("grossCostDeducted")
+                          : t("netGainCredited")}
                     </ThemedText>
                   </CardContent>
                 </Card>
@@ -509,17 +509,17 @@ export default function ExchangeDetailScreen() {
                 <Card>
                   <CardHeader style={{ paddingBottom: 0 }}>
                     <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground }}>
-                      Exchange Status
+                      {t("exchangeStatus")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent style={{ gap: SPACING[2.5] }}>
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                       <ThemedText type="default" style={{ fontWeight: "700", fontSize: FONT_SIZE.md }}>
                         {exchange?.status === "COMPLETED"
-                          ? "Exchange Completed 🎉"
+                          ? t("exchangeCompleted")
                           : iAmCompleted
-                            ? "Awaiting Partner Confirmation"
-                            : "Exchange Active"}
+                            ? t("awaitingPartner")
+                            : t("exchangeActive")}
                       </ThemedText>
                     </View>
 
@@ -538,7 +538,7 @@ export default function ExchangeDetailScreen() {
                       >
                         <CheckCircle2 size={16} color={getAccent("emerald").main} />
                         <ThemedText type="caption" style={{ color: getAccent("emerald").main, fontSize: FONT_SIZE.xs, flex: 1, fontWeight: "600" }}>
-                          {other?.name} has marked this exchange as complete.
+                          {t("partnerMarkedComplete", { name: other?.name })}
                         </ThemedText>
                       </View>
                     ) : null}
@@ -552,7 +552,7 @@ export default function ExchangeDetailScreen() {
                         disabled={iAmCompleted}
                         leftIcon={<CheckCircle2 size={16} color={iAmCompleted ? theme.mutedForeground : "#fff"} />}
                       >
-                        {iAmCompleted ? "Marked Complete" : "Mark Exchange Complete"}
+                        {iAmCompleted ? t("markedComplete") : t("markExchangeComplete")}
                       </Button>
                     ) : null}
                   </CardContent>
@@ -566,11 +566,11 @@ export default function ExchangeDetailScreen() {
               value={tab}
               onChange={setTab}
               items={[
-                { value: "overview", label: "Overview" },
-                { value: "sessions", label: "Sessions" },
-                { value: "chat", label: "Chat" },
-                { value: "details", label: "Details" },
-                { value: "review", label: "Review" },
+                { value: "overview", label: t("overview") },
+                { value: "sessions", label: t("sessions") },
+                { value: "chat", label: t("chat") },
+                { value: "details", label: t("details") },
+                { value: "review", label: t("review") },
               ]}
             />
 
@@ -696,7 +696,7 @@ export default function ExchangeDetailScreen() {
               <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
                 <Coins size={20} color={getAccent("amber").main} />
                 <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg, fontWeight: "700" }}>
-                  Points Breakdown
+                  {tc("pointsBreakdown")}
                 </ThemedText>
               </View>
               <Pressable onPress={() => setPointsModalOpen(false)} hitSlop={8}>
@@ -712,15 +712,15 @@ export default function ExchangeDetailScreen() {
                 <Row label={t("netGain")} value={`${points.net} pts`} strong accent="emerald" main />
               </View>
             ) : (
-              <ThemedText type="small" muted>No points details available.</ThemedText>
+              <ThemedText type="small" muted>{t("noPointsDetails")}</ThemedText>
             )}
 
             <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs, lineHeight: 18 }}>
-              Points are held safely in escrow during active sessions and released immediately when both trading partners mark the exchange as complete.
+              {t("pointsEscrowPolicyDesc")}
             </ThemedText>
 
             <Button size="sm" variant="default" onPress={() => setPointsModalOpen(false)}>
-              Got it
+              {tc("close")}
             </Button>
           </View>
         </View>
@@ -764,10 +764,10 @@ export default function ExchangeDetailScreen() {
               <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: SPACING[2] }}>
                 <MessageCircle size={32} color={theme.mutedForeground} />
                 <ThemedText type="default" style={{ fontWeight: "700" }}>
-                  No room chat messages logged
+                  {t("noRoomChatMessages")}
                 </ThemedText>
                 <ThemedText type="caption" muted style={{ textAlign: "center", maxWidth: 260 }}>
-                  Messages sent inside the LiveKit video call room will appear here as history.
+                  {t("livekitChatDesc")}
                 </ThemedText>
               </View>
             ) : (
@@ -787,7 +787,7 @@ export default function ExchangeDetailScreen() {
                       <View style={{ flex: 1, gap: 2 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
                           <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.xs }}>
-                            {mine ? "You" : m.sender?.name ?? "User"}
+                            {mine ? tc("you") : m.sender?.name ?? "User"}
                           </ThemedText>
                           <ThemedText type="caption" muted style={{ fontSize: 10 }}>
                             {timeStr}
@@ -814,7 +814,7 @@ export default function ExchangeDetailScreen() {
             )}
 
             <Button size="sm" variant="outline" onPress={() => setSessionChatOpen(false)}>
-              Close Chat History
+              {tc("close")}
             </Button>
           </View>
         </SafeAreaView>
@@ -831,7 +831,7 @@ export default function ExchangeDetailScreen() {
           <View style={{ width: "100%", maxWidth: 420, backgroundColor: theme.card, borderRadius: RADIUS.xl, padding: SPACING[4], gap: SPACING[4] }}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg }}>
-                Session Recording Playback
+                {t("recordingPlayback")}
               </ThemedText>
               <Pressable onPress={() => setPlaybackUrl(null)} hitSlop={8}>
                 <X size={20} color={theme.mutedForeground} />
@@ -843,7 +843,7 @@ export default function ExchangeDetailScreen() {
             ) : null}
 
             <Button size="sm" variant="outline" onPress={() => setPlaybackUrl(null)}>
-              Close
+              {tc("close")}
             </Button>
           </View>
         </View>
@@ -856,14 +856,14 @@ export default function ExchangeDetailScreen() {
         title={t('exchangeActions')}
         options={[
           {
-            label: "View partner profile",
+            label: t('viewPartnerProfile'),
             icon: <ArrowLeft size={18} color={theme.foreground} />,
             onPress: () => other?.id && router.push(`/users/${other.id}` as any),
           },
           {
-            label: "Report issue",
+            label: t('reportIssue'),
             icon: <AlertTriangle size={18} color={theme.destructive as any} />,
-            subtitle: "Flag this exchange with support",
+            subtitle: t('flagExchangeSupport'),
             onPress: () =>
               toast.toast({
                 title: "Report sent",
@@ -883,7 +883,7 @@ export default function ExchangeDetailScreen() {
         confirmLabel={t('markComplete')}
         onConfirm={async () => {
           await completeQ.mutateAsync(id!);
-          toast.toast({ title: "Exchange completed", variant: "success" });
+          toast.toast({ title: t('exchangeCompleted'), variant: "success" });
           await q.refetch();
         }}
       />
@@ -911,10 +911,10 @@ export default function ExchangeDetailScreen() {
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <View>
                 <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg }}>
-                  {t('reviewQualities') ?? 'Review Qualities'}
+                  {tr('reviewQualities')}
                 </ThemedText>
                 <ThemedText type="caption" muted>
-                  {t('selectAllApply') ?? 'Select all that apply'}
+                  {tr('selectAllApply')}
                 </ThemedText>
               </View>
               <Pressable onPress={() => setTagSheet(false)} hitSlop={8}>
@@ -927,6 +927,19 @@ export default function ExchangeDetailScreen() {
                 Object.keys(REVIEW_TAG_LABELS) as (keyof typeof REVIEW_TAG_LABELS)[]
               ).map((k) => {
                 const active = tags.includes(k);
+                const tagKeyMap: Record<string, string> = {
+                  GREAT_TEACHER: "greatTeacher",
+                  PATIENT: "patient",
+                  KNOWLEDGEABLE: "knowledgeable",
+                  ON_TIME: "onTime",
+                  CLEAR_EXPLANATIONS: "clearExplanations",
+                  GOOD_COMMUNICATOR: "goodCommunicator",
+                  WELL_PREPARED: "wellPrepared",
+                  WOULD_EXCHANGE_AGAIN: "wouldExchangeAgain",
+                  NEEDS_IMPROVEMENT: "needsImprovement",
+                  UNRESPONSIVE: "unresponsive",
+                };
+                const localizedLabel = tr(tagKeyMap[k]) ?? REVIEW_TAG_LABELS[k];
                 return (
                   <Pressable
                     key={k}
@@ -958,7 +971,7 @@ export default function ExchangeDetailScreen() {
                         color: active ? getAccent("indigo").main : theme.foreground,
                       }}
                     >
-                      {REVIEW_TAG_LABELS[k]}
+                      {localizedLabel}
                     </ThemedText>
                   </Pressable>
                 );
@@ -966,7 +979,7 @@ export default function ExchangeDetailScreen() {
             </ScrollView>
 
             <Button onPress={() => setTagSheet(false)}>
-              Done ({tags.length} selected)
+              {tc("done")} ({tags.length})
             </Button>
           </View>
         </SafeAreaView>
@@ -1075,6 +1088,8 @@ function SessionsBody({
   exchange,
 }: any) {
   const theme = useTheme();
+  const t = useT('exchanges');
+  const tc = useT('common');
 
   if (loading)
     return (
@@ -1101,9 +1116,9 @@ function SessionsBody({
           value={sessionFilter}
           onChange={setSessionFilter}
           items={[
-            { value: "all", label: `All (${sessions?.length ?? 0})` },
-            { value: "taught", label: `${taughtSkillName ?? 'Taught'} (${taughtSessions?.length ?? 0})` },
-            { value: "received", label: `${receivedSkillName ?? 'Received'} (${receivedSessions?.length ?? 0})` },
+            { value: "all", label: `${t('all')} (${sessions?.length ?? 0})` },
+            { value: "taught", label: `${taughtSkillName ?? t('taught')} (${taughtSessions?.length ?? 0})` },
+            { value: "received", label: `${receivedSkillName ?? t('received')} (${receivedSessions?.length ?? 0})` },
           ]}
         />
       )}
@@ -1130,7 +1145,7 @@ function SessionsBody({
               <CalendarClock size={26} color={getAccent("indigo").main} />
             </View>
             <ThemedText type="default" style={{ fontWeight: "700" }}>
-              No sessions found
+              {t('noSessions')}
             </ThemedText>
             <ThemedText
               type="small"
@@ -1141,7 +1156,7 @@ function SessionsBody({
                 maxWidth: 280,
               }}
             >
-              Coordinate date and time with your partner in the Chat tab.
+              {t('coordinateScheduleDesc')}
             </ThemedText>
           </CardContent>
         </Card>
@@ -1206,13 +1221,13 @@ function SessionsBody({
                           {String(s.skill?.name ?? (isTaughtSkill ? taughtSkillName : receivedSkillName) ?? "")}
                         </ThemedText>
                         <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
-                          {sessionDate ? formatDateTimeShort(sessionDate) : "Scheduled session"} • {durationMinutes} min
+                          {sessionDate ? formatDateTimeShort(sessionDate) : t('scheduledSession')} • {durationMinutes} min
                         </ThemedText>
                       </View>
                     </View>
 
                     <Badge variant={isCancelled ? "destructive" : isCompleted ? "accent" : "outline"} accent={isCompleted ? "green" : undefined}>
-                      {String(s.status ?? "")}
+                      {labelForStatus(s.status, t)}
                     </Badge>
                   </View>
 
@@ -1220,7 +1235,7 @@ function SessionsBody({
                   <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2], padding: SPACING[2.5], borderRadius: RADIUS.md, backgroundColor: theme.secondary }}>
                     <BookOpen size={14} color={theme.primary} />
                     <ThemedText type="caption" style={{ fontSize: FONT_SIZE.xs, color: theme.foreground }}>
-                      {isCurrentUserTeacher ? "You teach this session" : `${teacherName ?? "Partner"} teaches this session`}
+                      {isCurrentUserTeacher ? t('youTeachSession') : t('partnerTeachesSession', { name: teacherName ?? t('peerTrader') })}
                     </ThemedText>
                   </View>
 
@@ -1232,7 +1247,7 @@ function SessionsBody({
                       onPress={() => onViewSessionChat(s.id, s.skill?.name)}
                       leftIcon={<MessageSquare size={14} color={theme.foreground} />}
                     >
-                      Session Chat
+                      {t('sessionChat')}
                     </Button>
 
                     {!isDone && (
@@ -1242,7 +1257,7 @@ function SessionsBody({
                         onPress={() => onJoin(s.id)}
                         leftIcon={isLive ? <Zap size={14} color="#fff" /> : <Video size={14} color={theme.foreground} />}
                       >
-                        {isLive ? "Join Live" : "Join Room"}
+                        {isLive ? t('joinLive') : t('joinRoom')}
                       </Button>
                     )}
                   </View>
@@ -1258,7 +1273,7 @@ function SessionsBody({
                           leftIcon={<CheckCircle2 size={14} color={getAccent("green").main} />}
                           style={{ flex: 1 }}
                         >
-                          Mark Complete
+                          {t('markComplete')}
                         </Button>
                       )}
                       <Button
@@ -1268,7 +1283,7 @@ function SessionsBody({
                         leftIcon={<XCircle size={14} color={getAccent("red").main} />}
                         style={{ flex: !isCurrentUserTeacher ? 1 : undefined }}
                       >
-                        Mark Missed
+                        {t('markMissed')}
                       </Button>
                     </View>
                   )}
@@ -1277,7 +1292,7 @@ function SessionsBody({
                   {recordings.length > 0 && (
                     <View style={{ paddingTop: SPACING[2], borderTopWidth: 1, borderTopColor: theme.border + "40", gap: SPACING[2] }}>
                       <ThemedText type="caption" style={{ fontSize: 10, fontWeight: "700", textTransform: "uppercase", color: theme.mutedForeground }}>
-                        Session Recordings
+                        {t('recordings')}
                       </ThemedText>
                       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}>
                         {recordings.map((rec: any, idx: number) => {
@@ -1286,7 +1301,7 @@ function SessionsBody({
                           const isReady = rec.recordingStatus === "COMPLETED";
 
                           // Formulate status label cleanly without returning empty string ""
-                          const statusSuffix = isProcessing ? " (Processing)" : isExpired ? " (Expired)" : "";
+                          const statusSuffix = isProcessing ? ` (${t('processing')})` : isExpired ? ` (${t('expired')})` : "";
 
                           return (
                             <Button
@@ -1297,7 +1312,7 @@ function SessionsBody({
                               onPress={() => onWatchRecording(rec.id)}
                               leftIcon={<Play size={14} color={theme.foreground} />}
                             >
-                              {`Part ${recordings.length - idx}${statusSuffix}`}
+                              {t('part', { num: recordings.length - idx }) + statusSuffix}
                             </Button>
                           );
                         })}
@@ -1501,16 +1516,17 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
       });
 
       
-      // Step 2: Upload file via FileSystem.uploadAsync
-      const uploadRes = await uploadAsync(uploadUrl, fileUri, {
-        httpMethod: "PUT",
-        uploadType: FileSystemUploadType.BINARY_CONTENT,
+      // Step 2: Upload file
+      const file = new File(fileUri);
+      const fileUploadRes = await fetch(uploadUrl, {
+        method: "PUT",
         headers: {
           "Content-Type": mimeType,
         },
+        body: file,
       });
 
-      if (uploadRes.status < 200 || uploadRes.status >= 300) {
+      if (!fileUploadRes.ok || fileUploadRes.status < 200 || fileUploadRes.status >= 300) {
         throw new Error("File upload to storage failed");
       }
 
@@ -1537,7 +1553,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
   // Pick from Photo Library
   const handlePickImage = async () => {
     setAttachmentSheetOpen(false);
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(() => r(null), 400));
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,
@@ -1554,7 +1570,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
   // Take Photo via Camera
   const handleTakePhoto = async () => {
     setAttachmentSheetOpen(false);
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(() => r(null), 400));
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       toast.toast({ title: "Camera permission required", variant: "error" });
@@ -1576,7 +1592,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
   // Pick Document / File
   const handlePickDocument = async () => {
     setAttachmentSheetOpen(false);
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(() => r(null), 400));
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
@@ -1594,85 +1610,79 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
     }
   };
 
-  // Direct File Download & Save Prompt (Lets user select destination folder!)
+  // Direct File Download & Save Prompt (Lets user select destination folder / share!)
   const handleDownloadAndSaveFile = async (url: string, fileName?: string) => {
     try {
-      toast.toast({ title: "Downloading file...", variant: "info" });
-      const name = fileName || url.split('/').pop()?.split('?')[0] || `file_${Date.now()}`;
+      // If image preview modal is currently open, dismiss it first to avoid
+      // native modal controller presentation collision with Sharing.shareAsync on iOS/Android
+      // if (previewImageUrl) {
+      //   setPreviewImageUrl(null);
+      //   await new Promise((resolve) => setTimeout(() => resolve(undefined), 250));
+      // }
+
+      toast.toast({ title: t('downloadingFile'), variant: "info" });
+
+      const rawName = fileName || url.split('/').pop()?.split('?')[0] || `file_${Date.now()}`;
+      const name = rawName.replace(/[^a-zA-Z0-9._-]/g, '_');
       const ext = name.split('.').pop()?.toLowerCase() || '';
 
       let mimeType = "application/octet-stream";
-      if (["jpg", "jpeg"].includes(ext)) mimeType = "image/jpeg";
-      else if (ext === "png") mimeType = "image/png";
-      else if (ext === "gif") mimeType = "image/gif";
-      else if (ext === "webp") mimeType = "image/webp";
-      else if (ext === "pdf") mimeType = "application/pdf";
-      else if (ext === "mp4") mimeType = "video/mp4";
-      else if (ext === "mp3") mimeType = "audio/mpeg";
-      else if (ext === "zip") mimeType = "application/zip";
-      else if (ext === "txt") mimeType = "text/plain";
 
-      const targetFile = new File(Paths.cache, name);
-      const downloadedFile = await File.downloadFileAsync(url, targetFile, { idempotent: true });
-
-      const isAndroid = Platform.OS === 'android';
-      if(isAndroid){
-        ``
-        const SAVED_DIR_KEY = '@app_downloads_directory_uri';
-
-        try {
-          let directoryUri = await AsyncStorage.getItem(SAVED_DIR_KEY);
-
-          // Ask ONLY if permission hasn't been granted previously
-          if (!directoryUri) {
-            const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
-            if (permissions.granted) {
-              directoryUri = permissions.directoryUri;
-              await AsyncStorage.setItem(SAVED_DIR_KEY, directoryUri);
-            } else {
-              toast.toast({ title: "Permission denied", variant: "error" });
-              return;
-            }
-          }
-
-          const base64Data = await readAsStringAsync(downloadedFile.uri, {
-            encoding: EncodingType.Base64,
-          });
-          const createdFileUri = await StorageAccessFramework.createFileAsync(
-            directoryUri,
-            name,
-            mimeType
-          );
-          await StorageAccessFramework.writeAsStringAsync(createdFileUri, base64Data, {
-            encoding: EncodingType.Base64,
-          });
-          toast.toast({ title: "Saved successfully!", variant: "success" });
-          return;
-        } catch(error) {
-          const errMsg = (error && typeof error.toString === 'function') 
-            ? error.toString() 
-            : String(error);
-          if (errMsg.includes("isn't writable")) {
-            Alert.alert("Error", "You cannot select this folder. Try creating a new folder inside the folder you selected, and choose that instead.");
-          } else {
-            // Fallback to Sharing dialog if SAF is declined or fails
-          }
-          
-        }
+      if (["jpg", "jpeg"].includes(ext)) {
+        mimeType = "image/jpeg";
+      } else if (ext === "png") {
+        mimeType = "image/png";
+      } else if (ext === "gif") {
+        mimeType = "image/gif";
+      } else if (ext === "webp") {
+        mimeType = "image/webp";
+      } else if (ext === "pdf") {
+        mimeType = "application/pdf";
+      } else if (ext === "mp4") {
+        mimeType = "video/mp4";
+      } else if (ext === "mp3") {
+        mimeType = "audio/mpeg";
+      } else if (ext === "zip") {
+        mimeType = "application/zip";
+      } else if (ext === "txt") {
+        mimeType = "text/plain";
       }
 
-      // iOS or Android SAF fallback: Native Share/Save sheet
+      console.log(mimeType);
+      
+
+      let fileUri = url;
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        const targetFile = new File(Paths.cache, name);
+        const downloadedFile = await File.downloadFileAsync(url, targetFile, { idempotent: true });
+        fileUri = downloadedFile?.uri || targetFile.uri;
+      }
+
+      console.log('b4');
+      
       const canShare = await Sharing.isAvailableAsync();
+      console.log(canShare);
       if (canShare) {
-        await Sharing.shareAsync(downloadedFile.uri, {
+        await Sharing.shareAsync(fileUri, {
           dialogTitle: `Save ${name}`,
-          mimeType,
+          mimeType
         });
+        console.log('af');
       } else {
-        toast.toast({ title: "File downloaded", description: downloadedFile.uri, variant: "success" });
+        console.log('af2');
+        toast.toast({
+          title: t('fileDownloaded'),
+          description: name,
+          variant: "success",
+        });
       }
     } catch (err: any) {
-      toast.toast({ title: "Save failed", description: err?.message, variant: "error" });
+      console.error("Error saving/sharing file:", err);
+      toast.toast({
+        title: t('saveFailed'),
+        description: err?.message || String(err),
+        variant: "error",
+      });
     }
   };
 
@@ -1690,10 +1700,10 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
             <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: SPACING[3] }}>
               <MessageCircle size={32} color={theme.primary} />
               <ThemedText type="default" style={{ fontWeight: "700" }}>
-                No messages yet
+                {t('noMessagesYet')}
               </ThemedText>
               <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: "center", maxWidth: 260 }}>
-                Send a message or share files to coordinate with your exchange partner.
+                {t('noMessagesDesc')}
               </ThemedText>
             </View>
           ) : (
@@ -1820,17 +1830,17 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
           description={t('selectAttachmentSource')}
           options={[
             {
-              label: "Take photo",
+              label: t('takePhoto'),
               icon: <Camera size={18} color={theme.primary} />,
               onPress: handleTakePhoto,
             },
             {
-              label: "Get from Photos",
+              label: t('getFromPhotos'),
               icon: <ImageIcon size={18} color={theme.primary} />,
               onPress: handlePickImage,
             },
             {
-              label: "Add File",
+              label: t('addFile'),
               icon: <FileText size={18} color={theme.primary} />,
               onPress: handlePickDocument,
             },
@@ -1859,7 +1869,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
               }}
             >
               <ThemedText type="smallBold" style={{ color: "#fff", fontSize: FONT_SIZE.md }}>
-                Image Preview
+                {t('imagePreview')}
               </ThemedText>
               <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[3] }}>
                 <Pressable
@@ -1920,6 +1930,8 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
 
 function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loading }: any) {
   const theme = useTheme();
+  const t = useT('exchanges');
+  const tc = useT('common');
 
   if (loading)
     return (
@@ -1936,7 +1948,7 @@ function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loa
       <Card>
         <CardHeader>
           <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground, textTransform: "uppercase" }}>
-            Exchange Participants
+            {t('exchangeParticipants')}
           </CardTitle>
         </CardHeader>
         <CardContent style={{ gap: SPACING[4] }}>
@@ -1945,9 +1957,9 @@ function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loa
             <View style={{ alignItems: "center", gap: SPACING[1.5] }}>
               <Avatar uri={currentUser?.image} fallback={currentUser?.name} size={48} />
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                {currentUser?.name ?? "You"}
+                {currentUser?.name ?? tc("you")}
               </ThemedText>
-              <Badge variant="outline">{isSender ? "Sender" : "Receiver"}</Badge>
+              <Badge variant="outline">{isSender ? t("sender") : t("receiver")}</Badge>
             </View>
 
             <ArrowRightLeft size={22} color={theme.mutedForeground} />
@@ -1956,9 +1968,9 @@ function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loa
             <View style={{ alignItems: "center", gap: SPACING[1.5] }}>
               <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={48} />
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                {otherUser?.name ?? "Partner"}
+                {otherUser?.name ?? t("peerTrader")}
               </ThemedText>
-              <Badge variant="outline">{isSender ? "Receiver" : "Sender"}</Badge>
+              <Badge variant="outline">{isSender ? t("receiver") : t("sender")}</Badge>
             </View>
           </View>
         </CardContent>
@@ -1968,32 +1980,32 @@ function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loa
       <Card>
         <CardHeader>
           <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground, textTransform: "uppercase" }}>
-            Skills Being Exchanged
+            {t('skillsBeingExchanged')}
           </CardTitle>
         </CardHeader>
         <CardContent style={{ gap: SPACING[3] }}>
           <View style={{ padding: SPACING[3], borderRadius: RADIUS.md, backgroundColor: theme.secondary, gap: 4 }}>
             <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-              Taught Skill
+              {t('taughtSkill')}
             </ThemedText>
             <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
               {exchange?.taughtSkill?.name ?? "Skill"}
             </ThemedText>
             <ThemedText type="caption" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.xs }}>
-              {exchange?.requestedSkillSessions ?? 1} sessions × {exchange?.requestedSkillDuration ?? 60} min
+              {t("sessionsCountDuration", { sessions: exchange?.requestedSkillSessions ?? 1, duration: exchange?.requestedSkillDuration ?? 60 })}
             </ThemedText>
           </View>
 
           {isTwoWay && exchange?.receivedSkill && (
             <View style={{ padding: SPACING[3], borderRadius: RADIUS.md, backgroundColor: theme.secondary, gap: 4 }}>
               <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                Received Skill (Return)
+                {t('receivedSkill')}
               </ThemedText>
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
                 {exchange?.receivedSkill?.name}
               </ThemedText>
               <ThemedText type="caption" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.xs }}>
-                {exchange?.offeredSkillSessions ?? 1} sessions × {exchange?.offeredSkillDuration ?? 60} min
+                {t("sessionsCountDuration", { sessions: exchange?.offeredSkillSessions ?? 1, duration: exchange?.offeredSkillDuration ?? 60 })}
               </ThemedText>
             </View>
           )}
@@ -2006,6 +2018,7 @@ function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loa
 function OverviewBody({ exchange, loading, points, other }: any) {
   const theme = useTheme();
   const t = useT('exchanges');
+  const tc = useT('common');
 
   if (loading)
     return (
@@ -2035,8 +2048,8 @@ function OverviewBody({ exchange, loading, points, other }: any) {
               <HandCoins size={18} color={getAccent("amber").main} />
             </View>
             <View style={{ flex: 1 }}>
-              <CardTitle>Points breakdown</CardTitle>
-              <CardDescription>Split for value & commission</CardDescription>
+              <CardTitle>{tc("pointsBreakdown")}</CardTitle>
+              <CardDescription>{t("pointsSplitDesc")}</CardDescription>
             </View>
           </View>
         </CardHeader>
@@ -2050,7 +2063,7 @@ function OverviewBody({ exchange, loading, points, other }: any) {
             </>
           ) : (
             <ThemedText type="small" style={{ color: theme.mutedForeground }}>
-              No points amount set for this exchange.
+              {t("noPointsSet")}
             </ThemedText>
           )}
         </CardContent>
@@ -2073,22 +2086,22 @@ function OverviewBody({ exchange, loading, points, other }: any) {
               <CalendarCheck size={18} color={getAccent("violet").main} />
             </View>
             <View style={{ flex: 1 }}>
-              <CardTitle>Timeline</CardTitle>
-              <CardDescription>Key events for this exchange.</CardDescription>
+              <CardTitle>{t("timeline")}</CardTitle>
+              <CardDescription>{t("timelineDesc")}</CardDescription>
             </View>
           </View>
         </CardHeader>
         <CardContent style={{ gap: 0, paddingHorizontal: 0 }}>
           <TimelineDot
             icon={<Handshake size={14} color={theme.primary} />}
-            label="Exchange created"
+            label={t("exchangeCreated")}
             at={exchange?.committedAt ?? exchange?.createdAt}
             accent="indigo"
           />
           {exchange?.acceptedAt ? (
             <TimelineDot
               icon={<CheckCircle2 size={14} color={getAccent("emerald").main} />}
-              label="Accepted"
+              label={t("accepted")}
               at={exchange.acceptedAt}
               accent="emerald"
             />
@@ -2096,7 +2109,7 @@ function OverviewBody({ exchange, loading, points, other }: any) {
           {exchange?.completedAt ? (
             <TimelineDot
               icon={<FileCheck size={14} color={getAccent("blue").main} />}
-              label="Completed"
+              label={t("completed")}
               at={exchange.completedAt}
               accent="blue"
             />
@@ -2104,7 +2117,7 @@ function OverviewBody({ exchange, loading, points, other }: any) {
           {exchange?.cancelledAt ? (
             <TimelineDot
               icon={<XCircle size={14} color={getAccent("red").main} />}
-              label="Cancelled"
+              label={t("cancelled")}
               at={exchange.cancelledAt}
               accent="red"
             />
@@ -2129,14 +2142,14 @@ function OverviewBody({ exchange, loading, points, other }: any) {
               <ShieldCheck size={18} color={getAccent("blue").main} />
             </View>
             <View style={{ flex: 1 }}>
-              <CardTitle>Trusted exchange</CardTitle>
-              <CardDescription>All sessions take place in our secure LiveKit rooms.</CardDescription>
+              <CardTitle>{t("trustedExchange")}</CardTitle>
+              <CardDescription>{t("trustedExchangeDesc")}</CardDescription>
             </View>
           </View>
         </CardHeader>
         <CardContent>
           <ThemedText type="small" style={{ color: theme.mutedForeground, lineHeight: 20 }}>
-            Sessions are recorded only with mutual consent and points are held in escrow until the exchange is marked complete by both sides.
+            {t("trustedExchangeSafety")}
           </ThemedText>
         </CardContent>
       </Card>
@@ -2159,6 +2172,7 @@ function ReviewBody({
 }: any) {
   const theme = useTheme();
   const t = useT('exchanges');
+  const tr = useT('review');
 
   const theirReview = exchange?.theirReview;
   const myReview = exchange?.myReview;
@@ -2182,8 +2196,8 @@ function ReviewBody({
                 <Star size={18} color={getAccent("amber").main} fill={getAccent("amber").main} />
               </View>
               <View style={{ flex: 1 }}>
-                <CardTitle>Leave a review</CardTitle>
-                <CardDescription>Rate your experience with your exchange partner.</CardDescription>
+                <CardTitle>{tr("title")}</CardTitle>
+                <CardDescription>{tr("description", { name: exchange?.otherUser?.name })}</CardDescription>
               </View>
             </View>
           </CardHeader>
@@ -2204,7 +2218,7 @@ function ReviewBody({
                 })}
               </View>
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.lg, color: getAccent("amber").main }}>
-                {rating} / 5
+                {tr("starsOutOf5", { rating })}
               </ThemedText>
             </View>
 
@@ -2212,7 +2226,7 @@ function ReviewBody({
               label={t("howDidItGo")}
               value={comment}
               onChangeText={setComment}
-              placeholder={t('shareFeedback')}
+              placeholder={tr('shareFeedback')}
               numberOfLines={4}
               description={`${comment.length}/500`}
             />
@@ -2228,11 +2242,11 @@ function ReviewBody({
               }}
             >
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm, marginBottom: SPACING[1] }}>
-                Qualities ({tags.length}/8)
+                {tr("qualitiesCount", { count: tags.length })}
               </ThemedText>
               {tags.length === 0 ? (
                 <ThemedText type="small" style={{ color: theme.mutedForeground }}>
-                  Tap to select qualities…
+                  {tr("tapToSelectQualities")}
                 </ThemedText>
               ) : (
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}>
@@ -2246,7 +2260,7 @@ function ReviewBody({
             </Pressable>
 
             <Button onPress={onSubmit} loading={submitting} leftIcon={<CheckCircle2 size={16} color="#fff" />}>
-              Submit Review
+              {tr("submitReview")}
             </Button>
           </CardContent>
         </Card>
@@ -2256,10 +2270,10 @@ function ReviewBody({
         <Card>
           <CardContent style={{ paddingVertical: SPACING[6], alignItems: "center", gap: SPACING[2] }}>
             <ThemedText type="default" style={{ fontWeight: "700", textAlign: "center" }}>
-              Complete exchange to leave a review
+              {tr("completeToReview")}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: "center", fontSize: FONT_SIZE.sm }}>
-              Reviews unlock once both trading partners mark the exchange as complete.
+              {tr("reviewsUnlockDesc")}
             </ThemedText>
           </CardContent>
         </Card>
@@ -2268,7 +2282,7 @@ function ReviewBody({
       {theirReview ? (
         <>
           <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md, marginLeft: SPACING[0.5] }}>
-            Their review for you
+            {tr("theirReviewForYou")}
           </ThemedText>
           <ReviewCard review={theirReview} />
         </>
@@ -2347,7 +2361,21 @@ function TimelineDot({
   );
 }
 
-function labelForStatus(s: string) {
+function labelForStatus(s: string, t?: any) {
+  if (t) {
+    switch (s) {
+      case "COMMITTED": return t("committed");
+      case "IN_PROGRESS": return t("in_progress");
+      case "COMPLETED": return t("completed");
+      case "CANCELLED": return t("cancelled");
+      case "ACCEPTED": return t("accepted");
+      case "SCHEDULED": return t("scheduled");
+      case "PENDING": return t("pending");
+      case "REJECTED": return t("rejected");
+      case "EXPIRED": return t("expired");
+      default: return s ? s.replace(/_/g, " ") : t("active");
+    }
+  }
   switch (s) {
     case "COMMITTED":
       return "Committed";

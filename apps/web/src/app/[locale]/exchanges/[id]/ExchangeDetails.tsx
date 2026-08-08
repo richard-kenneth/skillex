@@ -151,9 +151,9 @@ export default function ExchangeDetails({
       isOpen: true,
       title: isCompleted ? tc("confirm") : t("missed"),
       description: isCompleted 
-        ? "Are you sure you want to mark this session as completed?" 
-        : "Are you sure you want to mark this session as missed?",
-      confirmText: isCompleted ? "Mark Completed" : "Mark Missed",
+        ? t("confirmMarkCompleted") 
+        : t("confirmMarkMissed"),
+      confirmText: isCompleted ? t("markedComplete") : t("markMissed"),
       onConfirm: () => updateSessionStatus(sessionId, status),
     });
   };
@@ -162,7 +162,7 @@ export default function ExchangeDetails({
     setConfirmModal({
       isOpen: true,
       title: t("markComplete"),
-      description: "Are you sure you want to mark the entire exchange as complete? This action is irreversible.",
+      description: t("markCompleteDesc"),
       confirmText: t("markComplete"),
       onConfirm: completeExchange,
     });
@@ -728,7 +728,7 @@ export default function ExchangeDetails({
                   {exchange.status !== "COMPLETED" && partnerCompleted && (
                     <span className="text-xs font-normal text-emerald-500 flex items-center gap-1 mt-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-md">
                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                      {tc("with", { name: otherUser.name })} has marked this exchange as complete.
+                      {t("partnerMarkedComplete", { name: otherUser.name })}
                     </span>
                   )}
                 </div>

@@ -15,7 +15,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { I18nProvider } from 'lib/i18n';
 import { useEffect } from 'react';
-import { KeyboardAvoidingView, Platform, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { queryClient } from '../../lib/query-client';
@@ -38,89 +38,73 @@ function AppInner() {
   const { resolvedTheme } = useThemeContext();
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: theme.background },
-            animation: Platform.OS === 'ios' ? 'default' : 'slide_from_right',
-            animationDuration: 250,
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: theme.background },
+          animation: Platform.OS === 'ios' ? 'default' : 'slide_from_right',
+          animationDuration: 250,
+        }}
+      >
+        <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade_from_bottom' }} />
+        <Stack.Screen
+          name="notifications"
+          options={{
+            headerShown: true,
+            headerTitle: 'Notifications',
+            headerTransparent: false,
+            headerStyle: { backgroundColor: theme.glassBackground },
+            headerTintColor: theme.foreground,
+            headerShadowVisible: false,
+            headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+            animation: 'slide_from_right',
           }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade_from_bottom' }} />
-          <Stack.Screen
-            name="notifications"
-            options={{
-              headerShown: true,
-              headerTitle: 'Notifications',
-              headerTransparent: false,
-              headerStyle: { backgroundColor: theme.glassBackground },
-              headerTintColor: theme.foreground,
-              headerShadowVisible: false,
-              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
-              animation: 'slide_from_right',
-            }}
-          />
-          <Stack.Screen
-            name="users/[id]"
-            options={{
-              headerShown: true,
-              headerTitle: 'Profile',
-              headerTransparent: false,
-              headerStyle: { backgroundColor: theme.glassBackground },
-              headerTintColor: theme.foreground,
-              headerShadowVisible: false,
-              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
-              animation: 'slide_from_right',
-            }}
-          />
-          <Stack.Screen
-            name="exchanges/[id]"
-            options={{
-              headerShown: true,
-              headerTitle: 'Exchange Details',
-              headerTransparent: false,
-              headerStyle: { backgroundColor: theme.glassBackground },
-              headerTintColor: theme.foreground,
-              headerShadowVisible: false,
-              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
-              animation: 'slide_from_right',
-            }}
-          />
-          <Stack.Screen
-            name="requests/[id]"
-            options={{
-              headerShown: true,
-              headerTitle: 'Request',
-              headerTransparent: false,
-              headerStyle: { backgroundColor: theme.background },
-              headerTintColor: theme.foreground,
-              headerShadowVisible: false,
-              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
-            }}
-          />
-          <Stack.Screen
-            name="room/[id]"
-            options={{
-              headerShown: true,
-              headerTitle: 'Session',
-              headerTransparent: false,
-              headerStyle: { backgroundColor: theme.background },
-              headerTintColor: theme.foreground,
-              headerShadowVisible: false,
-              headerTitleStyle: { fontWeight: '600', fontSize: 17 },
-            }}
-          />
-        </Stack>
-        <StatusBar style={resolvedTheme === 'dark' ? 'light' : 'dark'} />
-      </View>
-    </KeyboardAvoidingView>
+        />
+        <Stack.Screen
+          name="users/[id]"
+          options={{
+            headerShown: true,
+            headerTitle: 'Profile',
+            headerTransparent: false,
+            headerStyle: { backgroundColor: theme.glassBackground },
+            headerTintColor: theme.foreground,
+            headerShadowVisible: false,
+            headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="exchanges/[id]"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="requests/[id]"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="room/[id]"
+          options={{
+            headerShown: true,
+            headerTitle: 'Session',
+            headerTransparent: false,
+            headerStyle: { backgroundColor: theme.background },
+            headerTintColor: theme.foreground,
+            headerShadowVisible: false,
+            headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+          }}
+        />
+      </Stack>
+      <StatusBar style={resolvedTheme === 'dark' ? 'light' : 'dark'} />
+    </View>
   );
 }
 

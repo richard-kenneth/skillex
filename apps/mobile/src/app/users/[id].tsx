@@ -163,7 +163,7 @@ export default function PublicUserProfileScreen() {
         const map: Record<string, string> = {};
         const issues = v.flatten(e.issues);
         Object.entries(issues.nested ?? {}).forEach(([k, v]) => {
-          map[k] = (v as any)[0] ?? "Invalid";
+          map[k] = (v as any)[0] ?? t('invalid');
         });
         setErrors(map);
         return;
@@ -370,7 +370,7 @@ export default function PublicUserProfileScreen() {
                       size="icon"
                       onPress={() =>
                         Share.share({
-                          message: `Check out ${user?.name ?? "this user"} on Skil-Ex`,
+                          message: t('shareProfileMessage', { name: user?.name ?? t('thisUser') }),
                         }).catch(() => {})
                       }
                     >
@@ -635,7 +635,7 @@ export default function PublicUserProfileScreen() {
                           type="smallBold"
                           style={{ fontSize: FONT_SIZE.md }}
                         >
-                          {s.skill?.name ?? s.skillName ?? "Skill"}
+                          {s.skill?.name ?? s.skillName ?? t('skills')}
                         </ThemedText>
                         {s.level ? (
                           <ThemedText
@@ -650,7 +650,7 @@ export default function PublicUserProfileScreen() {
                         ) : null}
                       </View>
                       {selected ? (
-                        <Badge variant="default">Selected</Badge>
+                        <Badge variant="default">{t('selected')}</Badge>
                       ) : null}
                     </Pressable>
                   );
@@ -730,7 +730,7 @@ export default function PublicUserProfileScreen() {
                           type="smallBold"
                           style={{ fontSize: FONT_SIZE.md }}
                         >
-                          {s.skill?.name ?? s.skillName ?? "Skill"}
+                          {s.skill?.name ?? s.skillName ?? t('skills')}
                         </ThemedText>
                         {s.level ? (
                           <ThemedText
@@ -745,7 +745,7 @@ export default function PublicUserProfileScreen() {
                         ) : null}
                       </View>
                       {selected ? (
-                        <Badge variant="default">Selected</Badge>
+                        <Badge variant="default">{t('selected')}</Badge>
                       ) : null}
                     </Pressable>
                   );
@@ -795,7 +795,7 @@ export default function PublicUserProfileScreen() {
             icon: <Share2 size={18} color={theme.foreground} />,
             onPress: () =>
               Share.share({
-                message: `Check out ${user?.name ?? "this user"} on Skil-Ex`,
+                message: t('shareProfileMessage', { name: user?.name ?? t('thisUser') }),
               }).catch(() => {}),
           },
           {
@@ -836,7 +836,7 @@ export default function PublicUserProfileScreen() {
             }}
           >
             <ThemedText type="smallBold" style={{ color: "#fff", fontSize: FONT_SIZE.md }}>
-              {user?.name ?? 'User'}
+              {user?.name ?? t('user')}
             </ThemedText>
             <Pressable
               onPress={() => setFullscreenImage(null)}
@@ -866,7 +866,7 @@ export default function PublicUserProfileScreen() {
 
           <View style={{ padding: SPACING[4] }}>
             <Button variant="outline" onPress={() => setFullscreenImage(null)}>
-              Close
+              {t('cancel')}
             </Button>
           </View>
         </SafeAreaView>

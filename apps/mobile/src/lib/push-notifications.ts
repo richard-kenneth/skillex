@@ -14,6 +14,7 @@ import * as Notifications from "expo-notifications";
 import { authClient } from "lib/auth";
 import { Platform } from "react-native";
 import EventSource from "react-native-sse";
+import * as Device from 'expo-device';
 
 const API_BASE = `${
   process.env.EXPO_PUBLIC_API_BASE_URL!
@@ -55,11 +56,23 @@ function getNotifClient(): NotificationApiClient {
   return notifClient;
 }
 
+const projectId = 
+  Constants.expoConfig?.extra?.eas?.projectId ?? 
+  Constants.easConfig?.projectId;
+
+if (!projectId) {
+  throw new Error("Project ID not found in app config");
+}
+
 /**
  * Request notification permissions and get push token
  */
 export async function registerForPushNotifications(): Promise<PushTokenResult> {
-  try {    
+  try {
+    if (!Device.isDevice) {
+      console.log("Must use physical device for Push Notifications");
+      return { token: null, granted: false, error: "Simulator not supported" };
+    }
     // Request permissions
     const { status: existingStatus } =
       await Notifications.getPermissionsAsync();
@@ -77,17 +90,23 @@ export async function registerForPushNotifications(): Promise<PushTokenResult> {
 
     // Get push token
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: Constants.expoConfig?.extra?.eas?.projectId,
+      projectId,
     });
 
     const token = tokenData.data;
 
-    // Register token with backend using shared client
-    await getNotifClient().registerPushToken(token, Platform.OS);
-
-    // Set up Android channels
+    // Set up Android channels before registering with backend
     if (Platform.OS === "android") {
       await setupAndroidChannels();
+    }
+
+    // Wrap the backend call in a separate try/catch so network 
+    // failures don't mask the fact that the token was generated successfully
+    try {
+      await getNotifClient().registerPushToken(token, Platform.OS);
+    } catch (apiError) {
+      console.error("Failed to sync token to backend:", apiError);
+      // Depending on your logic, you might want to retry this later
     }
 
     return { token, granted: true };
@@ -142,7 +161,7 @@ async function setupAndroidChannels() {
 export async function unregisterPushToken(): Promise<void> {
   try {
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: Constants.expoConfig?.extra?.eas?.projectId,
+      projectId,
     }).catch(() => null);
 
     if (tokenData) {
@@ -174,9 +193,8 @@ export function setupNotificationListeners(
     Notifications.addNotificationResponseReceivedListener(onResponse);
 
   return () => {
-    // Note: expo-notifications doesn't expose removeNotificationSubscription
-    // Listeners are automatically cleaned up when the app closes
-    // The returned cleanup function is for reference only
+    notificationListener.remove();
+    responseListener.remove();
   };
 }
 

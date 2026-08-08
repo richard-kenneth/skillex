@@ -753,6 +753,10 @@ export default function PointsPage() {
                         return t("penalty");
                       case "WITHDRAWAL":
                         return t("withdrawal");
+                      case "RECORDING_FEE":
+                        return t("txSessionRecording");
+                      case "CONVERSION":
+                        return t("txCurrencyConversion");
                       case "REFERRAL_REWARD":
                         return tRefs("rewardReceived");
                       case "REFERRAL_BONUS":

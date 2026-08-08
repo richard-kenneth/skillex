@@ -19,6 +19,12 @@ const IndirectUpdateProfileSchema = v.strictObject({
 });
 
 export const UpdateProfileSchema = v.strictObject({
+  name: v.optional(
+    v.pipe(
+      v.string(),
+      v.maxLength(100, "Name must be less than 100 characters."),
+    ),
+  ),
   bio: v.optional(
     v.pipe(
       v.string(),

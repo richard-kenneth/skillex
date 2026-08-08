@@ -53,12 +53,7 @@
           "imageWidth": 76
         }
       ],
-      [
-        "@livekit/react-native-expo-plugin",
-        {
-          "enableScreenShare": true
-        }
-      ],
+      "@livekit/react-native-expo-plugin",
       "@config-plugins/react-native-webrtc",
       [
         "expo-notifications",
@@ -99,6 +94,32 @@
         {
           "supportsBackgroundPlayback": true,
           "supportsPictureInPicture": true
+        }
+      ],
+      [
+        "expo-sharing",
+        {
+          "ios": {
+            "enabled": true,
+            "activationRule": {
+              "supportsFileWithMaxCount": 5,
+              "supportsImageWithMaxCount": 5,
+              "supportsMovieWithMaxCount": 1,
+              "supportsText": true,
+              "supportsWebURLWithMaxCount": 1,
+              "supportsWebPageWithMaxCount": 1,
+              "supportsAttachmentsWithMaxCount": 10
+            }
+          },
+          "android": {
+            "enabled": true,
+            "singleShareMimeTypes": [
+              "*/*"
+            ],
+            "multipleShareMimeTypes": [
+              "*/*"
+            ]
+          }
         }
       ]
     ],

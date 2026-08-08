@@ -98,17 +98,17 @@ import {
 type Tab = "messages" | "terms" | "availability";
 
 const QUICK_REPLIES = [
-  { key: "AVAILABLE_WEEKDAYS", label: "Weekdays" },
-  { key: "AVAILABLE_WEEKENDS", label: "Weekends" },
-  { key: "NEED_MORE_TIME", label: "Need time" },
-  { key: "REQUEST_RESCHEDULE", label: "Reschedule" },
+  { key: "AVAILABLE_WEEKDAYS", labelKey: "availableWeekdays" },
+  { key: "AVAILABLE_WEEKENDS", labelKey: "availableWeekends" },
+  { key: "NEED_MORE_TIME", labelKey: "needMoreTime" },
+  { key: "REQUEST_RESCHEDULE", labelKey: "needReschedule" },
 ];
 
 const TIME_SLOTS = [
-  { val: "Morning", label: "Morning", Icon: Sunrise },
-  { val: "Afternoon", label: "Afternoon", Icon: Sunset },
-  { val: "Evening", label: "Evening", Icon: CloudMoon },
-  { val: "Night", label: "Night", Icon: Moon },
+  { val: "Morning", labelKey: "morning", Icon: Sunrise },
+  { val: "Afternoon", labelKey: "afternoon", Icon: Sunset },
+  { val: "Evening", labelKey: "evening", Icon: CloudMoon },
+  { val: "Night", labelKey: "night", Icon: Moon },
 ];
 
 const TIME_PRESETS_AMPM = [
@@ -281,12 +281,12 @@ export default function RequestDetailScreen() {
       };
 
       await proposeQ.mutateAsync({ requestId: id!, payload });
-      toast.toast({ title: "Proposal submitted", variant: "success" });
+      toast.toast({ title: t("proposalSubmitted"), variant: "success" });
       await q.refetch();
     } catch (e: any) {
       toast.toast({
-        title: "Could not propose terms",
-        description: e?.message ?? "Please check inputs and try again.",
+        title: t("couldNotProposeTerms"),
+        description: e?.message ?? t("checkInputsAndTry"),
         variant: "error",
       });
     }
@@ -304,13 +304,13 @@ export default function RequestDetailScreen() {
       } else {
         await acceptQ.mutateAsync(id!);
       }
-      toast.toast({ title: "Terms accepted!", variant: "success" });
+      toast.toast({ title: t("termsAccepted"), variant: "success" });
       await q.refetch();
       await balanceQ.refetch();
     } catch (e: any) {
       toast.toast({
-        title: "Failed to accept terms",
-        description: e?.message ?? "Try again",
+        title: t("failedAcceptTerms"),
+        description: e?.message ?? t("tryAgain"),
         variant: "error",
       });
     }
@@ -323,12 +323,12 @@ export default function RequestDetailScreen() {
         timeSlots: availTimes,
       };
       await updateAvailQ.mutateAsync({ requestId: id!, payload });
-      toast.toast({ title: "Availability saved", variant: "success" });
+      toast.toast({ title: t("availabilitySaved"), variant: "success" });
       await q.refetch();
     } catch (e: any) {
       toast.toast({
-        title: "Failed to save availability",
-        description: e?.message ?? "Try again",
+        title: t("failedSaveAvailability"),
+        description: e?.message ?? t("tryAgain"),
         variant: "error",
       });
     }
@@ -342,7 +342,7 @@ export default function RequestDetailScreen() {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: theme.background }}
-      edges={["bottom"]}
+      edges={["top", "bottom"]}
     >
       <ThemedView type="background" style={{ flex: 1, alignItems: "center" }}>
         {/* Top Navbar */}
@@ -362,7 +362,13 @@ export default function RequestDetailScreen() {
         >
           <Pressable
             hitSlop={12}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/(tabs)/matches");
+              }
+            }}
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -382,7 +388,7 @@ export default function RequestDetailScreen() {
               <ArrowLeft size={18} color={theme.foreground} />
             </View>
             <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-              Negotiation
+              {t("negotiation")}
             </ThemedText>
           </Pressable>
 
@@ -481,11 +487,11 @@ export default function RequestDetailScreen() {
               items={[
                 {
                   value: "messages",
-                  label: "Chat",
+                  label: t("chat"),
                   badge: request?.messages?.length || undefined,
                 },
-                { value: "terms", label: "Terms & Agreement" },
-                { value: "availability", label: "Availability" },
+                { value: "terms", label: t("termsAndScheduling") },
+                { value: "availability", label: t("generalAvailability") },
               ]}
             />
 
@@ -503,12 +509,12 @@ export default function RequestDetailScreen() {
                       requestId: id!,
                       payload: { messageKey: key as any },
                     });
-                    toast.toast({ title: "Sent", variant: "success" });
+                    toast.toast({ title: t("messageSent"), variant: "success" });
                     await q.refetch();
                   } catch (e: any) {
                     toast.toast({
-                      title: "Could not send",
-                      description: e?.message ?? "Try again",
+                      title: t("couldNotSend"),
+                      description: e?.message ?? t("tryAgain"),
                       variant: "error",
                     });
                   }
@@ -646,7 +652,7 @@ export default function RequestDetailScreen() {
                   type="subtitle"
                   style={{ fontSize: FONT_SIZE.lg, fontWeight: "700" }}
                 >
-                  Points & Fee Breakdown
+                  {t("pointsFeeBreakdown")}
                 </ThemedText>
               </View>
               <Pressable
@@ -677,7 +683,7 @@ export default function RequestDetailScreen() {
                         value={`${bd.gross} pts`}
                       />
                       <FeeRow
-                        label={t("platformFeePercent")}
+                        label={t("platformFeePercent", { percent: 10 })}
                         value={`-${bd.fee} pts`}
                         danger
                       />
@@ -685,8 +691,8 @@ export default function RequestDetailScreen() {
                       <FeeRow
                         label={
                           breakdownData.payerIsMe
-                            ? "Total points you pay"
-                            : "Net points you receive"
+                            ? t("totalPointsYouPay")
+                            : t("netPointsYouReceive")
                         }
                         value={`${breakdownData.payerIsMe ? bd.gross : bd.net} pts`}
                         strong
@@ -722,8 +728,7 @@ export default function RequestDetailScreen() {
                       lineHeight: 16,
                     }}
                   >
-                    The 10% platform fee supports lesson scheduling, dispute
-                    resolution, automated reminders, and escrow safety.
+                    {t("feeExplanationText")}
                   </ThemedText>
                 </View>
               </View>
@@ -733,7 +738,7 @@ export default function RequestDetailScreen() {
               onPress={() => setBreakdownModalOpen(false)}
               style={{ width: "100%" }}
             >
-              Close
+              {t("close")}
             </Button>
           </Pressable>
         </Pressable>
@@ -746,7 +751,7 @@ export default function RequestDetailScreen() {
         title={t('requestActions')}
         options={[
           {
-            label: "View partner profile",
+            label: t("viewPartnerProfile"),
             icon: <User size={18} color={theme.foreground} />,
             onPress: () =>
               otherUser?.id && router.push(`/users/${otherUser.id}` as any),
@@ -754,14 +759,14 @@ export default function RequestDetailScreen() {
           ...(isPending && !isSender
             ? [
                 {
-                  label: "Accept request",
+                  label: t("acceptRequest"),
                   icon: (
                     <CheckCircle2 size={18} color={getAccent("green").main} />
                   ),
                   onPress: () => setConfirmAccept(true),
                 },
                 {
-                  label: "Reject request",
+                  label: t("rejectRequestAction"),
                   icon: (
                     <XCircle size={18} color={theme.destructive as any} />
                   ),
@@ -772,20 +777,20 @@ export default function RequestDetailScreen() {
           ...(isPending && isSender
             ? [
                 {
-                  label: "Cancel request",
+                  label: t("cancelRequestAction"),
                   icon: <Ban size={18} color={theme.destructive as any} />,
                   onPress: () => setConfirmCancel(true),
                 },
               ]
             : []),
           {
-            label: "Report issue",
+            label: t("reportIssue"),
             icon: <AlertTriangle size={18} color={theme.destructive as any} />,
-            subtitle: "Flag this request with support",
+            subtitle: t("reportIssueSubtitle"),
             onPress: () =>
               toast.toast({
-                title: "Report submitted",
-                description: "Support will review this request.",
+                title: t("reportSubmitted"),
+                description: t("reportSubmittedDesc"),
                 variant: "info",
               }),
           },
@@ -798,19 +803,37 @@ export default function RequestDetailScreen() {
         onOpenChange={setConfirmAccept}
         title={
           hasInsufficientPointsToAccept
-            ? "Insufficient points balance"
-            : "Confirm & Accept Terms"
+            ? t("insufficientPointsBalance")
+            : t("confirmAcceptTermsTitle")
         }
         description={
           hasInsufficientPointsToAccept
-            ? `You need ${request?.pointsProposal ?? 0} points to accept (available balance: ${balance}). Top up your points first or propose new terms.`
-            : `You are agreeing to:
-• ${request?.requestedSkill?.name}: ${request?.requestedSkillSessions || 1} session(s) (${request?.requestedSkillDuration || 60}m)
-${request?.offeredSkill ? `• ${request?.offeredSkill?.name}: ${request?.offeredSkillSessions || 1} session(s) (${request?.offeredSkillDuration || 60}m)\n` : ""}${request?.pointsProposal > 0 ? `• Points: ${request.pointsProposal} pts (${request.pointsPayerId === currentUserId ? "You Pay" : "They Pay"})\n` : ""}
-Both parties will commit to this schedule and an active exchange room will be opened.`
+            ? t("insufficientPointsAcceptDesc", { required: request?.pointsProposal ?? 0, balance })
+            : t("confirmAcceptTermsDesc", {
+                requestedSkill: request?.requestedSkill?.name ?? "",
+                requestedSessions: request?.requestedSkillSessions || 1,
+                requestedDuration: request?.requestedSkillDuration || 60,
+                offeredText: request?.offeredSkill
+                  ? t("confirmOfferedSkillSnippet", {
+                      skill: request?.offeredSkill?.name ?? "",
+                      sessions: request?.offeredSkillSessions || 1,
+                      duration: request?.offeredSkillDuration || 60,
+                    })
+                  : "",
+                pointsText:
+                  request?.pointsProposal > 0
+                    ? t("confirmPointsSnippet", {
+                        points: request.pointsProposal,
+                        payer:
+                          request.pointsPayerId === currentUserId
+                            ? t("iPay")
+                            : t("theyPay"),
+                      })
+                    : "",
+              })
         }
         confirmLabel={
-          hasInsufficientPointsToAccept ? "Get Points" : "I Agree & Accept"
+          hasInsufficientPointsToAccept ? t("getPoints") : t("iAgreeAndAccept")
         }
         onConfirm={handleAcceptTerms}
       />
@@ -826,12 +849,12 @@ Both parties will commit to this schedule and an active exchange room will be op
         onConfirm={async () => {
           try {
             await rejectQ.mutateAsync(id!);
-            toast.toast({ title: "Request rejected", variant: "info" });
+            toast.toast({ title: t("requestRejected"), variant: "info" });
             router.back();
           } catch (e: any) {
             toast.toast({
-              title: "Could not reject",
-              description: e?.message ?? "Try again",
+              title: t("couldNotReject"),
+              description: e?.message ?? t("tryAgain"),
               variant: "error",
             });
           }
@@ -849,12 +872,12 @@ Both parties will commit to this schedule and an active exchange room will be op
         onConfirm={async () => {
           try {
             await cancelQ.mutateAsync(id!);
-            toast.toast({ title: "Request cancelled", variant: "info" });
+            toast.toast({ title: t("requestCancelled"), variant: "info" });
             router.back();
           } catch (e: any) {
             toast.toast({
-              title: "Could not cancel",
-              description: e?.message ?? "Try again",
+              title: t("couldNotCancel"),
+              description: e?.message ?? t("tryAgain"),
               variant: "error",
             });
           }
@@ -881,8 +904,10 @@ function HeaderHeroCard({
 }) {
   const theme = useTheme();
   const router = useRouter();
+  const t = useT('requests');
+  const c = useT('common');
 
-  const peerAvail = getPeerAvailabilityInfo(request, isSender, otherUser);
+  const peerAvail = getPeerAvailabilityInfo(request, isSender, otherUser, t);
 
   return (
     <Card style={{ borderColor: theme.border }}>
@@ -911,7 +936,7 @@ function HeaderHeroCard({
                   type="title"
                   style={{ fontSize: FONT_SIZE.lg, fontWeight: "700" }}
                 >
-                  {otherUser?.name ?? "Peer"}
+                  {otherUser?.name ?? c("peer")}
                 </ThemedText>
                 <ThemedText
                   type="small"
@@ -921,8 +946,8 @@ function HeaderHeroCard({
                   }}
                 >
                   {isSender
-                    ? "Skill request sent by you"
-                    : "Skill request received from peer"}
+                    ? t("skillRequestSentByYou")
+                    : t("skillRequestReceivedFromPeer")}
                 </ThemedText>
               </View>
             </Pressable>
@@ -967,7 +992,7 @@ function HeaderHeroCard({
                       fontWeight: "700",
                     }}
                   >
-                    Target Skill (Learn)
+                    {t("targetSkillLearn")}
                   </ThemedText>
                   <ThemedText
                     type="smallBold"
@@ -1012,7 +1037,7 @@ function HeaderHeroCard({
                           fontWeight: "700",
                         }}
                       >
-                        Offered Skill (Teach)
+                        {t("offeredSkillTeach")}
                       </ThemedText>
                       <ThemedText
                         type="smallBold"
@@ -1047,13 +1072,13 @@ function HeaderHeroCard({
                   type="smallBold"
                   style={{ fontSize: 11, color: theme.foreground }}
                 >
-                  {otherUser?.name ?? "Peer"}'s Availability: {peerAvail.days}
+                  {t("peerAvailabilityTitle", { name: otherUser?.name ?? c("peer") })}: {peerAvail.days}
                 </ThemedText>
                 <ThemedText
                   type="small"
                   style={{ fontSize: 10, color: theme.mutedForeground }}
                 >
-                  Times: {peerAvail.times}
+                  {t("availTimes", { times: peerAvail.times })}
                 </ThemedText>
               </View>
             </View>
@@ -1070,7 +1095,7 @@ function HeaderHeroCard({
                 type="small"
                 style={{ fontSize: 11, color: theme.mutedForeground }}
               >
-                Request created {formatDateTimeShort(request.createdAt)}
+                {t("requestCreatedDate", { date: formatDateTimeShort(request.createdAt) })}
               </ThemedText>
             </View>
           </>
@@ -1107,6 +1132,8 @@ function ChatTabSection({
 }) {
   // 1. Declare ALL hooks at the top level
   const theme = useTheme();
+  const t = useT('requests');
+  const c = useT('common');
   const chatScrollRef = React.useRef<ScrollView>(null);
 
   const messages = request?.messages ?? [];
@@ -1157,11 +1184,11 @@ function ChatTabSection({
               fontWeight: "700",
             }}
           >
-            Current Proposed Terms
+            {t("currentProposedTerms")}
           </ThemedText>
           <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.xs }}>
             {request.requestedSkill?.name}: {request.requestedSkillSessions || 1}x {request.requestedSkillDuration || 60}m
-            {(request.pointsProposal ?? 0) > 0 ? ` · ${request.pointsProposal} pts` : ""}
+            {(request.pointsProposal ?? 0) > 0 ? ` · ${request.pointsProposal} ${c("points")}` : ""}
           </ThemedText>
         </View>
         <View
@@ -1175,7 +1202,7 @@ function ChatTabSection({
             type="smallBold"
             style={{ fontSize: 11, color: theme.foreground }}
           >
-            Review & Respond
+            {t("reviewAndRespond")}
           </ThemedText>
           <ArrowRight size={14} color={theme.foreground} />
         </View>
@@ -1210,10 +1237,10 @@ function ChatTabSection({
             </View>
             <View style={{ flex: 1 }}>
               <CardTitle style={{ fontSize: FONT_SIZE.md }}>
-                Negotiation Thread
+                {t("negotiationThread")}
               </CardTitle>
               <CardDescription style={{ fontSize: FONT_SIZE.xs }}>
-                Real-time messages & proposal history
+                {t("realTimeMessagesHistory")}
               </CardDescription>
             </View>
           </View>
@@ -1247,7 +1274,7 @@ function ChatTabSection({
                   type="small"
                   style={{ color: theme.mutedForeground, textAlign: "center" }}
                 >
-                  No messages yet. Send a quick reply or switch to the Terms tab to submit a proposal.
+                  {t("noMessagesYet")}
                 </ThemedText>
               </View>
             ) : (
@@ -1284,7 +1311,7 @@ function ChatTabSection({
                               : theme.mutedForeground,
                           }}
                         >
-                          {isMe ? "You" : (otherUser?.name ?? "Peer")}
+                          {isMe ? c("you") : (otherUser?.name ?? c("peer"))}
                         </ThemedText>
 
                         {msg.messageKey === "PROPOSE_TERMS" ? (
@@ -1298,7 +1325,7 @@ function ChatTabSection({
                                 fontSize: FONT_SIZE.xs,
                               }}
                             >
-                              Proposed new terms
+                              {t("msg_PROPOSE_TERMS")}
                             </ThemedText>
                             <View
                               style={{
@@ -1357,7 +1384,7 @@ function ChatTabSection({
                                           fontSize: FONT_SIZE.xs,
                                         }}
                                       >
-                                        {msg.pointsProposal} pts
+                                        {msg.pointsProposal} {c("points")}
                                       </ThemedText>
                                     </View>
 
@@ -1393,7 +1420,7 @@ function ChatTabSection({
                                             : theme.foreground,
                                         }}
                                       >
-                                        Fee breakdown
+                                        {t("feeBreakdown")}
                                       </ThemedText>
                                     </Pressable>
                                   </View>
@@ -1407,10 +1434,12 @@ function ChatTabSection({
                                         : theme.mutedForeground,
                                     }}
                                   >
-                                    Payer:{" "}
-                                    {msg.pointsPayerId === currentUserId
-                                      ? "You"
-                                      : otherUser?.name ?? "Peer"}
+                                    {t("payerLabel", {
+                                      payer:
+                                        msg.pointsPayerId === currentUserId
+                                          ? c("you")
+                                          : (otherUser?.name ?? c("peer")),
+                                    })}
                                   </ThemedText>
                                 </View>
                               ) : null}
@@ -1427,7 +1456,7 @@ function ChatTabSection({
                               lineHeight: 18,
                             }}
                           >
-                            {translateQuickReply(msg.messageKey)}
+                            {translateQuickReply(msg.messageKey, t)}
                           </ThemedText>
                         )}
 
@@ -1463,7 +1492,7 @@ function ChatTabSection({
                   textTransform: "uppercase",
                 }}
               >
-                Quick Replies
+                {t("quickReplies")}
               </ThemedText>
               <View
                 style={{
@@ -1481,7 +1510,7 @@ function ChatTabSection({
                     disabled={sending}
                     style={{ borderRadius: RADIUS.pill }}
                   >
-                    {r.label}
+                    {t(r.labelKey)}
                   </Button>
                 ))}
               </View>
@@ -1494,12 +1523,12 @@ function ChatTabSection({
                 gap: 4,
               }}
             >
-              <Badge variant="outline">Negotiation Finalized</Badge>
+              <Badge variant="outline">{t("negotiationFinalized")}</Badge>
               <ThemedText
                 type="small"
                 style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.xs }}
               >
-                Chat is locked for this exchange.
+                {t("chatLocked")}
               </ThemedText>
             </View>
           )}
@@ -1595,6 +1624,8 @@ function TermsTabSection({
   onGoToExchange,
 }: any) {
   const theme = useTheme();
+  const t = useT('requests');
+  const c = useT('common');
 
   if (loading) {
     return (
@@ -1609,7 +1640,7 @@ function TermsTabSection({
   const pointsBreakdown =
     counterPointsNum > 0 ? calculatePointsBreakdown(counterPointsNum) : null;
   const isCommitted = request.status === "COMMITTED";
-  const peerAvail = getPeerAvailabilityInfo(request, isSender, otherUser);
+  const peerAvail = getPeerAvailabilityInfo(request, isSender, otherUser, t);
 
   return (
     <View style={{ gap: SPACING[4] }}>
@@ -1637,10 +1668,10 @@ function TermsTabSection({
             </View>
             <View style={{ flex: 1 }}>
               <CardTitle style={{ fontSize: FONT_SIZE.md }}>
-                Agreement & Proposed Terms
+                {t("agreementAndProposedTerms")}
               </CardTitle>
               <CardDescription style={{ fontSize: FONT_SIZE.xs }}>
-                Review active proposal details before agreeing or declining
+                {t("reviewActiveProposalDesc")}
               </CardDescription>
             </View>
           </View>
@@ -1649,12 +1680,12 @@ function TermsTabSection({
           {/* Party Agreement Badges */}
           <View style={{ gap: SPACING[2] }}>
             <AgreementRow
-              name={request.sender?.name ?? "Sender"}
+              name={request.sender?.name ?? c("sender")}
               agreed={!!request.senderAgreed}
               isMe={request.senderId === currentUserId}
             />
             <AgreementRow
-              name={request.receiver?.name ?? "Receiver"}
+              name={request.receiver?.name ?? c("receiver")}
               agreed={!!request.receiverAgreed}
               isMe={request.receiverId === currentUserId}
             />
@@ -1678,7 +1709,7 @@ function TermsTabSection({
                   textTransform: "uppercase",
                 }}
               >
-                Proposed Schedule Slots
+                {t("proposedScheduleSlots")}
               </ThemedText>
               <View style={{ gap: SPACING[2] }}>
                 {request.proposedSlots.map((slot: any) => {
@@ -1734,7 +1765,7 @@ function TermsTabSection({
                                 : getAccent("amber").main,
                             }}
                           >
-                            {isAccepted ? "Accepted" : "Pending"}
+                            {isAccepted ? t("agreed") : t("statusPending")}
                           </ThemedText>
                         </Badge>
                       </View>
@@ -1756,7 +1787,7 @@ function TermsTabSection({
                           fontSize: 11,
                         }}
                       >
-                        Proposed by {isMe ? "you" : (slot.proposer?.name ?? "peer")}
+                        {t("proposedBy", { name: isMe ? c("you") : (slot.proposer?.name ?? c("peer")) })}
                       </ThemedText>
                     </View>
                   );
@@ -1790,7 +1821,7 @@ function TermsTabSection({
                     fontWeight: "600",
                   }}
                 >
-                  Negotiation complete! The exchange is active.
+                  {t("negotiationCompleteActive")}
                 </ThemedText>
               </View>
               <Button
@@ -1798,7 +1829,7 @@ function TermsTabSection({
                 onPress={onGoToExchange}
                 style={{ width: "100%" }}
               >
-                Go to Exchange Workspace
+                {t("goToExchangeWorkspace")}
               </Button>
             </View>
           ) : null}
@@ -1835,7 +1866,7 @@ function TermsTabSection({
                       flex: 1,
                     }}
                   >
-                    You need {request?.pointsProposal ?? 0} pts to accept terms (available: {balance} pts).
+                    {t("needPointsToAccept", { pts: request?.pointsProposal ?? 0, balance })}
                   </ThemedText>
                 </View>
               )}
@@ -1855,7 +1886,7 @@ function TermsTabSection({
                       )
                     }
                   >
-                    Accept Terms
+                    {t("acceptTerms")}
                   </Button>
                 )}
 
@@ -1871,7 +1902,7 @@ function TermsTabSection({
                       />
                     }
                   >
-                    Reject
+                    {t("reject")}
                   </Button>
                 ) : null}
 
@@ -1882,7 +1913,7 @@ function TermsTabSection({
                     onPress={onCancel}
                     leftIcon={<Ban size={16} color={theme.foreground} />}
                   >
-                    Cancel
+                    {t("cancelRequestAction")}
                   </Button>
                 ) : null}
               </View>
@@ -1916,10 +1947,10 @@ function TermsTabSection({
               </View>
               <View style={{ flex: 1 }}>
                 <CardTitle style={{ fontSize: FONT_SIZE.md }}>
-                  Propose Counter-Terms
+                  {t("proposeCounterTerms")}
                 </CardTitle>
                 <CardDescription style={{ fontSize: FONT_SIZE.xs }}>
-                  Modify session counts, AM/PM schedule times, or points
+                  {t("modifySessionScheduleDesc")}
                 </CardDescription>
               </View>
             </View>
@@ -1942,20 +1973,20 @@ function TermsTabSection({
                   type="smallBold"
                   style={{ fontSize: 11, color: theme.foreground }}
                 >
-                  {otherUser?.name ?? "Peer"}'s Free Days & Times:
+                  {t("peerFreeDaysAndTimes", { name: otherUser?.name ?? c("peer") })}
                 </ThemedText>
               </View>
               <ThemedText
                 type="small"
                 style={{ fontSize: 11, color: theme.mutedForeground }}
               >
-                Days: {peerAvail.days} · Times: {peerAvail.times}
+                {t("daysTimesSummary", { days: peerAvail.days, times: peerAvail.times })}
               </ThemedText>
             </View>
 
             {/* Skill 1 Editor */}
             <SkillTermCard
-              label={`${request.requestedSkill?.name ?? "Requested Skill"} (Learn)`}
+              label={t("requestedSkillLearnLabel", { skill: request.requestedSkill?.name ?? "" })}
               sessions={reqSessions}
               setSessions={setReqSessions}
               duration={reqDuration}
@@ -1970,7 +2001,7 @@ function TermsTabSection({
             {/* Skill 2 Editor (if swap) */}
             {request.offeredSkill ? (
               <SkillTermCard
-                label={`${request.offeredSkill?.name ?? "Offered Skill"} (Teach)`}
+                label={t("offeredSkillTeachLabel", { skill: request.offeredSkill?.name ?? "" })}
                 sessions={offSessions}
                 setSessions={setOffSessions}
                 duration={offDuration}
@@ -2018,8 +2049,7 @@ function TermsTabSection({
                       flex: 1,
                     }}
                   >
-                    You need {counterPointsNum} pts to propose (available:{" "}
-                    {balance} pts).
+                    {t("needPointsToPropose", { pts: counterPointsNum, balance })}
                   </ThemedText>
                 </View>
               )}
@@ -2031,7 +2061,7 @@ function TermsTabSection({
                 onPress={onPropose}
                 style={{ width: "100%" }}
               >
-                Submit Proposal
+                {t("submitProposal")}
               </Button>
             </View>
           </CardContent>
@@ -2057,7 +2087,7 @@ function PointsNegotiationCard({
 }: any) {
   const theme = useTheme();
   const t = useT('requests');
-
+  const c = useT('common');
 
   return (
     <View
@@ -2086,7 +2116,7 @@ function PointsNegotiationCard({
         >
           <Coins size={18} color={getAccent("amber").main} />
           <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.xs }}>
-            Points Adjustment (Optional)
+            {t("pointsAdjustmentOptional")}
           </ThemedText>
         </View>
 
@@ -2094,7 +2124,7 @@ function PointsNegotiationCard({
           type="small"
           style={{ fontSize: 11, color: theme.mutedForeground }}
         >
-          Balance: {balance} pts
+          {t("balancePts", { balance })}
         </ThemedText>
       </View>
 
@@ -2130,7 +2160,7 @@ function PointsNegotiationCard({
                 : theme.foreground,
             }}
           >
-            I Pay Points
+            {t("iPayPoints")}
           </ThemedText>
         </Pressable>
         <Pressable
@@ -2154,7 +2184,7 @@ function PointsNegotiationCard({
                 : theme.foreground,
             }}
           >
-            They Pay Points
+            {t("theyPayPoints")}
           </ThemedText>
         </Pressable>
       </View>
@@ -2253,7 +2283,7 @@ function PointsNegotiationCard({
                       : theme.foreground,
                   }}
                 >
-                  {pt === 0 ? "0 (Clear)" : `${pt} pts`}
+                  {pt === 0 ? t("clearPoints") : `${pt} ${c("points")}`}
                 </ThemedText>
               </Pressable>
             );
@@ -2275,17 +2305,17 @@ function PointsNegotiationCard({
         >
           <FeeRow
             label={t("grossProposal")}
-            value={`${pointsBreakdown.gross} pts`}
+            value={`${pointsBreakdown.gross} ${c("points")}`}
           />
           <FeeRow
-            label={t("platformFeePercent")}
-            value={`-${pointsBreakdown.fee} pts`}
+            label={t("platformFeePercent", { percent: 10 })}
+            value={`-${pointsBreakdown.fee} ${c("points")}`}
             danger
           />
           <Separator style={{ marginVertical: 2 }} />
           <FeeRow
-            label={counterPayerIsMe ? "You pay total" : "You receive net"}
-            value={`${counterPayerIsMe ? pointsBreakdown.gross : pointsBreakdown.net} pts`}
+            label={counterPayerIsMe ? t("youPayTotal") : t("youReceiveNet")}
+            value={`${counterPayerIsMe ? pointsBreakdown.gross : pointsBreakdown.net} ${c("points")}`}
             strong
             accent={counterPayerIsMe ? "red" : "green"}
           />
@@ -2308,7 +2338,7 @@ function PointsNegotiationCard({
                 textDecorationLine: "underline",
               }}
             >
-              View platform fee details
+              {t("viewPlatformFeeDetails")}
             </ThemedText>
           </Pressable>
 
@@ -2322,7 +2352,7 @@ function PointsNegotiationCard({
                 fontWeight: "600",
               }}
             >
-              Insufficient balance ({balance} pts available)
+              {t("insufficientBalancePts", { balance })}
             </ThemedText>
           ) : null}
         </View>
@@ -2350,7 +2380,7 @@ function AvailabilityTabSection({
 }: any) {
   const theme = useTheme();
   const t = useT('requests');
-
+  const c = useT('common');
 
   if (loading) {
     return (
@@ -2375,7 +2405,7 @@ function AvailabilityTabSection({
     );
   };
 
-  const peerAvail = getPeerAvailabilityInfo(request, isSender, otherUser);
+  const peerAvail = getPeerAvailabilityInfo(request, isSender, otherUser, t);
 
   return (
     <View style={{ gap: SPACING[4] }}>
@@ -2402,10 +2432,10 @@ function AvailabilityTabSection({
             </View>
             <View style={{ flex: 1 }}>
               <CardTitle style={{ fontSize: FONT_SIZE.md }}>
-                General Availability
+                {t("generalAvailability")}
               </CardTitle>
               <CardDescription style={{ fontSize: FONT_SIZE.xs }}>
-                Overall free days & time slots
+                {t("overallFreeDaysTimesDesc")}
               </CardDescription>
             </View>
           </View>
@@ -2430,13 +2460,13 @@ function AvailabilityTabSection({
                 textTransform: "uppercase",
               }}
             >
-              {otherUser?.name ?? "Peer"}'s Availability
+              {t("peerAvailabilityTitle", { name: otherUser?.name ?? c("peer") })}
             </ThemedText>
             <ThemedText type="small" style={{ fontSize: FONT_SIZE.xs }}>
-              Days: {peerAvail.days}
+              {t("availDays", { days: peerAvail.days })}
             </ThemedText>
             <ThemedText type="small" style={{ fontSize: FONT_SIZE.xs }}>
-              Times: {peerAvail.times}
+              {t("availTimes", { times: peerAvail.times })}
             </ThemedText>
           </View>
 
@@ -2446,7 +2476,7 @@ function AvailabilityTabSection({
                 type="small"
                 style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.xs }}
               >
-                Set your free times so {otherUser?.name ?? "peer"} can propose matching slots.
+                {t("setFreeTimesHelp", { name: otherUser?.name ?? c("peer") })}
               </ThemedText>
 
               <View style={{ gap: SPACING[2] }}>
@@ -2493,7 +2523,7 @@ function AvailabilityTabSection({
                     gap: SPACING[1.5],
                   }}
                 >
-                  {TIME_SLOTS.map(({ val, label, Icon }) => {
+                  {TIME_SLOTS.map(({ val, labelKey, Icon }) => {
                     const selected = availTimes.includes(val);
                     return (
                       <Badge
@@ -2519,7 +2549,7 @@ function AvailabilityTabSection({
                             color={selected ? theme.primaryForeground : theme.mutedForeground}
                           />
                           <ThemedText type="smallBold" style={{ fontSize: 11 }}>
-                            {label}
+                            {t(labelKey)}
                           </ThemedText>
                         </Pressable>
                       </Badge>
@@ -2535,7 +2565,7 @@ function AvailabilityTabSection({
                 onPress={onUpdateAvail}
                 style={{ marginTop: SPACING[1] }}
               >
-                Save Availability
+                {t("saveAvailability")}
               </Button>
             </View>
           ) : null}
@@ -2727,7 +2757,7 @@ function SkillTermCard({
             type="small"
             style={{ fontSize: 10, color: theme.mutedForeground }}
           >
-            Max {maxDays} day(s)
+            {t("maxDaysCount", { max: maxDays })}
           </ThemedText>
         </View>
 
@@ -2784,6 +2814,7 @@ function NativeTimePickerField({
   label?: string;
 }) {
   const theme = useTheme();
+  const t = useT('requests');
   const [showPicker, setShowPicker] = React.useState(false);
 
   const dateValue = React.useMemo(() => {
@@ -2849,7 +2880,7 @@ function NativeTimePickerField({
         >
           <Clock size={16} color={theme.foreground} />
           <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-            {formatTimeToAMPM(value) || "Select Time"}
+            {formatTimeToAMPM(value) || t("selectTime")}
           </ThemedText>
         </View>
 
@@ -2858,7 +2889,7 @@ function NativeTimePickerField({
             type="small"
             style={{ fontSize: 10, color: theme.mutedForeground }}
           >
-            Tap to Open Picker
+            {t("tapToOpenPicker")}
           </ThemedText>
         </Badge>
       </Pressable>
@@ -2938,7 +2969,7 @@ function NativeTimePickerField({
                     type="subtitle"
                     style={{ fontSize: FONT_SIZE.md }}
                   >
-                    Select Start Time
+                    {t("selectStartTime")}
                   </ThemedText>
 
                   <DateTimePicker
@@ -2954,7 +2985,7 @@ function NativeTimePickerField({
                     onPress={() => setShowPicker(false)}
                     style={{ width: "100%" }}
                   >
-                    Done ({formatTimeToAMPM(value)})
+                    {t("doneWithTime", { time: formatTimeToAMPM(value) })}
                   </Button>
                 </Pressable>
               </Pressable>
@@ -2988,6 +3019,9 @@ function AgreementRow({
   isMe: boolean;
 }) {
   const theme = useTheme();
+  const t = useT('requests');
+  const c = useT('common');
+
   return (
     <View
       style={{
@@ -3000,7 +3034,7 @@ function AgreementRow({
         {name}{" "}
         {isMe && (
           <ThemedText type="small" style={{ color: theme.mutedForeground }}>
-            (you)
+            ({c("you")})
           </ThemedText>
         )}
       </ThemedText>
@@ -3021,7 +3055,7 @@ function AgreementRow({
               : getAccent("amber").main,
           }}
         >
-          {agreed ? "Agreed" : "Pending"}
+          {agreed ? t("agreed") : t("statusPending")}
         </ThemedText>
       </Badge>
     </View>
@@ -3065,7 +3099,7 @@ function FeeRow({ label, value, danger, strong, accent }: any) {
   );
 }
 
-function getPeerAvailabilityInfo(request: any, isSender: boolean, otherUser: any) {
+function getPeerAvailabilityInfo(request: any, isSender: boolean, otherUser: any, t?: any) {
   const avail = isSender
     ? request?.receiverAvailability ?? otherUser?.availability
     : request?.senderAvailability ?? otherUser?.availability;
@@ -3073,44 +3107,34 @@ function getPeerAvailabilityInfo(request: any, isSender: boolean, otherUser: any
   const days =
     avail?.days && avail.days.length > 0
       ? avail.days.map((d: number) => DAY_NAMES_LONG[d]).join(", ")
-      : "Flexible / Any day";
+      : t ? t("flexibleAnyDay") : "";
 
   const times =
     avail?.timeSlots && avail.timeSlots.length > 0
       ? avail.timeSlots.join(", ")
-      : "Flexible / Any time";
+      : t ? t("flexibleAnyTime") : "";
 
   return { days, times };
 }
 
-function labelForRequestStatus(s: string) {
+function labelForRequestStatus(s: string, t?: any) {
   switch (s) {
     case "PENDING":
-      return "Pending";
+      return t ? t("statusPending") : s;
     case "COMMITTED":
-      return "Accepted";
+      return t ? t("statusCommitted") : s;
     case "REJECTED":
-      return "Rejected";
+      return t ? t("statusRejected") : s;
     case "CANCELLED":
-      return "Cancelled";
+      return t ? t("statusCancelled") : s;
     default:
       return s.replace(/_/g, " ");
   }
 }
 
-function translateQuickReply(k: string) {
-  switch (k) {
-    case "AVAILABLE_WEEKDAYS":
-      return "I'm available on weekdays.";
-    case "AVAILABLE_WEEKENDS":
-      return "I'm available on weekends.";
-    case "NEED_MORE_TIME":
-      return "I need a little more time — checking my schedule.";
-    case "REQUEST_RESCHEDULE":
-      return "Let's try rescheduling — those times don't work for me.";
-    default:
-      return k.replace(/_/g, " ");
-  }
+function translateQuickReply(k: string, t?: any) {
+  if (!k) return "";
+  return t ? t(`msg_${k}`) : k.replace(/_/g, " ");
 }
 
 function formatTimeShort(dateStr: string | Date) {

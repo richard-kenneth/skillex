@@ -124,7 +124,7 @@ export default function PointsScreen() {
         try {
           const r = await resolveQ.mutateAsync({ accountNumber: withdrawAccount, bankCode: withdrawBankCode });
           if ((r as any)?.success) setResolvedName((r as any).accountName);
-          else setWithdrawError((r as any)?.message ?? 'Could not verify account');
+          else setWithdrawError((r as any)?.message ?? t('couldNotVerifyAccount'));
         } catch (e: any) { setWithdrawError(e?.message ?? t('couldNotVerifyAccount')); }
       }, 600);
     } else { setResolvedName(null); }
@@ -146,7 +146,7 @@ export default function PointsScreen() {
         setPurchaseAmount('');
         setTimeout(() => { Promise.all([balanceQ.refetch(), txQ.refetch()]); }, 3000);
       } else { toast.toast({ title: t('paymentInitiated'), variant: 'info' }); }
-    } catch (e: any) { setPurchaseError(e?.message ?? 'Purchase failed'); }
+    } catch (e: any) { setPurchaseError(e?.message ?? t('purchaseFailed')); }
   };
 
   const handleWithdraw = async () => {
@@ -225,7 +225,7 @@ export default function PointsScreen() {
                   placeholder={`${t('min')} ${MIN_PURCHASE_POINTS}`}
                   keyboardType="numeric"
                   error={purchaseError}
-                  rightSlot={<Badge variant="secondary">Points</Badge>}
+                  rightSlot={<Badge variant="secondary">{t('points')}</Badge>}
                 />
 
                 {pAmount > 0 && pAmount < MIN_PURCHASE_POINTS ? (
@@ -236,8 +236,8 @@ export default function PointsScreen() {
 
                 {pAmount >= MIN_PURCHASE_POINTS ? (
                   <View style={{ padding: SPACING[3], borderRadius: RADIUS.lg, backgroundColor: theme.secondary, gap: SPACING[2] }}>
-                    <Row label={t('rate')} value={`1 pt = ${formatCurrency(POINT_TO_USD_RATE * rate, selectedCurrency)}`} />
-                    <Row label={t('subtotal')} value={`${pAmount.toLocaleString()} pts`} />
+                    <Row label={t('rate')} value={`1 ${t('pt')} = ${formatCurrency(POINT_TO_USD_RATE * rate, selectedCurrency)}`} />
+                    <Row label={t('subtotal')} value={`${pAmount.toLocaleString()} ${t('pts')}`} />
                     <Separator />
                     <Row label={t('youPay')} value={formatCurrency(pFiatTotal, selectedCurrency)} strong />
                   </View>
@@ -298,7 +298,7 @@ export default function PointsScreen() {
                   label={t('pointsToWithdraw')}
                   value={withdrawAmount}
                   onChangeText={(v) => { setWithdrawAmount(v.replace(/[^0-9]/g, '')); setWithdrawError(null); }}
-                  placeholder={`${t('min')} ${minWithdrawalPoints} pts`}
+                  placeholder={`${t('min')} ${minWithdrawalPoints} ${t('pts')}`}
                   keyboardType="numeric"
                   rightSlot={<Badge variant="outline">{t('balance')}: {balance.toLocaleString()}</Badge>}
                 />
@@ -403,7 +403,7 @@ export default function PointsScreen() {
       <AlertDialog
         open={confirmWithdraw} onOpenChange={setConfirmWithdraw}
         title={`${t('withdraw')} ${wAmount.toLocaleString()} ${t('points')}?`}
-        description={`${t('youWillReceive')} ~${formatCurrency(wReceive, WITHDRAWAL_CURRENCY)} ${t('in')} ${resolvedName ?? t('yourAccount')} (${(withdrawalSpread * 100).toFixed(0)}% ${t('spreadApplied')}).`}
+        description={t('confirmWithdrawDesc', { receive: formatCurrency(wReceive, WITHDRAWAL_CURRENCY), account: resolvedName ?? t('yourAccount'), spread: (withdrawalSpread * 100).toFixed(0) })}
         confirmLabel={t('confirmWithdrawal')} onConfirm={submitWithdraw}
       />
     </View>
@@ -490,12 +490,12 @@ function TxRow({ tx }: { tx: any }) {
       <View style={{ flex: 1, gap: 2 }}>
         <ThemedText type="label" style={{ fontSize: FONT_SIZE.md }}>{labelForTx(tx.type, tx.description, t)}</ThemedText>
         <ThemedText type="caption" muted>
-          {formatDateShort(tx.createdAt)}{tx.status ? ` · ${tx.status}` : ''}
+          {formatDateShort(tx.createdAt)}{tx.status ? ` · ${formatTxStatus(tx.status, t)}` : ''}
         </ThemedText>
       </View>
       <View style={{ alignItems: 'flex-end' }}>
         <ThemedText type="label" style={{ color: isPositive ? getAccent('green').main : getAccent('red').main, fontWeight: '600' }}>
-          {isPositive ? '+' : ''}{tx.amount} pts
+          {isPositive ? '+' : ''}{tx.amount} {t('pts')}
         </ThemedText>
         {tx.fiatAmount && tx.fiatCurrency ? (
           <ThemedText type="caption" muted style={{ fontSize: 10 }}>{formatCurrency(tx.fiatAmount, tx.fiatCurrency)}</ThemedText>
@@ -537,6 +537,15 @@ function labelForTx(type: string, desc: string | null, t: any): string {
     [TransactionType.CONVERSION]: t('txCurrencyConversion'),
   };
   return lookup[type] ?? type.replace(/_/g, ' ');
+}
+
+function formatTxStatus(status: string | undefined | null, t: any): string {
+  if (!status) return '';
+  const s = status.toUpperCase();
+  if (s === 'PENDING') return t('statusPending');
+  if (s === 'SUCCESS' || s === 'COMPLETED') return t('statusSuccess');
+  if (s === 'FAILED') return t('statusFailed');
+  return status;
 }
 
 function Row({ label, value, dim, strong, accent }: any) {

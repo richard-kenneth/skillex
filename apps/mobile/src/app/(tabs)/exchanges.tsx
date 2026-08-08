@@ -209,7 +209,7 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
             <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={22} />
             <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.sm }}>
-              {isSender ? 'Learning from' : 'Teaching'}{' '}
+              {isSender ? t('learningFrom') : t('teaching')}{' '}
               <ThemedText type="caption" style={{ fontWeight: '600', color: theme.foreground }}>
                 {otherUser?.name ?? t('peerTrader')}
               </ThemedText>
@@ -240,7 +240,7 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
         {totalSessions > 0 ? (
           <MetaChip
             icon={<Clock size={12} color={theme.mutedForeground} />}
-            label={`${completedSessions}/${totalSessions} sessions`}
+            label={t('sessionsCount', { completed: completedSessions, total: totalSessions })}
           />
         ) : null}
 
@@ -248,7 +248,7 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
           <MetaChip
             accent="amber"
             icon={<Coins size={12} color={getAccent('amber').main} />}
-            label={`${displayPoints} pts${exchange.escrowLocked ? ' (Escrowed)' : ''}`}
+            label={exchange.escrowLocked ? t('pointsEscrowed', { points: displayPoints }) : `${displayPoints} pts`}
           />
         ) : null}
 
@@ -256,12 +256,12 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
           <MetaChip
             accent="indigo"
             icon={<Video size={12} color={getAccent('indigo').main} />}
-            label={`Session: ${formatDateTimeShort(nextSession.scheduledAt ?? nextSession.startTime)}`}
+            label={t('sessionLabel', { date: formatDateTimeShort(nextSession.scheduledAt ?? nextSession.startTime) })}
           />
         ) : exchange.committedAt || exchange.createdAt ? (
           <MetaChip
             icon={<CalendarCheck size={12} color={theme.mutedForeground} />}
-            label={`Started ${formatDateShort(exchange.committedAt ?? exchange.createdAt)}`}
+            label={t('startedLabel', { date: formatDateShort(exchange.committedAt ?? exchange.createdAt) })}
           />
         ) : null}
 
@@ -269,7 +269,7 @@ export function ExchangeRowCard({ exchange, onPress }: { exchange: any; onPress:
           <MetaChip
             accent="indigo"
             icon={<MessageCircle size={12} color={getAccent('indigo').main} />}
-            label="New chat"
+            label={t('newChat')}
           />
         ) : null}
       </View>
