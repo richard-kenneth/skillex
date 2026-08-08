@@ -497,7 +497,7 @@ export default function PublicUserProfileScreen() {
                         key={r.id}
                         review={r}
                         onOpen={() =>
-                          router.push(`/users/${r.reviewerId}` as any)
+                          router.push(`/users/${r.reviewerId}`)
                         }
                       />
                     ))

@@ -1120,7 +1120,16 @@
     "bluetooth": "Bluetooth",
     "headset": "Headset",
     "selectAudioOutput": "Select Audio Output",
-    "newMessages": "New Messages"
+    "newMessages": "New Messages",
+    "partnerDeclined": "Partner declined recording",
+    "recordingStarted": "Recording is now active",
+    "partnerWillAppear": "Your partner will appear here once connected",
+    "typeMessagePrompt": "Send a message during your video session",
+    "recordingConsentInfoTitle": "Privacy & Security",
+    "screenShareStarted": "Screen sharing started",
+    "screenShareStopped": "Screen sharing stopped",
+    "screenShareUnavailable": "Screen share unavailable",
+    "screenShareFailed": "In-app screen capture failed"
   },
   "profile": {
     "title": "Profile",

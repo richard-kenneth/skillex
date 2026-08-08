@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useAudioDeviceDetector } from 'audio-device-detector';
+import { useAudioDeviceDetector, getConnectedDevices } from 'audio-device-detector';
 import {
   Pressable,
   ScrollView,
@@ -333,12 +333,12 @@ export default function RoomScreen() {
       if (stopAt) {
         setRecordingStopAt(stopAt);
       }
-      toast.toast({ title: t('recordingSuccess') ?? 'Recording started', variant: 'success' });
+      toast.toast({ title: t('recordingStarted'), variant: 'success' });
     } catch (err: any) {
       setRecordingState('idle');
       sendSignal({ type: 'consent_error' });
       toast.toast({
-        title: t('startRecordingFailed') ?? 'Could not start recording',
+        title: t('startRecordingFailed'),
         description: err?.message,
         variant: 'error',
       });
@@ -374,12 +374,12 @@ export default function RoomScreen() {
           case 'consent_decline':
             setRecordingState('idle');
             setShowConsentModal(false);
-            toast.toast({ title: t('partnerDeclined') ?? 'Partner declined recording', variant: 'warning' });
+            toast.toast({ title: t('partnerDeclined'), variant: 'warning' });
             break;
           case 'consent_error':
             setRecordingState('idle');
             setShowConsentModal(false);
-            toast.toast({ title: t('partnerConsentFailed') ?? 'Partner consent failed', variant: 'error' });
+            toast.toast({ title: t('partnerConsentFailed'), variant: 'error' });
             break;
           case 'recording_started':
             setRecordingState('recording');
@@ -392,7 +392,7 @@ export default function RoomScreen() {
               }
               setRecordingStopAt(stopAt);
             }
-            toast.toast({ title: t('recordingStarted') ?? 'Recording is now active', variant: 'success' });
+            toast.toast({ title: t('recordingStarted'), variant: 'success' });
             break;
           case 'recording_stopped':
             setRecordingState('processing');
@@ -401,12 +401,12 @@ export default function RoomScreen() {
           case 'recording_completed':
             setRecordingState('idle');
             setRecordingStopAt(null);
-            toast.toast({ title: t('recordingSaved') ?? 'Recording saved successfully', variant: 'success' });
+            toast.toast({ title: t('recordingSuccess'), variant: 'success' });
             break;
           case 'recording_failed':
             setRecordingState('idle');
             setRecordingStopAt(null);
-            toast.toast({ title: t('recordingFailed') ?? 'Recording failed', variant: 'error' });
+            toast.toast({ title: t('recordingFailed'), variant: 'error' });
             break;
         }
       } catch (err) {
@@ -425,7 +425,7 @@ export default function RoomScreen() {
       setShowEstimateModal(true);
     } catch (err: any) {
       toast.toast({
-        title: t('failedGetEstimate') ?? 'Failed to check estimate',
+        title: t('failedGetEstimate'),
         description: err?.message,
         variant: 'error',
       });
@@ -440,13 +440,13 @@ export default function RoomScreen() {
     try {
       await consentQ.mutateAsync({ exchangeSessionId, consented: true });
     } catch (err: any) {
-      toast.toast({ title: t('consentInitFailed') ?? 'Consent init failed', variant: 'error' });
+      toast.toast({ title: t('consentInitFailed'), variant: 'error' });
       setRecordingState('idle');
       return;
     }
     sendSignal({ type: 'consent_request' });
     setRecordingState('waiting_for_partner');
-    toast.toast({ title: t('waitingPartner') ?? 'Awaiting partner consent…', variant: 'info' });
+    toast.toast({ title: t('waitingPartner'), variant: 'info' });
   }, [exchangeSessionId, consentQ, sendSignal, t, toast]);
 
   const handleConsentSubmit = useCallback(
@@ -460,7 +460,7 @@ export default function RoomScreen() {
       try {
         await consentQ.mutateAsync({ exchangeSessionId, consented: true });
       } catch (err: any) {
-        toast.toast({ title: t('submitConsentFailed') ?? 'Consent submission failed', variant: 'error' });
+        toast.toast({ title: t('submitConsentFailed'), variant: 'error' });
         sendSignal({ type: 'consent_error' });
         setRecordingState('idle');
         return;
@@ -484,7 +484,7 @@ export default function RoomScreen() {
       setRecordingStopAt(null);
       sendSignal({ type: 'recording_stopped' });
     } catch (err: any) {
-      toast.toast({ title: t('stopRecordingFailed') ?? 'Could not stop recording', variant: 'error' });
+      toast.toast({ title: t('stopRecordingFailed'), variant: 'error' });
     }
   }, [exchangeSessionId, stopRecQ, sendSignal, t, toast]);
 
@@ -498,7 +498,7 @@ export default function RoomScreen() {
         handleStopRecording();
       }
       if (exchangeId) {
-        router.replace(`/exchanges/${exchangeId}` as any);
+        router.replace(`/exchanges/${exchangeId}`);
       } else {
         router.back();
       }
@@ -520,7 +520,7 @@ export default function RoomScreen() {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING[4] }}>
           <Loader2 size={36} color={theme.primary} />
           <ThemedText type="default" style={{ color: theme.mutedForeground }}>
-            {t('connectingToRoom') ?? 'Connecting to session...'}
+            {t('connectingToRoom')}
           </ThemedText>
         </View>
       </SafeAreaView>
@@ -558,18 +558,18 @@ export default function RoomScreen() {
               <AlertCircle size={28} color={getAccent('red').main} />
             </View>
             <ThemedText type="title" style={{ fontSize: FONT_SIZE.xl, fontWeight: '700' }}>
-              {t('videoConnectionError') ?? 'Connection Error'}
+              {t('videoConnectionError')}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: 'center' }}>
-              {error ?? t('failedGetVideoToken') ?? 'Unable to connect to video session.'}
+              {error ?? t('failedGetVideoToken')}
             </ThemedText>
           </View>
           <Button
             variant="outline"
-            onPress={() => (exchangeId ? router.replace(`/exchanges/${exchangeId}` as any) : router.back())}
+            onPress={() => (exchangeId ? router.replace(`/exchanges/${exchangeId}`) : router.back())}
             leftIcon={<ArrowLeft size={16} color={theme.foreground} />}
           >
-            {c('goBack') ?? 'Go Back'}
+            {t('goBack')}
           </Button>
         </View>
       </SafeAreaView>
@@ -669,13 +669,13 @@ export default function RoomScreen() {
         <AlertDialog
           open={confirmLeave}
           onOpenChange={setConfirmLeave}
-          title={t('leaveSession') ?? 'Leave Video Session'}
+          title={t('leaveSession')}
           description={
             recordingState === 'recording'
-              ? t('leaveSessionRecordingDesc') ?? 'Recording is active. Leaving will stop the recording.'
-              : t('leaveSessionDesc') ?? 'Are you sure you want to leave this session?'
+              ? t('leaveSessionRecordingDesc')
+              : t('leaveSessionDesc')
           }
-          confirmLabel={t('leaveSession') ?? 'Leave'}
+          confirmLabel={t('leaveSession')}
           destructive
           onConfirm={() => handleLeave(false)}
         />
@@ -765,7 +765,7 @@ function TopHeaderBar({
         >
           <MessageSquare size={16} color="#fff" />
           <ThemedText type="smallBold" style={{ fontSize: 12, color: '#fff' }}>
-            {t('chat') ?? 'Chat'}
+            {t('chat')}
           </ThemedText>
           {unreadCount > 0 ? (
             <View
@@ -834,7 +834,7 @@ function SessionTimer({ endsAt, duration, now }: { endsAt: string; duration?: nu
           color: isExpired ? '#fca5a5' : isWarning ? '#fcd34d' : '#e4e4e7',
         }}
       >
-        {isExpired ? t('sessionEnded') ?? 'Ended' : timeStr}
+        {isExpired ? t('sessionEnded') : timeStr}
       </ThemedText>
     </View>
   );
@@ -913,7 +913,7 @@ function RecordingHeaderBadge({
       >
         <Loader2 size={12} color="#fcd34d" />
         <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fcd34d' }}>
-          {t('waitingPartner') ?? 'Waiting…'}
+          {t('waitingPartner')}
         </ThemedText>
         <Pressable onPress={onCancelRecordingRequest} hitSlop={6}>
           <X size={12} color="#fcd34d" />
@@ -996,7 +996,7 @@ function ParticipantGrid({ participants, partner, me }: any) {
         </View>
         <View style={{ alignItems: 'center', gap: SPACING[1] }}>
           <ThemedText type="default" style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
-            {partner?.name ?? t('waitingForPartnerToJoin')}
+            {partner?.name ?? (t('waitingForPartner'))}
           </ThemedText>
           <ThemedText type="small" style={{ color: '#71717a', fontSize: 12 }}>
             {t('partnerWillAppear')}
@@ -1056,7 +1056,7 @@ function ParticipantGrid({ participants, partner, me }: any) {
           >
             <MonitorUp size={12} color="#fff" />
             <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fff' }}>
-              {t('sharing') ?? 'Sharing'} • {screenShareParticipant.isLocal ? t('you') ?? 'You' : partner?.name || screenShareParticipant.name || screenShareParticipant.identity}
+              {t('sharing')} • {screenShareParticipant.isLocal ? t('you') : partner?.name || screenShareParticipant.name || screenShareParticipant.identity}
             </ThemedText>
           </View>
 
@@ -1080,7 +1080,7 @@ function ParticipantGrid({ participants, partner, me }: any) {
             >
               <SquareX size={14} color="#fff" />
               <ThemedText type="smallBold" style={{ fontSize: 11, color: '#fff' }}>
-                {t('stopShare') ?? 'Stop Sharing'}
+                {t('stopShare')}
               </ThemedText>
             </Pressable>
           ) : null}
@@ -1099,7 +1099,7 @@ function ParticipantGrid({ participants, partner, me }: any) {
           const cameraPublication = participant.getTrackPublication(Track.Source.Camera);
           const isMe = participant.isLocal;
           const fallbackName = isMe
-            ? (t('you') ?? 'You')
+            ? (t('you'))
             : (partner?.name || participant.name || (participant.identity ? `User ${participant.identity.slice(0, 6)}` : 'Partner'));
           const isMicEnabled = participant.isMicrophoneEnabled;
           const isCamEnabled = participant.isCameraEnabled;
@@ -1385,7 +1385,7 @@ function PersistentChatDrawer({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
               <MessageSquare size={16} color={getAccent('indigo').main} />
               <ThemedText type="smallBold" style={{ color: '#fff', fontSize: 14 }}>
-                {t('chat') ?? 'Chat'}
+                {t('chat')}
               </ThemedText>
               {partner?.name ? (
                 <ThemedText type="small" style={{ color: '#71717a', fontSize: 12 }}>
@@ -1430,10 +1430,10 @@ function PersistentChatDrawer({
                   <MessageSquare size={24} color={getAccent('indigo').main} />
                 </View>
                 <ThemedText type="default" style={{ color: '#a1a1aa', fontWeight: '600', fontSize: 14 }}>
-                  {t('noMessages') ?? 'No messages yet'}
+                  {t('noMessages')}
                 </ThemedText>
                 <ThemedText type="small" style={{ color: '#52525b', textAlign: 'center', fontSize: 12 }}>
-                  {t('typeMessagePrompt') ?? 'Send a message during your video session'}
+                  {t('typeMessagePrompt')}
                 </ThemedText>
               </View>
             ) : (
@@ -1463,7 +1463,7 @@ function PersistentChatDrawer({
                             }}
                           >
                             <ThemedText type="smallBold" style={{ fontSize: 10, color: getAccent('indigo').main }}>
-                              New Messages
+                              {t('newMessages')}
                             </ThemedText>
                           </View>
                           <View style={{ flex: 1, height: 1, backgroundColor: getAccent('indigo').main + '40' }} />
@@ -1523,7 +1523,7 @@ function PersistentChatDrawer({
             <TextInput
               value={inputVal}
               onChangeText={setInputVal}
-              placeholder={t('typeMessage') ?? 'Type a message…'}
+              placeholder={t('typeMessage')}
               placeholderTextColor="#3f3f46"
               style={{
                 flex: 1,
@@ -1564,11 +1564,11 @@ function PersistentChatDrawer({
 
 /** Maps audio output device id/type to an icon and label */
 function getAudioOutputInfo(output: string) {
-  if (output === 'bluetooth') return { icon: Bluetooth, label: 'Bluetooth' };
-  if (output === 'headset' || output === 'wired_headset' || output === 'wired_headphones' || output === 'usb_headset') return { icon: Headphones, label: 'Headset' };
-  if (output === 'earpiece' || output === 'default' || output === 'builtin_earpiece') return { icon: Smartphone, label: 'Earpiece' };
+  if (output === 'bluetooth') return { icon: Bluetooth, key: 'bluetooth', label: 'Bluetooth' };
+  if (output === 'headset' || output === 'wired_headset' || output === 'wired_headphones' || output === 'usb_headset') return { icon: Headphones, key: 'headset', label: 'Headset' };
+  if (output === 'earpiece' || output === 'default' || output === 'builtin_earpiece') return { icon: Smartphone, key: 'earpiece', label: 'Earpiece' };
   // speaker, force_speaker, or anything else
-  return { icon: Volume2, label: 'Speaker' };
+  return { icon: Volume2, key: 'speaker', label: 'Speaker' };
 }
 
 function mapDeviceTypeToAudioOutput(type: string): string {
@@ -1580,10 +1580,10 @@ function mapDeviceTypeToAudioOutput(type: string): string {
     case 'usb_headset':
       return 'headset';
     case 'builtin_earpiece':
-      return 'earpiece';
+      return Platform.OS === 'ios' ? 'default' : 'earpiece';
     case 'builtin_speaker':
     default:
-      return 'speaker';
+      return Platform.OS === 'ios' ? 'force_speaker' : 'speaker';
   }
 }
 
@@ -1621,55 +1621,103 @@ function ControlsBar({
     if (latestConnectedDevice) {
       const targetOutput = mapDeviceTypeToAudioOutput(latestConnectedDevice.type);
       setAudioOutput(targetOutput);
-      AudioSession.selectAudioOutput(targetOutput).catch(() => {});
+      const nativeTarget = Platform.OS === 'ios' && (targetOutput === 'bluetooth' || targetOutput === 'headset') ? 'default' : targetOutput;
+      AudioSession.selectAudioOutput(nativeTarget).catch(() => {});
       AudioSession.getAudioOutputs().then(setAvailableOutputs).catch(() => {});
+
+      const info = getAudioOutputInfo(targetOutput);
+      if (info?.key) {
+        toast.toast({ title: t(info.key) ?? info.label, variant: 'info' });
+      }
     }
   }, [latestConnectedDevice]);
 
-  // Re-sync on device disconnection
+  // Re-sync on device disconnection (both iOS and Android)
   useEffect(() => {
     if (latestDisconnectedDevice) {
-      const fallbackOutput = 'speaker';
-      setAudioOutput(fallbackOutput);
-      AudioSession.selectAudioOutput(fallbackOutput).catch(() => {});
-      AudioSession.getAudioOutputs().then(setAvailableOutputs).catch(() => {});
+      getConnectedDevices().then((devices) => {
+        const bluetoothDevice = devices.find((d) => d.type === 'bluetooth');
+        const headsetDevice = devices.find(
+          (d) => d.type === 'wired_headset' || d.type === 'wired_headphones' || d.type === 'usb_headset'
+        );
+
+        let targetOutput: string;
+        let nativeTarget: string;
+
+        if (bluetoothDevice) {
+          targetOutput = 'bluetooth';
+          nativeTarget = Platform.OS === 'ios' ? 'default' : 'bluetooth';
+        } else if (headsetDevice) {
+          targetOutput = 'headset';
+          nativeTarget = Platform.OS === 'ios' ? 'default' : 'headset';
+        } else {
+          targetOutput = Platform.OS === 'ios' ? 'force_speaker' : 'speaker';
+          nativeTarget = targetOutput;
+        }
+
+        setAudioOutput(targetOutput);
+        AudioSession.selectAudioOutput(nativeTarget).catch(() => {});
+        AudioSession.getAudioOutputs().then(setAvailableOutputs).catch(() => {});
+
+        const info = getAudioOutputInfo(targetOutput);
+        if (info?.key) {
+          toast.toast({ title: t(info.key) ?? info.label, variant: 'info' });
+        }
+      }).catch(() => {
+        const fallbackOutput = Platform.OS === 'ios' ? 'force_speaker' : 'speaker';
+        setAudioOutput(fallbackOutput);
+        AudioSession.selectAudioOutput(fallbackOutput).catch(() => {});
+      });
     }
   }, [latestDisconnectedDevice]);
 
   useEffect(() => {
     let isMounted = true;
 
-  const initAudio = async () => {
-    try {
-      await AudioSession.startAudioSession();
+    const initAudio = async () => {
+      try {
+        await AudioSession.startAudioSession();
 
-      const outputs = await AudioSession.getAudioOutputs();
-      if (!isMounted) return;
-  
-      setAvailableOutputs(outputs);
-    } catch (e) {
-      console.warn('[AudioSession] setup failed:', e);
-    }
-  };
+        const outputs = await AudioSession.getAudioOutputs();
+        const devices = await getConnectedDevices();
+        if (!isMounted) return;
 
-  initAudio();
+        setAvailableOutputs(outputs);
 
-  return () => {
-    isMounted = false;
-    AudioSession.stopAudioSession().catch((e) =>
-      console.warn('[AudioSession] Stop failed:', e)
-    );
-  };
-}, []);
+        // On room join, automatically select active output (Bluetooth / Headset if connected, else Speaker)
+        const bluetoothDevice = devices.find((d) => d.type === 'bluetooth');
+        const headsetDevice = devices.find(
+          (d) => d.type === 'wired_headset' || d.type === 'wired_headphones' || d.type === 'usb_headset'
+        );
 
+        if (bluetoothDevice) {
+          setAudioOutput('bluetooth');
+          const target = Platform.OS === 'ios' ? 'default' : 'bluetooth';
+          await AudioSession.selectAudioOutput(target).catch(() => {});
+        } else if (headsetDevice) {
+          setAudioOutput('headset');
+          const target = Platform.OS === 'ios' ? 'default' : 'headset';
+          await AudioSession.selectAudioOutput(target).catch(() => {});
+        } else {
+          const initialOutput = Platform.OS === 'ios' ? 'force_speaker' : 'speaker';
+          setAudioOutput(initialOutput);
+          await AudioSession.selectAudioOutput(initialOutput).catch(() => {});
+        }
+      } catch (e) {
+        console.warn('[AudioSession] setup failed:', e);
+      }
+    };
 
-  // // Fetch available outputs on mount
-  // useEffect(() => {
-  //   AudioSession.startAudioSession()
-  //     .then(() => AudioSession.getAudioOutputs())
-  //       .then(setAvailableOutputs)
-  //       .catch(() => { });
-  // }, []);
+    initAudio();
+
+    return () => {
+      isMounted = false;
+      AudioSession.stopAudioSession().catch((e) =>
+        console.warn('[AudioSession] Stop failed:', e)
+      );
+    };
+  }, []);
+
 
   const handleToggleAudio = () => {
     localParticipant?.setMicrophoneEnabled(!isAudioEnabled);
@@ -1734,15 +1782,15 @@ function ControlsBar({
 
       await localParticipant.setScreenShareEnabled(nextState);
       toast.toast({
-        title: nextState ? "Screen sharing started" : "Screen sharing stopped",
-        variant: "info",
+        title: nextState ? (t('screenShareStarted')) : (t('screenShareStopped')),
+        variant: 'info',
       });
     } catch (e: any) {
       console.warn('[ScreenShare] Toggle failed:', e);
       toast.toast({
-        title: "Screen share unavailable",
-        description: e?.message || "In-app screen capture failed",
-        variant: "error",
+        title: t('screenShareUnavailable'),
+        description: e?.message || t('screenShareFailed'),
+        variant: 'error',
       });
     }
   };
@@ -1758,7 +1806,7 @@ function ControlsBar({
 
       // 2. Platform-specific target cycle order using valid LiveKit / WebRTC enums
       const cycleOrder = Platform.OS === 'ios'
-        ? ['speaker', 'default'] 
+        ? ['force_speaker', 'default'] 
         : ['speaker', 'earpiece', 'headset', 'bluetooth'];
 
       // 3. Filter order against actual available hardware
@@ -1773,12 +1821,31 @@ function ControlsBar({
       const nextOutput = validOutputs[nextIdx];
 
       // 5. Apply native route selection
-      await AudioSession.selectAudioOutput(nextOutput);
+      if (Platform.OS === 'ios') {
+        if (nextOutput === 'default') {
+          // Omit defaultToSpeaker to route audio to inbuilt earpiece (receiver)
+          await AudioSession.setAppleAudioConfiguration({
+            audioCategory: 'playAndRecord',
+            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
+            audioMode: 'voiceChat',
+          });
+          await AudioSession.selectAudioOutput('default');
+        } else {
+          await AudioSession.setAppleAudioConfiguration({
+            audioCategory: 'playAndRecord',
+            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay', 'defaultToSpeaker'],
+            audioMode: 'videoChat',
+          });
+          await AudioSession.selectAudioOutput('force_speaker');
+        }
+      } else {
+        await AudioSession.selectAudioOutput(nextOutput);
+      }
       setAudioOutput(nextOutput);
 
       const info = getAudioOutputInfo(nextOutput);
-      if (info?.label) {
-        toast.toast({ title: info.label, variant: 'info' });
+      if (info?.key) {
+        toast.toast({ title: t(info.key) ?? info.label, variant: 'info' });
       }
     } catch (e) {
       console.log('[AudioSession] Output cycle failed:', e);
@@ -2013,11 +2080,11 @@ function EstimateModal({
         <DialogHeader>
           <DialogTitle style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Video size={20} color={theme.primary} />
-            <ThemedText type="subtitle">{t('billingEstimateTitle') ?? 'Recording Billing Estimate'}</ThemedText>
+            <ThemedText type="subtitle">{t('billingEstimateTitle')}</ThemedText>
           </DialogTitle>
           <DialogDescription>
             <ThemedText type="small" style={{ color: theme.mutedForeground }}>
-              {t('billingEstimateDesc', { rate }) ?? `Recording costs ${rate} points per minute.`}
+              {t('billingEstimateDesc', { rate })}
             </ThemedText>
           </DialogDescription>
         </DialogHeader>
@@ -2025,14 +2092,14 @@ function EstimateModal({
         <View style={{ gap: SPACING[3], paddingVertical: SPACING[2] }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <ThemedText type="small" style={{ color: theme.mutedForeground }}>
-              {t('yourBalance') ?? 'Your Balance'}
+              {t('yourBalance')}
             </ThemedText>
             <ThemedText type="smallBold">{userBalance.toLocaleString()} pts</ThemedText>
           </View>
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <ThemedText type="small" style={{ color: theme.mutedForeground }}>
-              {t('sessionTimeLeft') ?? 'Session Time Left'}
+              {t('sessionTimeLeft')}
             </ThemedText>
             <ThemedText type="smallBold">{remainingSessionMinutes} min</ThemedText>
           </View>
@@ -2040,7 +2107,7 @@ function EstimateModal({
           <Separator />
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <ThemedText type="smallBold">{t('maxAffordable') ?? 'Max Affordable Time'}</ThemedText>
+            <ThemedText type="smallBold">{t('maxAffordable')}</ThemedText>
             <ThemedText type="smallBold" style={{ color: getAccent('indigo').main }}>
               {maxAffordableMinutes} min
             </ThemedText>
@@ -2057,11 +2124,10 @@ function EstimateModal({
               }}
             >
               <ThemedText type="smallBold" style={{ color: getAccent('green').main }}>
-                {t('estimateHealthyTitle') ?? 'Sufficient Balance'}
+                {t('estimateHealthyTitle')}
               </ThemedText>
               <ThemedText type="small" style={{ color: getAccent('green').main, marginTop: 4 }}>
-                {t('estimateHealthyDesc', { rate, minutes: remainingSessionMinutes, cost: fullSessionCost }) ??
-                  `You have enough points to record the entire remaining session (~${fullSessionCost} pts).`}
+                {t('estimateHealthyDesc', { rate, minutes: remainingSessionMinutes, cost: fullSessionCost })}
               </ThemedText>
             </View>
           )}
@@ -2077,11 +2143,10 @@ function EstimateModal({
               }}
             >
               <ThemedText type="smallBold" style={{ color: getAccent('amber').main }}>
-                ⚠️ {t('estimatePartialTitle') ?? 'Partial Session Balance'}
+                ⚠️ {t('estimatePartialTitle')}
               </ThemedText>
               <ThemedText type="small" style={{ color: getAccent('amber').main, marginTop: 4 }}>
-                {t('estimatePartialDesc', { minutes: maxAffordableMinutes }) ??
-                  `Your balance covers up to ${maxAffordableMinutes} minutes of recording.`}
+                {t('estimatePartialDesc', { minutes: maxAffordableMinutes })}
               </ThemedText>
             </View>
           )}
@@ -2097,11 +2162,10 @@ function EstimateModal({
               }}
             >
               <ThemedText type="smallBold" style={{ color: getAccent('red').main }}>
-                🚫 {t('estimateInsufficientTitle') ?? 'Insufficient Points Balance'}
+                🚫 {t('estimateInsufficientTitle')}
               </ThemedText>
               <ThemedText type="small" style={{ color: getAccent('red').main, marginTop: 4 }}>
-                {t('estimateInsufficientDesc', { minRequired: rate }) ??
-                  `You need at least ${rate} points to start recording.`}
+                {t('estimateInsufficientDesc', { minRequired: rate })}
               </ThemedText>
             </View>
           )}
@@ -2109,11 +2173,11 @@ function EstimateModal({
 
         <DialogFooter>
           <Button variant="outline" onPress={onClose}>
-            {c('cancel') ?? 'Cancel'}
+            {c('cancel')}
           </Button>
           {!isInsufficient ? (
             <Button onPress={onConfirm} leftIcon={<Sparkles size={16} color="#fff" />}>
-              {t('proceed') ?? 'Request Recording'}
+              {t('proceed')}
             </Button>
           ) : null}
         </DialogFooter>
@@ -2140,13 +2204,12 @@ function ConsentModal({
           <DialogTitle style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <ShieldCheck size={20} color={getAccent('indigo').main} />
             <ThemedText type="subtitle">
-              {t('partnerWantsToRecord') ?? 'Partner Requested Recording'}
+              {t('partnerWantsToRecord')}
             </ThemedText>
           </DialogTitle>
           <DialogDescription>
             <ThemedText type="small" style={{ color: theme.mutedForeground }}>
-              {t('consentDialogDesc') ??
-                'Your exchange partner would like to record this video session. Both participants must consent before recording can begin.'}
+              {t('consentDialogDesc')}
             </ThemedText>
           </DialogDescription>
         </DialogHeader>
@@ -2162,20 +2225,19 @@ function ConsentModal({
           }}
         >
           <ThemedText type="smallBold" style={{ color: getAccent('indigo').main }}>
-            {t('recordingConsentInfoTitle') ?? 'Privacy & Security'}
+            {t('recordingConsentInfoTitle')}
           </ThemedText>
           <ThemedText type="small" style={{ color: getAccent('indigo').main }}>
-            {t('recordingAgreement') ??
-              'The recording will be saved securely and made accessible in your exchange details once processed.'}
+            {t('recordingAgreement')}
           </ThemedText>
         </View>
 
         <DialogFooter>
           <Button variant="outline" onPress={() => onSubmit(false)}>
-            {t('iDecline') ?? 'Decline'}
+            {t('iDecline')}
           </Button>
           <Button onPress={() => onSubmit(true)} leftIcon={<CheckCircle2 size={16} color="#fff" />}>
-            {t('iConsent') ?? 'I Consent'}
+            {t('iConsent')}
           </Button>
         </DialogFooter>
       </DialogContent>

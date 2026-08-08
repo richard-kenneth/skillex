@@ -1120,7 +1120,16 @@
     "bluetooth": "Bluetooth",
     "headset": "Casque",
     "selectAudioOutput": "Sélectionner la sortie audio",
-    "newMessages": "Nouveaux messages"
+    "newMessages": "Nouveaux messages",
+    "partnerDeclined": "Le partenaire a refusé l'enregistrement",
+    "recordingStarted": "L'enregistrement est maintenant actif",
+    "partnerWillAppear": "Votre partenaire apparaîtra ici une fois connecté",
+    "typeMessagePrompt": "Envoyez un message pendant votre session vidéo",
+    "recordingConsentInfoTitle": "Confidentialité et sécurité",
+    "screenShareStarted": "Partage d'écran démarré",
+    "screenShareStopped": "Partage d'écran arrêté",
+    "screenShareUnavailable": "Partage d'écran non disponible",
+    "screenShareFailed": "Échec de la capture d'écran dans l'application"
   },
   "profile": {
     "title": "Profil",

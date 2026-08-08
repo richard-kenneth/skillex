@@ -1120,7 +1120,16 @@
     "bluetooth": "Bluetooth",
     "headset": "Fone de ouvido",
     "selectAudioOutput": "Selecionar saída de áudio",
-    "newMessages": "Novas mensagens"
+    "newMessages": "Novas mensagens",
+    "partnerDeclined": "O parceiro recusou a gravação",
+    "recordingStarted": "A gravação está ativa",
+    "partnerWillAppear": "Seu parceiro aparecerá aqui quando estiver conectado",
+    "typeMessagePrompt": "Envie uma mensagem durante sua sessão de vídeo",
+    "recordingConsentInfoTitle": "Privacidade e segurança",
+    "screenShareStarted": "Compartilhamento de tela iniciado",
+    "screenShareStopped": "Compartilhamento de tela interrompido",
+    "screenShareUnavailable": "Compartilhamento de tela indisponível",
+    "screenShareFailed": "Falha na captura de tela no aplicativo"
   },
   "profile": {
     "title": "Perfil",

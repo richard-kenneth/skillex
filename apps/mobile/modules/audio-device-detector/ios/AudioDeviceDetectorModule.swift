@@ -3,6 +3,7 @@ import AVFoundation
 
 public class AudioDeviceDetectorModule: Module {
   private var observer: NSObjectProtocol?
+  private var previousDevices: [[String: Any]] = []
 
   public func definition() -> ModuleDefinition {
     Name("AudioDeviceDetector")
@@ -36,33 +37,42 @@ public class AudioDeviceDetectorModule: Module {
 
   private func fetchCurrentDevices() -> [[String: Any]] {
     var devices: [[String: Any]] = []
-    var seenIds = Set<String>()
+    var seenKeys = Set<String>()
     let session = AVAudioSession.sharedInstance()
     let route = session.currentRoute
 
     for output in route.outputs {
       let dict = self.portToDict(output, isInput: false)
-      if let id = dict["id"] as? String {
-        seenIds.insert(id)
+      if let type = dict["type"] as? String, let id = dict["id"] as? String {
+        let key = "\(type)_\(id)"
+        if !seenKeys.contains(key) {
+          seenKeys.insert(key)
+          devices.append(dict)
+        }
       }
-      devices.append(dict)
     }
 
     for input in route.inputs {
       let dict = self.portToDict(input, isInput: true)
-      if let id = dict["id"] as? String {
-        seenIds.insert(id)
+      if let type = dict["type"] as? String, let id = dict["id"] as? String {
+        let key = "\(type)_\(id)"
+        if !seenKeys.contains(key) {
+          seenKeys.insert(key)
+          devices.append(dict)
+        }
       }
-      devices.append(dict)
     }
 
     // Include pre-connected devices (e.g. Bluetooth connected before joining room)
     if let availableInputs = session.availableInputs {
       for input in availableInputs {
         let dict = self.portToDict(input, isInput: true)
-        if let id = dict["id"] as? String, !seenIds.contains(id) {
-          seenIds.insert(id)
-          devices.append(dict)
+        if let type = dict["type"] as? String, let id = dict["id"] as? String {
+          let key = "\(type)_\(id)"
+          if !seenKeys.contains(key) {
+            seenKeys.insert(key)
+            devices.append(dict)
+          }
         }
       }
     }
@@ -73,9 +83,11 @@ public class AudioDeviceDetectorModule: Module {
   private func startObservingAudioRoutes() {
     guard observer == nil else { return }
 
+    previousDevices = fetchCurrentDevices()
+
     observer = NotificationCenter.default.addObserver(
       forName: AVAudioSession.routeChangeNotification,
-      object: AVAudioSession.sharedInstance(),
+      object: nil,
       queue: .main
     ) { [weak self] notification in
       guard let self = self else { return }
@@ -91,43 +103,82 @@ public class AudioDeviceDetectorModule: Module {
   }
 
   private func handleRouteChange(notification: Notification) {
-    guard let userInfo = notification.userInfo,
-          let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
-          let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
-      return
+    let currentDevices = fetchCurrentDevices()
+
+    let currentKeys = Set(currentDevices.compactMap { dict -> String? in
+      guard let type = dict["type"] as? String, let id = dict["id"] as? String else { return nil }
+      return "\(type)_\(id)"
+    })
+
+    let previousKeys = Set(previousDevices.compactMap { dict -> String? in
+      guard let type = dict["type"] as? String, let id = dict["id"] as? String else { return nil }
+      return "\(type)_\(id)"
+    })
+
+    let currentTypes = Set(currentDevices.compactMap { $0["type"] as? String })
+    let previousTypes = Set(previousDevices.compactMap { $0["type"] as? String })
+
+    let addedDevices = currentDevices.filter { dict in
+      guard let type = dict["type"] as? String, let id = dict["id"] as? String else { return false }
+      let key = "\(type)_\(id)"
+      return !previousKeys.contains(key) && !previousTypes.contains(type)
     }
 
-    let allDevices = fetchCurrentDevices()
+    let removedDevices = previousDevices.filter { dict in
+      guard let type = dict["type"] as? String, let id = dict["id"] as? String else { return false }
+      let key = "\(type)_\(id)"
+      return !currentKeys.contains(key) && !currentTypes.contains(type)
+    }
 
-    switch reason {
-    case .newDeviceAvailable:
-      let latestOutput = AVAudioSession.sharedInstance().currentRoute.outputs.last
-      if let output = latestOutput {
-        let deviceMap = self.portToDict(output, isInput: false)
+    for device in addedDevices {
+      if let type = device["type"] as? String,
+         type == "bluetooth" || type == "wired_headset" || type == "wired_headphones" || type == "usb_headset" {
         self.sendEvent("onAudioDeviceConnected", [
-          "device": deviceMap,
-          "allDevices": allDevices,
+          "device": device,
+          "allDevices": currentDevices,
           "timestamp": Date().timeIntervalSince1970 * 1000
         ])
       }
-    case .oldDeviceUnavailable:
-      if let previousRoute = userInfo[AVAudioSessionRouteChangePreviousRouteKey] as? AVAudioSessionRouteDescription,
-         let previousOutput = previousRoute.outputs.first {
-        let deviceMap = self.portToDict(previousOutput, isInput: false)
+    }
+
+    for device in removedDevices {
+      if let type = device["type"] as? String,
+         type == "bluetooth" || type == "wired_headset" || type == "wired_headphones" || type == "usb_headset" {
         self.sendEvent("onAudioDeviceDisconnected", [
-          "device": deviceMap,
-          "allDevices": allDevices,
+          "device": device,
+          "allDevices": currentDevices,
           "timestamp": Date().timeIntervalSince1970 * 1000
         ])
       }
-    default:
-      break
+    }
+
+    // Fallback: check userInfo for explicit oldDeviceUnavailable if diff didn't catch it
+    if removedDevices.isEmpty,
+       let userInfo = notification.userInfo,
+       let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+       let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue),
+       reason == .oldDeviceUnavailable {
+      if let previousRoute = userInfo[AVAudioSessionRouteChangePreviousRouteKey] as? AVAudioSessionRouteDescription {
+        for output in previousRoute.outputs {
+          let dict = self.portToDict(output, isInput: false)
+          if let type = dict["type"] as? String,
+             type == "bluetooth" || type == "wired_headset" || type == "wired_headphones" || type == "usb_headset" {
+            self.sendEvent("onAudioDeviceDisconnected", [
+              "device": dict,
+              "allDevices": currentDevices,
+              "timestamp": Date().timeIntervalSince1970 * 1000
+            ])
+          }
+        }
+      }
     }
 
     self.sendEvent("onAudioDevicesChanged", [
-      "allDevices": allDevices,
+      "allDevices": currentDevices,
       "timestamp": Date().timeIntervalSince1970 * 1000
     ])
+
+    previousDevices = currentDevices
   }
 
   private func portToDict(_ port: AVAudioSessionPortDescription, isInput: Bool) -> [String: Any] {
@@ -147,6 +198,8 @@ public class AudioDeviceDetectorModule: Module {
       portTypeStr = "builtin_mic"
     case .usbAudio:
       portTypeStr = "usb_headset"
+    case .airPlay:
+      portTypeStr = "bluetooth"
     default:
       portTypeStr = "unknown"
     }
@@ -160,3 +213,4 @@ public class AudioDeviceDetectorModule: Module {
     ]
   }
 }
+

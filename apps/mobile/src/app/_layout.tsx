@@ -100,6 +100,8 @@ function AppInner() {
             headerTintColor: theme.foreground,
             headerShadowVisible: false,
             headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+            headerBackButtonDisplayMode: 'minimal',
+            animation: 'slide_from_right',
           }}
         />
       </Stack>

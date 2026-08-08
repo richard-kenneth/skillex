@@ -1646,10 +1646,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
         mimeType = "application/zip";
       } else if (ext === "txt") {
         mimeType = "text/plain";
-      }
-
-      console.log(mimeType);
-      
+      }      
 
       let fileUri = url;
       if (url.startsWith("http://") || url.startsWith("https://")) {
@@ -1658,18 +1655,13 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
         fileUri = downloadedFile?.uri || targetFile.uri;
       }
 
-      console.log('b4');
-      
       const canShare = await Sharing.isAvailableAsync();
-      console.log(canShare);
       if (canShare) {
         await Sharing.shareAsync(fileUri, {
           dialogTitle: `Save ${name}`,
-          mimeType
+          mimeType,
         });
-        console.log('af');
       } else {
-        console.log('af2');
         toast.toast({
           title: t('fileDownloaded'),
           description: name,
