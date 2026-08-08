@@ -27,8 +27,15 @@ export interface AudioDevicesChangedPayload {
   timestamp: number;
 }
 
+export interface ActiveAudioDevicePayload {
+  activeDevice: AudioDevice | null;
+  allDevices: AudioDevice[];
+  timestamp: number;
+}
+
 export type AudioDeviceDetectorEvents = {
   onAudioDeviceConnected: (event: AudioDeviceEventPayload) => void;
   onAudioDeviceDisconnected: (event: AudioDeviceEventPayload) => void;
   onAudioDevicesChanged: (event: AudioDevicesChangedPayload) => void;
+  onActiveAudioOutputChanged: (event: ActiveAudioDevicePayload) => void;
 };

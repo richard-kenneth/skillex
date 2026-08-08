@@ -4,6 +4,7 @@ import AVFoundation
 public class AudioDeviceDetectorModule: Module {
   private var observer: NSObjectProtocol?
   private var previousDevices: [[String: Any]] = []
+  private var previousActiveDeviceKey: String?
 
   public func definition() -> ModuleDefinition {
     Name("AudioDeviceDetector")
@@ -11,11 +12,16 @@ public class AudioDeviceDetectorModule: Module {
     Events(
       "onAudioDeviceConnected",
       "onAudioDeviceDisconnected",
-      "onAudioDevicesChanged"
+      "onAudioDevicesChanged",
+      "onActiveAudioOutputChanged"
     )
 
     AsyncFunction("getConnectedDevices") { () -> [[String: Any]] in
       return self.fetchCurrentDevices()
+    }
+
+    AsyncFunction("getActiveDevice") { () -> [String: Any]? in
+      return self.fetchActiveOutputDevice()
     }
 
     OnCreate {
@@ -33,6 +39,14 @@ public class AudioDeviceDetectorModule: Module {
     OnStopObserving {
       self.stopObservingAudioRoutes()
     }
+  }
+
+  private func fetchActiveOutputDevice() -> [String: Any]? {
+    let session = AVAudioSession.sharedInstance()
+    if let output = session.currentRoute.outputs.first {
+      return self.portToDict(output, isInput: false)
+    }
+    return nil
   }
 
   private func fetchCurrentDevices() -> [[String: Any]] {
@@ -84,6 +98,9 @@ public class AudioDeviceDetectorModule: Module {
     guard observer == nil else { return }
 
     previousDevices = fetchCurrentDevices()
+    if let active = fetchActiveOutputDevice(), let type = active["type"] as? String, let id = active["id"] as? String {
+      previousActiveDeviceKey = "\(type)_\(id)"
+    }
 
     observer = NotificationCenter.default.addObserver(
       forName: AVAudioSession.routeChangeNotification,
@@ -104,6 +121,7 @@ public class AudioDeviceDetectorModule: Module {
 
   private func handleRouteChange(notification: Notification) {
     let currentDevices = fetchCurrentDevices()
+    let activeDevice = fetchActiveOutputDevice()
 
     let currentKeys = Set(currentDevices.compactMap { dict -> String? in
       guard let type = dict["type"] as? String, let id = dict["id"] as? String else { return nil }
@@ -173,6 +191,19 @@ public class AudioDeviceDetectorModule: Module {
       }
     }
 
+    // Emit active audio device change whenever route changes
+    if let active = activeDevice {
+      let activeKey = "\(active["type"] as? String ?? "")_\(active["id"] as? String ?? "")"
+      if activeKey != previousActiveDeviceKey {
+        previousActiveDeviceKey = activeKey
+        self.sendEvent("onActiveAudioOutputChanged", [
+          "activeDevice": active,
+          "allDevices": currentDevices,
+          "timestamp": Date().timeIntervalSince1970 * 1000
+        ])
+      }
+    }
+
     self.sendEvent("onAudioDevicesChanged", [
       "allDevices": currentDevices,
       "timestamp": Date().timeIntervalSince1970 * 1000
@@ -213,4 +244,5 @@ public class AudioDeviceDetectorModule: Module {
     ]
   }
 }
+
 

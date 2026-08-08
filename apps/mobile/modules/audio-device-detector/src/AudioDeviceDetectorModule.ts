@@ -25,4 +25,11 @@ export async function getConnectedDevices(): Promise<AudioDevice[]> {
   return [];
 }
 
+export async function getActiveDevice(): Promise<AudioDevice | null> {
+  if (NativeAudioDeviceDetector && NativeAudioDeviceDetector.getActiveDevice) {
+    return await NativeAudioDeviceDetector.getActiveDevice();
+  }
+  return null;
+}
+
 export default NativeAudioDeviceDetector;

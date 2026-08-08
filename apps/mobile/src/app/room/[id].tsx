@@ -1614,49 +1614,86 @@ function ControlsBar({
   const recActive = recordingState === 'recording' || recordingState === 'processing';
   const recLoading = recordingState === 'starting' || recordingState === 'processing' || isCheckingEstimate;
 
-  const { latestConnectedDevice, latestDisconnectedDevice } = useAudioDeviceDetector();
+  const { activeDevice, latestConnectedDevice, latestDisconnectedDevice } = useAudioDeviceDetector();
+
+  // Keep audio icon 100% in sync with real-time active OS output (e.g., native route picker, Control Center, Bluetooth)
+  useEffect(() => {
+    if (activeDevice) {
+      const targetOutput = mapDeviceTypeToAudioOutput(activeDevice.type);
+      setAudioOutput(targetOutput);
+    }
+  }, [activeDevice]);
+
+  // Centralized helper to switch audio output routes and manage iOS category options
+  const selectAudioOutputRoute = async (targetOutput: string) => {
+    try {
+      if (Platform.OS === 'ios') {
+        if (targetOutput === 'default' || targetOutput === 'earpiece') {
+          // Omit defaultToSpeaker to route audio to inbuilt earpiece (receiver)
+          await AudioSession.setAppleAudioConfiguration({
+            audioCategory: 'playAndRecord',
+            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
+            audioMode: 'voiceChat',
+          });
+          await AudioSession.selectAudioOutput('default');
+        } else if (targetOutput === 'bluetooth' || targetOutput === 'headset') {
+          await AudioSession.setAppleAudioConfiguration({
+            audioCategory: 'playAndRecord',
+            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
+            audioMode: 'voiceChat',
+          });
+          await AudioSession.selectAudioOutput('default');
+        } else {
+          // force_speaker or speaker
+          await AudioSession.setAppleAudioConfiguration({
+            audioCategory: 'playAndRecord',
+            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay', 'defaultToSpeaker'],
+            audioMode: 'videoChat',
+          });
+          await AudioSession.selectAudioOutput('force_speaker');
+        }
+      } else {
+        await AudioSession.selectAudioOutput(targetOutput);
+      }
+      setAudioOutput(targetOutput);
+    } catch (e) {
+      console.warn('[AudioSession] Route selection failed:', e);
+    }
+  };
 
   // Automatically switch audio output & update icon when OS connects a new device
   useEffect(() => {
     if (latestConnectedDevice) {
       const targetOutput = mapDeviceTypeToAudioOutput(latestConnectedDevice.type);
-      setAudioOutput(targetOutput);
-      const nativeTarget = Platform.OS === 'ios' && (targetOutput === 'bluetooth' || targetOutput === 'headset') ? 'default' : targetOutput;
-      AudioSession.selectAudioOutput(nativeTarget).catch(() => {});
-      AudioSession.getAudioOutputs().then(setAvailableOutputs).catch(() => {});
-
-      const info = getAudioOutputInfo(targetOutput);
-      if (info?.key) {
-        toast.toast({ title: t(info.key) ?? info.label, variant: 'info' });
-      }
+      selectAudioOutputRoute(targetOutput).then(() => {
+        AudioSession.getAudioOutputs().then(setAvailableOutputs).catch(() => {});
+        const info = getAudioOutputInfo(targetOutput);
+        if (info?.key) {
+          toast.toast({ title: t(info.key) ?? info.label, variant: 'info' });
+        }
+      });
     }
   }, [latestConnectedDevice]);
 
   // Re-sync on device disconnection (both iOS and Android)
   useEffect(() => {
     if (latestDisconnectedDevice) {
-      getConnectedDevices().then((devices) => {
+      getConnectedDevices().then(async (devices) => {
         const bluetoothDevice = devices.find((d) => d.type === 'bluetooth');
         const headsetDevice = devices.find(
           (d) => d.type === 'wired_headset' || d.type === 'wired_headphones' || d.type === 'usb_headset'
         );
 
         let targetOutput: string;
-        let nativeTarget: string;
-
         if (bluetoothDevice) {
           targetOutput = 'bluetooth';
-          nativeTarget = Platform.OS === 'ios' ? 'default' : 'bluetooth';
         } else if (headsetDevice) {
           targetOutput = 'headset';
-          nativeTarget = Platform.OS === 'ios' ? 'default' : 'headset';
         } else {
           targetOutput = Platform.OS === 'ios' ? 'force_speaker' : 'speaker';
-          nativeTarget = targetOutput;
         }
 
-        setAudioOutput(targetOutput);
-        AudioSession.selectAudioOutput(nativeTarget).catch(() => {});
+        await selectAudioOutputRoute(targetOutput);
         AudioSession.getAudioOutputs().then(setAvailableOutputs).catch(() => {});
 
         const info = getAudioOutputInfo(targetOutput);
@@ -1665,8 +1702,7 @@ function ControlsBar({
         }
       }).catch(() => {
         const fallbackOutput = Platform.OS === 'ios' ? 'force_speaker' : 'speaker';
-        setAudioOutput(fallbackOutput);
-        AudioSession.selectAudioOutput(fallbackOutput).catch(() => {});
+        selectAudioOutputRoute(fallbackOutput);
       });
     }
   }, [latestDisconnectedDevice]);
@@ -1691,17 +1727,12 @@ function ControlsBar({
         );
 
         if (bluetoothDevice) {
-          setAudioOutput('bluetooth');
-          const target = Platform.OS === 'ios' ? 'default' : 'bluetooth';
-          await AudioSession.selectAudioOutput(target).catch(() => {});
+          await selectAudioOutputRoute('bluetooth');
         } else if (headsetDevice) {
-          setAudioOutput('headset');
-          const target = Platform.OS === 'ios' ? 'default' : 'headset';
-          await AudioSession.selectAudioOutput(target).catch(() => {});
+          await selectAudioOutputRoute('headset');
         } else {
           const initialOutput = Platform.OS === 'ios' ? 'force_speaker' : 'speaker';
-          setAudioOutput(initialOutput);
-          await AudioSession.selectAudioOutput(initialOutput).catch(() => {});
+          await selectAudioOutputRoute(initialOutput);
         }
       } catch (e) {
         console.warn('[AudioSession] setup failed:', e);
@@ -1717,7 +1748,6 @@ function ControlsBar({
       );
     };
   }, []);
-
 
   const handleToggleAudio = () => {
     localParticipant?.setMicrophoneEnabled(!isAudioEnabled);
@@ -1753,7 +1783,7 @@ function ControlsBar({
    *      override func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, of sampleBufferType: RPSampleBufferType) {
    *        LKWBRTCScreenCapturer.processSampleBuffer(sampleBuffer, of: sampleBufferType)
    *      }
-   *    }
+   *      }
    *    ```
    * 5. Native RPSystemBroadcastPickerView trigger in React Native:
    *    ```ts
@@ -1798,50 +1828,22 @@ function ControlsBar({
   // Cycle through available audio outputs in priority order
   const handleCycleAudioOutput = async () => {
     try {
-      // 1. Fetch available devices directly
       const outputs = await AudioSession.getAudioOutputs();      
       setAvailableOutputs(outputs);
-
       if (!outputs || outputs.length === 0) return;
 
-      // 2. Platform-specific target cycle order using valid LiveKit / WebRTC enums
       const cycleOrder = Platform.OS === 'ios'
         ? ['force_speaker', 'default'] 
         : ['speaker', 'earpiece', 'headset', 'bluetooth'];
 
-      // 3. Filter order against actual available hardware
       const available = cycleOrder.filter((type) => outputs.includes(type));
-      
-      // Fallback: If no matched predefined order, use raw returned outputs directly
       const validOutputs = available.length > 0 ? available : outputs;
 
-      // 4. Determine current position defensively
       const currentIdx = validOutputs.indexOf(audioOutput);
       const nextIdx = currentIdx === -1 ? 0 : (currentIdx + 1) % validOutputs.length;
       const nextOutput = validOutputs[nextIdx];
 
-      // 5. Apply native route selection
-      if (Platform.OS === 'ios') {
-        if (nextOutput === 'default') {
-          // Omit defaultToSpeaker to route audio to inbuilt earpiece (receiver)
-          await AudioSession.setAppleAudioConfiguration({
-            audioCategory: 'playAndRecord',
-            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
-            audioMode: 'voiceChat',
-          });
-          await AudioSession.selectAudioOutput('default');
-        } else {
-          await AudioSession.setAppleAudioConfiguration({
-            audioCategory: 'playAndRecord',
-            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay', 'defaultToSpeaker'],
-            audioMode: 'videoChat',
-          });
-          await AudioSession.selectAudioOutput('force_speaker');
-        }
-      } else {
-        await AudioSession.selectAudioOutput(nextOutput);
-      }
-      setAudioOutput(nextOutput);
+      await selectAudioOutputRoute(nextOutput);
 
       const info = getAudioOutputInfo(nextOutput);
       if (info?.key) {

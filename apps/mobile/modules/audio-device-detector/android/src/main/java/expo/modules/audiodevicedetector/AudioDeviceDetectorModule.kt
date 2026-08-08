@@ -27,11 +27,16 @@ class AudioDeviceDetectorModule : Module() {
     Events(
       "onAudioDeviceConnected",
       "onAudioDeviceDisconnected",
-      "onAudioDevicesChanged"
+      "onAudioDevicesChanged",
+      "onActiveAudioOutputChanged"
     )
 
     AsyncFunction("getConnectedDevices") {
       return@AsyncFunction fetchConnectedDevices()
+    }
+
+    AsyncFunction("getActiveDevice") {
+      return@AsyncFunction fetchActiveOutputDevice()
     }
 
     OnCreate {
@@ -53,6 +58,37 @@ class AudioDeviceDetectorModule : Module() {
     }
   }
 
+  private fun fetchActiveOutputDevice(): Map<String, Any>? {
+    val am = audioManager ?: return null
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      val commDevice = am.communicationDevice
+      if (commDevice != null) {
+        return deviceToMap(commDevice)
+      }
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      val devices = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+      if (am.isBluetoothScoOn || am.isBluetoothA2dpOn) {
+        val bt = devices.find { it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP }
+        if (bt != null) return deviceToMap(bt)
+      }
+      if (am.isWiredHeadsetOn) {
+        val headset = devices.find { it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET || it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES }
+        if (headset != null) return deviceToMap(headset)
+      }
+      if (am.isSpeakerphoneOn) {
+        val speaker = devices.find { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+        if (speaker != null) return deviceToMap(speaker)
+      }
+      val earpiece = devices.find { it.type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE }
+      if (earpiece != null) return deviceToMap(earpiece)
+
+      val firstOutput = devices.firstOrNull()
+      if (firstOutput != null) return deviceToMap(firstOutput)
+    }
+    return null
+  }
+
   private fun fetchConnectedDevices(): List<Map<String, Any>> {
     val am = audioManager ?: return emptyList()
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -67,12 +103,23 @@ class AudioDeviceDetectorModule : Module() {
       val cb = object : AudioDeviceCallback() {
         override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
           val allDevices = fetchConnectedDevices()
+          val activeDevice = fetchActiveOutputDevice()
           for (device in addedDevices) {
             val deviceMap = deviceToMap(device)
             sendEvent(
               "onAudioDeviceConnected",
               mapOf(
                 "device" to deviceMap,
+                "allDevices" to allDevices,
+                "timestamp" to System.currentTimeMillis()
+              )
+            )
+          }
+          if (activeDevice != null) {
+            sendEvent(
+              "onActiveAudioOutputChanged",
+              mapOf(
+                "activeDevice" to activeDevice,
                 "allDevices" to allDevices,
                 "timestamp" to System.currentTimeMillis()
               )
@@ -89,12 +136,23 @@ class AudioDeviceDetectorModule : Module() {
 
         override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) {
           val allDevices = fetchConnectedDevices()
+          val activeDevice = fetchActiveOutputDevice()
           for (device in removedDevices) {
             val deviceMap = deviceToMap(device)
             sendEvent(
               "onAudioDeviceDisconnected",
               mapOf(
                 "device" to deviceMap,
+                "allDevices" to allDevices,
+                "timestamp" to System.currentTimeMillis()
+              )
+            )
+          }
+          if (activeDevice != null) {
+            sendEvent(
+              "onActiveAudioOutputChanged",
+              mapOf(
+                "activeDevice" to activeDevice,
                 "allDevices" to allDevices,
                 "timestamp" to System.currentTimeMillis()
               )
