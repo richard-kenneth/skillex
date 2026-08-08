@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useAudioDeviceDetector, getConnectedDevices } from 'audio-device-detector';
+import { useAudioDeviceDetector, getConnectedDevices, setAudioOutput as setNativeAudioOutput } from 'audio-device-detector';
 import {
   Pressable,
   ScrollView,
@@ -1619,7 +1619,7 @@ function ControlsBar({
 
   // Keep audio icon 100% in sync with real-time active OS output (e.g., native route picker, Control Center, Bluetooth)
   useEffect(() => {
-    if (activeDevice && !isManualSelectionRef.current) {
+    if (activeDevice) {
       const targetOutput = mapDeviceTypeToAudioOutput(activeDevice.type);
       setAudioOutput(targetOutput);
     }
@@ -1630,39 +1630,53 @@ function ControlsBar({
     try {
       isManualSelectionRef.current = true;
       setAudioOutput(targetOutput);
-
+console.log('selectAudioOutputRoute', targetOutput, 'audioOutput', audioOutput);
       if (Platform.OS === 'ios') {
-        if (targetOutput === 'bluetooth') {
-          // Route to Bluetooth: enable allowBluetooth, omit defaultToSpeaker
-          await AudioSession.setAppleAudioConfiguration({
-            audioCategory: 'playAndRecord',
-            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
-            audioMode: 'voiceChat',
-          });
-          await AudioSession.selectAudioOutput('default');
-        } else if (targetOutput === 'earpiece' || targetOutput === 'default') {
-          // Force Built-in Earpiece (receiver): omit allowBluetooth and omit defaultToSpeaker
-          await AudioSession.setAppleAudioConfiguration({
-            audioCategory: 'playAndRecord',
-            audioCategoryOptions: ['allowAirPlay'],
-            audioMode: 'voiceChat',
-          });
-          await AudioSession.selectAudioOutput('default');
-        } else if (targetOutput === 'headset') {
-          await AudioSession.setAppleAudioConfiguration({
-            audioCategory: 'playAndRecord',
-            audioCategoryOptions: ['allowAirPlay'],
-            audioMode: 'voiceChat',
-          });
-          await AudioSession.selectAudioOutput('default');
-        } else {
-          // force_speaker or speaker
+        if (targetOutput === 'speaker' || targetOutput === 'force_speaker') {
+          // Speaker mode: include defaultToSpeaker & videoChat mode so audio routes to main speaker
           await AudioSession.setAppleAudioConfiguration({
             audioCategory: 'playAndRecord',
             audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay', 'defaultToSpeaker'],
             audioMode: 'videoChat',
           });
-          await AudioSession.selectAudioOutput('force_speaker');
+          const nativeSuccess = await setNativeAudioOutput('speaker');
+          if (!nativeSuccess) {
+            await AudioSession.selectAudioOutput('force_speaker');
+          }
+        } else if (targetOutput === 'earpiece' || targetOutput === 'default') {
+          // Earpiece mode: omit defaultToSpeaker so Built-in Receiver (earpiece) plays audio,
+          // while keeping allowBluetooth/allowBluetoothA2DP/allowAirPlay so Bluetooth & AirPlay stay available in picker!
+          await AudioSession.setAppleAudioConfiguration({
+            audioCategory: 'playAndRecord',
+            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
+            audioMode: 'voiceChat',
+          });
+          const nativeSuccess = await setNativeAudioOutput('earpiece');
+          if (!nativeSuccess) {
+            await AudioSession.selectAudioOutput('default');
+          }
+        } else if (targetOutput === 'bluetooth') {
+          // Bluetooth mode: allow Bluetooth & AirPlay, omit defaultToSpeaker
+          await AudioSession.setAppleAudioConfiguration({
+            audioCategory: 'playAndRecord',
+            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
+            audioMode: 'voiceChat',
+          });
+          const nativeSuccess = await setNativeAudioOutput('bluetooth');
+          if (!nativeSuccess) {
+            await AudioSession.selectAudioOutput('default');
+          }
+        } else {
+          // Headset or other: allow Bluetooth & AirPlay, omit defaultToSpeaker
+          await AudioSession.setAppleAudioConfiguration({
+            audioCategory: 'playAndRecord',
+            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
+            audioMode: 'voiceChat',
+          });
+          const nativeSuccess = await setNativeAudioOutput(targetOutput);
+          if (!nativeSuccess) {
+            await AudioSession.selectAudioOutput('default');
+          }
         }
       } else {
         await AudioSession.selectAudioOutput(targetOutput);
@@ -1772,59 +1786,10 @@ function ControlsBar({
     localParticipant?.setCameraEnabled(!isVideoEnabled);
   };
 
-  /**
-   * ============================================================================
-   * iOS SYSTEM-WIDE SCREEN SHARING DOCUMENTATION & IMPLEMENTATION
-   * ============================================================================
-   * 
-   * To enable System-Wide Screen Sharing on iOS across all apps (ReplayKit Broadcast Extension):
-   * 
-   * REQUIREMENTS (When Apple Developer Account & Custom Native Build are ready):
-   * 1. Paid Apple Developer Account (required for App Group & Broadcast Extension Signing).
-   * 2. Configure App Group entitlement in app.json / Xcode:
-   *    - Main App Entitlement: "group.com.skilex.app"
-   *    - Extension Entitlement: "group.com.skilex.app"
-   * 3. Add Broadcast Upload Extension target in Xcode (or via @livekit/react-native-expo-plugin):
-   *    - Target Name: "SkilExBroadcastExtension"
-   *    - Bundle ID: "com.skilex.app.broadcast"
-   * 4. SampleHandler.swift in Broadcast Extension:
-   *    ```swift
-   *    import ReplayKit
-   *    import LiveKitWebRTC
-   *    class SampleHandler: RPBroadcastSampleHandler {
-   *      override func broadcastStarted(withSetupInfo setupInfo: [String : NSObject]?) {
-   *        LKWBRTCScreenCapturer.startBroadcast(self)
-   *      }
-   *      override func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, of sampleBufferType: RPSampleBufferType) {
-   *        LKWBRTCScreenCapturer.processSampleBuffer(sampleBuffer, of: sampleBufferType)
-   *      }
-   *      }
-   *    ```
-   * 5. Native RPSystemBroadcastPickerView trigger in React Native:
-   *    ```ts
-   *    // System-wide iOS Broadcast Trigger (Commented out until App Group & Provisioning Profile are ready):
-   *    // import { NativeModules } from 'react-native';
-   *    // const startSystemBroadcastIOS = () => {
-   *    //   NativeModules.ScreenCapturePicker?.showBroadcastPicker?.("com.skilex.app.broadcast");
-   *    // };
-   *    ```
-   * 
-   * CURRENT BEST WORKING APPROACH (Without Apple Developer Account):
-   * In-App Screen Capture via LiveKit `localParticipant.setScreenShareEnabled(true)`.
-   * This captures in-app session content, slides, notes, and webviews cleanly on iOS & Android
-   * without needing Apple Developer certificates or custom Xcode Broadcast Extensions.
-   * ============================================================================
-   */
   const handleToggleScreenShare = async () => {
     if (!localParticipant) return;
     try {
       const nextState = !isScreenShareEnabled;
-      
-      // SYSTEM-WIDE BROADCAST EXTENSION HOOK (Uncomment when Apple Dev Account target is ready):
-      // if (Platform.OS === 'ios' && nextState) {
-      //   // startSystemBroadcastIOS();
-      // }
-
       await localParticipant.setScreenShareEnabled(nextState);
       toast.toast({
         title: nextState ? (t('screenShareStarted')) : (t('screenShareStopped')),
@@ -1881,6 +1846,14 @@ function ControlsBar({
   const handleShowRoutePicker = async () => {
     if (Platform.OS === 'ios') {
       try {
+        const isSpeaker = audioOutput === 'speaker' || audioOutput === 'force_speaker';
+        await AudioSession.setAppleAudioConfiguration({
+          audioCategory: 'playAndRecord',
+          audioCategoryOptions: isSpeaker
+            ? ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay', 'defaultToSpeaker']
+            : ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
+          audioMode: isSpeaker ? 'videoChat' : 'voiceChat',
+        });
         await AudioSession.showAudioRoutePicker();
       } catch (e) {
         console.warn('[AudioSession] Route picker failed:', e);

@@ -28,6 +28,16 @@ export async function getConnectedDevices(): Promise<AudioDevice[]> {
   }
 }
 
+export async function getActiveDevice(): Promise<AudioDevice | null> {
+  return null;
+}
+
+export async function setAudioOutput(targetOutput: string): Promise<boolean> {
+  return false;
+}
+
 export default {
   getConnectedDevices,
+  getActiveDevice,
+  setAudioOutput,
 };

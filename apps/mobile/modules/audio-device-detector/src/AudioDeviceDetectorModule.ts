@@ -32,4 +32,11 @@ export async function getActiveDevice(): Promise<AudioDevice | null> {
   return null;
 }
 
+export async function setAudioOutput(targetOutput: string): Promise<boolean> {
+  if (NativeAudioDeviceDetector && NativeAudioDeviceDetector.setAudioOutput) {
+    return await NativeAudioDeviceDetector.setAudioOutput(targetOutput);
+  }
+  return false;
+}
+
 export default NativeAudioDeviceDetector;

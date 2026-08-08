@@ -24,6 +24,10 @@ public class AudioDeviceDetectorModule: Module {
       return self.fetchActiveOutputDevice()
     }
 
+    AsyncFunction("setAudioOutput") { (targetOutput: String) -> Bool in
+      return self.setAudioOutputPort(targetOutput)
+    }
+
     OnCreate {
       self.startObservingAudioRoutes()
     }
@@ -195,14 +199,12 @@ public class AudioDeviceDetectorModule: Module {
     // Emit active audio device change whenever route changes
     if let active = activeDevice {
       let activeKey = "\(active["type"] as? String ?? "")_\(active["id"] as? String ?? "")"
-      if activeKey != previousActiveDeviceKey {
-        previousActiveDeviceKey = activeKey
-        self.sendEvent("onActiveAudioOutputChanged", [
-          "activeDevice": active,
-          "allDevices": currentDevices,
-          "timestamp": Date().timeIntervalSince1970 * 1000
-        ])
-      }
+      previousActiveDeviceKey = activeKey
+      self.sendEvent("onActiveAudioOutputChanged", [
+        "activeDevice": active,
+        "allDevices": currentDevices,
+        "timestamp": Date().timeIntervalSince1970 * 1000
+      ])
     }
 
     self.sendEvent("onAudioDevicesChanged", [
@@ -211,6 +213,37 @@ public class AudioDeviceDetectorModule: Module {
     ])
 
     previousDevices = currentDevices
+  }
+
+  private func setAudioOutputPort(_ targetOutput: String) -> Bool {
+    let session = AVAudioSession.sharedInstance()
+    do {
+      if targetOutput == "speaker" || targetOutput == "force_speaker" {
+        try session.overrideOutputAudioPort(.speaker)
+      } else if targetOutput == "earpiece" || targetOutput == "builtin_earpiece" || targetOutput == "default" {
+        try session.overrideOutputAudioPort(.none)
+        if let inputs = session.availableInputs {
+          if let earpieceInput = inputs.first(where: { $0.portType == .builtInMic }) {
+            try session.setPreferredInput(earpieceInput)
+          }
+        }
+      } else if targetOutput == "bluetooth" {
+        try session.overrideOutputAudioPort(.none)
+        if let inputs = session.availableInputs {
+          if let btInput = inputs.first(where: {
+            $0.portType == .bluetoothHFP || $0.portType == .bluetoothA2DP || $0.portType == .bluetoothLE
+          }) {
+            try session.setPreferredInput(btInput)
+          }
+        }
+      } else {
+        try session.overrideOutputAudioPort(.none)
+      }
+      return true
+    } catch {
+      print("[AudioDeviceDetectorModule] Failed to set audio output port (\(targetOutput)): \(error.localizedDescription)")
+      return false
+    }
   }
 
   private func portToDict(_ port: AVAudioSessionPortDescription, isInput: Bool) -> [String: Any] {
