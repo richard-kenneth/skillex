@@ -53,8 +53,23 @@ public class AudioDeviceDetectorModule: Module {
     var devices: [[String: Any]] = []
     var seenKeys = Set<String>()
     let session = AVAudioSession.sharedInstance()
-    let route = session.currentRoute
 
+    // 1. Include availableInputs (physically connected/paired devices)
+    if let availableInputs = session.availableInputs {
+      for input in availableInputs {
+        let dict = self.portToDict(input, isInput: true)
+        if let type = dict["type"] as? String, let id = dict["id"] as? String {
+          let key = "\(type)_\(id)"
+          if !seenKeys.contains(key) {
+            seenKeys.insert(key)
+            devices.append(dict)
+          }
+        }
+      }
+    }
+
+    // 2. Include active route outputs & inputs
+    let route = session.currentRoute
     for output in route.outputs {
       let dict = self.portToDict(output, isInput: false)
       if let type = dict["type"] as? String, let id = dict["id"] as? String {
@@ -73,20 +88,6 @@ public class AudioDeviceDetectorModule: Module {
         if !seenKeys.contains(key) {
           seenKeys.insert(key)
           devices.append(dict)
-        }
-      }
-    }
-
-    // Include pre-connected devices (e.g. Bluetooth connected before joining room)
-    if let availableInputs = session.availableInputs {
-      for input in availableInputs {
-        let dict = self.portToDict(input, isInput: true)
-        if let type = dict["type"] as? String, let id = dict["id"] as? String {
-          let key = "\(type)_\(id)"
-          if !seenKeys.contains(key) {
-            seenKeys.insert(key)
-            devices.append(dict)
-          }
         }
       }
     }

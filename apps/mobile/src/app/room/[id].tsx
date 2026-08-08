@@ -1614,11 +1614,12 @@ function ControlsBar({
   const recActive = recordingState === 'recording' || recordingState === 'processing';
   const recLoading = recordingState === 'starting' || recordingState === 'processing' || isCheckingEstimate;
 
+  const isManualSelectionRef = useRef(false);
   const { activeDevice, latestConnectedDevice, latestDisconnectedDevice } = useAudioDeviceDetector();
 
   // Keep audio icon 100% in sync with real-time active OS output (e.g., native route picker, Control Center, Bluetooth)
   useEffect(() => {
-    if (activeDevice) {
+    if (activeDevice && !isManualSelectionRef.current) {
       const targetOutput = mapDeviceTypeToAudioOutput(activeDevice.type);
       setAudioOutput(targetOutput);
     }
@@ -1627,19 +1628,30 @@ function ControlsBar({
   // Centralized helper to switch audio output routes and manage iOS category options
   const selectAudioOutputRoute = async (targetOutput: string) => {
     try {
+      isManualSelectionRef.current = true;
+      setAudioOutput(targetOutput);
+
       if (Platform.OS === 'ios') {
-        if (targetOutput === 'default' || targetOutput === 'earpiece') {
-          // Omit defaultToSpeaker to route audio to inbuilt earpiece (receiver)
+        if (targetOutput === 'bluetooth') {
+          // Route to Bluetooth: enable allowBluetooth, omit defaultToSpeaker
           await AudioSession.setAppleAudioConfiguration({
             audioCategory: 'playAndRecord',
             audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
             audioMode: 'voiceChat',
           });
           await AudioSession.selectAudioOutput('default');
-        } else if (targetOutput === 'bluetooth' || targetOutput === 'headset') {
+        } else if (targetOutput === 'earpiece' || targetOutput === 'default') {
+          // Force Built-in Earpiece (receiver): omit allowBluetooth and omit defaultToSpeaker
           await AudioSession.setAppleAudioConfiguration({
             audioCategory: 'playAndRecord',
-            audioCategoryOptions: ['allowBluetooth', 'allowBluetoothA2DP', 'allowAirPlay'],
+            audioCategoryOptions: ['allowAirPlay'],
+            audioMode: 'voiceChat',
+          });
+          await AudioSession.selectAudioOutput('default');
+        } else if (targetOutput === 'headset') {
+          await AudioSession.setAppleAudioConfiguration({
+            audioCategory: 'playAndRecord',
+            audioCategoryOptions: ['allowAirPlay'],
             audioMode: 'voiceChat',
           });
           await AudioSession.selectAudioOutput('default');
@@ -1655,15 +1667,18 @@ function ControlsBar({
       } else {
         await AudioSession.selectAudioOutput(targetOutput);
       }
-      setAudioOutput(targetOutput);
     } catch (e) {
       console.warn('[AudioSession] Route selection failed:', e);
+    } finally {
+      setTimeout(() => {
+        isManualSelectionRef.current = false;
+      }, 1200);
     }
   };
 
   // Automatically switch audio output & update icon when OS connects a new device
   useEffect(() => {
-    if (latestConnectedDevice) {
+    if (latestConnectedDevice && !isManualSelectionRef.current) {
       const targetOutput = mapDeviceTypeToAudioOutput(latestConnectedDevice.type);
       selectAudioOutputRoute(targetOutput).then(() => {
         AudioSession.getAudioOutputs().then(setAvailableOutputs).catch(() => {});
@@ -1677,7 +1692,7 @@ function ControlsBar({
 
   // Re-sync on device disconnection (both iOS and Android)
   useEffect(() => {
-    if (latestDisconnectedDevice) {
+    if (latestDisconnectedDevice && !isManualSelectionRef.current) {
       getConnectedDevices().then(async (devices) => {
         const bluetoothDevice = devices.find((d) => d.type === 'bluetooth');
         const headsetDevice = devices.find(
@@ -1828,20 +1843,28 @@ function ControlsBar({
   // Cycle through available audio outputs in priority order
   const handleCycleAudioOutput = async () => {
     try {
-      const outputs = await AudioSession.getAudioOutputs();      
-      setAvailableOutputs(outputs);
-      if (!outputs || outputs.length === 0) return;
+      const devices = await getConnectedDevices();
+      const hasBluetooth = devices.some((d) => d.type === 'bluetooth');
+      const hasHeadset = devices.some(
+        (d) => d.type === 'wired_headset' || d.type === 'wired_headphones' || d.type === 'usb_headset'
+      );
 
-      const cycleOrder = Platform.OS === 'ios'
-        ? ['force_speaker', 'default'] 
-        : ['speaker', 'earpiece', 'headset', 'bluetooth'];
+      let cycleOrder: string[];
+      if (hasBluetooth) {
+        cycleOrder = ['bluetooth', 'speaker', 'earpiece'];
+      } else if (hasHeadset) {
+        cycleOrder = ['headset', 'speaker'];
+      } else {
+        cycleOrder = ['speaker', 'earpiece'];
+      }
 
-      const available = cycleOrder.filter((type) => outputs.includes(type));
-      const validOutputs = available.length > 0 ? available : outputs;
+      const normalizedCurrent = (audioOutput === 'force_speaker' || audioOutput === 'speaker')
+        ? 'speaker'
+        : (audioOutput === 'default' ? 'earpiece' : audioOutput);
 
-      const currentIdx = validOutputs.indexOf(audioOutput);
-      const nextIdx = currentIdx === -1 ? 0 : (currentIdx + 1) % validOutputs.length;
-      const nextOutput = validOutputs[nextIdx];
+      const currentIdx = cycleOrder.indexOf(normalizedCurrent);
+      const nextIdx = currentIdx === -1 ? 0 : (currentIdx + 1) % cycleOrder.length;
+      const nextOutput = cycleOrder[nextIdx];
 
       await selectAudioOutputRoute(nextOutput);
 
