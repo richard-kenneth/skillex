@@ -164,7 +164,7 @@
     "featureReferralDesc": "Earn 200 points per referral, plus ongoing bonuses for every exchange your referrals make.",
 
     "categoriesTitle": "Explore Skill Categories",
-    "categoriesSubtitle": "Browse 35+ skills across 6 categories. There's something for everyone.",
+    "categoriesSubtitle": "Browse {count}+ skills across 6 categories.",
     "categoryProgramming": "Programming",
     "categoryDesign": "Design",
     "categoryMarketing": "Marketing",

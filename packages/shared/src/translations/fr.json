@@ -164,7 +164,7 @@
     "featureReferralDesc": "Gagnez 200 points par parrainage réussi.",
 
     "categoriesTitle": "Explorez les catégories de compétences",
-    "categoriesSubtitle": "Parcourez plus de 35 compétences réparties en 6 catégories.",
+    "categoriesSubtitle": "Parcourez {count}+ compétences réparties en 6 catégories.",
     "categoryProgramming": "Programmation",
     "categoryDesign": "Design",
     "categoryMarketing": "Marketing",

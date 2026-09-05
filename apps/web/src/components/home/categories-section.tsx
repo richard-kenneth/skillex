@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   Code2, Palette, Megaphone, Briefcase, Languages, Heart,
 } from "lucide-react";
-import { SEED_CATEGORIES } from "@skil-ex2/shared";
+import { SEED_CATEGORIES, PLATFORM_STATS } from "@skil-ex2/shared";
 import { track, AnalyticsEvent } from "@/lib/analytics";
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -41,7 +41,7 @@ export function CategoriesSection() {
             {t("categoriesTitle")}
           </h2>
           <p className="mt-4 text-lg text-zinc-400 max-w-2xl mx-auto">
-            {t("categoriesSubtitle")}
+            {t("categoriesSubtitle", { count: PLATFORM_STATS.skillDisplayCount })}
           </p>
         </motion.div>
 

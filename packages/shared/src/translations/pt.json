@@ -164,7 +164,7 @@
     "featureReferralDesc": "Ganhe 200 pontos por cada indicação bem-sucedida.",
 
     "categoriesTitle": "Explore categorias de habilidades",
-    "categoriesSubtitle": "Explore mais de 35 habilidades em 6 categorias.",
+    "categoriesSubtitle": "Explore {count}+ habilidades em 6 categorias.",
     "categoryProgramming": "Programação",
     "categoryDesign": "Design",
     "categoryMarketing": "Marketing",

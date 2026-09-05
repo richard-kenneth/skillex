@@ -164,7 +164,7 @@
     "featureReferralDesc": "Gana 200 puntos por cada referido exitoso.",
 
     "categoriesTitle": "Explora categorías de habilidades",
-    "categoriesSubtitle": "Explora más de 35 habilidades en 6 categorías.",
+    "categoriesSubtitle": "Explora {count}+ habilidades en 6 categorías.",
     "categoryProgramming": "Programación",
     "categoryDesign": "Diseño",
     "categoryMarketing": "Marketing",
