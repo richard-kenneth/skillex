@@ -33,11 +33,17 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
   );
 }
 
-const stats = [
+interface StatItem {
+  key: string;
+  value: number | string;
+  suffix?: string;
+}
+
+const stats: StatItem[] = [
   { key: "statsCategories", value: PLATFORM_STATS.categoryCount, suffix: "" },
   { key: "statsSkills", value: PLATFORM_STATS.skillDisplayCount, suffix: "+" },
   { key: "statsLanguages", value: PLATFORM_STATS.languageCount, suffix: "" },
-  { key: "statsVideo", value: 0, suffix: "" },
+  { key: "statsVideo", value: "HD", suffix: "" },
 ];
 
 export function StatsSection() {
@@ -60,10 +66,10 @@ export function StatsSection() {
               className="flex flex-col items-center text-center"
             >
               <span className="text-3xl font-bold md:text-4xl bg-gradient-to-r from-violet-300 to-cyan-300 bg-clip-text text-transparent">
-                {stat.value > 0 ? (
+                {typeof stat.value === "number" ? (
                   <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                 ) : (
-                  "∞"
+                  `${stat.value}${stat.suffix ?? ""}`
                 )}
               </span>
               <span className="mt-2 text-sm text-zinc-400 font-medium">

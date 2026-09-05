@@ -36,30 +36,21 @@ async function main() {
     },
   });
 
-
   console.log('Seeding categories and skills from @skil-ex2/shared...');
 
   for (const cat of SEED_CATEGORIES) {
     const category = await prisma.category.upsert({
       where: { name: cat.name },
       update: {
-        ...(cat.sponsor
-          ? {
-              sponsorName: cat.sponsor.name,
-              sponsorLogo: cat.sponsor.logo,
-              sponsorUrl: cat.sponsor.url,
-            }
-          : {}),
+        sponsorName: cat.sponsor?.name ?? null,
+        sponsorLogo: cat.sponsor?.logo ?? null,
+        sponsorUrl: cat.sponsor?.url ?? null,
       },
       create: {
         name: cat.name,
-        ...(cat.sponsor
-          ? {
-              sponsorName: cat.sponsor.name,
-              sponsorLogo: cat.sponsor.logo,
-              sponsorUrl: cat.sponsor.url,
-            }
-          : {}),
+        sponsorName: cat.sponsor?.name ?? null,
+        sponsorLogo: cat.sponsor?.logo ?? null,
+        sponsorUrl: cat.sponsor?.url ?? null,
       },
     });
 

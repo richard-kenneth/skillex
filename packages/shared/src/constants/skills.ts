@@ -23,11 +23,6 @@ export const SEED_CATEGORIES: SeedCategory[] = [
       "Next.js",
       "Prisma",
     ],
-    sponsor: {
-      name: "AltSchool Africa",
-      url: "https://altschoolafrica.com",
-      logo: "https://altschoolafrica.com/favicon.ico",
-    },
   },
   {
     key: "Design",
@@ -62,11 +57,6 @@ export const SEED_CATEGORIES: SeedCategory[] = [
       "Public Speaking",
       "Leadership",
     ],
-    sponsor: {
-      name: "Ingressive for Good",
-      url: "https://ingressive.org",
-      logo: "https://ingressive.org/favicon.ico",
-    },
   },
   {
     key: "Languages",
