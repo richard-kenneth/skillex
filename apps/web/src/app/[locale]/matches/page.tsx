@@ -6,6 +6,9 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { getTranslations } from "next-intl/server";
 import { Inbox } from "lucide-react";
+import { ComingSoonGate } from "@/components/home/coming-soon-gate";
+
+const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +22,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default async function MatchesPage() {
+  if (isPrelaunch) return <ComingSoonGate />;
+
   const t = await getTranslations("matches");
   const session = await getSession();
 

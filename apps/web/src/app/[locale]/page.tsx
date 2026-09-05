@@ -1,12 +1,18 @@
 import { HomeClient } from "@/components/home/home-client";
-import { getTranslations } from "next-intl/server";
+import { routing } from "@/i18n/routing";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 interface Props {
   params: Promise<{ locale: string }>;
 }
 
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "metadata" });
   const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2.render.com";
 
@@ -29,30 +35,32 @@ export async function generateMetadata({ params }: Props) {
       siteName: "Skill Exchange",
       locale: locale,
       type: "website",
-      images: [
-        {
-          url: `${baseUrl}/icon-512.png`,
-          width: 512,
-          height: 512,
-          alt: "Skill Exchange Logo",
-        },
-      ],
     },
     twitter: {
       card: "summary_large_image",
       title: t("homeTitle"),
       description: t("homeDescription"),
-      images: [`${baseUrl}/icon-512.png`],
     },
   };
 }
 
 export default async function HomePage({ params }: Props) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "metadata" });
+  const tHome = await getTranslations({ locale, namespace: "home" });
   const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2.render.com";
 
-  // Structured Data (JSON-LD) for Search Engines
+  // Structured Data (JSON-LD) for Search Engines & Rich Results
+  const faqItems = ["1", "2", "3", "4", "5", "6", "7"].map((key) => ({
+    "@type": "Question",
+    "name": tHome(`faq${key}Q`),
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": tHome(`faq${key}A`),
+    },
+  }));
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -76,6 +84,26 @@ export default async function HomePage({ params }: Props) {
           "height": 512,
         },
         "sameAs": [],
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": `${baseUrl}/${locale}/#application`,
+        "name": "Skill Exchange",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web",
+        // TODO: Replace with below when we launch on other platforms
+        // "operatingSystem": "Web, Android, iOS",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+        },
+        "description": t("homeDescription"),
+      },
+      {
+        "@type": "FAQPage",
+        "@id": `${baseUrl}/${locale}/#faq`,
+        "mainEntity": faqItems,
       },
     ],
   };

@@ -20,6 +20,7 @@ import { RatesModule } from './rates/rates.module';
 import { BullModule } from '@nestjs/bullmq';
 import { RedisModule, REDIS_CONFIG } from './redis/redis.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { WaitlistModule } from './waitlist/waitlist.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
@@ -76,6 +77,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     ReferralsModule,
     RatesModule,
     NotificationsModule,
+    WaitlistModule,
   ],
   controllers: [AppController],
   providers: [AppService],

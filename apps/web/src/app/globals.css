@@ -129,6 +129,7 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
     /* Disable scrolling rubber band at html level */
     overscroll-behavior: none;
   }
@@ -148,5 +149,16 @@
   /* Safe area top padding for sticky header to flow beautifully under status bar */
   header {
     padding-top: env(safe-area-inset-top, 0px) !important;
+  }
+
+  /* Ensure all content is fully visible if JavaScript is disabled */
+  @media (scripting: none) {
+    [style*="opacity: 0"],
+    [style*="opacity:0"],
+    [style*="opacity: 0%"],
+    [style*="opacity:0%"] {
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
 }

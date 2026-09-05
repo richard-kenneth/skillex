@@ -312,6 +312,7 @@ model AppConfig {
   referralBonusCap         Int      @default(500)
   referralMonthlyCap       Int      @default(5000)
   recordingPointsPerMinute Int      @default(4)
+  prelaunchMode            Boolean  @default(true)
   updatedAt                DateTime @updatedAt
 }
 
@@ -491,5 +492,13 @@ model PushToken {
   platform  String   // "ios" | "android"
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WaitlistEntry {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  source    String?  // tracks which CTA: "landing_hero", "landing_footer", etc.
+  createdAt DateTime @default(now())
 }
 

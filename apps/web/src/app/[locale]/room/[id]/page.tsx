@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ComingSoonGate } from "@/components/home/coming-soon-gate";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -95,9 +96,13 @@ interface SessionTiming {
 
 const API = `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api`;
 
+const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
+
 /* ─── Main Page ─────────────────────────────────────── */
 
 export default function RoomPage() {
+  if (isPrelaunch) return <ComingSoonGate />;
+
   const t = useTranslations("room");
   const c = useTranslations("common");
 

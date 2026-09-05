@@ -1,5 +1,7 @@
 import { NotificationType, ReviewTag, TransactionType } from "../types";
 
+export * from "./skills";
+
 // ─── Notification Icons & Colors (shared across web + mobile) ─────────────
 export const NOTIFICATION_TYPE_META: Record<
   string,

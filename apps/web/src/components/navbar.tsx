@@ -17,12 +17,14 @@ import { useTranslations } from "next-intl";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
-const navItems = [
-  { key: "home", href: "/" },
-  { key: "matches", href: "/matches" },
-  { key: "exchanges", href: "/exchanges" },
-  { key: "points", href: "/points" },
-  { key: "dashboard", href: "/dashboard" },
+const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
+
+const allNavItems = [
+  { key: "home", href: "/", gated: false },
+  { key: "matches", href: "/matches", gated: true },
+  { key: "exchanges", href: "/exchanges", gated: true },
+  { key: "points", href: "/points", gated: true },
+  { key: "dashboard", href: "/dashboard", gated: false },
 ] as const;
 
 export function Navbar() {
@@ -30,35 +32,67 @@ export function Navbar() {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
+  const tHome = useTranslations("home");
+
+  // In pre-launch mode: only show non-gated nav items for logged-in users
+  // For unauthenticated users on home page, show anchor navigation
+  const isHomePage = pathname === "/";
+  const homeAnchorLinks = [
+    { key: "howItWorks", href: "#how-it-works" },
+    { key: "features", href: "#features" },
+    { key: "categories", href: "#categories" },
+    { key: "pointsInfo", href: "#points" },
+    { key: "faq", href: "#faq" },
+  ] as const;
+
+  const navItems = isPrelaunch
+    ? (session?.user
+        ? allNavItems.filter((item) => !item.gated)
+        : (isHomePage ? homeAnchorLinks : []))
+    : allNavItems;
+
+  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith("#")) {
+      e.preventDefault();
+      const el = document.querySelector(href);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        window.history.pushState(null, "", href);
+      }
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center space-x-2 transition-opacity hover:opacity-80">
-            <Code className="h-6 w-6 text-primary" />
+            <Code className={cn("h-6 w-6", isHomePage ? "text-violet-400" : "text-primary")} />
             <span className="font-bold text-xl tracking-tight hidden sm:block">
               {tCommon("appName")}
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  pathname === item.href
-                    ? "text-white"
-                    : "text-zinc-400"
-                )}
-              >
-                {t(item.key)}
-              </Link>
-            ))}
-          </nav>
+          {navItems.length > 0 && (
+            <nav className="hidden md:flex items-center gap-6">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={(e) => handleAnchorClick(e, item.href)}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-white",
+                    pathname === item.href
+                      ? "text-white"
+                      : "text-zinc-400"
+                  )}
+                >
+                  {t(item.key)}
+                </Link>
+              ))}
+            </nav>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -108,12 +142,14 @@ export function Navbar() {
                         <span>{t("profile")}</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="p-0">
-                      <Link href="/reviews" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
-                        <Star className="h-4 w-4 text-amber-400" />
-                        <span>{t("reviews")}</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    {!isPrelaunch && (
+                      <DropdownMenuItem className="p-0">
+                        <Link href="/reviews" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
+                          <Star className="h-4 w-4 text-amber-400" />
+                          <span>{t("reviews")}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator className="bg-zinc-800" />
                     <DropdownMenuItem
                       className="flex w-full items-center gap-2 cursor-pointer text-red-400 hover:text-red-300 hover:bg-red-950/30 p-2 rounded-sm"
@@ -127,82 +163,108 @@ export function Navbar() {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  asChild
-                  className="hidden sm:flex text-zinc-400 hover:text-white"
-                >
-                  <Link href="/sign-in">{t("signIn")}</Link>
-                </Button>
-                <Button 
-                  size="sm" 
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-5"
-                  asChild
-                >
-                  <Link href="/sign-up">{t("signUp")}</Link>
-                </Button>
+                {isPrelaunch && isHomePage ? (
+                  /* Pre-launch: show Join Waitlist + Sign Up */
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border-0 font-medium px-5"
+                    asChild
+                  >
+                    <Link href="/sign-up">{tHome("earlyAccess")}</Link>
+                  </Button>
+                ) : (
+                  /* Standard auth buttons */
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      asChild
+                      className="hidden sm:flex text-zinc-400 hover:text-white"
+                    >
+                      <Link href="/sign-in">{t("signIn")}</Link>
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-5"
+                      asChild
+                    >
+                      <Link href="/sign-up">{t("signUp")}</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </div>
 
           {/* Mobile Menu Toggle */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Toggle Menu</span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[240px] md:hidden bg-zinc-950 border-zinc-800 p-2">
-              <div className="flex flex-col gap-1">
-                {navItems.map((item) => (
-                  <DropdownMenuItem key={item.href} className="p-0">
-                    <Link 
-                      href={item.href} 
-                      className={cn(
-                        "flex w-full items-center p-2 text-sm rounded-md transition-colors",
-                        pathname === item.href ? "bg-zinc-900 text-white" : "text-zinc-400 hover:bg-zinc-900/50 hover:text-white"
-                      )}
-                    >
-                      {t(item.key)}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                
-                <DropdownMenuSeparator className="my-2 bg-zinc-800" />
-                
-                {session?.user ? (
-                  <>
-                    <div className="px-2 py-1.5 mb-1">
-                      <p className="text-sm font-medium text-white truncate">{session.user.name}</p>
-                      <p className="text-xs text-zinc-500 truncate">{session.user.email}</p>
-                    </div>
-                    <DropdownMenuItem className="p-0">
-                      <Link href="/dashboard/profile" className="flex w-full items-center gap-2 p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">
-                        <User className="h-4 w-4" />
-                        <span>{t("profile")}</span>
+          {navItems.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Toggle Menu</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[240px] md:hidden bg-zinc-950 border-zinc-800 p-2">
+                <div className="flex flex-col gap-1">
+                  {navItems.map((item) => (
+                    <DropdownMenuItem key={item.href} className="p-0">
+                      <Link 
+                        href={item.href} 
+                        onClick={(e) => handleAnchorClick(e, item.href)}
+                        className={cn(
+                          "flex w-full items-center p-2 text-sm rounded-md transition-colors",
+                          pathname === item.href ? "bg-zinc-900 text-white" : "text-zinc-400 hover:bg-zinc-900/50 hover:text-white"
+                        )}
+                      >
+                        {t(item.key)}
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="flex w-full items-center gap-2 p-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded-md cursor-pointer"
-                      onClick={() => signOut()}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>{t("signOut")}</span>
+                  ))}
+                  
+                  <DropdownMenuSeparator className="my-2 bg-zinc-800" />
+                  
+                  {session?.user ? (
+                    <>
+                      <div className="px-2 py-1.5 mb-1">
+                        <p className="text-sm font-medium text-white truncate">{session.user.name}</p>
+                        <p className="text-xs text-zinc-500 truncate">{session.user.email}</p>
+                      </div>
+                      <DropdownMenuItem className="p-0">
+                        <Link href="/dashboard/profile" className="flex w-full items-center gap-2 p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">
+                          <User className="h-4 w-4" />
+                          <span>{t("profile")}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="flex w-full items-center gap-2 p-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded-md cursor-pointer"
+                        onClick={() => signOut()}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>{t("signOut")}</span>
+                      </DropdownMenuItem>
+                    </>
+                  ) : isPrelaunch && isHomePage ? (
+                    <DropdownMenuItem className="p-0 mt-1">
+                      <Link
+                        href="/sign-up"
+                        className="flex w-full items-center justify-center p-2.5 text-sm bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-md font-medium shadow-sm"
+                      >
+                        {tHome("earlyAccess")}
+                      </Link>
                     </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem className="p-0">
-                      <Link href="/sign-in" className="flex w-full items-center p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">{t("signIn")}</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="p-0">
-                      <Link href="/sign-up" className="flex w-full items-center p-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium">{t("signUp")}</Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  ) : (
+                    <>
+                      <DropdownMenuItem className="p-0">
+                        <Link href="/sign-in" className="flex w-full items-center p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">{t("signIn")}</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="p-0">
+                        <Link href="/sign-up" className="flex w-full items-center p-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium">{t("signUp")}</Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
     </header>

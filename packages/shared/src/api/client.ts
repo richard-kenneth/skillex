@@ -393,6 +393,19 @@ export function createApiClient(config: ApiClientConfig) {
       }),
   };
 
+  // ─────────────────────────────────────────────────────────────────────────
+  //  Waitlist (pre-launch)
+  // ─────────────────────────────────────────────────────────────────────────
+  const waitlist = {
+    join: (payload: { email: string; name?: string; source?: string }) =>
+      request<{ success: boolean; alreadyJoined: boolean }>(`/waitlist`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    count: () =>
+      request<{ count: number }>(`/waitlist/count`),
+  };
+
   return {
     request,
     users,
@@ -405,6 +418,7 @@ export function createApiClient(config: ApiClientConfig) {
     video,
     uploads,
     auth,
+    waitlist,
   };
 }
 

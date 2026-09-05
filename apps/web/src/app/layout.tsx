@@ -22,6 +22,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_CLIENT_BASE_URL!),
   title: "Skill Exchange | Learn, Teach, Grow",
   description:
     "Connect with professionals to swap skills and knowledge securely.",
@@ -51,6 +52,16 @@ export default function RootLayout({
 }>) {
   return (
     <html className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
+      <head>
+        <noscript>
+          <style>{`
+            [style*="opacity: 0"], [style*="opacity:0"], [style*="opacity: 0%"], [style*="opacity:0%"] {
+              opacity: 1 !important;
+              transform: none !important;
+            }
+          `}</style>
+        </noscript>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background flex flex-col font-sans`}
       >

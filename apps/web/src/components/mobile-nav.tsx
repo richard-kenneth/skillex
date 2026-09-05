@@ -5,25 +5,36 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Home, Users, ArrowLeftRight, Coins, User } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSession } from "@/lib/auth-client";
 
-const navItems = [
-  { key: "home", href: "/", icon: Home },
-  { key: "matches", href: "/matches", icon: Users },
-  { key: "exchanges", href: "/exchanges", icon: ArrowLeftRight },
-  { key: "points", href: "/points", icon: Coins },
-  { key: "dashboard", href: "/dashboard", icon: User },
+const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
+
+const allNavItems = [
+  { key: "home", href: "/", icon: Home, gated: false },
+  { key: "matches", href: "/matches", icon: Users, gated: true },
+  { key: "exchanges", href: "/exchanges", icon: ArrowLeftRight, gated: true },
+  { key: "points", href: "/points", icon: Coins, gated: true },
+  { key: "dashboard", href: "/dashboard", icon: User, gated: false },
 ] as const;
 
 export function MobileNav() {
   const pathname = usePathname();
   const t = useTranslations("nav");
+  const { data: session } = useSession();
+
+  // Hide entirely for unauthenticated users in pre-launch
+  if (isPrelaunch && !session?.user) return null;
+
+  // In pre-launch, only show non-gated items
+  const navItems = isPrelaunch
+    ? allNavItems.filter((item) => !item.gated)
+    : allNavItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-zinc-950/80 backdrop-blur-md pb-[env(safe-area-inset-bottom,8px)] pt-2 md:hidden">
       <div className="flex h-12 items-center justify-around px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          // Check if active: either exact match, or for subpaths (except root /)
           const isActive = 
             pathname === item.href || 
             (item.href !== "/" && pathname.startsWith(item.href));

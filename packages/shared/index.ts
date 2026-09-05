@@ -5,6 +5,7 @@ export * from "./src/schemas/points.schema";
 export * from "./src/schemas/video.schema";
 export * from "./src/schemas/exchange-chat.schema";
 export * from "./src/schemas/referral.schema";
+export * from "./src/schemas/waitlist.schema";
 export * from "./src/utils/currency";
 export * from "./src/utils/string";
 

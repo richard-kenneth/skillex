@@ -36,6 +36,9 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { AnalyticsEvent, track } from "@/lib/analytics";
 import { useCallback, useEffect, useState } from "react";
+import { ComingSoonGate } from "@/components/home/coming-soon-gate";
+
+const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
 
 interface PointsTransaction {
   id: string;
@@ -101,6 +104,7 @@ const typeConfig: Record<
 };
 
 export default function PointsPage() {
+  if (isPrelaunch) return <ComingSoonGate />;
   const router = useRouter();
   const format = useFormatter();
   const WITHDRAWAL_CURRENCY = "NGN";

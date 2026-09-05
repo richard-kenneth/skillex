@@ -47,6 +47,12 @@ export const AnalyticsEvent = {
   // Onboarding
   ONBOARDING_DISMISSED: 'onboarding_dismissed',
   ONBOARDING_COMPLETED: 'onboarding_completed',
+
+  // Landing Page & Pre-launch
+  WAITLIST_SIGNUP: 'waitlist_signup',
+  PROFILE_SETUP_CLICKED: 'profile_setup_clicked',
+  CATEGORY_TAB_CLICKED: 'category_tab_clicked',
+  FAQ_EXPANDED: 'faq_expanded',
 } as const;
 
 export type AnalyticsEventName = (typeof AnalyticsEvent)[keyof typeof AnalyticsEvent];
@@ -150,5 +156,20 @@ export interface AnalyticsEventProperties {
     total_steps?: number;
     completed_steps?: number;
     skipped_steps?: number;
+  };
+
+  // Landing Page & Pre-launch
+  [AnalyticsEvent.WAITLIST_SIGNUP]: {
+    source: string;
+    already_joined?: boolean;
+  };
+  [AnalyticsEvent.PROFILE_SETUP_CLICKED]: {
+    source: 'hero' | 'footer' | string;
+  };
+  [AnalyticsEvent.CATEGORY_TAB_CLICKED]: {
+    category: string;
+  };
+  [AnalyticsEvent.FAQ_EXPANDED]: {
+    question_key: string;
   };
 }

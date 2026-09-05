@@ -1,6 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as dotenv from 'dotenv';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { SEED_CATEGORIES } from '@skil-ex2/shared';
 
 dotenv.config();
 
@@ -36,77 +37,30 @@ async function main() {
   });
 
 
-  const categories = [
-    {
-      name: 'Programming',
-      skills: [
-        'JavaScript',
-        'TypeScript',
-        'Python',
-        'React',
-        'Node.js',
-        'NestJS',
-        'Next.js',
-        'Prisma',
-      ],
-    },
-    {
-      name: 'Design',
-      skills: [
-        'UI Design',
-        'UX Design',
-        'Figma',
-        'Adobe XD',
-        'Graphic Design',
-        'Logo Design',
-      ],
-    },
-    {
-      name: 'Marketing',
-      skills: [
-        'SEO',
-        'Content Marketing',
-        'Social Media',
-        'Email Marketing',
-        'Digital Strategy',
-      ],
-    },
-    {
-      name: 'Business',
-      skills: [
-        'Project Management',
-        'Agile',
-        'Business Analysis',
-        'Public Speaking',
-        'Leadership',
-      ],
-    },
-    {
-      name: 'Languages',
-      skills: ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese'],
-    },
-    {
-      name: 'Lifestyle',
-      skills: ['Cooking', 'Yoga', 'Fitness', 'Music Production', 'Photography'],
-    },
-  ];
+  console.log('Seeding categories and skills from @skil-ex2/shared...');
 
-  // [x] Implement `SkillsService`
-  // [x] Implement `SkillsController`
-  // [x] Seed initial categories and skills
-  // [x] Integrate `SkillManager` into `ProfileForm`
-  // [/] Fix lint errors and verify functionality
-  //     [x] Frontend `SkillManager` lint & types
-  //     [/] Backend `SkillsController` & `seed.ts` lint
-  // [ ] Test skill management flow (add/remove)
-
-  console.log('Seeding categories and skills...');
-
-  for (const cat of categories) {
+  for (const cat of SEED_CATEGORIES) {
     const category = await prisma.category.upsert({
       where: { name: cat.name },
-      update: {},
-      create: { name: cat.name },
+      update: {
+        ...(cat.sponsor
+          ? {
+              sponsorName: cat.sponsor.name,
+              sponsorLogo: cat.sponsor.logo,
+              sponsorUrl: cat.sponsor.url,
+            }
+          : {}),
+      },
+      create: {
+        name: cat.name,
+        ...(cat.sponsor
+          ? {
+              sponsorName: cat.sponsor.name,
+              sponsorLogo: cat.sponsor.logo,
+              sponsorUrl: cat.sponsor.url,
+            }
+          : {}),
+      },
     });
 
     console.log(`Category: ${category.name}`);
@@ -123,37 +77,6 @@ async function main() {
       console.log(`  - Skill: ${skillName}`);
     }
   }
-
-  console.log('Seeding finished.');
-
-  // Add sponsor data to select categories
-  console.log('Adding sponsor data to categories...');
-
-  await prisma.category
-    .update({
-      where: { name: 'Programming' },
-      data: {
-        sponsorName: 'AltSchool Africa',
-        sponsorLogo: 'https://altschoolafrica.com/favicon.ico',
-        sponsorUrl: 'https://altschoolafrica.com',
-      },
-    })
-    .catch(() =>
-      console.log('  - Programming category not found, skipping sponsor'),
-    );
-
-  await prisma.category
-    .update({
-      where: { name: 'Business' },
-      data: {
-        sponsorName: 'Ingressive for Good',
-        sponsorLogo: 'https://ingressive.org/favicon.ico',
-        sponsorUrl: 'https://ingressive.org',
-      },
-    })
-    .catch(() =>
-      console.log('  - Business category not found, skipping sponsor'),
-    );
 
   console.log('All seeding complete.');
 }
