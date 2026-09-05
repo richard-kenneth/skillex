@@ -29,6 +29,7 @@ import {
   Lock, Plus, Unlock, Wallet, Zap, RefreshCw, CheckCircle2, Loader2, Gift, ShieldCheck,
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { AnalyticsEvent, track } from '@/lib/analytics';
 
 
 type SubTab = 'all' | 'purchase' | 'withdraw' | 'exchange';
@@ -140,6 +141,7 @@ export default function PointsScreen() {
       const res = await purchaseQ.mutateAsync({ amount: pAmount, currency: selectedCurrency, redirectUrl });
       const { paymentLink } = res as any;
       if (paymentLink) {
+        track(AnalyticsEvent.POINTS_PURCHASE_INITIATED, { points: pAmount, currency: selectedCurrency });
         if (Platform.OS === 'web' && typeof (globalThis as any).window !== 'undefined') { (globalThis as any).window.location.href = paymentLink; return; }
         const browserResult = await WebBrowser.openAuthSessionAsync(paymentLink, redirectUrl, { showTitle: true, enableBarCollapsing: true });
         if (browserResult.type !== 'success' || !browserResult.url) { toast.toast({ title: t('paymentCancelled'), variant: 'info' }); return; }
@@ -161,6 +163,7 @@ export default function PointsScreen() {
     setWithdrawError(null);
     try {
       await withdrawQ.mutateAsync({ amount: wAmount, bankCode: withdrawBankCode, accountNumber: withdrawAccount });
+      track(AnalyticsEvent.POINTS_WITHDRAWAL_REQUESTED, { points: wAmount });
       toast.toast({ title: t('withdrawalRequestSent'), description: t('withdrawalRequestSentDesc'), variant: 'success' });
       setWithdrawAmount(''); setWithdrawAccount(''); setWithdrawBankCode(''); setResolvedName(null);
       await Promise.all([balanceQ.refetch(), txQ.refetch()]);

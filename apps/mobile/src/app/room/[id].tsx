@@ -107,6 +107,7 @@ import {
   AudioSession,
 } from '@livekit/react-native';
 import { Track, VideoCaptureOptions } from 'livekit-client';
+import { AnalyticsEvent, track } from '@/lib/analytics';
 
 /* ─── Recording & Signal Types ───────────────────────── */
 type RecordingState =
@@ -321,6 +322,7 @@ export default function RoomScreen() {
     try {
       setRecordingState('starting');
       const data = await startRecQ.mutateAsync({ exchangeSessionId });
+      track(AnalyticsEvent.RECORDING_STARTED, { approved_minutes: data.approvedMinutes || 0 });
       setRecordingState('recording');
       setShowConsentModal(false);
       const approvedMinutes = data.approvedMinutes || 0;
@@ -444,6 +446,7 @@ export default function RoomScreen() {
       setRecordingState('idle');
       return;
     }
+    track(AnalyticsEvent.RECORDING_REQUESTED);
     sendSignal({ type: 'consent_request' });
     setRecordingState('waiting_for_partner');
     toast.toast({ title: t('waitingPartner'), variant: 'info' });
@@ -480,6 +483,7 @@ export default function RoomScreen() {
     if (!exchangeSessionId) return;
     try {
       await stopRecQ.mutateAsync({ exchangeSessionId });
+      track(AnalyticsEvent.RECORDING_STOPPED);
       setRecordingState('processing');
       setRecordingStopAt(null);
       sendSignal({ type: 'recording_stopped' });

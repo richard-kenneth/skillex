@@ -20,9 +20,11 @@ import { RatesModule } from './rates/rates.module';
 import { BullModule } from '@nestjs/bullmq';
 import { RedisModule, REDIS_CONFIG } from './redis/redis.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
+    AnalyticsModule,
     ConfigModule.forRoot({ isGlobal: true }),
     RedisModule,
     BullModule.forRootAsync({

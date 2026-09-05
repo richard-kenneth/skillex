@@ -120,6 +120,7 @@ import {
 import { ReviewCard } from "../(tabs)/profile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetch } from 'expo/fetch'
+import { AnalyticsEvent, track } from "@/lib/analytics";
 
 type Tab = "overview" | "sessions" | "chat" | "details" | "review";
 type SessionFilter = "all" | "taught" | "received";
@@ -234,6 +235,7 @@ export default function ExchangeDetailScreen() {
         sessionId,
         status,
       });
+      track(AnalyticsEvent.SESSION_STATUS_UPDATED, { status, exchange_id: id || undefined });
       toast.toast({ title: `Session marked as ${status.toLowerCase()}`, variant: "success" });
       q.refetch();
     } catch {
@@ -634,6 +636,10 @@ export default function ExchangeDetailScreen() {
                       tags: tags.length ? tags : undefined,
                     });
                     await reviewQ.mutateAsync(parsed);
+                    track(AnalyticsEvent.EXCHANGE_REVIEW_SUBMITTED, {
+                      exchange_id: id!,
+                      rating,
+                    });
                     toast.toast({ title: "Review submitted!", variant: "success" });
                     setComment("");
                     setTags([]);
@@ -883,6 +889,7 @@ export default function ExchangeDetailScreen() {
         confirmLabel={t('markComplete')}
         onConfirm={async () => {
           await completeQ.mutateAsync(id!);
+          track(AnalyticsEvent.EXCHANGE_MARKED_COMPLETE, { exchange_id: id! });
           toast.toast({ title: t('exchangeCompleted'), variant: "success" });
           await q.refetch();
         }}

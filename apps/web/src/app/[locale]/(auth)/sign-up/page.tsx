@@ -18,6 +18,7 @@ import { getAuthCallbackUrl } from "@/lib/utils";
 import { UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -43,6 +44,8 @@ export default function SignUpPage() {
       if (error) {
         toast.error(error.message || t("signUpFailed"));
       } else {
+        track(AnalyticsEvent.USER_SIGNED_UP, { method: "email" });
+
         // Auto-apply referral code if one was captured from the URL
         const storedRef = localStorage.getItem("skilex_ref");
         if (storedRef) {

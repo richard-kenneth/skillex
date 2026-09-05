@@ -1,4 +1,5 @@
 import { ToastProvider } from '@/components/ui/toast';
+import { posthog } from '@/lib/posthog';
 import { ThemeProvider as AppThemeProvider } from '@/hooks/theme-context';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemeContext } from '@/hooks/theme-context';
@@ -10,14 +11,17 @@ import {
 import { registerGlobals } from '@livekit/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { I18nProvider } from 'lib/i18n';
-import { useEffect } from 'react';
+import { PostHogErrorBoundary, PostHogProvider } from 'posthog-react-native';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { identifyUser, resetUser, trackScreen } from '@/lib/analytics';
+import { useSession } from '../../lib/auth';
 import { queryClient } from '../../lib/query-client';
 
 SplashScreen.preventAutoHideAsync();
@@ -32,6 +36,66 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+
+function RootErrorFallback() {
+  return <View style={{ flex: 1 }} />;
+}
+
+function PostHogErrorTracking({ children }: { children: ReactNode }) {
+  if (!posthog) {
+    return children;
+  }
+
+  return (
+    <PostHogProvider client={posthog}>
+      <PostHogErrorBoundary fallback={RootErrorFallback}>
+        {children}
+      </PostHogErrorBoundary>
+    </PostHogProvider>
+  );
+}
+
+function PostHogIdentity() {
+  const { data: session } = useSession();
+  const lastIdentifiedUserId = useRef<string | undefined>(undefined);
+  const user = session?.user;
+
+  useEffect(() => {
+    if (!user?.id) {
+      if (lastIdentifiedUserId.current) {
+        resetUser();
+      }
+      lastIdentifiedUserId.current = undefined;
+      return;
+    }
+
+    if (lastIdentifiedUserId.current === user.id) {
+      return;
+    }
+
+    lastIdentifiedUserId.current = user.id;
+    identifyUser(user.id, {
+      email: user.email,
+      name: user.name,
+    });
+  }, [user?.email, user?.id, user?.name]);
+
+  return null;
+}
+
+function PostHogScreenTracker() {
+  const pathname = usePathname();
+  const lastPathname = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (pathname && pathname !== lastPathname.current) {
+      lastPathname.current = pathname;
+      trackScreen(pathname);
+    }
+  }, [pathname]);
+
+  return null;
+}
 
 function AppInner() {
   const theme = useTheme();
@@ -155,15 +219,19 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <QueryClientProvider client={queryClient}>
-          <AppThemeProvider>
-            <I18nProvider defaultLocale="en">
-              <ToastProvider>
-                <AppInner />
-              </ToastProvider>
-            </I18nProvider>
-          </AppThemeProvider>
-        </QueryClientProvider>
+        <PostHogErrorTracking>
+          <QueryClientProvider client={queryClient}>
+            <AppThemeProvider>
+              <I18nProvider defaultLocale="en">
+                <ToastProvider>
+                  <PostHogIdentity />
+                  <PostHogScreenTracker />
+                  <AppInner />
+                </ToastProvider>
+              </I18nProvider>
+            </AppThemeProvider>
+          </QueryClientProvider>
+        </PostHogErrorTracking>
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

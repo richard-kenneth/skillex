@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useSession } from "@/lib/auth-client";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 
 interface Skill {
   id: string;
@@ -114,6 +115,7 @@ export function SkillManager({}: SkillManagerProps) {
         throw new Error(errorData.message || t("failedToAddSkill"));
       }
 
+      track(AnalyticsEvent.SKILL_ADDED, { skill_type: activeTab.toLowerCase() });
       toast.success(t("skillAdded"));
       setSearchQuery("");
       setSearchResults([]);
@@ -131,6 +133,7 @@ export function SkillManager({}: SkillManagerProps) {
         credentials: "include",
       });
       if (!response.ok) throw new Error(t("failedToRemoveSkill"));
+      track(AnalyticsEvent.SKILL_REMOVED, { skill_type: activeTab.toLowerCase() });
       toast.success(t("skillRemoved"));
       fetchUserSkills();
     } catch (error: unknown) {

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Coins, Loader2, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 import { useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
 import { calculatePointsBreakdown } from "@skil-ex2/shared";
@@ -98,6 +99,11 @@ export function RequestDialog({
         const err = await res.json();
         throw new Error(err.message || t("failedToSend"));
       }
+
+      track(AnalyticsEvent.EXCHANGE_REQUEST_CREATED, {
+        offered_skill: selectedOfferId || undefined,
+        requested_skill: selectedSkillId || undefined,
+      });
 
       onOpenChange(false);
       setSelectedSkillId(null);

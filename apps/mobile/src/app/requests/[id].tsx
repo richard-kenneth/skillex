@@ -94,6 +94,7 @@ import {
   formatDateTimeShort,
   getRequestStatusColor,
 } from "@skil-ex2/shared";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 
 type Tab = "messages" | "terms" | "availability";
 
@@ -281,6 +282,10 @@ export default function RequestDetailScreen() {
       };
 
       await proposeQ.mutateAsync({ requestId: id!, payload });
+      track(AnalyticsEvent.EXCHANGE_TERMS_PROPOSED, {
+        exchange_id: id || undefined,
+        duration_minutes: (payload.requestedSkillSessions || 0) * 60,
+      });
       toast.toast({ title: t("proposalSubmitted"), variant: "success" });
       await q.refetch();
     } catch (e: any) {
@@ -304,6 +309,9 @@ export default function RequestDetailScreen() {
       } else {
         await acceptQ.mutateAsync(id!);
       }
+      track(AnalyticsEvent.EXCHANGE_TERMS_ACCEPTED, {
+        exchange_id: id || undefined,
+      });
       toast.toast({ title: t("termsAccepted"), variant: "success" });
       await q.refetch();
       await balanceQ.refetch();
@@ -323,6 +331,9 @@ export default function RequestDetailScreen() {
         timeSlots: availTimes,
       };
       await updateAvailQ.mutateAsync({ requestId: id!, payload });
+      track(AnalyticsEvent.EXCHANGE_AVAILABILITY_UPDATED, {
+        exchange_id: id || undefined,
+      });
       toast.toast({ title: t("availabilitySaved"), variant: "success" });
       await q.refetch();
     } catch (e: any) {
@@ -849,6 +860,7 @@ export default function RequestDetailScreen() {
         onConfirm={async () => {
           try {
             await rejectQ.mutateAsync(id!);
+            track(AnalyticsEvent.EXCHANGE_REQUEST_REJECTED, { request_id: id! });
             toast.toast({ title: t("requestRejected"), variant: "info" });
             router.back();
           } catch (e: any) {
@@ -872,6 +884,7 @@ export default function RequestDetailScreen() {
         onConfirm={async () => {
           try {
             await cancelQ.mutateAsync(id!);
+            track(AnalyticsEvent.EXCHANGE_REQUEST_CANCELLED, { request_id: id! });
             toast.toast({ title: t("requestCancelled"), variant: "info" });
             router.back();
           } catch (e: any) {

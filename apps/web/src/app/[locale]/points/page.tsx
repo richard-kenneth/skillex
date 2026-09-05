@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 import { useCallback, useEffect, useState } from "react";
 
 interface PointsTransaction {
@@ -327,6 +328,11 @@ export default function PointsPage() {
         throw new Error(data.message || t("purchaseFailed"));
       }
 
+      track(AnalyticsEvent.POINTS_PURCHASE_INITIATED, {
+        points: pAmount,
+        amount: data.fiatAmount,
+        currency: data.fiatCurrency,
+      });
       setPaymentConfig({
         txRef: data.txRef,
         amount: data.fiatAmount,
@@ -374,6 +380,10 @@ export default function PointsPage() {
         throw new Error(data.message || t("withdrawalFailed"));
       }
 
+      track(AnalyticsEvent.POINTS_WITHDRAWAL_REQUESTED, {
+        points: wAmount,
+        currency: WITHDRAWAL_CURRENCY,
+      });
       setWithdrawAmount("");
       setAccountNumber("");
       await fetchData();

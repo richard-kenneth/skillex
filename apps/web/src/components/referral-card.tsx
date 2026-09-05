@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 
 interface ReferralStats {
   referralCount: number;
@@ -116,6 +117,7 @@ export function ReferralCard() {
     if (!referralCode) return;
     const referralLink = `${window.location.origin}?ref=${referralCode}`;
     await navigator.clipboard.writeText(referralLink);
+    track(AnalyticsEvent.REFERRAL_LINK_COPIED);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -131,6 +133,7 @@ export function ReferralCard() {
           text: t("shareLinkText", { code: referralCode }),
           url: referralLink,
         });
+        track(AnalyticsEvent.REFERRAL_LINK_SHARED, { share_method: "native" });
       } catch {
         // User cancelled share
       }
@@ -138,6 +141,7 @@ export function ReferralCard() {
       await navigator.clipboard.writeText(
         `${t("shareLinkText", { code: referralCode })}\n${referralLink}`
       );
+      track(AnalyticsEvent.REFERRAL_LINK_SHARED, { share_method: "clipboard" });
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

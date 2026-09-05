@@ -45,6 +45,7 @@
     },
     "plugins": [
       "expo-router",
+      "posthog-react-native",
       [
         "expo-splash-screen",
         {

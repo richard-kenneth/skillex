@@ -59,6 +59,7 @@ import {
 } from '@/components/ui';
 import { CustomHeader } from '@/components/ui/custom-header';
 import { ThemedText } from '@/components/themed-text';
+import { AnalyticsEvent, track } from '@/lib/analytics';
 import {
   useMatches,
   useRequests,
@@ -723,6 +724,10 @@ function RequestDialogModal({
         pointsPayerId: pointsAmount > 0 ? (payerIsMe ? currentUser?.id : matchUser.id) : undefined,
       });
 
+      track(AnalyticsEvent.EXCHANGE_REQUEST_CREATED, {
+        offered_skill: selectedOfferId ?? undefined,
+        requested_skill: selectedSkillId ?? undefined,
+      });
       toast.toast({
         title: t('exchangeRequestSent'),
         description: t('exchangeRequestSentDesc', { name: matchUser.name ?? t('user') }),

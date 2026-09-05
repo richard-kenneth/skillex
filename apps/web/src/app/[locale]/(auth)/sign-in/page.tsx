@@ -19,6 +19,7 @@ import { getAuthCallbackUrl } from "@/lib/utils";
 import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -47,6 +48,8 @@ export default function SignInPage() {
         } else {
           toast.error(error.message || t("signInFailed"));
         }
+      } else {
+        track(AnalyticsEvent.USER_SIGNED_IN, { method: "email" });
       }
     } catch {
       toast.error(t("unexpectedError"));

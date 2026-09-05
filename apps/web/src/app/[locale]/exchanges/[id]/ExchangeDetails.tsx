@@ -39,6 +39,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -294,6 +295,9 @@ export default function ExchangeDetails({
 
       const data = await res.json();
       if (data.status === "COMPLETED") {
+        track(AnalyticsEvent.EXCHANGE_MARKED_COMPLETE, {
+          exchange_id: exchange.id,
+        });
         setIsReviewModalOpen(true);
       }
       router.refresh();
@@ -330,6 +334,10 @@ export default function ExchangeDetails({
         throw new Error(errorData?.message || tr("failedSubmitReview"));
       }
 
+      track(AnalyticsEvent.EXCHANGE_REVIEW_SUBMITTED, {
+        exchange_id: exchange.id,
+        rating,
+      });
       toast.success(tr("reviewSubmitted"));
       setIsReviewModalOpen(false);
       router.refresh();

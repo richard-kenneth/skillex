@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -40,6 +41,13 @@ export function RequestActions({
       if (!res.ok) {
         const err = await res.json();
         console.error("Action failed:", err.message);
+      } else {
+        track(
+          action === "reject"
+            ? AnalyticsEvent.EXCHANGE_REQUEST_REJECTED
+            : AnalyticsEvent.EXCHANGE_REQUEST_CANCELLED,
+          { request_id: requestId }
+        );
       }
 
       router.refresh();

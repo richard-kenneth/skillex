@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 import {
   Dialog,
   DialogContent,
@@ -482,11 +483,15 @@ export function OnboardingWizard({
   };
 
   const handleDismiss = () => {
+    track(AnalyticsEvent.ONBOARDING_DISMISSED, { step: currentStep?.id ?? "unknown" });
     sessionStorage.setItem(SESSION_KEY, "1");
     setOpen(false);
   };
 
   const handleClose = () => {
+    track(AnalyticsEvent.ONBOARDING_COMPLETED, {
+      total_steps: activeSteps.length,
+    });
     isClosingProgrammatically.current = true;
     if (sessionToken) {
       sessionStorage.removeItem(STEP_KEY);

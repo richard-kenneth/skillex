@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 import { SkillManager } from "./skill-manager";
 
 interface ProfileFormProps {
@@ -91,6 +92,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
         values.image?.trim()
       );
 
+      track(AnalyticsEvent.PROFILE_UPDATED, {
+        has_name: !!values.name?.trim(),
+        has_bio: !!values.bio?.trim(),
+      });
       toast.success(t("profileUpdated"));
       if (step === "profile") {
         if (isProfileCompleteNow) {
@@ -120,6 +125,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       await refetch();
 
+      track(AnalyticsEvent.PROFILE_AVATAR_UPLOADED);
       toast.success(t("avatarUploaded"));
     } catch {
       // Error handled by hook

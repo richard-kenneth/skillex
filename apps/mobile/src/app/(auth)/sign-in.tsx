@@ -13,6 +13,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { Button } from '@/components/ui/button';
 import { RADIUS, SPACING, FONT_SIZE, ICON_SIZE } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
+import { AnalyticsEvent, track } from '@/lib/analytics';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -38,7 +39,10 @@ export default function SignInScreen() {
             { text: t('resendEmail'), onPress: handleResendVerification },
           ]);
         } else { Alert.alert(t('signInFailed'), error.message || t('invalidCredentials')); }
-      } else { router.replace('/(tabs)'); }
+      } else {
+        track(AnalyticsEvent.USER_SIGNED_IN, { method: 'email' });
+        router.replace('/(tabs)');
+      }
     } catch (err: any) { Alert.alert(t('error'), err.message || t('unexpectedError')); }
     finally { setLoading(false); }
   };

@@ -104,6 +104,7 @@ import {
 } from "react-native-safe-area-context";
 import * as v from "valibot";
 import { authClient } from "../../../lib/auth";
+import { AnalyticsEvent, track, resetUser } from "@/lib/analytics";
 import { useQueryClient } from "@tanstack/react-query";
 import { File } from "expo-file-system";
 
@@ -134,7 +135,10 @@ export default function ProfileScreen() {
         text: t('signOut'),
         style: "destructive",
         onPress: async () => {
-          await authClient.signOut();
+          const { error } = await authClient.signOut();
+          if (error) return;
+
+          resetUser();
           router.replace("/(auth)/sign-in");
         },
       },
@@ -663,6 +667,10 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
         bio,
       });
       await updateUser.mutateAsync(parsed);
+      track(AnalyticsEvent.PROFILE_UPDATED, {
+        has_name: !!name?.trim(),
+        has_bio: !!bio?.trim(),
+      });
       toast.toast({ title: t('profileSaved'), variant: "success" });
     } catch (e: any) {
       if (e instanceof v.ValiError) {
@@ -925,6 +933,10 @@ function SkillsPane({ user }: { user: any }) {
         level,
         experience: experience || undefined,
       } as any);
+      track(AnalyticsEvent.SKILL_ADDED, {
+        skill_type: type,
+        category: categoryId || undefined,
+      });
       toast.toast({
         title:
           type === "OFFERING" ? t('addedTeachingSkill') : t('addedLearningSkill'),

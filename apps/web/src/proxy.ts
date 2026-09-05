@@ -10,7 +10,7 @@ export const config = {
     "/",
     "/(en|fr|es|pt)/:path*",
     // Catch-all for other non-localized paths like /points, /dashboard, etc.
-    // Excludes static files, api, _next, etc.
-    "/((?!api|_next|_vercel|.*\\..*).*)",
+    // Excludes static files, api, ph (PostHog proxy), _next, etc.
+    "/((?!api|ph|_next|_vercel|.*\\..*).*)",
   ],
 };

@@ -23,6 +23,9 @@ export * from "./src/api/hooks";
 // Notifications
 export * from "./src/notifications";
 
+// Analytics & Event Contracts
+export * from "./src/analytics/events";
+
 // Translations
 export { default as en } from "./src/translations/en.json";
 export { default as es } from "./src/translations/es.json";

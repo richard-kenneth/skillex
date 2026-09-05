@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
+  AnalyticsEvent,
   applyCurrencyPrecision,
   POINT_TO_USD_RATE,
   PurchasePointsDto,
@@ -8,6 +9,7 @@ import {
 } from '@skil-ex2/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { RatesService } from '../rates/rates.service';
+import { PostHogService } from '../analytics/posthog.service';
 
 @Injectable()
 export class PointsService {
@@ -17,6 +19,7 @@ export class PointsService {
     private readonly prisma: PrismaService,
     private readonly ratesService: RatesService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly posthogService: PostHogService,
   ) {}
 
   async getFeeConfig() {
@@ -191,6 +194,13 @@ export class PointsService {
       this.eventEmitter.emit('points.purchased', {
         userId: transaction.userId,
         amount: transaction.amount,
+      });
+
+      this.posthogService.capture(AnalyticsEvent.POINTS_PURCHASE_COMPLETED, {
+        userId: transaction.userId,
+        points: transaction.amount,
+        txRef: txRef,
+        flwRef: flwRef,
       });
     }
   }

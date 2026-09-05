@@ -92,3 +92,8 @@ services:
       - key: EXPO_SCHEME
         sync: false
         
+      # PostHog Analytics
+      - key: POSTHOG_PROJECT_TOKEN
+        sync: false
+      - key: POSTHOG_HOST
+        value: https://us.i.posthog.com
