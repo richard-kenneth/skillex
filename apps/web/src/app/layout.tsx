@@ -25,7 +25,36 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_CLIENT_BASE_URL!),
   title: "Skill Exchange | Learn, Teach, Grow",
   description:
-    "Connect with professionals to swap skills and knowledge securely.",
+    "Master new skills by teaching what you know. 1-on-1 live video skill swaps with learners worldwide.",
+  keywords: [
+    "skill exchange",
+    "learn skills",
+    "teach skills",
+    "skill swap",
+    "peer learning",
+    "video sessions",
+    "online learning",
+    "knowledge exchange",
+  ],
+  authors: [{ name: "Skill Exchange" }],
+  creator: "Skill Exchange",
+  publisher: "Skill Exchange",
+  openGraph: {
+    type: "website",
+    siteName: "Skill Exchange",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Skill Exchange — Master new skills by trading what you know",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.jpg"],
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

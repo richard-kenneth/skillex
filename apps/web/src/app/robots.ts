@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2.render.com";
+  const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2-web.vercel.app";
 
   return {
     rules: {

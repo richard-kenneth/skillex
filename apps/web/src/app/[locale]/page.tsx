@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "metadata" });
-  const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2.render.com";
+  const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2-web.vercel.app";
 
   return {
     title: t("homeTitle"),
@@ -35,11 +35,21 @@ export async function generateMetadata({ params }: Props) {
       siteName: "Skill Exchange",
       locale: locale,
       type: "website",
+      images: [
+        {
+          url: `${baseUrl}/${locale}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: t("homeTitle"),
+          type: "image/png",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: t("homeTitle"),
       description: t("homeDescription"),
+      images: [`${baseUrl}/${locale}/opengraph-image`],
     },
   };
 }
@@ -49,7 +59,7 @@ export default async function HomePage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "metadata" });
   const tHome = await getTranslations({ locale, namespace: "home" });
-  const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2.render.com";
+  const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2-web.vercel.app";
 
   // Structured Data (JSON-LD) for Search Engines & Rich Results
   const faqItems = ["1", "2", "3", "4", "5", "6", "7"].map((key) => ({

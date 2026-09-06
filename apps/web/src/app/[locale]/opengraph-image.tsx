@@ -22,24 +22,67 @@ export default async function Image() {
           justifyContent: "center",
           backgroundColor: "#09090b",
           backgroundImage:
-            "radial-gradient(circle at 25% 25%, rgba(124, 58, 237, 0.25) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(6, 182, 212, 0.2) 0%, transparent 50%)",
+            "radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.25) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 70%)",
           color: "white",
           fontFamily: "system-ui, -apple-system, sans-serif",
-          padding: "60px 80px",
+          padding: "50px 80px",
           position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* Decorative corner accent - top left */}
+        <div
+          style={{
+            position: "absolute",
+            top: "0",
+            left: "0",
+            width: "200px",
+            height: "200px",
+            background:
+              "linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, transparent 60%)",
+            display: "flex",
+          }}
+        />
+
+        {/* Decorative corner accent - bottom right */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "0",
+            right: "0",
+            width: "250px",
+            height: "250px",
+            background:
+              "linear-gradient(315deg, rgba(6, 182, 212, 0.12) 0%, transparent 60%)",
+            display: "flex",
+          }}
+        />
+
+        {/* Decorative line - top */}
+        <div
+          style={{
+            position: "absolute",
+            top: "0",
+            left: "0",
+            right: "0",
+            height: "3px",
+            background:
+              "linear-gradient(to right, transparent, #a78bfa, #818cf8, #38bdf8, transparent)",
+            display: "flex",
+          }}
+        />
+
         {/* Brand Badge */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: "12px",
-            backgroundColor: "rgba(124, 58, 237, 0.15)",
-            border: "1px solid rgba(139, 92, 246, 0.4)",
+            backgroundColor: "rgba(124, 58, 237, 0.2)",
+            border: "1px solid rgba(139, 92, 246, 0.5)",
             borderRadius: "9999px",
-            padding: "8px 24px",
-            marginBottom: "32px",
+            padding: "10px 28px",
+            marginBottom: "28px",
           }}
         >
           <div
@@ -48,14 +91,15 @@ export default async function Image() {
               height: "10px",
               borderRadius: "9999px",
               backgroundColor: "#a78bfa",
+              boxShadow: "0 0 10px rgba(167, 139, 250, 0.6)",
             }}
           />
           <span
             style={{
               fontSize: "18px",
-              fontWeight: 600,
+              fontWeight: 700,
               color: "#c4b5fd",
-              letterSpacing: "0.05em",
+              letterSpacing: "0.08em",
             }}
           >
             SKILL EXCHANGE
@@ -65,19 +109,23 @@ export default async function Image() {
         {/* Main Title */}
         <div
           style={{
-            fontSize: "64px",
-            fontWeight: 800,
+            fontSize: "68px",
+            fontWeight: 900,
             textAlign: "center",
-            lineHeight: 1.15,
+            lineHeight: 1.1,
             maxWidth: "1000px",
-            marginBottom: "24px",
+            marginBottom: "20px",
             letterSpacing: "-0.03em",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
-          Master New Skills by{" "}
+          <span>Master New Skills by</span>
           <span
             style={{
-              backgroundImage: "linear-gradient(to right, #a78bfa, #818cf8, #38bdf8)",
+              backgroundImage:
+                "linear-gradient(to right, #c084fc, #818cf8, #38bdf8)",
               backgroundClip: "text",
               color: "transparent",
             }}
@@ -89,43 +137,54 @@ export default async function Image() {
         {/* Subtitle */}
         <div
           style={{
-            fontSize: "24px",
+            fontSize: "22px",
             color: "#a1a1aa",
             textAlign: "center",
-            maxWidth: "800px",
-            lineHeight: 1.4,
-            marginBottom: "48px",
+            maxWidth: "750px",
+            lineHeight: 1.5,
+            marginBottom: "36px",
           }}
         >
-          Connect with learners & professionals worldwide. Exchange expertise 1-on-1 through live HD video sessions.
+          1-on-1 live video skill swaps with learners &amp; professionals
+          worldwide.
         </div>
 
         {/* Badges / Pill Tags */}
         <div
           style={{
             display: "flex",
-            gap: "16px",
+            gap: "14px",
+            marginBottom: "28px",
           }}
         >
-          {["Live Video Sessions", "Skill-for-Skill Swaps", "Points Economy", "4 Languages"].map(
-            (badge) => (
-              <div
-                key={badge}
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  color: "#d4d4d8",
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "12px",
-                  padding: "10px 20px",
-                }}
-              >
-                {badge}
-              </div>
-            )
-          )}
+          {[
+            { emoji: "🎥", text: "Live Video" },
+            { emoji: "🔄", text: "Skill Swaps" },
+            { emoji: "💎", text: "Points Economy" },
+            { emoji: "🌍", text: "4 Languages" },
+          ].map((badge) => (
+            <div
+              key={badge.text}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "16px",
+                fontWeight: 600,
+                color: "#e4e4e7",
+                backgroundColor: "rgba(255, 255, 255, 0.06)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "12px",
+                padding: "10px 20px",
+              }}
+            >
+              <span>{badge.emoji}</span>
+              <span>{badge.text}</span>
+            </div>
+          ))}
         </div>
+
+
       </div>
     ),
     {
