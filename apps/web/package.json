@@ -20,6 +20,7 @@
     "@skil-ex2/shared": "workspace:*",
     "@tanstack/react-query": "^5.100.3",
     "@types/nodemailer": "^8.0.0",
+    "@vercel/analytics": "^2.0.1",
     "better-auth": "^1.6.25",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
