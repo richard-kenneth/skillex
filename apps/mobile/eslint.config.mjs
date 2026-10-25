@@ -15,4 +15,12 @@ export default defineConfig([
       "react-hooks/purity": "warn",
     },
   },
+  {
+    files: ["app.config.js"],
+    languageOptions: {
+      globals: {
+        __dirname: "readonly",
+      },
+    },
+  },
 ]);

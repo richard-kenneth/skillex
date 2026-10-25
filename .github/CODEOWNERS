@@ -1,0 +1,28 @@
+# Default owner for the repository.
+* @richard-kenneth
+
+# Security-sensitive API code.
+/apps/api/src/auth/ @richard-kenneth
+/apps/api/src/common/security/ @richard-kenneth
+/apps/api/src/config/ @richard-kenneth
+/apps/api/src/points/ @richard-kenneth
+/apps/api/src/uploads/ @richard-kenneth
+/apps/api/src/video/ @richard-kenneth
+/apps/api/prisma/ @richard-kenneth
+
+# Legal, security, and community policy.
+/CLA.md @richard-kenneth
+/CLA-CORPORATE.md @richard-kenneth
+/CODE_OF_CONDUCT.md @richard-kenneth
+/LICENSE @richard-kenneth
+/NOTICE @richard-kenneth
+/PRIVACY.md @richard-kenneth
+/SECURITY.md @richard-kenneth
+/TRADEMARK.md @richard-kenneth
+/docs/legal/ @richard-kenneth
+
+# CI, release, and repository configuration.
+/.github/ @richard-kenneth
+/Dockerfile @richard-kenneth
+/docker-compose.yml @richard-kenneth
+/render.yaml @richard-kenneth

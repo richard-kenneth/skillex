@@ -1,0 +1,85 @@
+name: Feature request
+description: Propose a scoped feature or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve SkillEx. Describe the problem before the
+        solution so we can evaluate the need, not just the implementation.
+
+        For open-ended ideas, use [Discussions](https://github.com/richard-kenneth/skillex/discussions) instead. Search existing issues first.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem are you trying to solve? Who experiences it, and when?
+      placeholder: Contributors cannot tell which optional integrations are configured when the API starts.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior or change you want. Keep it scoped enough to review.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else did you consider, and why is your proposal better?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the project would this change?
+      options:
+        - Web app (apps/web)
+        - API (apps/api)
+        - Mobile app (apps/mobile)
+        - Shared package (packages/shared)
+        - Documentation
+        - Local setup, Docker, or dev container
+        - Other or not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Willingness to contribute
+      description: This is not a commitment, but it helps with planning.
+      options:
+        - Yes, I can open a pull request
+        - Yes, with guidance on the approach
+        - No, I am only proposing the idea
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, related issues, prior art, or constraints. Do not include secrets or personal data.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched existing issues and discussions for a similar request.
+          required: true
+        - label: I read the roadmap and understand that this is not a commitment to implement it.
+          required: true
+        - label: I did not include secrets, credentials, or personal data in this request.
+          required: true

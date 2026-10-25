@@ -45,7 +45,6 @@
     },
     "plugins": [
       "expo-router",
-      "posthog-react-native",
       [
         "expo-splash-screen",
         {
@@ -66,18 +65,8 @@
         "expo-localization",
         {
           "supportedLocales": {
-            "ios": [
-              "en",
-              "fr",
-              "es",
-              "pt"
-            ],
-            "android": [
-              "en",
-              "fr",
-              "es",
-              "pt"
-            ]
+            "ios": ["en", "fr", "es", "pt"],
+            "android": ["en", "fr", "es", "pt"]
           }
         }
       ],
@@ -114,12 +103,8 @@
           },
           "android": {
             "enabled": true,
-            "singleShareMimeTypes": [
-              "*/*"
-            ],
-            "multipleShareMimeTypes": [
-              "*/*"
-            ]
+            "singleShareMimeTypes": ["*/*"],
+            "multipleShareMimeTypes": ["*/*"]
           }
         }
       ]

@@ -186,7 +186,7 @@ function configureApiEnv() {
     R2_BUCKET_NAME: "skillex-uploads",
     R2_ENDPOINT: "http://localhost:9000",
     R2_PUBLIC_URL: "http://localhost:9000/skillex-uploads",
-    EXPO_SCHEME: "skillex",
+    EXPO_SCHEME: "skil-ex",
   };
 
   for (const [key, value] of Object.entries(values)) {
@@ -253,7 +253,7 @@ function configureMobileEnv() {
     EXPO_PUBLIC_API_BASE_URL: "http://localhost:3001",
     EXPO_PUBLIC_BETTER_AUTH_URL: "http://localhost:3001",
     EXPO_PUBLIC_WEB_BASE_URL: "http://localhost:3000",
-    EXPO_PUBLIC_SCHEME: "skillex",
+    EXPO_PUBLIC_SCHEME: "skil-ex",
   };
 
   for (const [key, value] of Object.entries(values)) {

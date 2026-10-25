@@ -1,5 +1,9 @@
 # SkillEx
 
+[![CI](https://github.com/richard-kenneth/skillex/actions/workflows/ci.yml/badge.svg)](https://github.com/richard-kenneth/skillex/actions/workflows/ci.yml)
+[![License: AGPL-3.0-only](https://img.shields.io/badge/license-AGPL--3.0--only-blue.svg)](./LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+
 SkillEx is an open-source skill-exchange marketplace: trade skills, earn points, and learn live. Teach what you know, learn what you want, and settle the difference with points when a straight swap is not possible.
 
 The project is a pnpm + Turborepo monorepo with a Next.js web app, a NestJS API, an Expo / React Native mobile app, and a shared TypeScript package.
@@ -127,7 +131,7 @@ The local stack uses MinIO. In production, set `R2_ACCESS_KEY_ID`, `R2_SECRET_AC
 - **PostHog:** set `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` in the API and the corresponding `NEXT_PUBLIC_POSTHOG_*` values in the web app.
 - **Exchange rates:** set `OER_APP_ID` to use Open Exchange Rates; otherwise transparent fallback rates are used.
 
-The full environment-variable reference is in [`apps/api/.env.example`](./apps/api/.env.example), [`apps/web/.env.example`](./apps/web/.env.example), and [`apps/mobile/.env.example`](./apps/mobile/.env.example).
+The complete reference, including required values, defaults, optional groups, and legacy variables, is in [`docs/env-vars.md`](./docs/env-vars.md). The example files are [`apps/api/.env.example`](./apps/api/.env.example), [`apps/web/.env.example`](./apps/web/.env.example), and [`apps/mobile/.env.example`](./apps/mobile/.env.example).
 
 ## Commands
 
@@ -156,6 +160,22 @@ pnpm run setup -- --skip-install
 
 `db:reset` deletes the Docker volumes. The second command reapplies migrations and reseeds the demo data.
 
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+  Web["Next.js web app"] --> API["NestJS API"]
+  Mobile["Expo mobile app"] --> API
+  API --> DB[("PostgreSQL")]
+  API --> Redis[("Redis / BullMQ")]
+  API --> Storage[("MinIO or Cloudflare R2")]
+  API --> Email["Mailpit, Resend, or SMTP"]
+  API --> LiveKit["LiveKit (optional)"]
+  API --> Payments["Flutterwave (optional)"]
+```
+
+The web and mobile apps call the API over HTTP and SSE. The API owns PostgreSQL, Redis/BullMQ jobs, email, storage, payments, and LiveKit tokens. See [`docs/architecture.md`](./docs/architecture.md) for module-level detail, core flows, and known constraints.
+
 ## Project structure
 
 ```text
@@ -166,13 +186,11 @@ skillex/
 │   └── web/          # Next.js App Router frontend
 ├── packages/
 │   └── shared/       # Shared types, schemas, constants, translations
-├── docs/             # Architecture decisions and legal review notes
+├── docs/             # Architecture, environment, mobile, ADR, and legal docs
 ├── scripts/setup.mjs # One-command local setup
 ├── docker-compose.yml
 └── turbo.json
 ```
-
-The web app talks to the API over HTTP and SSE. The API owns PostgreSQL, Redis/BullMQ jobs, email, storage, payments, and LiveKit tokens.
 
 ## Mobile
 
@@ -184,7 +202,7 @@ pnpm --filter mobile android   # Android emulator or device
 pnpm --filter mobile ios       # macOS/Xcode only
 ```
 
-See [`apps/mobile/README.md`](./apps/mobile/README.md) for the platform requirements. Mobile contributions are community-supported; iOS-native and release work remain maintainer-led.
+See [`apps/mobile/README.md`](./apps/mobile/README.md) for the quick version and [`docs/mobile-development.md`](./docs/mobile-development.md) for development builds, device networking, push, LiveKit, and testing. Mobile contributions are community-supported; iOS-native and release work remain maintainer-led.
 
 ## Dev container / Codespaces
 
@@ -204,7 +222,9 @@ The repository includes a [development container](./.devcontainer/devcontainer.j
 We welcome contributions to the web app, API, shared package, docs, and tests. Mobile contributions are community-supported, with iOS-native and release work remaining maintainer-led.
 
 - Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) for setup, branch and commit conventions, the CLA, and review expectations.
-- Use GitHub Discussions for questions and GitHub Issues for bugs and scoped proposals.
+- Use GitHub Discussions for questions and GitHub Issues for bugs and scoped proposals. See [`SUPPORT.md`](./SUPPORT.md) for the right channel.
+- Check [`ROADMAP.md`](./ROADMAP.md) before starting significant work, and open an issue to agree on the approach.
+- All community spaces follow the [`Code of Conduct`](./CODE_OF_CONDUCT.md).
 - Do not report security vulnerabilities in public issues; see [`SECURITY.md`](./SECURITY.md).
 
 ## License and brand
@@ -218,4 +238,13 @@ The AGPL does not grant rights to the SkillEx name, logo, or other brand identif
 - Repository: <https://github.com/richard-kenneth/skillex>
 - Issues: <https://github.com/richard-kenneth/skillex/issues>
 - Discussions: <https://github.com/richard-kenneth/skillex/discussions>
+- Architecture: [`docs/architecture.md`](./docs/architecture.md)
+- Environment variables: [`docs/env-vars.md`](./docs/env-vars.md)
+- Mobile development: [`docs/mobile-development.md`](./docs/mobile-development.md)
 - Architecture decisions: [`docs/adr/`](./docs/adr/)
+- Roadmap: [`ROADMAP.md`](./ROADMAP.md)
+- Support: [`SUPPORT.md`](./SUPPORT.md)
+- Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
+- Security: [`SECURITY.md`](./SECURITY.md)
+- Privacy: [`PRIVACY.md`](./PRIVACY.md)
+- Trademark: [`TRADEMARK.md`](./TRADEMARK.md)

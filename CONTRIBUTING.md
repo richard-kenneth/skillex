@@ -2,6 +2,8 @@
 
 Thank you for considering a contribution to SkillEx. This guide explains how to get involved, what to expect from the review process, and the legal terms that apply to contributions.
 
+By participating in this project, you agree to follow the [`Code of Conduct`](./CODE_OF_CONDUCT.md). For questions about where to ask for help, see [`SUPPORT.md`](./SUPPORT.md).
+
 SkillEx is a skill-exchange marketplace. The repository is a pnpm + Turborepo monorepo containing:
 
 - `apps/web` — Next.js web application;
@@ -27,7 +29,7 @@ The mobile app uses Expo development builds and native modules (including LiveKi
 
 - **Report a bug** by opening an issue with a minimal reproduction.
 - **Request a feature** by opening an issue describing the problem and the proposed solution.
-- **Improve documentation** — setup guides, env-var docs, architecture notes, and tutorials are valuable.
+- **Improve documentation** — setup guides, environment-variable docs, architecture notes, and tutorials are valuable. Start with [`docs/`](./docs/).
 - **Write tests** for services, schemas, and UI behavior.
 - **Fix a labeled issue** — `good first issue`, `help wanted`, `bug`, `docs`, or an `area:` label.
 - **Review a pull request** if you have relevant experience.
@@ -94,7 +96,7 @@ Email:    demo@skillex.dev
 Password: Password123!
 ```
 
-Local service URLs and optional integrations are documented in [`README.md`](./README.md). No paid third-party account is required for the core local workflow. LiveKit, Flutterwave, Resend, R2, OAuth, web push, PostHog, and OER are optional; each feature degrades to a no-op, fallback, or local mock when its keys are absent.
+Local service URLs and optional integrations are documented in [`README.md`](./README.md). The full configuration reference is in [`docs/env-vars.md`](./docs/env-vars.md), and the system design is in [`docs/architecture.md`](./docs/architecture.md). No paid third-party account is required for the core local workflow. LiveKit, Flutterwave, Resend, R2, OAuth, web push, PostHog, and OER are optional; each feature degrades to a no-op, fallback, or local mock when its keys are absent.
 
 Useful commands:
 
@@ -107,7 +109,7 @@ pnpm format:check
 pnpm db:reset      # delete local volumes, then re-run pnpm run setup
 ```
 
-The API and web app are supported for contributions. The mobile app is community-supported; see [`apps/mobile/README.md`](./apps/mobile/README.md) for the platform requirements. Never commit real credentials or `.env` files.
+The API and web app are supported for contributions. The mobile app is community-supported; see [`apps/mobile/README.md`](./apps/mobile/README.md) and [`docs/mobile-development.md`](./docs/mobile-development.md) for the platform requirements. Never commit real credentials or `.env` files.
 
 ### Dev container
 
@@ -166,6 +168,10 @@ By contributing, you agree that your Contributions are licensed to the public un
 
 The SkillEx name, logo, and other brand identifiers are not licensed under the AGPL. See [`TRADEMARK.md`](./TRADEMARK.md).
 
+## Code of Conduct
+
+All community spaces are covered by the [`Code of Conduct`](./CODE_OF_CONDUCT.md). Report unacceptable behavior through the private process described there, not in a public thread.
+
 ## Questions
 
-If you are unsure where to start, open a discussion or an issue and ask. We would rather answer a question than have you spend time on something that cannot be merged.
+If you are unsure where to start, see [`SUPPORT.md`](./SUPPORT.md), open a discussion, or open an issue and ask. We would rather answer a question than have you spend time on something that cannot be merged.
