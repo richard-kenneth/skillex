@@ -38,6 +38,13 @@ once versioned releases begin.
 - Root quality scripts, PR CI, a development container, and example service
   tests for exchanges and points.
 - Manual macOS workflows for unsigned iOS IPA builds.
+- Grouped weekly Dependabot updates for the pnpm workspace, GitHub Actions,
+  Docker, and the development container.
+- CodeQL and OpenSSF Scorecard workflows that activate when the repository is
+  public.
+- Branded 1280x640 social preview image, also used as the README banner.
+- GitHub repository settings runbook covering metadata, security features,
+  rulesets, Actions permissions, Discussions, and the CLA Assistant.
 
 ### Changed
 
@@ -76,6 +83,12 @@ once versioned releases begin.
   webhook endpoints.
 - Removed personal contact details from public documentation in favor of
   GitHub-mediated private channels.
+- Enabled Dependabot alerts and automated security fixes.
+- Added a `main` ruleset requiring a pull request, one approval, passing CI, and
+  resolved conversations, with squash-only merges, no force-push or branch
+  deletion, and a pull-request-only admin bypass.
+- Documented the post-public security settings: secret scanning, push
+  protection, private vulnerability reporting, CodeQL, and fork PR approval.
 - Documented the remaining pre-launch security work: rotate exposed
   credentials and scan the full Git history before the repository is made
   public.

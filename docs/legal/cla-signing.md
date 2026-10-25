@@ -4,13 +4,13 @@
 
 ## 1. Decision
 
-| Area | Channel | Why |
-| --- | --- | --- |
-| Individual CLA | Hosted CLA Assistant (`cla-assistant.io`) | GitHub authentication, automatic PR status, versioned signatures, and the Project Owner's personal email is not published in the repository |
-| Corporate CLA | Private process started from GitHub Discussions | Corporate signatures need authority checks and Schedule A; the hosted service does not manage corporate CLAs |
-| Security reports | GitHub private vulnerability reporting | Private, GitHub-native, and no email |
-| Trademark requests | GitHub Discussions | Public policy questions; a private channel can be arranged when needed |
-| General questions | GitHub Discussions or issues | Community-visible |
+| Area               | Channel                                         | Why                                                                                                                                         |
+| ------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Individual CLA     | Hosted CLA Assistant (`cla-assistant.io`)       | GitHub authentication, automatic PR status, versioned signatures, and the Project Owner's personal email is not published in the repository |
+| Corporate CLA      | Private process started from GitHub Discussions | Corporate signatures need authority checks and Schedule A; the hosted service does not manage corporate CLAs                                |
+| Security reports   | GitHub private vulnerability reporting          | Private, GitHub-native, and no email                                                                                                        |
+| Trademark requests | GitHub Discussions                              | Public policy questions; a private channel can be arranged when needed                                                                      |
+| General questions  | GitHub Discussions or issues                    | Community-visible                                                                                                                           |
 
 The Project Owner's personal email address is not published in the repository. Contact is through GitHub.
 
@@ -84,13 +84,15 @@ When `CLA.md` changes, edit the `CLA.md` file in the existing Gist. Do not creat
 
 ### 4.6 Discussions
 
-- [ ] Enable GitHub Discussions.
+- [x] Enable GitHub Discussions.
 - [ ] Create a category named **Corporate CLA** with the slug `corporate-cla`.
 - [ ] Create a category named **Trademark** with the slug `trademark`.
 - [ ] Confirm the templates in `.github/DISCUSSION_TEMPLATE/` appear.
 - [ ] Pin a short post explaining the CLA process and linking to `CONTRIBUTING.md`.
 
 ### 4.7 Security reporting
+
+Private vulnerability reporting is not available while the repository is private. Enable it immediately after the public launch.
 
 - [ ] Enable **Private vulnerability reporting** in the repository's security settings.
 - [ ] Confirm the link in `SECURITY.md` opens the private report form.
@@ -129,6 +131,7 @@ A Developer Certificate of Origin is lighter, but it does not grant the Project 
 
 - [ ] Legal review and approval.
 - [ ] Create the Gist and configure CLA Assistant.
-- [ ] Enable private vulnerability reporting and the Discussions categories.
+- [ ] Create the Discussions categories. Discussions itself is enabled.
+- [ ] Enable private vulnerability reporting after the repository is public.
 - [ ] Add the CLA Assistant status check to branch protection.
 - [ ] Test the full flow before the public launch.

@@ -6,6 +6,8 @@
 
 SkillEx is an open-source skill-exchange marketplace: trade skills, earn points, and learn live. Teach what you know, learn what you want, and settle the difference with points when a straight swap is not possible.
 
+![SkillEx — trade skills, earn points, learn live](./docs/assets/social-preview.png)
+
 The project is a pnpm + Turborepo monorepo with a Next.js web app, a NestJS API, an Expo / React Native mobile app, and a shared TypeScript package.
 
 > **Status:** pre-launch. The repository is being prepared for its first public release. The local development stack is designed to run with **zero paid accounts**.
