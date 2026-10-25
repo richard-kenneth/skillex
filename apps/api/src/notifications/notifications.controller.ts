@@ -11,6 +11,7 @@ import {
   Sse,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Request } from 'express';
 import { Observable, fromEvent, merge } from 'rxjs';
@@ -58,6 +59,7 @@ export class NotificationsController {
   }
 
   @Patch('preferences')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   updatePreferences(
     @Req() req: Request & { user: { id: string } },
     @Body()
@@ -71,6 +73,7 @@ export class NotificationsController {
   }
 
   @Post('push-subscription')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   saveSubscription(
     @Req() req: Request & { user: { id: string } },
     @Body() subscription: any,
@@ -83,6 +86,7 @@ export class NotificationsController {
 
   // Mobile push token registration (Expo)
   @Post('push-token')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   savePushToken(
     @Req() req: Request & { user: { id: string } },
     @Body() body: { token: string; platform: string },
@@ -95,6 +99,7 @@ export class NotificationsController {
   }
 
   @Delete('push-token')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   removePushToken(
     @Req() req: Request & { user: { id: string } },
     @Body() body: { token: string },
@@ -103,6 +108,7 @@ export class NotificationsController {
   }
 
   @Post('test-push')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   testPush(@Req() req: Request & { user: { id: string } }) {
     // Send test push to both web and mobile
     return Promise.all([
@@ -123,6 +129,7 @@ export class NotificationsController {
   }
 
   @Sse('stream')
+  @SkipThrottle()
   streamNotifications(
     @Req() req: Request & { user: { id: string } },
   ): Observable<MessageEvent> {

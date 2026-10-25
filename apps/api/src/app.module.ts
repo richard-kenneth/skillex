@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ExchangesModule } from './exchanges/exchanges.module';
@@ -22,11 +24,23 @@ import { RedisModule, REDIS_CONFIG } from './redis/redis.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WaitlistModule } from './waitlist/waitlist.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { validateEnv } from './config/env.validation';
 
 @Module({
   imports: [
     AnalyticsModule,
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      validate: validateEnv,
+    }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     RedisModule,
     BullModule.forRootAsync({
       imports: [RedisModule],
@@ -80,7 +94,12 @@ import { AnalyticsModule } from './analytics/analytics.module';
     WaitlistModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
-

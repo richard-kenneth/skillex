@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   AnalyticsEvent,
@@ -7,9 +13,71 @@ import {
   PurchasePointsDto,
   WithdrawPointsDto,
 } from '@skillex/shared';
+import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RatesService } from '../rates/rates.service';
 import { PostHogService } from '../analytics/posthog.service';
+import { secureCompare } from '../common/security/secure-compare';
+
+interface WebhookPayload {
+  event: string | null;
+  status: string | null;
+  txRef: string | null;
+  flwRef: string | null;
+  amount: number | null;
+  currency: string | null;
+}
+
+function readString(
+  record: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = record[key];
+  return typeof value === 'string' ? value : null;
+}
+
+/**
+ * Webhook bodies are untrusted input. Read only the fields we use and coerce
+ * them explicitly instead of accessing an `any` payload.
+ */
+function parseWebhookPayload(payload: unknown): WebhookPayload {
+  const empty: WebhookPayload = {
+    event: null,
+    status: null,
+    txRef: null,
+    flwRef: null,
+    amount: null,
+    currency: null,
+  };
+
+  if (typeof payload !== 'object' || payload === null) return empty;
+
+  const body = payload as Record<string, unknown>;
+  const event = readString(body, 'event');
+  const rawData = body.data;
+
+  if (typeof rawData !== 'object' || rawData === null) {
+    return { ...empty, event };
+  }
+
+  const data = rawData as Record<string, unknown>;
+  const rawAmount = data.amount;
+  const amount =
+    typeof rawAmount === 'number'
+      ? rawAmount
+      : typeof rawAmount === 'string'
+        ? Number(rawAmount)
+        : null;
+
+  return {
+    event,
+    status: readString(data, 'status'),
+    txRef: readString(data, 'tx_ref'),
+    flwRef: readString(data, 'flw_ref'),
+    amount,
+    currency: readString(data, 'currency'),
+  };
+}
 
 @Injectable()
 export class PointsService {
@@ -129,7 +197,7 @@ export class PointsService {
         customizations: { title: `${basePoints} points` },
       }),
     });
-    const flwData = await flwRes.json();    
+    const flwData = await flwRes.json();
 
     if (flwData.status !== 'success') {
       await this.prisma.pointsTransaction.update({
@@ -145,64 +213,128 @@ export class PointsService {
     return { ...base, paymentLink: flwData.data.link as string };
   }
 
-  async verifyWebhook(signature: string, payload: any) {
+  async verifyWebhook(signature: string, payload: unknown) {
     const secretHash = process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH;
 
-    if (!signature || signature !== secretHash) {
-      this.logger.warn(
-        `[Webhook] Invalid signature. Expected: ${secretHash}, Got: ${signature}`,
+    // Fail closed: an unset secret must never be treated as a valid signature.
+    if (!secretHash) {
+      this.logger.error(
+        '[Webhook] FLUTTERWAVE_WEBHOOK_SECRET_HASH is not configured; rejecting webhook',
       );
-      return;
+      throw new ServiceUnavailableException(
+        'Webhook verification is not configured',
+      );
     }
+
+    if (!secureCompare(signature, secretHash)) {
+      // Never log the expected value or the supplied signature.
+      this.logger.warn('[Webhook] Rejected request with an invalid signature');
+      throw new UnauthorizedException('Invalid webhook signature');
+    }
+
+    const webhook = parseWebhookPayload(payload);
 
     if (
-      payload.event === 'charge.completed' &&
-      payload.data?.status === 'successful'
+      webhook.event !== 'charge.completed' ||
+      webhook.status !== 'successful'
     ) {
-      const txRef = payload.data.tx_ref;
-      const flwRef = payload.data.flw_ref;
-      if (!txRef?.startsWith('pts_buy_')) return;
-
-      const transaction = await this.prisma.pointsTransaction.findFirst({
-        where: { referenceId: txRef, type: 'PURCHASE' },
-      });
-
-      if (!transaction) return;
-      if (transaction.status !== 'PENDING') return; // Already processed
-
-      // Atomic update transaction
-      await this.prisma.$transaction(async (tx) => {
-        await tx.pointsTransaction.update({
-          where: { id: transaction.id },
-          data: {
-            status: 'SUCCESS',
-            flwRef: flwRef,
-            description: `Purchased ${transaction.amount} points via FW_REF: ${flwRef}`,
-          },
-        });
-
-        await tx.user.update({
-          where: { id: transaction.userId },
-          data: { pointsBalance: { increment: transaction.amount } },
-        });
-      });
-
-      this.logger.log(
-        `Successfully credited ${transaction.amount} points for txRef ${txRef}`,
-      );
-
-      this.eventEmitter.emit('points.purchased', {
-        userId: transaction.userId,
-        amount: transaction.amount,
-      });
-
-      this.posthogService.capture(AnalyticsEvent.POINTS_PURCHASE_COMPLETED, {
-        userId: transaction.userId,
-        points: transaction.amount,
-        txRef: txRef,
-        flwRef: flwRef,
-      });
+      return { received: true };
     }
+
+    const { txRef, flwRef } = webhook;
+
+    if (!txRef || !txRef.startsWith('pts_buy_')) {
+      return { received: true };
+    }
+
+    const transaction = await this.prisma.pointsTransaction.findFirst({
+      where: { referenceId: txRef, type: 'PURCHASE' },
+    });
+
+    if (!transaction) {
+      this.logger.warn(
+        `[Webhook] No purchase transaction found for txRef ${txRef}`,
+      );
+      return { received: true };
+    }
+
+    if (transaction.status !== 'PENDING') {
+      return { received: true };
+    }
+
+    const paidAmount = webhook.amount;
+    const paidCurrency = webhook.currency?.toUpperCase() ?? '';
+    const expectedAmount = transaction.fiatAmount;
+    const expectedCurrency = transaction.fiatCurrency?.toUpperCase();
+
+    if (
+      paidAmount === null ||
+      !Number.isFinite(paidAmount) ||
+      paidAmount <= 0 ||
+      expectedAmount === null ||
+      Math.abs(paidAmount - expectedAmount) > 0.01
+    ) {
+      this.logger.error(
+        `[Webhook] Amount mismatch for txRef ${txRef}: expected ${expectedAmount}, received ${webhook.amount}. Refusing to credit.`,
+      );
+      return { received: true };
+    }
+
+    if (!expectedCurrency || paidCurrency !== expectedCurrency) {
+      this.logger.error(
+        `[Webhook] Currency mismatch for txRef ${txRef}: expected ${expectedCurrency}, received ${webhook.currency}. Refusing to credit.`,
+      );
+      return { received: true };
+    }
+
+    // Claim the transaction with a conditional update so two concurrent
+    // deliveries of the same webhook can only credit the user once.
+    const credited = await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.pointsTransaction.updateMany({
+        where: { id: transaction.id, status: 'PENDING' },
+        data: {
+          status: 'SUCCESS',
+          flwRef: flwRef ?? null,
+          description: `Purchased ${transaction.amount} points via FW_REF: ${
+            flwRef ?? 'unknown'
+          }`,
+        },
+      });
+
+      if (claimed.count !== 1) return false;
+
+      await tx.user.update({
+        where: { id: transaction.userId },
+        data: { pointsBalance: { increment: transaction.amount } },
+      });
+
+      return true;
+    });
+
+    if (!credited) {
+      this.logger.log(
+        `[Webhook] Transaction ${txRef} was already processed; ignoring duplicate`,
+      );
+      return { received: true };
+    }
+
+    this.logger.log(
+      `Successfully credited ${transaction.amount} points for txRef ${txRef}`,
+    );
+
+    this.eventEmitter.emit('points.purchased', {
+      userId: transaction.userId,
+      amount: transaction.amount,
+    });
+
+    this.posthogService.capture(AnalyticsEvent.POINTS_PURCHASE_COMPLETED, {
+      userId: transaction.userId,
+      points: transaction.amount,
+      txRef: txRef,
+      flwRef: flwRef ?? undefined,
+    });
+
+    return { received: true };
   }
 
   /**
@@ -270,12 +402,17 @@ export class PointsService {
 
     const reference = `pts_wd_${userId}_${Date.now()}`;
 
-    // Deduct all points immediately
+    // Deduct all points immediately. The conditional update prevents two
+    // concurrent withdrawals from spending the same balance.
     const wt = await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
+      const deducted = await tx.user.updateMany({
+        where: { id: userId, pointsBalance: { gte: data.amount } },
         data: { pointsBalance: { decrement: data.amount } },
       });
+
+      if (deducted.count !== 1) {
+        throw new BadRequestException('Insufficient points balance');
+      }
 
       return tx.pointsTransaction.create({
         data: {
@@ -383,38 +520,43 @@ export class PointsService {
   }
 
   /**
-   * Lock points into escrow for an exchange.
-   * Returns the updated balance.
+   * Lock points into escrow inside an existing transaction.
+   *
+   * This must run in the same transaction that creates the exchange. If it ran
+   * separately, a failure while creating the exchange would leave the payer's
+   * points locked with no exchange to ever release them.
    */
-  async lockEscrow(userId: string, amount: number, exchangeId: string) {
+  async lockEscrowInTransaction(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    amount: number,
+    exchangeId: string,
+  ) {
     if (amount <= 0) return; // no escrow needed for even exchanges
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { pointsBalance: true },
+    const locked = await tx.user.updateMany({
+      where: { id: userId, pointsBalance: { gte: amount } },
+      data: { pointsBalance: { decrement: amount } },
     });
 
-    if (!user || user.pointsBalance < amount) {
+    if (locked.count !== 1) {
+      const payer = await tx.user.findUnique({
+        where: { id: userId },
+        select: { pointsBalance: true },
+      });
       throw new BadRequestException(
-        `Insufficient points. You have ${user?.pointsBalance ?? 0} but need ${amount}.`,
+        `Insufficient points. You have ${payer?.pointsBalance ?? 0} but need ${amount}.`,
       );
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
-        data: { pointsBalance: { decrement: amount } },
-      });
-
-      await tx.pointsTransaction.create({
-        data: {
-          userId,
-          amount: -amount,
-          type: 'ESCROW_LOCK',
-          referenceId: exchangeId,
-          description: `Locked ${amount} points in escrow for exchange`,
-        },
-      });
+    await tx.pointsTransaction.create({
+      data: {
+        userId,
+        amount: -amount,
+        type: 'ESCROW_LOCK',
+        referenceId: exchangeId,
+        description: `Locked ${amount} points in escrow for exchange`,
+      },
     });
   }
 
@@ -434,7 +576,20 @@ export class PointsService {
     const commission = Math.floor(amount * config.exchangeCommissionRate);
     const teacherReceives = amount - commission;
 
-    await this.prisma.$transaction(async (tx) => {
+    const released = await this.prisma.$transaction(async (tx) => {
+      // The exchange may be completed again after a crash or retry. Never
+      // release the same escrow twice.
+      const existingRelease = await tx.pointsTransaction.findFirst({
+        where: {
+          userId: recipientId,
+          type: 'ESCROW_RELEASE',
+          referenceId: exchangeId,
+        },
+        select: { id: true },
+      });
+
+      if (existingRelease) return false;
+
       // Credit the teacher the net amount
       await tx.user.update({
         where: { id: recipientId },
@@ -464,7 +619,16 @@ export class PointsService {
           },
         });
       }
+
+      return true;
     });
+
+    if (!released) {
+      this.logger.warn(
+        `Escrow for exchange ${exchangeId} was already released; skipping`,
+      );
+      return;
+    }
 
     this.logger.log(
       `Released escrow for exchange ${exchangeId}: teacher=${teacherReceives}, commission=${commission}`,
@@ -495,10 +659,28 @@ export class PointsService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
+      const existingFee = await tx.pointsTransaction.findFirst({
+        where: {
+          userId,
+          type: 'FACILITATION_FEE',
+          referenceId: exchangeId,
+        },
+        select: { id: true },
+      });
+
+      if (existingFee) return;
+
+      const charged = await tx.user.updateMany({
+        where: { id: userId, pointsBalance: { gte: facilitationFee } },
         data: { pointsBalance: { decrement: facilitationFee } },
       });
+
+      if (charged.count !== 1) {
+        this.logger.warn(
+          `Skipping facilitation fee for user ${userId}: balance changed before the charge could be applied`,
+        );
+        return;
+      }
 
       await tx.pointsTransaction.create({
         data: {

@@ -3,6 +3,9 @@ name: Build iOS IPA
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-ios:
     name: Build Unsigned iOS IPA
@@ -26,6 +29,7 @@ jobs:
       - name: Write .env file
         working-directory: apps/mobile
         run: |
+          umask 077
           cat <<EOF > .env
           EXPO_PUBLIC_API_BASE_URL=${{ secrets.EXPO_PUBLIC_API_BASE_URL }}
           EXPO_PUBLIC_SCHEME=${{ secrets.EXPO_PUBLIC_SCHEME }}

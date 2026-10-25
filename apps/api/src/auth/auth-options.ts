@@ -5,6 +5,8 @@ import { Resend } from 'resend';
 import { PrismaClient } from '../generated/prisma/client';
 import { expo } from '@better-auth/expo';
 import { bearer, emailOTP } from 'better-auth/plugins';
+import { getDevExtraOrigins } from '../common/config/origins';
+import { isTrustedInternalRequest } from '../common/security/internal-auth';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -66,15 +68,20 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
     }),
   ],
   hooks: {
-    before: createAuthMiddleware(async (ctx) => {
+    before: createAuthMiddleware((ctx) => {
       // 1. Listen specifically for the update user endpoint
       if (ctx.path === '/update-user') {
         // 2. Check if the incoming payload is trying to modify the image
-        if (ctx.body && 'image' in ctx.body) {
+        if (
+          typeof ctx.body === 'object' &&
+          ctx.body !== null &&
+          'image' in ctx.body
+        ) {
           // 3. Look for a secret header that only NestJS has access to
 
-          const isTrustedBackend =
-            ctx.headers?.get('x-server-secret') === process.env.INTERNAL_SECRET;
+          const isTrustedBackend = isTrustedInternalRequest(
+            ctx.headers?.get('x-server-secret'),
+          );
 
           if (!isTrustedBackend) {
             // 4. Block the frontend request immediately
@@ -85,6 +92,8 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
           }
         }
       }
+
+      return Promise.resolve();
     }),
   },
   emailAndPassword: {
@@ -107,8 +116,8 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
   //todo: confirm if this is safe if at any time you need to uncomment
   // account: { skipStateCookieCheck: true },
   trustedOrigins: [
-    process.env.CLIENT_BASE_URL!,
-    `${process.env.EXPO_SCHEME!}://`,
+    ...(process.env.CLIENT_BASE_URL ? [process.env.CLIENT_BASE_URL] : []),
+    ...(process.env.EXPO_SCHEME ? [`${process.env.EXPO_SCHEME}://`] : []),
 
     ...(process.env.NODE_ENV === 'development'
       ? [
@@ -118,6 +127,7 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
           'exp://**', // Trust all Expo URLs (wildcard matching)
           'exp://192.168.*.*:*/**', // Trust 192.168.x.x IP range with any port and path
           'exp://172.20.*.*:*/**', // Trust 172.20.x.x IP range with any port and path
+          ...getDevExtraOrigins(),
         ]
       : []),
   ],

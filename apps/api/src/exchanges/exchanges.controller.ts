@@ -11,6 +11,7 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   type AcceptSlotsDto,
@@ -92,6 +93,7 @@ export class ExchangesController {
   }
 
   @Post('request')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @UsePipes(new ValibotValidationPipe(CreateExchangeRequestSchema))
   createRequest(
     @Req() req: Request & { user: { id: string } },
@@ -219,6 +221,7 @@ export class ExchangesController {
 
   @Post(':id/chat')
   @UseGuards(BetterAuthGuard)
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
   sendChatMessage(
     @Req() req: Request & { user: { id: string } },
     @Param('id') exchangeId: string,
@@ -246,6 +249,7 @@ export class ExchangesController {
 
   @Post(':id/chat/upload')
   @UseGuards(BetterAuthGuard)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   getChatUploadUrl(
     @Req() req: Request & { user: { id: string } },
     @Param('id') exchangeId: string,

@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "rootDir": "src",
+    "types": ["node", "jest"],
     "strict": true,
     "module": "nodenext",
     "moduleResolution": "nodenext",

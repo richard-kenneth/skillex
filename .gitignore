@@ -1,7 +1,22 @@
+# Dependencies and build output
 node_modules
-
-*.env
-
+dist/
+coverage/
 .turbo/
+.expo/
+.next/
 
+# Environment files (keep the examples)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Local tooling and OS files
+.DS_Store
+Thumbs.db
+*.log
+*.pid
+
+# Prisma generated client
 */generated/prisma

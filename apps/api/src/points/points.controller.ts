@@ -3,11 +3,14 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
+  HttpStatus,
   Post,
   Req,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   type PurchasePointsDto,
   PurchasePointsSchema,
@@ -58,6 +61,7 @@ export class PointsController {
 
   @Post('purchase')
   @UseGuards(BetterAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @UsePipes(new ValibotValidationPipe(PurchasePointsSchema))
   purchasePoints(
     @Req() req: Request & { user: { id: string } },
@@ -68,6 +72,7 @@ export class PointsController {
 
   @Post('withdraw')
   @UseGuards(BetterAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @UsePipes(new ValibotValidationPipe(WithdrawPointsSchema))
   withdrawPoints(
     @Req() req: Request & { user: { id: string } },
@@ -78,14 +83,17 @@ export class PointsController {
 
   @Post('resolve-account')
   @UseGuards(BetterAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   resolveAccount(@Body() data: { accountNumber: string; bankCode: string }) {
     return this.pointsService.resolveAccount(data.accountNumber, data.bankCode);
   }
 
   @Post('webhook')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 120, ttl: 60_000 } })
   verifyWebhook(
     @Headers('verif-hash') signature: string,
-    @Body() payload: any,
+    @Body() payload: unknown,
   ) {
     return this.pointsService.verifyWebhook(signature, payload);
   }

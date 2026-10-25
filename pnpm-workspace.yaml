@@ -1,6 +1,11 @@
 packages:
   - "apps/*"
   - "packages/*"
+overrides:
+  chokidar: ^5.0.0
+  react: 19.2.3
+  react-dom: 19.2.3
+  "@tanstack/react-query": 5.100.3
 allowBuilds:
   "@nestjs/core": true
   "@parcel/watcher": true
