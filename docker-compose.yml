@@ -1,0 +1,100 @@
+name: skillex
+
+# Local development dependencies. Everything here is free and runs on your
+# machine; no third-party account is required.
+#
+#   docker compose up -d --wait postgres redis mailpit minio
+#   docker compose run --rm minio-init
+#   docker compose --profile video up -d # core services + LiveKit
+#
+# Credentials in this file are development-only. Never reuse them in production.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: skillex
+      POSTGRES_PASSWORD: skillex
+      POSTGRES_DB: skillex
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skillex -d skillex"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Catches all outbound email in development. Open http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+
+  # S3-compatible stand-in for Cloudflare R2. Open http://localhost:9001.
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: skillex
+      MINIO_ROOT_PASSWORD: skillex-dev-secret
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Console
+    volumes:
+      - minio-data:/data
+
+  # Creates the upload bucket once MinIO is accepting connections.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 skillex skillex-dev-secret; do sleep 1; done;
+      mc mb --ignore-existing local/skillex-uploads;
+      mc anonymous set download local/skillex-uploads;
+      echo 'MinIO bucket ready: skillex-uploads';
+      "
+    restart: "no"
+
+  # Optional video stack. Start with:
+  #   docker compose --profile video up -d
+  # The --dev mode uses the API key "devkey" and secret "secret".
+  livekit:
+    image: livekit/livekit-server:latest
+    profiles: ["video"]
+    restart: unless-stopped
+    command: ["--dev", "--bind", "0.0.0.0"]
+    ports:
+      - "7880:7880" # WebSocket / HTTP
+      - "7881:7881" # RTC TCP
+      - "7882:7882/udp" # RTC UDP
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:

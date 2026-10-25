@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -12,7 +13,6 @@ import {
   DataPacket_Kind,
   EgressClient,
   EgressInfo,
-  EgressStatus,
   EncodedFileOutput,
   EncodedFileType,
   RoomServiceClient,
@@ -21,6 +21,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../uploads/r2.service';
 import { RecordingBillingService } from './recording-billing.service';
+import { errorMessage } from '../common/errors/error-message';
 
 const RECORDING_TTL_DAYS = 30;
 const SESSION_GRACE_MINUTES = 5;
@@ -34,7 +35,19 @@ export class VideoService {
     private prisma: PrismaService,
     private r2: R2Service,
     private recordingBillingService: RecordingBillingService,
-  ) {}
+  ) {
+    const configured = Boolean(
+      this.config.get<string>('LIVEKIT_API_KEY') &&
+      this.config.get<string>('LIVEKIT_API_SECRET') &&
+      this.config.get<string>('NEXT_PUBLIC_LIVEKIT_URL'),
+    );
+
+    if (!configured) {
+      this.logger.log(
+        'Video conferencing disabled: set LIVEKIT_API_KEY, LIVEKIT_API_SECRET, and NEXT_PUBLIC_LIVEKIT_URL to enable.',
+      );
+    }
+  }
 
   /* ─── Token Generation ──────────────────────────────────── */
 
@@ -49,7 +62,7 @@ export class VideoService {
 
     if (!apiKey || !apiSecret || !wsUrl) {
       this.logger.error('Video conferencing credentials are not configured');
-      throw new InternalServerErrorException(
+      throw new ServiceUnavailableException(
         'Video conferencing is not configured on this server.',
       );
     }
@@ -72,7 +85,10 @@ export class VideoService {
 
   /* ─── Session Time Validation ────────────────────────────── */
 
-  private async validateSessionTimeForSession(exchangeSessionId: string, userId: string) {
+  private async validateSessionTimeForSession(
+    exchangeSessionId: string,
+    userId: string,
+  ) {
     let session = await this.prisma.exchangeSession.findUnique({
       where: { id: exchangeSessionId },
       include: { exchange: true },
@@ -86,8 +102,12 @@ export class VideoService {
       if (exchange && exchange.sessions.length > 0) {
         const now = new Date();
         const sorted = [...exchange.sessions].sort((a, b) => {
-          const distA = Math.abs(new Date(a.scheduledAt).getTime() - now.getTime());
-          const distB = Math.abs(new Date(b.scheduledAt).getTime() - now.getTime());
+          const distA = Math.abs(
+            new Date(a.scheduledAt).getTime() - now.getTime(),
+          );
+          const distB = Math.abs(
+            new Date(b.scheduledAt).getTime() - now.getTime(),
+          );
           return distA - distB;
         });
         session = await this.prisma.exchangeSession.findUnique({
@@ -107,7 +127,9 @@ export class VideoService {
     }
 
     if (session.status === 'COMPLETED' || session.status === 'CANCELLED') {
-      throw new BadRequestException('This session is already completed or cancelled.');
+      throw new BadRequestException(
+        'This session is already completed or cancelled.',
+      );
     }
 
     const now = new Date();
@@ -167,14 +189,20 @@ export class VideoService {
       }
 
       if (exchange.sessions.length === 0) {
-        throw new BadRequestException('No sessions scheduled for this exchange.');
+        throw new BadRequestException(
+          'No sessions scheduled for this exchange.',
+        );
       }
 
       // Find active or closest session
       const now = new Date();
       const sorted = [...exchange.sessions].sort((a, b) => {
-        const distA = Math.abs(new Date(a.scheduledAt).getTime() - now.getTime());
-        const distB = Math.abs(new Date(b.scheduledAt).getTime() - now.getTime());
+        const distA = Math.abs(
+          new Date(a.scheduledAt).getTime() - now.getTime(),
+        );
+        const distB = Math.abs(
+          new Date(b.scheduledAt).getTime() - now.getTime(),
+        );
         return distA - distB;
       });
 
@@ -206,7 +234,10 @@ export class VideoService {
     const scheduledAt = new Date(session.scheduledAt);
     const duration = session.duration || 60;
     const endsAt = new Date(scheduledAt.getTime() + duration * 60 * 1000);
-    const partnerUser = session.exchange.senderId === userId ? session.exchange.receiver : session.exchange.sender;
+    const partnerUser =
+      session.exchange.senderId === userId
+        ? session.exchange.receiver
+        : session.exchange.sender;
 
     return {
       exchangeId: session.exchangeId,
@@ -383,27 +414,33 @@ export class VideoService {
       const duration = session.duration || 60;
       const sessionEnd = new Date(scheduledAt.getTime() + duration * 60 * 1000);
       const remainingMs = sessionEnd.getTime() - now.getTime();
-      const remainingSessionMinutes = Math.max(1, Math.ceil(remainingMs / 60000));
-
-      const billingResult = await this.recordingBillingService.deductAndSchedule(
-        recording.id,
-        userId,
-        remainingSessionMinutes,
+      const remainingSessionMinutes = Math.max(
+        1,
+        Math.ceil(remainingMs / 60000),
       );
+
+      const billingResult =
+        await this.recordingBillingService.deductAndSchedule(
+          recording.id,
+          userId,
+          remainingSessionMinutes,
+        );
       return {
         recordingId: recording.id,
         egressId: egressInfo.egressId,
         status: recording.recordingStatus,
         approvedMinutes: billingResult.approvedMinutes,
       };
-    } catch (error: any) {
+    } catch (error) {
       this.logger.error(
-        `Failed to lock points for recording ${recording.id}: ${error.message}. Stopping egress.`,
+        `Failed to lock points for recording ${recording.id}: ${errorMessage(error)}. Stopping egress.`,
       );
       try {
         await egressClient.stopEgress(egressInfo.egressId);
-      } catch (stopError: any) {
-        this.logger.error(`Failed to stop egress after billing failure: ${stopError.message}`);
+      } catch (stopError) {
+        this.logger.error(
+          `Failed to stop egress after billing failure: ${errorMessage(stopError)}`,
+        );
       }
       await this.prisma.sessionRecording.update({
         where: { id: recording.id },
@@ -683,9 +720,14 @@ export class VideoService {
       });
 
       try {
-        await this.recordingBillingService.settleRecording(recording.id, durationMs);
-      } catch (billingErr: any) {
-        this.logger.error(`Failed to settle recording points for failed egress ${recording.id}: ${billingErr.message}`);
+        await this.recordingBillingService.settleRecording(
+          recording.id,
+          durationMs,
+        );
+      } catch (billingErr) {
+        this.logger.error(
+          `Failed to settle recording points for failed egress ${recording.id}: ${errorMessage(billingErr)}`,
+        );
       }
 
       try {
@@ -720,9 +762,14 @@ export class VideoService {
     });
 
     try {
-      await this.recordingBillingService.settleRecording(recording.id, durationMs);
-    } catch (billingErr: any) {
-      this.logger.error(`Failed to settle recording points for completed egress ${recording.id}: ${billingErr.message}`);
+      await this.recordingBillingService.settleRecording(
+        recording.id,
+        durationMs,
+      );
+    } catch (billingErr) {
+      this.logger.error(
+        `Failed to settle recording points for completed egress ${recording.id}: ${errorMessage(billingErr)}`,
+      );
     }
 
     this.logger.log(
@@ -750,7 +797,7 @@ export class VideoService {
     const apiSecret = this.config.get<string>('LIVEKIT_API_SECRET');
 
     if (!wsUrl || !apiKey || !apiSecret) {
-      throw new InternalServerErrorException(
+      throw new ServiceUnavailableException(
         'LiveKit credentials are not configured',
       );
     }
@@ -768,7 +815,7 @@ export class VideoService {
     const apiSecret = this.config.get<string>('LIVEKIT_API_SECRET');
 
     if (!wsUrl || !apiKey || !apiSecret) {
-      throw new InternalServerErrorException(
+      throw new ServiceUnavailableException(
         'LiveKit credentials are not configured',
       );
     }

@@ -49,12 +49,18 @@ export function ReferralCard() {
   const fetchData = useCallback(async () => {
     try {
       const [codeRes, statsRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/referrals/my-code`, {
-          credentials: "include",
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/referrals/stats`, {
-          credentials: "include",
-        }),
+        fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/referrals/my-code`,
+          {
+            credentials: "include",
+          },
+        ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/referrals/stats`,
+          {
+            credentials: "include",
+          },
+        ),
       ]);
 
       if (codeRes.ok) {
@@ -73,33 +79,36 @@ export function ReferralCard() {
     fetchData();
   }, [fetchData]);
 
-  const handleApplyDirectly = useCallback(async (code: string) => {
-    setApplying(true);
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/referrals/apply`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ referralCode: code.trim() }),
+  const handleApplyDirectly = useCallback(
+    async (code: string) => {
+      setApplying(true);
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/referrals/apply`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ referralCode: code.trim() }),
+          },
+        );
+        const data = await res.json();
+        if (res.ok) {
+          setApplyMessage({ type: "success", text: data.message });
+          localStorage.removeItem("skilex_ref"); // Clean up on success
+          fetchData();
+        } else {
+          // Just show it if auto-apply fails (e.g. invalid code)
+          setApplyMessage({ type: "error", text: data.message });
         }
-      );
-      const data = await res.json();
-      if (res.ok) {
-        setApplyMessage({ type: "success", text: data.message });
-        localStorage.removeItem("skilex_ref"); // Clean up on success
-        fetchData();
-      } else {
-        // Just show it if auto-apply fails (e.g. invalid code)
-        setApplyMessage({ type: "error", text: data.message });
+      } catch {
+        //
+      } finally {
+        setApplying(false);
       }
-    } catch {
-      //
-    } finally {
-      setApplying(false);
-    }
-  }, [fetchData]);
+    },
+    [fetchData],
+  );
 
   // Silent auto-apply for social login fallback
   useEffect(() => {
@@ -139,14 +148,13 @@ export function ReferralCard() {
       }
     } else {
       await navigator.clipboard.writeText(
-        `${t("shareLinkText", { code: referralCode })}\n${referralLink}`
+        `${t("shareLinkText", { code: referralCode })}\n${referralLink}`,
       );
       track(AnalyticsEvent.REFERRAL_LINK_SHARED, { share_method: "clipboard" });
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
 
   if (loading) {
     return (
@@ -202,7 +210,9 @@ export function ReferralCard() {
             </div>
             {stats && (
               <p className="text-xs text-muted-foreground">
-                {t("shareDesc", { reward: t("points_count", { count: stats.rewardPerReferral }) })}
+                {t("shareDesc", {
+                  reward: t("points_count", { count: stats.rewardPerReferral }),
+                })}
               </p>
             )}
           </div>

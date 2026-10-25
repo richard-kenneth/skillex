@@ -12,7 +12,8 @@ export const REDIS_CONFIG = 'REDIS_CONFIG';
     {
       provide: REDIS_CONFIG,
       useFactory: (configService: ConfigService) => {
-        const redisUrl = configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
+        const redisUrl =
+          configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
         try {
           const parsed = new URL(redisUrl);
           return {
@@ -36,7 +37,8 @@ export const REDIS_CONFIG = 'REDIS_CONFIG';
     {
       provide: REDIS_CLIENT,
       useFactory: (configService: ConfigService) => {
-        const redisUrl = configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
+        const redisUrl =
+          configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
         return new Redis(redisUrl, {
           maxRetriesPerRequest: null,
         });

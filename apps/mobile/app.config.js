@@ -1,4 +1,4 @@
-const appConfig = require('./app.json');
+const appConfig = require("./app.json");
 
 const { expo } = appConfig;
 

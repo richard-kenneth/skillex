@@ -6,7 +6,11 @@ import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "exchanges" });
   return {
@@ -28,7 +32,7 @@ export default async function ExchangePage({
 
   const { id } = await params;
   const reqHeaders = new Headers(await headers());
-  
+
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/exchanges/${id}`,
     { headers: reqHeaders },

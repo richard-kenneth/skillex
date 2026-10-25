@@ -26,7 +26,9 @@ export function LocaleSwitcher() {
 
   const handleLocaleChange = (newLocale: string) => {
     setOpen(false);
-    router.replace(pathname, { locale: newLocale as (typeof routing.locales)[number] });
+    router.replace(pathname, {
+      locale: newLocale as (typeof routing.locales)[number],
+    });
   };
 
   return (

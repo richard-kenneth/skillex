@@ -9,10 +9,22 @@
     "url": "git+https://github.com/richard-kenneth/skillex.git"
   },
   "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
+    "setup": "node scripts/setup.mjs",
+    "db:up": "docker compose up -d --wait postgres redis mailpit minio && docker compose run --rm minio-init",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && pnpm db:up"
   },
   "devDependencies": {
     "turbo": "^2.9.6"

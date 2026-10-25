@@ -21,7 +21,10 @@ export function PointsSection() {
   const t = useTranslations("home");
 
   return (
-    <section id="points" className="relative py-24 overflow-hidden border-y border-white/5 scroll-mt-16">
+    <section
+      id="points"
+      className="relative py-24 overflow-hidden border-y border-white/5 scroll-mt-16"
+    >
       <div className="absolute inset-0 -z-10 bg-white/[0.01]">
         <div className="absolute left-1/4 top-0 h-[400px] w-[400px] rounded-full bg-cyan-500/5 blur-[120px]" />
       </div>
@@ -76,9 +79,7 @@ export function PointsSection() {
                 )}
                 {/* Flow connector for mobile */}
                 {i < steps.length - 1 && (
-                  <div className="flex lg:hidden text-zinc-600 my-1">
-                    ↓
-                  </div>
+                  <div className="flex lg:hidden text-zinc-600 my-1">↓</div>
                 )}
               </motion.div>
             );

@@ -4,7 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  Code2, Palette, Megaphone, Briefcase, Languages, Heart,
+  Code2,
+  Palette,
+  Megaphone,
+  Briefcase,
+  Languages,
+  Heart,
 } from "lucide-react";
 import { SEED_CATEGORIES, PLATFORM_STATS } from "@skillex/shared";
 import { track, AnalyticsEvent } from "@/lib/analytics";
@@ -23,7 +28,10 @@ export function CategoriesSection() {
   const [active, setActive] = useState(0);
 
   return (
-    <section id="categories" className="relative py-24 overflow-hidden scroll-mt-16">
+    <section
+      id="categories"
+      className="relative py-24 overflow-hidden scroll-mt-16"
+    >
       <div className="absolute inset-0 -z-10">
         <div className="absolute right-0 top-1/3 h-[500px] w-[500px] rounded-full bg-violet-500/5 blur-[150px]" />
       </div>
@@ -41,7 +49,9 @@ export function CategoriesSection() {
             {t("categoriesTitle")}
           </h2>
           <p className="mt-4 text-lg text-zinc-400 max-w-2xl mx-auto">
-            {t("categoriesSubtitle", { count: PLATFORM_STATS.skillDisplayCount })}
+            {t("categoriesSubtitle", {
+              count: PLATFORM_STATS.skillDisplayCount,
+            })}
           </p>
         </motion.div>
 
@@ -61,7 +71,9 @@ export function CategoriesSection() {
                 key={cat.key}
                 onClick={() => {
                   setActive(i);
-                  track(AnalyticsEvent.CATEGORY_TAB_CLICKED, { category: cat.key });
+                  track(AnalyticsEvent.CATEGORY_TAB_CLICKED, {
+                    category: cat.key,
+                  });
                 }}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer flex-shrink-0 whitespace-nowrap ${
                   isActive

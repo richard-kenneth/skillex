@@ -105,6 +105,10 @@ const typeConfig: Record<
 
 export default function PointsPage() {
   if (isPrelaunch) return <ComingSoonGate />;
+  return <PointsContent />;
+}
+
+function PointsContent() {
   const router = useRouter();
   const format = useFormatter();
   const WITHDRAWAL_CURRENCY = "NGN";
@@ -165,20 +169,32 @@ export default function PointsPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [balRes, txRes, banksRes, feeRes, ratesRes] =
-        await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/balance`, {
+      const [balRes, txRes, banksRes, feeRes, ratesRes] = await Promise.all([
+        fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/balance`,
+          {
             credentials: "include",
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/transactions`, {
+          },
+        ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/transactions`,
+          {
             credentials: "include",
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/banks`, {
+          },
+        ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/banks`,
+          {
             credentials: "include",
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/fee-config`),
-          fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/rates`),
-        ]);
+          },
+        ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/fee-config`,
+        ),
+        fetch(
+          `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/points/rates`,
+        ),
+      ]);
 
       if (balRes.ok) {
         const data = await balRes.json();
@@ -249,16 +265,26 @@ export default function PointsPage() {
   const pAmount = parseInt(purchaseAmount) || 0;
   const rate = rates ? rates[selectedCurrency] || 1 : 1;
   const baseFiatRaw = pAmount * POINT_TO_USD_RATE * rate;
-  const pTotalFiat = applyCurrencyPrecision(baseFiatRaw, selectedCurrency, rate);
+  const pTotalFiat = applyCurrencyPrecision(
+    baseFiatRaw,
+    selectedCurrency,
+    rate,
+  );
 
   // Withdrawal calculations — structural spread
   const wAmount = parseInt(withdrawAmount) || 0;
   const ngnRate = rates ? rates["NGN"] || 1500 : 1500;
-  const withdrawalSpread = feeConfig?.withdrawalSpread ?? DEFAULT_WITHDRAWAL_SPREAD;
+  const withdrawalSpread =
+    feeConfig?.withdrawalSpread ?? DEFAULT_WITHDRAWAL_SPREAD;
   const wNominalRaw = wAmount * POINT_TO_USD_RATE * ngnRate;
   const wReceiveRaw = wNominalRaw * (1 - withdrawalSpread);
-  const wReceive = applyCurrencyPrecision(wReceiveRaw, WITHDRAWAL_CURRENCY, ngnRate);
-  const minWithdrawalPoints = feeConfig?.minWithdrawalPoints ?? MIN_WITHDRAWAL_POINTS;
+  const wReceive = applyCurrencyPrecision(
+    wReceiveRaw,
+    WITHDRAWAL_CURRENCY,
+    ngnRate,
+  );
+  const minWithdrawalPoints =
+    feeConfig?.minWithdrawalPoints ?? MIN_WITHDRAWAL_POINTS;
 
   // Detect if user is Nigerian for bank transfer priority
   const isNGN = selectedCurrency === "NGN";
@@ -337,6 +363,17 @@ export default function PointsPage() {
         amount: data.fiatAmount,
         currency: data.fiatCurrency,
       });
+
+      // Local development without Flutterwave keys: the API credits the
+      // points immediately instead of opening a payment modal.
+      if (data.mock) {
+        setPurchaseAmount("");
+        await fetchData();
+        setPurchasing(false);
+        alert("Test mode: points were added without a real payment.");
+        return;
+      }
+
       setPaymentConfig({
         txRef: data.txRef,
         amount: data.fiatAmount,
@@ -493,7 +530,10 @@ export default function PointsPage() {
                       })}
                     </span>
                     {isNGN && (
-                      <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/30 bg-emerald-500/5">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] text-emerald-500 border-emerald-500/30 bg-emerald-500/5"
+                      >
                         🏦 {t("bankTransferRecommended")}
                       </Badge>
                     )}
@@ -602,8 +642,7 @@ export default function PointsPage() {
                   disabled={withdrawing}
                 />
                 <p className="text-[10px] text-muted-foreground px-1">
-                  {t("minWithdrawal")}:{" "}
-                  {format.number(minWithdrawalPoints)}{" "}
+                  {t("minWithdrawal")}: {format.number(minWithdrawalPoints)}{" "}
                   {tCommon("points_label", { count: minWithdrawalPoints })}
                   <span className="mx-1">·</span>
                   {t("processingStandard")}:{" "}

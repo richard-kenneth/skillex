@@ -38,6 +38,18 @@ import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
 import { ExchangesService } from './exchanges.service';
 
+interface ExchangeUpdatedEvent {
+  userIds?: string[];
+  requestId?: string;
+  message?: string;
+}
+
+interface SessionUpdatedEvent {
+  userIds?: string[];
+  exchangeId?: string;
+  sessionId?: string;
+}
+
 @Controller('exchanges')
 @UseGuards(BetterAuthGuard)
 export class ExchangesController {
@@ -50,12 +62,12 @@ export class ExchangesController {
   streamEvents(
     @Req() req: Request & { user: { id: string } },
   ): Observable<MessageEvent> {
-    const exchangeUpdates = fromEvent(
+    const exchangeUpdates = fromEvent<ExchangeUpdatedEvent>(
       this.eventEmitter,
       'exchange.updated',
     ).pipe(
-      filter((payload: any) => payload.userIds?.includes(req.user.id)),
-      map((payload: any) => ({
+      filter((payload) => payload.userIds?.includes(req.user.id) ?? false),
+      map((payload) => ({
         data: {
           requestId: payload.requestId,
           message: payload.message,
@@ -63,9 +75,12 @@ export class ExchangesController {
       })),
     );
 
-    const sessionUpdates = fromEvent(this.eventEmitter, 'session.updated').pipe(
-      filter((payload: any) => payload.userIds?.includes(req.user.id)),
-      map((payload: any) => ({
+    const sessionUpdates = fromEvent<SessionUpdatedEvent>(
+      this.eventEmitter,
+      'session.updated',
+    ).pipe(
+      filter((payload) => payload.userIds?.includes(req.user.id) ?? false),
+      map((payload) => ({
         data: {
           exchangeId: payload.exchangeId,
           sessionId: payload.sessionId,
@@ -74,7 +89,7 @@ export class ExchangesController {
       })),
     );
 
-    return merge(exchangeUpdates, sessionUpdates) as Observable<MessageEvent>;
+    return merge(exchangeUpdates, sessionUpdates);
   }
 
   @Get('matches')

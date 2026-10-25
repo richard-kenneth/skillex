@@ -1,10 +1,17 @@
-import React from 'react';
-import { View, ViewStyle } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { RADIUS, SPACING, getAccent } from '@/constants/theme';
+import React from "react";
+import { View, ViewStyle } from "react-native";
+import { ThemedText } from "@/components/themed-text";
+import { useTheme } from "@/hooks/use-theme";
+import { RADIUS, SPACING, getAccent } from "@/constants/theme";
 
-type Variant = 'default' | 'secondary' | 'outline' | 'destructive' | 'success' | 'accent' | 'warning';
+type Variant =
+  | "default"
+  | "secondary"
+  | "outline"
+  | "destructive"
+  | "success"
+  | "accent"
+  | "warning";
 
 export interface BadgeProps {
   children: React.ReactNode;
@@ -16,7 +23,7 @@ export interface BadgeProps {
 
 export function Badge({
   children,
-  variant = 'secondary',
+  variant = "secondary",
   dot = false,
   accent,
   style,
@@ -25,12 +32,12 @@ export function Badge({
   const accentPalette = accent ? getAccent(accent) : null;
 
   const base: ViewStyle = {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     paddingHorizontal: SPACING[2.5],
     paddingVertical: 3,
     borderRadius: RADIUS.md,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING[1],
   };
 
@@ -50,7 +57,7 @@ export function Badge({
       _dotColor: theme.mutedForeground,
     },
     outline: {
-      backgroundColor: 'transparent',
+      backgroundColor: "transparent",
       borderWidth: 1,
       borderColor: theme.border,
       _textColor: theme.foreground,
@@ -62,18 +69,18 @@ export function Badge({
       _dotColor: theme.destructiveForeground,
     },
     success: {
-      backgroundColor: getAccent('green').bg,
+      backgroundColor: getAccent("green").bg,
       borderWidth: 1,
-      borderColor: getAccent('green').border,
-      _textColor: getAccent('green').main,
-      _dotColor: getAccent('green').main,
+      borderColor: getAccent("green").border,
+      _textColor: getAccent("green").main,
+      _dotColor: getAccent("green").main,
     },
     warning: {
-      backgroundColor: getAccent('amber').bg,
+      backgroundColor: getAccent("amber").bg,
       borderWidth: 1,
-      borderColor: getAccent('amber').border,
-      _textColor: getAccent('amber').main,
-      _dotColor: getAccent('amber').main,
+      borderColor: getAccent("amber").border,
+      _textColor: getAccent("amber").main,
+      _dotColor: getAccent("amber").main,
     },
     accent: accentPalette
       ? {

@@ -5,7 +5,9 @@ export const RecordingConsentSchema = v.strictObject({
   consented: v.boolean(),
 });
 
-export type RecordingConsentPayload = v.InferInput<typeof RecordingConsentSchema>;
+export type RecordingConsentPayload = v.InferInput<
+  typeof RecordingConsentSchema
+>;
 export type RecordingConsentDto = v.InferOutput<typeof RecordingConsentSchema>;
 
 export const StartRecordingSchema = v.strictObject({
@@ -28,7 +30,7 @@ export const SaveSessionChatSchema = v.strictObject({
       v.strictObject({
         message: v.pipe(v.string(), v.minLength(1, "Message cannot be empty.")),
         timestamp: v.pipe(v.string(), v.isoTimestamp("Invalid timestamp.")),
-      })
+      }),
     ),
     v.minLength(1, "At least one message is required."),
   ),
@@ -41,5 +43,9 @@ export const SendSessionChatMessageSchema = v.strictObject({
   message: v.pipe(v.string(), v.minLength(1, "Message cannot be empty.")),
 });
 
-export type SendSessionChatMessagePayload = v.InferInput<typeof SendSessionChatMessageSchema>;
-export type SendSessionChatMessageDto = v.InferOutput<typeof SendSessionChatMessageSchema>;
+export type SendSessionChatMessagePayload = v.InferInput<
+  typeof SendSessionChatMessageSchema
+>;
+export type SendSessionChatMessageDto = v.InferOutput<
+  typeof SendSessionChatMessageSchema
+>;

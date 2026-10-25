@@ -4,23 +4,24 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { AuthService } from './auth.service';
+
+export type AuthenticatedRequest = Request & {
+  user?: { id: string };
+  session?: { id: string };
+};
 
 @Injectable()
 export class BetterAuthGuard implements CanActivate {
   constructor(private authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    // console.log(request);
-    // console.log(request.headers);
-    
-    const session = await this.authService.auth.api.getSession({
-      headers: request.headers,
-    });
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
-    // console.log(session?.session?.token);
-    
+    const session = await this.authService.auth.api.getSession({
+      headers: request.headers as HeadersInit,
+    });
 
     if (!session) {
       throw new UnauthorizedException();

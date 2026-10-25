@@ -2,6 +2,12 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { VideoService } from './video.service';
+import { errorMessage } from '../common/errors/error-message';
+
+interface RecordingTimeoutJobData {
+  exchangeSessionId: string;
+  sessionRecordingId: string;
+}
 
 @Processor('recording-timeout')
 export class RecordingBillingProcessor extends WorkerHost {
@@ -11,17 +17,23 @@ export class RecordingBillingProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<any, any, string>): Promise<any> {
+  async process(
+    job: Job<RecordingTimeoutJobData, void, string>,
+  ): Promise<void> {
     this.logger.log(`Processing job ${job.id} of type ${job.name}`);
     if (job.name === 'stop-recording') {
       const { exchangeSessionId, sessionRecordingId } = job.data;
-      this.logger.log(`Stopping recording for session ${exchangeSessionId} (timeout reached)`);
+      this.logger.log(
+        `Stopping recording for session ${exchangeSessionId} (timeout reached)`,
+      );
       try {
         await this.videoService.stopRecording(exchangeSessionId, 'SYSTEM');
-        this.logger.log(`Successfully stopped recording for session ${exchangeSessionId}`);
+        this.logger.log(
+          `Successfully stopped recording for session ${exchangeSessionId}`,
+        );
       } catch (err) {
         this.logger.error(
-          `Failed to automatically stop recording ${sessionRecordingId} for session ${exchangeSessionId}: ${(err as Error).message}`,
+          `Failed to automatically stop recording ${sessionRecordingId} for session ${exchangeSessionId}: ${errorMessage(err)}`,
         );
         throw err;
       }

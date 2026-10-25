@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
 import {
   FlatList,
   Image,
@@ -9,10 +9,10 @@ import {
   TextInput,
   View,
   ActivityIndicator,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import Animated, { FadeIn, FadeOut, FadeInUp } from 'react-native-reanimated';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import Animated, { FadeIn, FadeOut, FadeInUp } from "react-native-reanimated";
 import {
   Users,
   Handshake,
@@ -34,11 +34,18 @@ import {
   X,
   MessageSquare,
   Check,
-} from 'lucide-react-native';
+} from "lucide-react-native";
 
-import { useTheme } from '@/hooks/use-theme';
-import { FONT_SIZE, RADIUS, SPACING, getAccent, MAX_CONTENT_WIDTH, ICON_SIZE } from '@/constants/theme';
-import { useI18n, useT } from 'lib/i18n';
+import { useTheme } from "@/hooks/use-theme";
+import {
+  FONT_SIZE,
+  RADIUS,
+  SPACING,
+  getAccent,
+  MAX_CONTENT_WIDTH,
+  ICON_SIZE,
+} from "@/constants/theme";
+import { useI18n, useT } from "lib/i18n";
 import {
   Avatar,
   Badge,
@@ -56,10 +63,10 @@ import {
   DialogDescription,
   DialogContent,
   DialogFooter,
-} from '@/components/ui';
-import { CustomHeader } from '@/components/ui/custom-header';
-import { ThemedText } from '@/components/themed-text';
-import { AnalyticsEvent, track } from '@/lib/analytics';
+} from "@/components/ui";
+import { CustomHeader } from "@/components/ui/custom-header";
+import { ThemedText } from "@/components/themed-text";
+import { AnalyticsEvent, track } from "@/lib/analytics";
 import {
   useMatches,
   useRequests,
@@ -68,28 +75,30 @@ import {
   useAcceptRequest,
   useCancelRequest,
   useRejectRequest,
-} from '@/lib/api-hooks';
+} from "@/lib/api-hooks";
 import {
   getRequestStatusColor,
   formatDateShort,
   calculateAverageRating,
   calculatePointsBreakdown,
-} from '@skillex/shared';
+} from "@skillex/shared";
 
-type PrimaryTab = 'discover' | 'requests';
-type RequestSubTab = 'received' | 'sent';
+type PrimaryTab = "discover" | "requests";
+type RequestSubTab = "received" | "sent";
 
 export default function MatchesScreen() {
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const t = useT('matches');
+  const t = useT("matches");
 
-  const [tab, setTab] = useState<PrimaryTab>('discover');
-  const [requestSubTab, setRequestSubTab] = useState<RequestSubTab>('received');
-  const [search, setSearch] = useState('');
+  const [tab, setTab] = useState<PrimaryTab>("discover");
+  const [requestSubTab, setRequestSubTab] = useState<RequestSubTab>("received");
+  const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedMatchForDialog, setSelectedMatchForDialog] = useState<any | null>(null);
+  const [selectedMatchForDialog, setSelectedMatchForDialog] = useState<
+    any | null
+  >(null);
 
   const matchesQ = useMatches();
   const requestsQ = useRequests();
@@ -97,28 +106,40 @@ export default function MatchesScreen() {
 
   const refresh = async () => {
     setRefreshing(true);
-    await Promise.all([matchesQ.refetch(), requestsQ.refetch(), currentUserQ.refetch()]);
+    await Promise.all([
+      matchesQ.refetch(),
+      requestsQ.refetch(),
+      currentUserQ.refetch(),
+    ]);
     setRefreshing(false);
   };
 
   const matchesData = matchesQ.data as any;
   const perfectMatches: any[] = matchesData?.perfectMatches ?? [];
   const partialMatches: any[] = matchesData?.partialMatches ?? [];
-  
+
   const requestsData = requestsQ.data as any;
   const currentUserId = currentUserQ.data?.id;
 
-  const incoming: any[] = requestsData?.['received'] ?? 
-    (Array.isArray(requestsData) ? requestsData.filter((r: any) => r.receiverId === currentUserId) : []);
+  const incoming: any[] =
+    requestsData?.["received"] ??
+    (Array.isArray(requestsData)
+      ? requestsData.filter((r: any) => r.receiverId === currentUserId)
+      : []);
 
-  const outgoing: any[] = requestsData?.['sent'] ?? 
-    (Array.isArray(requestsData) ? requestsData.filter((r: any) => r.senderId === currentUserId) : []);
+  const outgoing: any[] =
+    requestsData?.["sent"] ??
+    (Array.isArray(requestsData)
+      ? requestsData.filter((r: any) => r.senderId === currentUserId)
+      : []);
 
   const totalMatchesCount = perfectMatches.length + partialMatches.length;
   const totalRequestsCount = incoming.length + outgoing.length;
 
   const currentUserSkills = currentUserQ.data?.skills ?? [];
-  const seekingCount = currentUserSkills.filter((s: any) => s.type === 'SEEKING').length;
+  const seekingCount = currentUserSkills.filter(
+    (s: any) => s.type === "SEEKING",
+  ).length;
   const noSeekingSkills = !currentUserQ.isLoading && seekingCount === 0;
 
   // Filter users by search query
@@ -130,41 +151,75 @@ export default function MatchesScreen() {
       const bioMatch = u.bio?.toLowerCase().includes(q);
       const skillsList = u.skills || [];
       const skillMatch = skillsList.some((s: any) => {
-        const skillName = s.skill?.name || s.name || '';
+        const skillName = s.skill?.name || s.name || "";
         return skillName.toLowerCase().includes(q);
       });
-      const canTeachMatch = (u.canTeachMe || []).some((s: any) => s.name?.toLowerCase().includes(q));
-      const canLearnMatch = (u.canLearnFromMe || []).some((s: any) => s.name?.toLowerCase().includes(q));
-      return nameMatch || bioMatch || skillMatch || canTeachMatch || canLearnMatch;
+      const canTeachMatch = (u.canTeachMe || []).some((s: any) =>
+        s.name?.toLowerCase().includes(q),
+      );
+      const canLearnMatch = (u.canLearnFromMe || []).some((s: any) =>
+        s.name?.toLowerCase().includes(q),
+      );
+      return (
+        nameMatch || bioMatch || skillMatch || canTeachMatch || canLearnMatch
+      );
     });
   };
 
-  const filteredPerfect = useMemo(() => filterUsers(perfectMatches), [search, perfectMatches]);
-  const filteredPartial = useMemo(() => filterUsers(partialMatches), [search, partialMatches]);
+  const filteredPerfect = useMemo(
+    () => filterUsers(perfectMatches),
+    [search, perfectMatches],
+  );
+  const filteredPartial = useMemo(
+    () => filterUsers(partialMatches),
+    [search, partialMatches],
+  );
   const totalFilteredCount = filteredPerfect.length + filteredPartial.length;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      <CustomHeader title={t('matchesAndRequests')} subtitle={t('matchesAndRequestsDesc')} showNotifications showSearch />
+      <CustomHeader
+        title={t("matchesAndRequests")}
+        subtitle={t("matchesAndRequestsDesc")}
+        showNotifications
+        showSearch
+      />
 
-      <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: 'center' }}>
+      <View
+        style={{
+          width: "100%",
+          maxWidth: MAX_CONTENT_WIDTH,
+          flex: 1,
+          alignSelf: "center",
+        }}
+      >
         {/* Primary Top Tab Bar: Matches vs Requests */}
-        <View style={{ paddingHorizontal: SPACING[4], paddingTop: SPACING[3], paddingBottom: SPACING[2] }}>
+        <View
+          style={{
+            paddingHorizontal: SPACING[4],
+            paddingTop: SPACING[3],
+            paddingBottom: SPACING[2],
+          }}
+        >
           <Tabs<PrimaryTab>
             variant="pills"
             value={tab}
             onChange={setTab}
             fullWidth
             items={[
-              { value: 'discover', label: t('discoverLabel') ?? 'Matches' },
-              { value: 'requests', label: t('requestsLabel') ?? 'Requests' },
+              { value: "discover", label: t("discoverLabel") ?? "Matches" },
+              { value: "requests", label: t("requestsLabel") ?? "Requests" },
             ]}
           />
         </View>
 
         {/* Smooth Animated Content Switcher when navigating top tabs */}
-        <Animated.View key={tab} entering={FadeIn.duration(220)} style={{ flex: 1 }}>
-          {tab === 'discover' ? (
+        <Animated.View
+          key={tab}
+          entering={FadeIn.duration(220)}
+          style={{ flex: 1 }}
+        >
+          {tab === "discover" ? (
             <ScrollView
               contentContainerStyle={{
                 paddingHorizontal: SPACING[4],
@@ -183,8 +238,8 @@ export default function MatchesScreen() {
               {/* Search Bar */}
               <View
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
+                  flexDirection: "row",
+                  alignItems: "center",
                   backgroundColor: theme.secondary,
                   borderRadius: RADIUS.xl,
                   borderWidth: 1,
@@ -199,7 +254,7 @@ export default function MatchesScreen() {
                 <TextInput
                   value={search}
                   onChangeText={setSearch}
-                  placeholder={t('searchPlaceholder')}
+                  placeholder={t("searchPlaceholder")}
                   placeholderTextColor={theme.mutedForeground}
                   style={{
                     flex: 1,
@@ -209,7 +264,7 @@ export default function MatchesScreen() {
                   }}
                 />
                 {search.length > 0 && (
-                  <Pressable onPress={() => setSearch('')} hitSlop={8}>
+                  <Pressable onPress={() => setSearch("")} hitSlop={8}>
                     <X size={16} color={theme.mutedForeground} />
                   </Pressable>
                 )}
@@ -218,33 +273,51 @@ export default function MatchesScreen() {
               {/* Empty Seeking Skills Prompt Banner */}
               {noSeekingSkills ? (
                 <View style={{ marginBottom: SPACING[4] }}>
-                  <Card variant="glass" style={{ borderColor: getAccent('amber').border }}>
-                    <CardContent style={{ padding: SPACING[5], alignItems: 'center', gap: SPACING[3] }}>
+                  <Card
+                    variant="glass"
+                    style={{ borderColor: getAccent("amber").border }}
+                  >
+                    <CardContent
+                      style={{
+                        padding: SPACING[5],
+                        alignItems: "center",
+                        gap: SPACING[3],
+                      }}
+                    >
                       <View
                         style={{
                           width: 52,
                           height: 52,
                           borderRadius: 26,
-                          backgroundColor: getAccent('amber').bg,
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          backgroundColor: getAccent("amber").bg,
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
-                        <Sparkles size={24} color={getAccent('amber').main} />
+                        <Sparkles size={24} color={getAccent("amber").main} />
                       </View>
-                      <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
-                        {t('addSkillsTitle')}
+                      <ThemedText
+                        type="cardTitle"
+                        style={{ textAlign: "center" }}
+                      >
+                        {t("addSkillsTitle")}
                       </ThemedText>
-                      <ThemedText type="caption" muted style={{ textAlign: 'center', maxWidth: 300 }}>
-                        {t('addSkillsDesc')}
+                      <ThemedText
+                        type="caption"
+                        muted
+                        style={{ textAlign: "center", maxWidth: 300 }}
+                      >
+                        {t("addSkillsDesc")}
                       </ThemedText>
                       <Button
                         size="sm"
                         variant="default"
-                        onPress={() => router.push('/(tabs)/profile' as any)}
-                        leftIcon={<UserPlus size={14} color={theme.primaryForeground} />}
+                        onPress={() => router.push("/(tabs)/profile" as any)}
+                        leftIcon={
+                          <UserPlus size={14} color={theme.primaryForeground} />
+                        }
                       >
-                        {t('manageSkills')}
+                        {t("manageSkills")}
                       </Button>
                     </CardContent>
                   </Card>
@@ -259,39 +332,59 @@ export default function MatchesScreen() {
                 </View>
               ) : totalFilteredCount === 0 && !noSeekingSkills ? (
                 <Card variant="glass" style={{ marginBottom: SPACING[4] }}>
-                  <CardContent style={{ padding: SPACING[6], alignItems: 'center', gap: SPACING[3] }}>
+                  <CardContent
+                    style={{
+                      padding: SPACING[6],
+                      alignItems: "center",
+                      gap: SPACING[3],
+                    }}
+                  >
                     <View
                       style={{
                         width: 52,
                         height: 52,
                         borderRadius: 26,
                         backgroundColor: theme.secondary,
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
                       <Users size={24} color={theme.mutedForeground} />
                     </View>
-                    <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
-                      {search ? t('noMatchingResults') : t('noMatchesTitle')}
+                    <ThemedText
+                      type="cardTitle"
+                      style={{ textAlign: "center" }}
+                    >
+                      {search ? t("noMatchingResults") : t("noMatchesTitle")}
                     </ThemedText>
-                    <ThemedText type="caption" muted style={{ textAlign: 'center', maxWidth: 300 }}>
+                    <ThemedText
+                      type="caption"
+                      muted
+                      style={{ textAlign: "center", maxWidth: 300 }}
+                    >
                       {search
-                        ? t('noMatchingResultsDesc', { query: search })
-                        : (t('noMatchesDesc') ?? 'We couldn\'t find any matches based on your skills right now. Try adding more skills!')}
+                        ? t("noMatchingResultsDesc", { query: search })
+                        : (t("noMatchesDesc") ??
+                          "We couldn't find any matches based on your skills right now. Try adding more skills!")}
                     </ThemedText>
                     {search ? (
-                      <Button size="sm" variant="outline" onPress={() => setSearch('')}>
-                        {t('clearSearch')}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onPress={() => setSearch("")}
+                      >
+                        {t("clearSearch")}
                       </Button>
                     ) : (
                       <Button
                         size="sm"
                         variant="default"
-                        onPress={() => router.push('/(tabs)/profile' as any)}
-                        leftIcon={<UserPlus size={14} color={theme.primaryForeground} />}
+                        onPress={() => router.push("/(tabs)/profile" as any)}
+                        leftIcon={
+                          <UserPlus size={14} color={theme.primaryForeground} />
+                        }
                       >
-                        {t('manageSkills')}
+                        {t("manageSkills")}
                       </Button>
                     )}
                   </CardContent>
@@ -301,17 +394,28 @@ export default function MatchesScreen() {
                   {/* Perfect Matches Section */}
                   {filteredPerfect.length > 0 && (
                     <View style={{ marginBottom: SPACING[4] }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2], marginBottom: 4 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: SPACING[2],
+                          marginBottom: 4,
+                        }}
+                      >
                         <Sparkles size={20} color="#f59e0b" />
                         <ThemedText type="sectionTitle">
-                          {t('perfectMatchesTitle')}
+                          {t("perfectMatchesTitle")}
                         </ThemedText>
                         <Badge variant="accent" accent="amber">
                           {filteredPerfect.length}
                         </Badge>
                       </View>
-                      <ThemedText type="caption" muted style={{ marginBottom: SPACING[3] }}>
-                        {t('perfectMatchesDesc')}
+                      <ThemedText
+                        type="caption"
+                        muted
+                        style={{ marginBottom: SPACING[3] }}
+                      >
+                        {t("perfectMatchesDesc")}
                       </ThemedText>
 
                       {filteredPerfect.map((m: any) => (
@@ -320,7 +424,9 @@ export default function MatchesScreen() {
                             match={m}
                             perfect
                             currentUserSkills={currentUserSkills}
-                            onPressCard={() => router.push(`/users/${m.id}` as any)}
+                            onPressCard={() =>
+                              router.push(`/users/${m.id}` as any)
+                            }
                             onPressRequest={() => setSelectedMatchForDialog(m)}
                           />
                         </View>
@@ -331,17 +437,28 @@ export default function MatchesScreen() {
                   {/* More Matches Section */}
                   {filteredPartial.length > 0 && (
                     <View style={{ marginBottom: SPACING[4] }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2], marginBottom: 4 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: SPACING[2],
+                          marginBottom: 4,
+                        }}
+                      >
                         <Users size={20} color={theme.primary} />
                         <ThemedText type="sectionTitle">
-                          {t('moreMatchesTitle')}
+                          {t("moreMatchesTitle")}
                         </ThemedText>
                         <Badge variant="secondary">
                           {filteredPartial.length}
                         </Badge>
                       </View>
-                      <ThemedText type="caption" muted style={{ marginBottom: SPACING[3] }}>
-                        {t('moreMatchesDesc')}
+                      <ThemedText
+                        type="caption"
+                        muted
+                        style={{ marginBottom: SPACING[3] }}
+                      >
+                        {t("moreMatchesDesc")}
                       </ThemedText>
 
                       {filteredPartial.map((m: any) => (
@@ -349,7 +466,9 @@ export default function MatchesScreen() {
                           <MatchCard
                             match={m}
                             currentUserSkills={currentUserSkills}
-                            onPressCard={() => router.push(`/users/${m.id}` as any)}
+                            onPressCard={() =>
+                              router.push(`/users/${m.id}` as any)
+                            }
                             onPressRequest={() => setSelectedMatchForDialog(m)}
                           />
                         </View>
@@ -363,10 +482,15 @@ export default function MatchesScreen() {
             /* Requests View Section */
             <View style={{ flex: 1 }}>
               {/* Sub-Header Segment Toggle for Received vs Sent inside Requests */}
-              <View style={{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[3] }}>
+              <View
+                style={{
+                  paddingHorizontal: SPACING[4],
+                  paddingBottom: SPACING[3],
+                }}
+              >
                 <View
                   style={{
-                    flexDirection: 'row',
+                    flexDirection: "row",
                     backgroundColor: theme.secondary,
                     borderRadius: RADIUS.lg,
                     padding: 3,
@@ -375,60 +499,91 @@ export default function MatchesScreen() {
                   }}
                 >
                   <Pressable
-                    onPress={() => setRequestSubTab('received')}
+                    onPress={() => setRequestSubTab("received")}
                     style={{
                       flex: 1,
                       paddingVertical: SPACING[2],
                       borderRadius: RADIUS.md,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexDirection: 'row',
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexDirection: "row",
                       gap: 6,
-                      backgroundColor: requestSubTab === 'received' ? theme.card : 'transparent',
+                      backgroundColor:
+                        requestSubTab === "received"
+                          ? theme.card
+                          : "transparent",
                     }}
                   >
-                    <Inbox size={15} color={requestSubTab === 'received' ? theme.foreground : theme.mutedForeground} />
+                    <Inbox
+                      size={15}
+                      color={
+                        requestSubTab === "received"
+                          ? theme.foreground
+                          : theme.mutedForeground
+                      }
+                    />
                     <ThemedText
                       type="label"
                       style={{
                         fontSize: 13,
-                        color: requestSubTab === 'received' ? theme.foreground : theme.mutedForeground,
+                        color:
+                          requestSubTab === "received"
+                            ? theme.foreground
+                            : theme.mutedForeground,
                       }}
                     >
-                      {t('received')}
+                      {t("received")}
                     </ThemedText>
                     {incoming.length > 0 && (
-                      <Badge variant="accent" accent="indigo" style={{ paddingHorizontal: 6, paddingVertical: 1 }}>
+                      <Badge
+                        variant="accent"
+                        accent="indigo"
+                        style={{ paddingHorizontal: 6, paddingVertical: 1 }}
+                      >
                         {incoming.length}
                       </Badge>
                     )}
                   </Pressable>
 
                   <Pressable
-                    onPress={() => setRequestSubTab('sent')}
+                    onPress={() => setRequestSubTab("sent")}
                     style={{
                       flex: 1,
                       paddingVertical: SPACING[2],
                       borderRadius: RADIUS.md,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexDirection: 'row',
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexDirection: "row",
                       gap: 6,
-                      backgroundColor: requestSubTab === 'sent' ? theme.card : 'transparent',
+                      backgroundColor:
+                        requestSubTab === "sent" ? theme.card : "transparent",
                     }}
                   >
-                    <Send size={14} color={requestSubTab === 'sent' ? theme.foreground : theme.mutedForeground} />
+                    <Send
+                      size={14}
+                      color={
+                        requestSubTab === "sent"
+                          ? theme.foreground
+                          : theme.mutedForeground
+                      }
+                    />
                     <ThemedText
                       type="label"
                       style={{
                         fontSize: 13,
-                        color: requestSubTab === 'sent' ? theme.foreground : theme.mutedForeground,
+                        color:
+                          requestSubTab === "sent"
+                            ? theme.foreground
+                            : theme.mutedForeground,
                       }}
                     >
-                      {t('sent')}
+                      {t("sent")}
                     </ThemedText>
                     {outgoing.length > 0 && (
-                      <Badge variant="secondary" style={{ paddingHorizontal: 6, paddingVertical: 1 }}>
+                      <Badge
+                        variant="secondary"
+                        style={{ paddingHorizontal: 6, paddingVertical: 1 }}
+                      >
                         {outgoing.length}
                       </Badge>
                     )}
@@ -436,9 +591,13 @@ export default function MatchesScreen() {
                 </View>
               </View>
 
-              <Animated.View key={requestSubTab} entering={FadeIn.duration(180)} style={{ flex: 1 }}>
+              <Animated.View
+                key={requestSubTab}
+                entering={FadeIn.duration(180)}
+                style={{ flex: 1 }}
+              >
                 <RequestsList
-                  requests={requestSubTab === 'received' ? incoming : outgoing}
+                  requests={requestSubTab === "received" ? incoming : outgoing}
                   direction={requestSubTab}
                   loading={requestsQ.isLoading}
                   refreshing={refreshing}
@@ -483,35 +642,39 @@ function MatchCard({
   onPressRequest: () => void;
 }) {
   const theme = useTheme();
-  const t = useT('matches');
+  const t = useT("matches");
   const user = match;
-  const avgRating = user.reviews?.length ? calculateAverageRating(user.reviews) : 0;
+  const avgRating = user.reviews?.length
+    ? calculateAverageRating(user.reviews)
+    : 0;
 
   // Normalize offerings & seekings from match payload format
   const rawSkills: any[] = user.skills || [];
-  const offeringList = rawSkills.filter((s) => s.type === 'OFFERING');
-  const seekingList = rawSkills.filter((s) => s.type === 'SEEKING');
+  const offeringList = rawSkills.filter((s) => s.type === "OFFERING");
+  const seekingList = rawSkills.filter((s) => s.type === "SEEKING");
 
-  const canTeachMe = offeringList.length > 0
-    ? offeringList
-    : (user.canTeachMe || []).map((s: any) => ({ id: s.id, skill: s }));
+  const canTeachMe =
+    offeringList.length > 0
+      ? offeringList
+      : (user.canTeachMe || []).map((s: any) => ({ id: s.id, skill: s }));
 
-  const canLearnFromMe = seekingList.length > 0
-    ? seekingList
-    : (user.canLearnFromMe || []).map((s: any) => ({ id: s.id, skill: s }));
+  const canLearnFromMe =
+    seekingList.length > 0
+      ? seekingList
+      : (user.canLearnFromMe || []).map((s: any) => ({ id: s.id, skill: s }));
 
   const mySeekingIds = new Set(
     currentUserSkills
-      .filter((s) => s.type === 'SEEKING')
+      .filter((s) => s.type === "SEEKING")
       .map((s) => s.skill?.id || s.skillId)
-      .filter(Boolean)
+      .filter(Boolean),
   );
 
   const myOfferingIds = new Set(
     currentUserSkills
-      .filter((s) => s.type === 'OFFERING')
+      .filter((s) => s.type === "OFFERING")
       .map((s) => s.skill?.id || s.skillId)
-      .filter(Boolean)
+      .filter(Boolean),
   );
 
   return (
@@ -521,41 +684,84 @@ function MatchCard({
       style={{ padding: SPACING[4], gap: SPACING[3.5] }}
     >
       {/* Tapping anywhere in card header/body navigates to user profile */}
-      <View style={{ flexDirection: 'row', gap: SPACING[3], alignItems: 'flex-start' }}>
-        <Avatar uri={user.image} fallback={user.name ?? 'U'} size={48} />
+      <View
+        style={{
+          flexDirection: "row",
+          gap: SPACING[3],
+          alignItems: "flex-start",
+        }}
+      >
+        <Avatar uri={user.image} fallback={user.name ?? "U"} size={48} />
         <View style={{ flex: 1, gap: 3 }}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: SPACING[1.5] }}>
-            <View style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: SPACING[1.5],
+            }}
+          >
+            <View
+              style={{
+                flexShrink: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
               <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.md }}>
-                {user.name ?? t('anonymousUser')}
+                {user.name ?? t("anonymousUser")}
               </ThemedText>
               <ChevronRight size={16} color={theme.mutedForeground} />
             </View>
 
             {perfect && (
-              <Badge variant="accent" accent="amber" dot style={{ paddingVertical: 2 }}>
-                {t('perfectMatchBadge')}
+              <Badge
+                variant="accent"
+                accent="amber"
+                dot
+                style={{ paddingVertical: 2 }}
+              >
+                {t("perfectMatchBadge")}
               </Badge>
             )}
           </View>
 
           {/* Rating & Exchange stats */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: SPACING[2] }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: SPACING[2],
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 3 }}
+            >
               <Star size={12} color="#f59e0b" fill="#f59e0b" />
-              <ThemedText type="caption" style={{ fontWeight: '600', color: theme.foreground }}>
-                {avgRating > 0 ? avgRating.toFixed(1) : t('new')}
+              <ThemedText
+                type="caption"
+                style={{ fontWeight: "600", color: theme.foreground }}
+              >
+                {avgRating > 0 ? avgRating.toFixed(1) : t("new")}
               </ThemedText>
             </View>
             {user.exchangesCompleted ? (
               <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                · {t('exchangesCompleted', { count: user.exchangesCompleted })}
+                · {t("exchangesCompleted", { count: user.exchangesCompleted })}
               </ThemedText>
             ) : null}
           </View>
 
           {user.bio ? (
-            <ThemedText type="caption" muted numberOfLines={2} style={{ marginTop: 2, fontSize: 12 }}>
+            <ThemedText
+              type="caption"
+              muted
+              numberOfLines={2}
+              style={{ marginTop: 2, fontSize: 12 }}
+            >
               {user.bio}
             </ThemedText>
           ) : null}
@@ -567,17 +773,32 @@ function MatchCard({
         {/* Can Teach (Offering) */}
         {canTeachMe.length > 0 && (
           <View style={{ gap: 6 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1] }}>
-              <GraduationCap size={13} color={getAccent('emerald').main} />
-              <ThemedText type="caption" style={{ color: getAccent('emerald').main, fontWeight: '600', textTransform: 'uppercase', fontSize: 11, letterSpacing: 0.5 }}>
-                {t('canTeach')}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: SPACING[1],
+              }}
+            >
+              <GraduationCap size={13} color={getAccent("emerald").main} />
+              <ThemedText
+                type="caption"
+                style={{
+                  color: getAccent("emerald").main,
+                  fontWeight: "600",
+                  textTransform: "uppercase",
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                }}
+              >
+                {t("canTeach")}
               </ThemedText>
             </View>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
               {canTeachMe.map((item: any) => {
                 const skillObj = item.skill || item;
                 const skillId = skillObj.id;
-                const skillName = skillObj.name || 'Skill';
+                const skillName = skillObj.name || "Skill";
                 const isMatched = mySeekingIds.has(skillId);
                 const category = skillObj.category;
                 const sponsorName = category?.sponsorName;
@@ -585,25 +806,28 @@ function MatchCard({
                 return (
                   <View key={item.id || skillId} style={{ gap: 2 }}>
                     <Badge
-                      variant={isMatched ? 'accent' : 'secondary'}
-                      accent={isMatched ? 'emerald' : undefined}
-                      style={{ paddingHorizontal: SPACING[2.5], paddingVertical: 3 }}
+                      variant={isMatched ? "accent" : "secondary"}
+                      accent={isMatched ? "emerald" : undefined}
+                      style={{
+                        paddingHorizontal: SPACING[2.5],
+                        paddingVertical: 3,
+                      }}
                     >
-                      {skillName} {isMatched ? '✓' : ''}
+                      {skillName} {isMatched ? "✓" : ""}
                     </Badge>
                     {sponsorName ? (
                       <View
                         style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
+                          flexDirection: "row",
+                          alignItems: "center",
                           gap: 4,
                           paddingHorizontal: 6,
                           paddingVertical: 1.5,
                           borderRadius: RADIUS.pill,
-                          backgroundColor: getAccent('indigo').bg,
+                          backgroundColor: getAccent("indigo").bg,
                           borderWidth: 1,
-                          borderColor: getAccent('indigo').border,
-                          alignSelf: 'flex-start',
+                          borderColor: getAccent("indigo").border,
+                          alignSelf: "flex-start",
                         }}
                       >
                         {category?.sponsorLogo ? (
@@ -612,8 +836,15 @@ function MatchCard({
                             style={{ width: 12, height: 12, borderRadius: 2 }}
                           />
                         ) : null}
-                        <ThemedText type="caption" style={{ fontSize: 9, color: getAccent('indigo').main, fontWeight: '600' }}>
-                          {t('sponsoredByName', { name: sponsorName })}
+                        <ThemedText
+                          type="caption"
+                          style={{
+                            fontSize: 9,
+                            color: getAccent("indigo").main,
+                            fontWeight: "600",
+                          }}
+                        >
+                          {t("sponsoredByName", { name: sponsorName })}
                         </ThemedText>
                       </View>
                     ) : null}
@@ -627,27 +858,45 @@ function MatchCard({
         {/* Wants to Learn (Seeking) */}
         {canLearnFromMe.length > 0 && (
           <View style={{ gap: 6 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1] }}>
-              <BookOpen size={13} color={getAccent('indigo').main} />
-              <ThemedText type="caption" style={{ color: getAccent('indigo').main, fontWeight: '600', textTransform: 'uppercase', fontSize: 11, letterSpacing: 0.5 }}>
-                {t('wantsToLearn')}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: SPACING[1],
+              }}
+            >
+              <BookOpen size={13} color={getAccent("indigo").main} />
+              <ThemedText
+                type="caption"
+                style={{
+                  color: getAccent("indigo").main,
+                  fontWeight: "600",
+                  textTransform: "uppercase",
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                }}
+              >
+                {t("wantsToLearn")}
               </ThemedText>
             </View>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
               {canLearnFromMe.map((item: any) => {
                 const skillObj = item.skill || item;
                 const skillId = skillObj.id;
-                const skillName = skillObj.name || 'Skill';
+                const skillName = skillObj.name || "Skill";
                 const isMatched = myOfferingIds.has(skillId);
 
                 return (
                   <Badge
                     key={item.id || skillId}
-                    variant={isMatched ? 'accent' : 'outline'}
-                    accent={isMatched ? 'indigo' : undefined}
-                    style={{ paddingHorizontal: SPACING[2.5], paddingVertical: 3 }}
+                    variant={isMatched ? "accent" : "outline"}
+                    accent={isMatched ? "indigo" : undefined}
+                    style={{
+                      paddingHorizontal: SPACING[2.5],
+                      paddingVertical: 3,
+                    }}
                   >
-                    {skillName} {isMatched ? '✓' : ''}
+                    {skillName} {isMatched ? "✓" : ""}
                   </Badge>
                 );
               })}
@@ -661,13 +910,15 @@ function MatchCard({
         <Button
           size="sm"
           variant="default"
-          leftIcon={<ArrowRightLeft size={14} color={theme.primaryForeground} />}
+          leftIcon={
+            <ArrowRightLeft size={14} color={theme.primaryForeground} />
+          }
           onPress={(e: any) => {
             e?.stopPropagation?.();
             onPressRequest();
           }}
         >
-          {t('requestExchange')}
+          {t("requestExchange")}
         </Button>
       </View>
     </PressableCard>
@@ -688,10 +939,9 @@ function RequestDialogModal({
   currentUser: any;
 }) {
   const theme = useTheme();
-  const t = useT('matches');
+  const t = useT("matches");
   const toast = useToast();
   const createRequestMutation = useCreateRequest();
-
 
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
@@ -700,17 +950,18 @@ function RequestDialogModal({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const rawMatchSkills: any[] = matchUser.skills || [];
-  const matchOfferings = rawMatchSkills.filter((s) => s.type === 'OFFERING');
-  const availableToLearn = matchOfferings.length > 0
-    ? matchOfferings
-    : (matchUser.canTeachMe || []).map((s: any) => ({ id: s.id, skill: s }));
+  const matchOfferings = rawMatchSkills.filter((s) => s.type === "OFFERING");
+  const availableToLearn =
+    matchOfferings.length > 0
+      ? matchOfferings
+      : (matchUser.canTeachMe || []).map((s: any) => ({ id: s.id, skill: s }));
 
   const rawMySkills: any[] = currentUser?.skills || [];
-  const myOfferings = rawMySkills.filter((s) => s.type === 'OFFERING');
+  const myOfferings = rawMySkills.filter((s) => s.type === "OFFERING");
 
   const handleSend = async () => {
     if (!selectedSkillId) {
-      setErrorMsg(t('selectSkillToLearn'));
+      setErrorMsg(t("selectSkillToLearn"));
       return;
     }
 
@@ -721,7 +972,12 @@ function RequestDialogModal({
         requestedSkillId: selectedSkillId,
         offeredSkillId: selectedOfferId ?? undefined,
         pointsProposal: pointsAmount > 0 ? pointsAmount : undefined,
-        pointsPayerId: pointsAmount > 0 ? (payerIsMe ? currentUser?.id : matchUser.id) : undefined,
+        pointsPayerId:
+          pointsAmount > 0
+            ? payerIsMe
+              ? currentUser?.id
+              : matchUser.id
+            : undefined,
       });
 
       track(AnalyticsEvent.EXCHANGE_REQUEST_CREATED, {
@@ -729,13 +985,15 @@ function RequestDialogModal({
         requested_skill: selectedSkillId ?? undefined,
       });
       toast.toast({
-        title: t('exchangeRequestSent'),
-        description: t('exchangeRequestSentDesc', { name: matchUser.name ?? t('user') }),
-        variant: 'success',
+        title: t("exchangeRequestSent"),
+        description: t("exchangeRequestSentDesc", {
+          name: matchUser.name ?? t("user"),
+        }),
+        variant: "success",
       });
       onOpenChange(false);
     } catch (e: any) {
-      setErrorMsg(e?.message ?? t('failedToSendExchangeRequest'));
+      setErrorMsg(e?.message ?? t("failedToSendExchangeRequest"));
     }
   };
 
@@ -744,14 +1002,20 @@ function RequestDialogModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader onClose={() => onOpenChange(false)}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2.5] }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: SPACING[2.5],
+          }}
+        >
           <Avatar uri={matchUser.image} fallback={matchUser.name} size={36} />
           <View style={{ flex: 1 }}>
             <DialogTitle style={{ fontSize: FONT_SIZE.md }}>
-              {t('requestSkillExchange')}
+              {t("requestSkillExchange")}
             </DialogTitle>
             <DialogDescription style={{ marginTop: 0 }}>
-              {t('connectWithName', { name: matchUser.name ?? t('user') })}
+              {t("connectWithName", { name: matchUser.name ?? t("user") })}
             </DialogDescription>
           </View>
         </View>
@@ -762,9 +1026,16 @@ function RequestDialogModal({
           {/* Step 1: Select skill to learn */}
           <View style={{ gap: SPACING[2] }}>
             <ThemedText type="label">
-              1. {t('whatToLearnQuestion')} <ThemedText style={{ color: theme.destructive }}>*</ThemedText>
+              1. {t("whatToLearnQuestion")}{" "}
+              <ThemedText style={{ color: theme.destructive }}>*</ThemedText>
             </ThemedText>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: SPACING[2],
+              }}
+            >
               {availableToLearn.map((item: any) => {
                 const sObj = item.skill || item;
                 const isSelected = selectedSkillId === sObj.id;
@@ -774,14 +1045,14 @@ function RequestDialogModal({
                     onPress={() => setSelectedSkillId(sObj.id)}
                   >
                     <Badge
-                      variant={isSelected ? 'default' : 'outline'}
+                      variant={isSelected ? "default" : "outline"}
                       style={{
                         paddingHorizontal: SPACING[3],
                         paddingVertical: SPACING[1.5],
                         borderRadius: RADIUS.lg,
                       }}
                     >
-                      {sObj.name} {isSelected ? '✓' : ''}
+                      {sObj.name} {isSelected ? "✓" : ""}
                     </Badge>
                   </Pressable>
                 );
@@ -793,30 +1064,38 @@ function RequestDialogModal({
           {myOfferings.length > 0 && (
             <View style={{ gap: SPACING[2] }}>
               <ThemedText type="label">
-                2. {t('whatToOfferQuestion')}{' '}
+                2. {t("whatToOfferQuestion")}{" "}
                 <ThemedText type="caption" muted>
-                  ({t('optional')})
+                  ({t("optional")})
                 </ThemedText>
               </ThemedText>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING[2] }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: SPACING[2],
+                }}
+              >
                 {myOfferings.map((item: any) => {
                   const sObj = item.skill || item;
                   const isSelected = selectedOfferId === sObj.id;
                   return (
                     <Pressable
                       key={item.id || sObj.id}
-                      onPress={() => setSelectedOfferId(isSelected ? null : sObj.id)}
+                      onPress={() =>
+                        setSelectedOfferId(isSelected ? null : sObj.id)
+                      }
                     >
                       <Badge
-                        variant={isSelected ? 'accent' : 'secondary'}
-                        accent={isSelected ? 'indigo' : undefined}
+                        variant={isSelected ? "accent" : "secondary"}
+                        accent={isSelected ? "indigo" : undefined}
                         style={{
                           paddingHorizontal: SPACING[3],
                           paddingVertical: SPACING[1.5],
                           borderRadius: RADIUS.lg,
                         }}
                       >
-                        {sObj.name} {isSelected ? '✓' : ''}
+                        {sObj.name} {isSelected ? "✓" : ""}
                       </Badge>
                     </Pressable>
                   );
@@ -836,25 +1115,37 @@ function RequestDialogModal({
               borderColor: theme.border,
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: SPACING[2],
+              }}
+            >
               <Coins size={18} color="#f59e0b" />
               <View style={{ flex: 1 }}>
                 <ThemedText type="label" style={{ fontSize: 13 }}>
-                  {t('pointsProposal')}
+                  {t("pointsProposal")}
                 </ThemedText>
                 <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                  {t('forUnevenExchangesShort')}
+                  {t("forUnevenExchangesShort")}
                 </ThemedText>
               </View>
             </View>
 
             {/* Input & Quick presets */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[2] }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: SPACING[2],
+              }}
+            >
               <TextInput
                 keyboardType="numeric"
-                value={pointsAmount ? String(pointsAmount) : ''}
+                value={pointsAmount ? String(pointsAmount) : ""}
                 onChangeText={(val) => {
-                  const num = parseInt(val.replace(/[^0-9]/g, ''), 10);
+                  const num = parseInt(val.replace(/[^0-9]/g, ""), 10);
                   setPointsAmount(isNaN(num) ? 0 : Math.max(0, num));
                 }}
                 placeholder="0"
@@ -869,16 +1160,18 @@ function RequestDialogModal({
                   paddingHorizontal: SPACING[3],
                   color: theme.foreground,
                   fontSize: FONT_SIZE.md,
-                  fontWeight: '600',
-                  textAlign: 'center',
+                  fontWeight: "600",
+                  textAlign: "center",
                 }}
               />
-              <ThemedText type="bodySmall" style={{ fontWeight: '600' }}>
-                {t('points')}
+              <ThemedText type="bodySmall" style={{ fontWeight: "600" }}>
+                {t("points")}
               </ThemedText>
 
               {/* Quick Preset Buttons */}
-              <View style={{ flexDirection: 'row', gap: 4, marginLeft: 'auto' }}>
+              <View
+                style={{ flexDirection: "row", gap: 4, marginLeft: "auto" }}
+              >
                 {[10, 25, 50].map((amt) => (
                   <Pressable
                     key={amt}
@@ -887,7 +1180,8 @@ function RequestDialogModal({
                       paddingHorizontal: 8,
                       paddingVertical: 4,
                       borderRadius: RADIUS.md,
-                      backgroundColor: pointsAmount === amt ? theme.primary : theme.background,
+                      backgroundColor:
+                        pointsAmount === amt ? theme.primary : theme.background,
                       borderWidth: 1,
                       borderColor: theme.border,
                     }}
@@ -895,8 +1189,11 @@ function RequestDialogModal({
                     <ThemedText
                       type="caption"
                       style={{
-                        color: pointsAmount === amt ? theme.primaryForeground : theme.foreground,
-                        fontWeight: '600',
+                        color:
+                          pointsAmount === amt
+                            ? theme.primaryForeground
+                            : theme.foreground,
+                        fontWeight: "600",
                       }}
                     >
                       +{amt}
@@ -908,28 +1205,37 @@ function RequestDialogModal({
 
             {/* Payer Selector Segment */}
             {pointsAmount > 0 && (
-              <Animated.View entering={FadeInUp.duration(200)} style={{ gap: SPACING[2.5] }}>
-                <View style={{ flexDirection: 'row', gap: SPACING[2] }}>
+              <Animated.View
+                entering={FadeInUp.duration(200)}
+                style={{ gap: SPACING[2.5] }}
+              >
+                <View style={{ flexDirection: "row", gap: SPACING[2] }}>
                   <Pressable
                     onPress={() => setPayerIsMe(true)}
                     style={{
                       flex: 1,
                       paddingVertical: 8,
                       borderRadius: RADIUS.md,
-                      backgroundColor: payerIsMe ? getAccent('emerald').bg : theme.background,
+                      backgroundColor: payerIsMe
+                        ? getAccent("emerald").bg
+                        : theme.background,
                       borderWidth: 1,
-                      borderColor: payerIsMe ? getAccent('emerald').border : theme.border,
-                      alignItems: 'center',
+                      borderColor: payerIsMe
+                        ? getAccent("emerald").border
+                        : theme.border,
+                      alignItems: "center",
                     }}
                   >
                     <ThemedText
                       type="caption"
                       style={{
-                        color: payerIsMe ? getAccent('emerald').main : theme.mutedForeground,
-                        fontWeight: '600',
+                        color: payerIsMe
+                          ? getAccent("emerald").main
+                          : theme.mutedForeground,
+                        fontWeight: "600",
                       }}
                     >
-                      {t('iWillPay')}
+                      {t("iWillPay")}
                     </ThemedText>
                   </Pressable>
 
@@ -939,20 +1245,26 @@ function RequestDialogModal({
                       flex: 1,
                       paddingVertical: 8,
                       borderRadius: RADIUS.md,
-                      backgroundColor: !payerIsMe ? getAccent('indigo').bg : theme.background,
+                      backgroundColor: !payerIsMe
+                        ? getAccent("indigo").bg
+                        : theme.background,
                       borderWidth: 1,
-                      borderColor: !payerIsMe ? getAccent('indigo').border : theme.border,
-                      alignItems: 'center',
+                      borderColor: !payerIsMe
+                        ? getAccent("indigo").border
+                        : theme.border,
+                      alignItems: "center",
                     }}
                   >
                     <ThemedText
                       type="caption"
                       style={{
-                        color: !payerIsMe ? getAccent('indigo').main : theme.mutedForeground,
-                        fontWeight: '600',
+                        color: !payerIsMe
+                          ? getAccent("indigo").main
+                          : theme.mutedForeground,
+                        fontWeight: "600",
                       }}
                     >
-                      {t('theyWillPay')}
+                      {t("theyWillPay")}
                     </ThemedText>
                   </Pressable>
                 </View>
@@ -966,27 +1278,46 @@ function RequestDialogModal({
                     gap: 4,
                   }}
                 >
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
                     <ThemedText type="caption" muted>
-                      {payerIsMe ? t('grossPayment') : t('grossReceived')}:
+                      {payerIsMe ? t("grossPayment") : t("grossReceived")}:
                     </ThemedText>
-                    <ThemedText type="caption" style={{ fontWeight: '600' }}>
+                    <ThemedText type="caption" style={{ fontWeight: "600" }}>
                       {pointsBreakdown.gross} pts
                     </ThemedText>
                   </View>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <ThemedText type="caption" muted style={{ color: getAccent('red').main }}>
-                      {t('platformFeePercent', { percent: 10 })}:
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <ThemedText
+                      type="caption"
+                      muted
+                      style={{ color: getAccent("red").main }}
+                    >
+                      {t("platformFeePercent", { percent: 10 })}:
                     </ThemedText>
-                    <ThemedText type="caption" style={{ color: getAccent('red').main }}>
+                    <ThemedText
+                      type="caption"
+                      style={{ color: getAccent("red").main }}
+                    >
                       -{pointsBreakdown.fee} pts
                     </ThemedText>
                   </View>
                   <View
                     style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
                       paddingTop: 4,
                       marginTop: 2,
                       borderTopWidth: StyleSheet.hairlineWidth,
@@ -994,16 +1325,20 @@ function RequestDialogModal({
                     }}
                   >
                     <ThemedText type="label" style={{ fontSize: 12 }}>
-                      {payerIsMe ? t('totalYouPay') : t('netYouReceive')}:
+                      {payerIsMe ? t("totalYouPay") : t("netYouReceive")}:
                     </ThemedText>
                     <ThemedText
                       type="label"
                       style={{
                         fontSize: 12,
-                        color: payerIsMe ? getAccent('red').main : getAccent('emerald').main,
+                        color: payerIsMe
+                          ? getAccent("red").main
+                          : getAccent("emerald").main,
                       }}
                     >
-                      {payerIsMe ? `${pointsBreakdown.gross} pts` : `+${pointsBreakdown.net} pts`}
+                      {payerIsMe
+                        ? `${pointsBreakdown.gross} pts`
+                        : `+${pointsBreakdown.net} pts`}
                     </ThemedText>
                   </View>
                 </View>
@@ -1017,12 +1352,15 @@ function RequestDialogModal({
               style={{
                 padding: SPACING[3],
                 borderRadius: RADIUS.lg,
-                backgroundColor: getAccent('red').bg,
+                backgroundColor: getAccent("red").bg,
                 borderWidth: 1,
-                borderColor: getAccent('red').border,
+                borderColor: getAccent("red").border,
               }}
             >
-              <ThemedText type="caption" style={{ color: getAccent('red').main }}>
+              <ThemedText
+                type="caption"
+                style={{ color: getAccent("red").main }}
+              >
                 {errorMsg}
               </ThemedText>
             </View>
@@ -1037,7 +1375,7 @@ function RequestDialogModal({
           onPress={() => onOpenChange(false)}
           disabled={createRequestMutation.isPending}
         >
-          {t('cancel')}
+          {t("cancel")}
         </Button>
         <Button
           variant="default"
@@ -1052,7 +1390,7 @@ function RequestDialogModal({
             )
           }
         >
-          {createRequestMutation.isPending ? t('sending') : t('sendRequest')}
+          {createRequestMutation.isPending ? t("sending") : t("sendRequest")}
         </Button>
       </DialogFooter>
     </Dialog>
@@ -1071,7 +1409,7 @@ function RequestsList({
   currentUserId,
 }: {
   requests: any[];
-  direction: 'received' | 'sent';
+  direction: "received" | "sent";
   loading: boolean;
   refreshing: boolean;
   onRefresh: () => Promise<void>;
@@ -1079,7 +1417,7 @@ function RequestsList({
   currentUserId?: string;
 }) {
   const theme = useTheme();
-  const t = useT('matches');
+  const t = useT("matches");
 
   const acceptQ = useAcceptRequest();
   const rejectQ = useRejectRequest();
@@ -1112,32 +1450,44 @@ function RequestsList({
               <SkeletonText lines={4} />
             </View>
           ) : (
-            <View style={{ padding: SPACING[6], alignItems: 'center', gap: SPACING[3] }}>
+            <View
+              style={{
+                padding: SPACING[6],
+                alignItems: "center",
+                gap: SPACING[3],
+              }}
+            >
               <View
                 style={{
                   width: 52,
                   height: 52,
                   borderRadius: 26,
                   backgroundColor: theme.secondary,
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                {direction === 'received' ? (
+                {direction === "received" ? (
                   <Inbox size={24} color={theme.mutedForeground} />
                 ) : (
                   <Send size={24} color={theme.mutedForeground} />
                 )}
               </View>
-              <ThemedText type="cardTitle" style={{ textAlign: 'center' }}>
-                {direction === 'received'
-                  ? (t('noReceivedRequests') ?? 'No Received Requests')
-                  : (t('noSentRequests') ?? 'No Sent Requests')}
+              <ThemedText type="cardTitle" style={{ textAlign: "center" }}>
+                {direction === "received"
+                  ? (t("noReceivedRequests") ?? "No Received Requests")
+                  : (t("noSentRequests") ?? "No Sent Requests")}
               </ThemedText>
-              <ThemedText type="caption" muted style={{ textAlign: 'center', maxWidth: 280 }}>
-                {direction === 'received'
-                  ? (t('noReceivedRequestsDesc') ?? 'You don\'t have any incoming exchange requests right now.')
-                  : (t('noSentRequestsDesc') ?? 'You haven\'t sent any exchange requests yet. Explore matches to connect!')}
+              <ThemedText
+                type="caption"
+                muted
+                style={{ textAlign: "center", maxWidth: 280 }}
+              >
+                {direction === "received"
+                  ? (t("noReceivedRequestsDesc") ??
+                    "You don't have any incoming exchange requests right now.")
+                  : (t("noSentRequestsDesc") ??
+                    "You haven't sent any exchange requests yet. Explore matches to connect!")}
               </ThemedText>
             </View>
           )
@@ -1152,29 +1502,41 @@ function RequestsList({
               onAccept={async () => {
                 try {
                   await acceptQ.mutateAsync(item.id);
-                  toast.toast({ title: t('requestAccepted'), variant: 'success' });
+                  toast.toast({
+                    title: t("requestAccepted"),
+                    variant: "success",
+                  });
                 } catch (e: any) {
                   toast.toast({
-                    title: t('couldNotAccept'),
-                    description: e?.message ?? t('tryAgain'),
-                    variant: 'error',
+                    title: t("couldNotAccept"),
+                    description: e?.message ?? t("tryAgain"),
+                    variant: "error",
                   });
                 }
               }}
               onReject={async () => {
                 try {
                   await rejectQ.mutateAsync(item.id);
-                  toast.toast({ title: t('requestRejected'), variant: 'info' });
+                  toast.toast({ title: t("requestRejected"), variant: "info" });
                 } catch (e: any) {
-                  toast.toast({ title: t('couldNotRejectRequest'), variant: 'error' });
+                  toast.toast({
+                    title: t("couldNotRejectRequest"),
+                    variant: "error",
+                  });
                 }
               }}
               onCancel={async () => {
                 try {
                   await cancelQ.mutateAsync(item.id);
-                  toast.toast({ title: t('requestCancelled'), variant: 'info' });
+                  toast.toast({
+                    title: t("requestCancelled"),
+                    variant: "info",
+                  });
                 } catch (e: any) {
-                  toast.toast({ title: t('couldNotCancelRequest'), variant: 'error' });
+                  toast.toast({
+                    title: t("couldNotCancelRequest"),
+                    variant: "error",
+                  });
                 }
               }}
             />
@@ -1197,7 +1559,7 @@ export function RequestCard({
   currentUserId,
 }: {
   request: any;
-  direction: 'received' | 'sent';
+  direction: "received" | "sent";
   onOpen: () => void;
   onAccept?: () => Promise<void>;
   onReject?: () => Promise<void>;
@@ -1205,54 +1567,84 @@ export function RequestCard({
   currentUserId?: string;
 }) {
   const theme = useTheme();
-  const t = useT('matches');
+  const t = useT("matches");
   const statusColor = getRequestStatusColor(request.status);
   const { locale } = useI18n();
-  const otherUser = direction === 'received' ? request.sender : request.receiver;
+  const otherUser =
+    direction === "received" ? request.sender : request.receiver;
 
   const [confirmReject, setConfirmReject] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
 
-  const requestedSkillName = request.requestedSkill?.name || request.requestedSkillName || t('requestedSkill');
+  const requestedSkillName =
+    request.requestedSkill?.name ||
+    request.requestedSkillName ||
+    t("requestedSkill");
   const requestedSessions = request.requestedSkillSessions ?? 1;
   const requestedDuration = request.requestedSkillDuration ?? 60;
 
-  const offeredSkillName = request.offeredSkill?.name || request.offeredSkillName;
+  const offeredSkillName =
+    request.offeredSkill?.name || request.offeredSkillName;
   const offeredSessions = request.offeredSkillSessions ?? 1;
   const offeredDuration = request.offeredSkillDuration ?? 60;
 
-  const senderName = request.senderId === currentUserId ? t('youCap') : (request.sender?.name ?? t('sender'));
-  const receiverName = request.receiverId === currentUserId ? t('youCap') : (request.receiver?.name ?? t('receiver'));
+  const senderName =
+    request.senderId === currentUserId
+      ? t("youCap")
+      : (request.sender?.name ?? t("sender"));
+  const receiverName =
+    request.receiverId === currentUserId
+      ? t("youCap")
+      : (request.receiver?.name ?? t("receiver"));
 
   const getRequestStatusText = (status: string) => {
     switch (status) {
-      case 'PENDING': return t('statusPending');
-      case 'COMMITTED': return t('statusCommitted');
-      case 'REJECTED': return t('statusRejected');
-      case 'CANCELLED': return t('statusCancelled');
-      default: return status?.replace('_', ' ') ?? '';
+      case "PENDING":
+        return t("statusPending");
+      case "COMMITTED":
+        return t("statusCommitted");
+      case "REJECTED":
+        return t("statusRejected");
+      case "CANCELLED":
+        return t("statusCancelled");
+      default:
+        return status?.replace("_", " ") ?? "";
     }
   };
 
   return (
-    <PressableCard onPress={onOpen} variant="glass" style={{ padding: SPACING[4], gap: SPACING[3] }}>
+    <PressableCard
+      onPress={onOpen}
+      variant="glass"
+      style={{ padding: SPACING[4], gap: SPACING[3] }}
+    >
       {/* Header: User Avatar, Name, Status */}
-      <View style={{ flexDirection: 'row', gap: SPACING[3], alignItems: 'flex-start' }}>
-        <Avatar uri={otherUser?.image} fallback={otherUser?.name ?? 'U'} size={44} />
+      <View
+        style={{
+          flexDirection: "row",
+          gap: SPACING[3],
+          alignItems: "flex-start",
+        }}
+      >
+        <Avatar
+          uri={otherUser?.image}
+          fallback={otherUser?.name ?? "U"}
+          size={44}
+        />
         <View style={{ flex: 1, gap: 4 }}>
           <View
             style={{
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              flexDirection: "row",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
               gap: SPACING[1.5],
             }}
           >
             <ThemedText type="label" style={{ fontSize: FONT_SIZE.md }}>
-              {direction === 'received'
-                ? t('fromName', { name: otherUser?.name ?? t('user') })
-                : t('toName', { name: otherUser?.name ?? t('user') })}
+              {direction === "received"
+                ? t("fromName", { name: otherUser?.name ?? t("user") })
+                : t("toName", { name: otherUser?.name ?? t("user") })}
             </ThemedText>
             <Badge variant="accent" accent={statusColor}>
               {getRequestStatusText(request.status)}
@@ -1261,28 +1653,52 @@ export function RequestCard({
 
           {/* Requested & Offered Skills Breakdown */}
           <View style={{ gap: 4, marginTop: 2 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                flexWrap: "wrap",
+              }}
+            >
               <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                {direction === 'received' ? t('wantsToLearn') : t('requested')}
+                {direction === "received" ? t("wantsToLearn") : t("requested")}
               </ThemedText>
               <Badge variant="accent" accent="emerald">
                 {requestedSkillName}
               </Badge>
               <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                ({t('sessionCount', { count: requestedSessions, duration: requestedDuration })})
+                (
+                {t("sessionCount", {
+                  count: requestedSessions,
+                  duration: requestedDuration,
+                })}
+                )
               </ThemedText>
             </View>
 
             {offeredSkillName && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  flexWrap: "wrap",
+                }}
+              >
                 <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                  {t('offering')}
+                  {t("offering")}
                 </ThemedText>
                 <Badge variant="accent" accent="indigo">
                   {offeredSkillName}
                 </Badge>
                 <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                  ({t('sessionCount', { count: offeredSessions, duration: offeredDuration })})
+                  (
+                  {t("sessionCount", {
+                    count: offeredSessions,
+                    duration: offeredDuration,
+                  })}
+                  )
                 </ThemedText>
               </View>
             )}
@@ -1301,7 +1717,13 @@ export function RequestCard({
           borderColor: theme.border,
         }}
       >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <ThemedText type="caption" muted style={{ fontSize: 11 }}>
             {senderName}:
           </ThemedText>
@@ -1309,14 +1731,22 @@ export function RequestCard({
             type="caption"
             style={{
               fontSize: 11,
-              fontWeight: '600',
-              color: request.senderAgreed ? getAccent('emerald').main : getAccent('amber').main,
+              fontWeight: "600",
+              color: request.senderAgreed
+                ? getAccent("emerald").main
+                : getAccent("amber").main,
             }}
           >
-            {request.senderAgreed ? t('agreedCheck') : t('reviewing')}
+            {request.senderAgreed ? t("agreedCheck") : t("reviewing")}
           </ThemedText>
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <ThemedText type="caption" muted style={{ fontSize: 11 }}>
             {receiverName}:
           </ThemedText>
@@ -1324,11 +1754,13 @@ export function RequestCard({
             type="caption"
             style={{
               fontSize: 11,
-              fontWeight: '600',
-              color: request.receiverAgreed ? getAccent('emerald').main : getAccent('amber').main,
+              fontWeight: "600",
+              color: request.receiverAgreed
+                ? getAccent("emerald").main
+                : getAccent("amber").main,
             }}
           >
-            {request.receiverAgreed ? t('agreedCheck') : t('reviewing')}
+            {request.receiverAgreed ? t("agreedCheck") : t("reviewing")}
           </ThemedText>
         </View>
       </View>
@@ -1337,22 +1769,28 @@ export function RequestCard({
       {request.pointsProposal > 0 && (
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
+            flexDirection: "row",
+            alignItems: "center",
             gap: SPACING[2],
             paddingHorizontal: SPACING[3],
             paddingVertical: SPACING[2],
             borderRadius: RADIUS.md,
-            backgroundColor: getAccent('amber').bg,
+            backgroundColor: getAccent("amber").bg,
             borderWidth: 1,
-            borderColor: getAccent('amber').border,
+            borderColor: getAccent("amber").border,
           }}
         >
-          <Coins size={14} color={getAccent('amber').main} />
-          <ThemedText type="caption" style={{ color: getAccent('amber').main, fontWeight: '600' }}>
-            {t('pointsPaidBy', {
+          <Coins size={14} color={getAccent("amber").main} />
+          <ThemedText
+            type="caption"
+            style={{ color: getAccent("amber").main, fontWeight: "600" }}
+          >
+            {t("pointsPaidBy", {
               points: request.pointsProposal,
-              payer: request.pointsPayerId === currentUserId ? t('you') : (otherUser?.name ?? t('them')),
+              payer:
+                request.pointsPayerId === currentUserId
+                  ? t("you")
+                  : (otherUser?.name ?? t("them")),
             })}
           </ThemedText>
         </View>
@@ -1365,12 +1803,25 @@ export function RequestCard({
         onPress={onOpen}
         leftIcon={<MessageSquare size={14} color={theme.foreground} />}
       >
-        {t('viewExchange')}
+        {t("viewExchange")}
       </Button>
 
       {/* Date & Link */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 2 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[1] }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingTop: 2,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: SPACING[1],
+          }}
+        >
           <Clock size={12} color={theme.mutedForeground} />
           <ThemedText type="caption" muted>
             {formatDateShort(request.createdAt, locale)}
@@ -1379,8 +1830,14 @@ export function RequestCard({
       </View>
 
       {/* Action Buttons for Pending Requests */}
-      {direction === 'received' && request.status === 'PENDING' ? (
-        <View style={{ flexDirection: 'row', gap: SPACING[2], paddingTop: SPACING[1] }}>
+      {direction === "received" && request.status === "PENDING" ? (
+        <View
+          style={{
+            flexDirection: "row",
+            gap: SPACING[2],
+            paddingTop: SPACING[1],
+          }}
+        >
           <Button
             style={{ flex: 1 }}
             size="sm"
@@ -1389,9 +1846,11 @@ export function RequestCard({
               e?.stopPropagation?.();
               onAccept?.();
             }}
-            leftIcon={<CheckCircle2 size={14} color={theme.primaryForeground} />}
+            leftIcon={
+              <CheckCircle2 size={14} color={theme.primaryForeground} />
+            }
           >
-            {t('accept')}
+            {t("accept")}
           </Button>
           <Button
             size="sm"
@@ -1402,10 +1861,10 @@ export function RequestCard({
             }}
             leftIcon={<XCircle size={14} color="#fff" />}
           >
-            {t('reject')}
+            {t("reject")}
           </Button>
         </View>
-      ) : direction === 'sent' && request.status === 'PENDING' ? (
+      ) : direction === "sent" && request.status === "PENDING" ? (
         <View style={{ paddingTop: SPACING[1] }}>
           <Button
             size="sm"
@@ -1416,7 +1875,7 @@ export function RequestCard({
             }}
             leftIcon={<Ban size={14} color={theme.foreground} />}
           >
-            {t('cancelRequest')}
+            {t("cancelRequest")}
           </Button>
         </View>
       ) : null}
@@ -1424,18 +1883,18 @@ export function RequestCard({
       <AlertDialog
         open={confirmReject}
         onOpenChange={setConfirmReject}
-        title={t('rejectExchangeRequest')}
-        description={t('rejectExchangeRequestDesc')}
-        confirmLabel={t('reject')}
+        title={t("rejectExchangeRequest")}
+        description={t("rejectExchangeRequestDesc")}
+        confirmLabel={t("reject")}
         destructive
         onConfirm={() => onReject?.()}
       />
       <AlertDialog
         open={confirmCancel}
         onOpenChange={setConfirmCancel}
-        title={t('cancelExchangeRequest')}
-        description={t('cancelExchangeRequestDesc')}
-        confirmLabel={t('cancelRequest')}
+        title={t("cancelExchangeRequest")}
+        description={t("cancelExchangeRequestDesc")}
+        confirmLabel={t("cancelRequest")}
         destructive
         onConfirm={() => onCancel?.()}
       />

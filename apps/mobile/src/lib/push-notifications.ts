@@ -14,11 +14,9 @@ import * as Notifications from "expo-notifications";
 import { authClient } from "lib/auth";
 import { Platform } from "react-native";
 import EventSource from "react-native-sse";
-import * as Device from 'expo-device';
+import * as Device from "expo-device";
 
-const API_BASE = `${
-  process.env.EXPO_PUBLIC_API_BASE_URL!
-}/api`;
+const API_BASE = `${process.env.EXPO_PUBLIC_API_BASE_URL!}/api`;
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -44,7 +42,7 @@ function getNotifClient(): NotificationApiClient {
   if (!notifClient) {
     notifClient = createNotificationClient(API_BASE, async () => {
       const session = await authClient.getSession();
-        
+
       const headers: Record<string, string> = {};
 
       if (session?.data?.session?.token) {
@@ -56,9 +54,8 @@ function getNotifClient(): NotificationApiClient {
   return notifClient;
 }
 
-const projectId = 
-  Constants.expoConfig?.extra?.eas?.projectId ?? 
-  Constants.easConfig?.projectId;
+const projectId =
+  Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
 
 if (!projectId) {
   throw new Error("Project ID not found in app config");
@@ -100,7 +97,7 @@ export async function registerForPushNotifications(): Promise<PushTokenResult> {
       await setupAndroidChannels();
     }
 
-    // Wrap the backend call in a separate try/catch so network 
+    // Wrap the backend call in a separate try/catch so network
     // failures don't mask the fact that the token was generated successfully
     try {
       await getNotifClient().registerPushToken(token, Platform.OS);
@@ -207,32 +204,30 @@ export function setupRealtimeNotifications(
   onCountUpdate: () => void,
   onError?: (err: any) => void,
 ): () => void {
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const headers: Record<string, string> = {
+      Accept: "text/event-stream",
+      "Content-Type": "application/json",
+    };
 
-const getAuthHeaders = async (): Promise<Record<string, string>> => {
-  const headers: Record<string, string> = {
-    "Accept": "text/event-stream",
-    "Content-Type": "application/json",
-  };
-
-  // 1. Web relies on cookies (withCredentials: true), so headers stay empty
-  if (Platform.OS === 'web') {
-    return headers;
-  }
-
-  // 2. Mobile needs the explicit token from Better-Auth
-  try {
-    const session = await authClient.getSession();
-    
-    if (session?.data?.session?.token) {
-      headers['Authorization'] = `Bearer ${session.data.session.token}`;
+    // 1. Web relies on cookies (withCredentials: true), so headers stay empty
+    if (Platform.OS === "web") {
+      return headers;
     }
-  } catch (error) {
-    console.error("Failed to fetch Better-Auth token for SSE:", error);
-  }
 
-  return headers;
-};
+    // 2. Mobile needs the explicit token from Better-Auth
+    try {
+      const session = await authClient.getSession();
 
+      if (session?.data?.session?.token) {
+        headers["Authorization"] = `Bearer ${session.data.session.token}`;
+      }
+    } catch (error) {
+      console.error("Failed to fetch Better-Auth token for SSE:", error);
+    }
+
+    return headers;
+  };
 
   return createNotificationStream(
     API_BASE,

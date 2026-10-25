@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2-web.vercel.app";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_CLIENT_BASE_URL ||
+    "https://skil-ex2-web.vercel.app";
   const locales = ["en", "fr", "es", "pt"];
   // Publicly indexable routes
   const routes = ["", "/matches", "/sign-in", "/sign-up"];

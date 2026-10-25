@@ -1,16 +1,17 @@
 import type { BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
-import { Resend } from 'resend';
 import { PrismaClient } from '../generated/prisma/client';
 import { expo } from '@better-auth/expo';
 import { bearer, emailOTP } from 'better-auth/plugins';
 import { getDevExtraOrigins } from '../common/config/origins';
 import { isTrustedInternalRequest } from '../common/security/internal-auth';
+import type { EmailService } from '../email/email.service';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
+export const getAuthConfig = (
+  prisma: PrismaClient,
+  emailService: EmailService,
+): BetterAuthOptions => ({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
@@ -20,12 +21,8 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
     bearer(),
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
-        const fromEmail =
-          process.env.ONBOARDING_EMAIL_FROM || 'onboarding@richardkenneth.com';
-
         if (type === 'email-verification') {
-          await resend.emails.send({
-            from: fromEmail,
+          await emailService.send({
             to: email,
             subject: 'Verify your email address',
             html: `
@@ -44,8 +41,7 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
             `,
           });
         } else if (type === 'forget-password') {
-          await resend.emails.send({
-            from: fromEmail,
+          await emailService.send({
             to: email,
             subject: 'Reset your password',
             html: `
@@ -104,14 +100,22 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
     autoSignInAfterVerification: true,
   },
   socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    },
-    linkedin: {
-      clientId: process.env.LINKEDIN_CLIENT_ID!,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
-    },
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? {
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          },
+        }
+      : {}),
+    ...(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET
+      ? {
+          linkedin: {
+            clientId: process.env.LINKEDIN_CLIENT_ID,
+            clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+          },
+        }
+      : {}),
   },
   //todo: confirm if this is safe if at any time you need to uncomment
   // account: { skipStateCookieCheck: true },

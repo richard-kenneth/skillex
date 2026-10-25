@@ -170,7 +170,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 <User className="h-5 w-5" />
               </div>
               <div className="space-y-1">
-                <p className="font-semibold text-sm text-blue-500">{t("onboardingProfileTitle")}</p>
+                <p className="font-semibold text-sm text-blue-500">
+                  {t("onboardingProfileTitle")}
+                </p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {t("onboardingProfileDesc")}
                 </p>
@@ -195,9 +197,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                           className="bg-background/50 focus:bg-background transition-colors"
                         />
                       </FormControl>
-                      <FormDescription>
-                        {t("displayNameDesc")}
-                      </FormDescription>
+                      <FormDescription>{t("displayNameDesc")}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -282,9 +282,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      {t("bioDesc")}
-                    </FormDescription>
+                    <FormDescription>{t("bioDesc")}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -309,9 +307,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       <Card className="border-destructive/20 bg-destructive/5 overflow-hidden border">
         <CardHeader>
           <CardTitle className="text-destructive">{t("dangerZone")}</CardTitle>
-          <CardDescription>
-            {t("dangerZoneDesc")}
-          </CardDescription>
+          <CardDescription>{t("dangerZoneDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button

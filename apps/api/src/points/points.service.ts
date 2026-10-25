@@ -28,6 +28,38 @@ interface WebhookPayload {
   currency: string | null;
 }
 
+interface FlutterwaveCheckoutResponse {
+  status: string;
+  message?: string;
+  data?: {
+    link?: string;
+  };
+}
+
+interface FlutterwaveTransferResponse {
+  status: string;
+  message?: string;
+}
+
+export interface FlutterwaveBank {
+  id: number;
+  code: string;
+  name: string;
+}
+
+interface FlutterwaveBanksResponse {
+  status: string;
+  data?: FlutterwaveBank[];
+}
+
+interface FlutterwaveResolveResponse {
+  status: string;
+  message?: string;
+  data?: {
+    account_name?: string;
+  };
+}
+
 function readString(
   record: Record<string, unknown>,
   key: string,
@@ -88,7 +120,24 @@ export class PointsService {
     private readonly ratesService: RatesService,
     private readonly eventEmitter: EventEmitter2,
     private readonly posthogService: PostHogService,
-  ) {}
+  ) {
+    if (!this.paymentsEnabled) {
+      this.logger.log(
+        this.mockPaymentsEnabled
+          ? 'Payments disabled: using the local mock (no Flutterwave account required).'
+          : 'Payments disabled: set FLUTTERWAVE_SECRET_KEY and FLUTTERWAVE_WEBHOOK_SECRET_HASH to enable.',
+      );
+    }
+  }
+
+  /** Flutterwave is optional; without it, development uses a local mock. */
+  private get paymentsEnabled(): boolean {
+    return Boolean(process.env.FLUTTERWAVE_SECRET_KEY);
+  }
+
+  private get mockPaymentsEnabled(): boolean {
+    return !this.paymentsEnabled && process.env.NODE_ENV !== 'production';
+  }
 
   async getFeeConfig() {
     let config = await this.prisma.appConfig.findUnique({
@@ -146,7 +195,11 @@ export class PointsService {
 
     // Pure conversion: Points → Fiat, zero markup
     const baseFiatRaw = basePoints * POINT_TO_USD_RATE * rate;
-    const totalFiatRounded = applyCurrencyPrecision(baseFiatRaw, currency, rate);
+    const totalFiatRounded = applyCurrencyPrecision(
+      baseFiatRaw,
+      currency,
+      rate,
+    );
 
     const txRef = `pts_buy_${userId}_${Date.now()}`;
 
@@ -171,6 +224,55 @@ export class PointsService {
       targetPoints: basePoints,
       customer,
     };
+
+    if (!this.paymentsEnabled) {
+      if (!this.mockPaymentsEnabled) {
+        await this.prisma.pointsTransaction.update({
+          where: { id: ptsTrx.id },
+          data: {
+            status: 'FAILED',
+            description: 'Payments are not configured on this server',
+          },
+        });
+        throw new ServiceUnavailableException(
+          'Payments are not configured on this server.',
+        );
+      }
+
+      // Local development: credit the points immediately so contributors can
+      // exercise the full points flow without a Flutterwave account.
+      await this.prisma.$transaction(async (tx) => {
+        const claimed = await tx.pointsTransaction.updateMany({
+          where: { id: ptsTrx.id, status: 'PENDING' },
+          data: {
+            status: 'SUCCESS',
+            description: `Mock purchase of ${basePoints} points (local development)`,
+          },
+        });
+
+        if (claimed.count !== 1) return;
+
+        await tx.user.update({
+          where: { id: userId },
+          data: { pointsBalance: { increment: basePoints } },
+        });
+      });
+
+      this.logger.log(
+        `[Mock payment] Credited ${basePoints} points to ${userId}`,
+      );
+      this.eventEmitter.emit('points.purchased', {
+        userId,
+        amount: basePoints,
+      });
+      this.posthogService.capture(AnalyticsEvent.POINTS_PURCHASE_COMPLETED, {
+        userId,
+        points: basePoints,
+        txRef,
+      });
+
+      return { ...base, mock: true, credited: true };
+    }
 
     // Web: flutterwave-react-v3 opens its own inline modal client-side with this
     // data and the public key. Nothing more needed from here.
@@ -197,7 +299,7 @@ export class PointsService {
         customizations: { title: `${basePoints} points` },
       }),
     });
-    const flwData = await flwRes.json();
+    const flwData = (await flwRes.json()) as FlutterwaveCheckoutResponse;
 
     if (flwData.status !== 'success') {
       await this.prisma.pointsTransaction.update({
@@ -210,7 +312,7 @@ export class PointsService {
       throw new BadRequestException('Could not start the payment');
     }
 
-    return { ...base, paymentLink: flwData.data.link as string };
+    return { ...base, paymentLink: flwData.data?.link };
   }
 
   async verifyWebhook(signature: string, payload: unknown) {
@@ -429,6 +531,41 @@ export class PointsService {
     });
 
     const flutterwaveUrl = 'https://api.flutterwave.com/v3/transfers';
+
+    if (!this.paymentsEnabled) {
+      if (!this.mockPaymentsEnabled) {
+        await this.refundWithdrawal(userId, wt.id, data.amount);
+        throw new ServiceUnavailableException(
+          'Payments are not configured on this server.',
+        );
+      }
+
+      await this.prisma.pointsTransaction.update({
+        where: { id: wt.id },
+        data: {
+          status: 'SUCCESS',
+          description: `Mock withdrawal of ${data.amount} points (local development)`,
+        },
+      });
+
+      this.logger.log(
+        `[Mock payment] Withdrew ${data.amount} points for ${userId} (${amountToTransfer} NGN)`,
+      );
+      this.eventEmitter.emit('points.withdrawn', {
+        userId,
+        amount: data.amount,
+        status: 'SUCCESS',
+      });
+
+      return {
+        success: true,
+        mock: true,
+        message: 'Mock withdrawal completed (local development)',
+        reference,
+        amountToTransfer,
+      };
+    }
+
     try {
       const response = await fetch(flutterwaveUrl, {
         method: 'POST',
@@ -446,7 +583,7 @@ export class PointsService {
         }),
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as FlutterwaveTransferResponse;
       if (result.status !== 'success') {
         throw new Error(`Flutterwave transfer failed: ${result.message}`);
       }
@@ -475,19 +612,7 @@ export class PointsService {
     } catch (error) {
       this.logger.error(`Withdrawal failed for ${userId}`, error);
       // Revert points deduction on immediate failure
-      await this.prisma.$transaction(async (tx) => {
-        await tx.user.update({
-          where: { id: userId },
-          data: { pointsBalance: { increment: data.amount } },
-        });
-        await tx.pointsTransaction.update({
-          where: { id: wt.id },
-          data: {
-            status: 'FAILED',
-            description: `Refunded ${data.amount} points due to failed withdrawal`,
-          },
-        });
-      });
+      await this.refundWithdrawal(userId, wt.id, data.amount);
 
       this.eventEmitter.emit('points.withdrawn', {
         userId,
@@ -504,14 +629,43 @@ export class PointsService {
     }
   }
 
+  private async refundWithdrawal(
+    userId: string,
+    transactionId: string,
+    amount: number,
+  ) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { pointsBalance: { increment: amount } },
+      });
+      await tx.pointsTransaction.update({
+        where: { id: transactionId },
+        data: {
+          status: 'FAILED',
+          description: `Refunded ${amount} points due to failed withdrawal`,
+        },
+      });
+    });
+  }
+
   async getBanks() {
+    if (!this.paymentsEnabled) {
+      if (!this.mockPaymentsEnabled) return [];
+
+      return [
+        { id: 1, code: '000', name: 'SkillEx Test Bank' },
+        { id: 2, code: '001', name: 'Demo Microfinance Bank' },
+      ];
+    }
+
     try {
       const response = await fetch('https://api.flutterwave.com/v3/banks/NG', {
         headers: {
           Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
         },
       });
-      const result = await response.json();
+      const result = (await response.json()) as FlutterwaveBanksResponse;
       return result.data || [];
     } catch (error) {
       this.logger.error('Failed to fetch banks', error);
@@ -695,6 +849,21 @@ export class PointsService {
   }
 
   async resolveAccount(account_number: string, account_bank: string) {
+    if (!this.paymentsEnabled) {
+      if (!this.mockPaymentsEnabled) {
+        return {
+          success: false,
+          message: 'Payments are not configured on this server.',
+        };
+      }
+
+      return {
+        success: true,
+        accountName: 'SkillEx Test Account',
+        mock: true,
+      };
+    }
+
     try {
       const response = await fetch(
         'https://api.flutterwave.com/v3/accounts/resolve',
@@ -707,9 +876,12 @@ export class PointsService {
           body: JSON.stringify({ account_number, account_bank }),
         },
       );
-      const result = await response.json();
+      const result = (await response.json()) as FlutterwaveResolveResponse;
       if (result.status === 'success') {
-        return { success: true, accountName: result.data.account_name };
+        return {
+          success: true,
+          accountName: result.data?.account_name,
+        };
       }
       return { success: false, message: result.message };
     } catch (error) {

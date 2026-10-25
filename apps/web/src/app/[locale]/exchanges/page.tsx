@@ -20,7 +20,11 @@ const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
   return {
@@ -82,9 +86,12 @@ export default async function ExchangesPage() {
   }
 
   const reqHeaders = new Headers(await headers());
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/exchanges`, {
-    headers: reqHeaders,
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/exchanges`,
+    {
+      headers: reqHeaders,
+    },
+  );
 
   const exchanges: Exchange[] = res.ok ? await res.json() : [];
 
@@ -195,9 +202,11 @@ export default async function ExchangesPage() {
                       <div className="flex items-center gap-2 text-sm">
                         <Coins className="h-4 w-4 text-amber-400" />
                         <span className="text-amber-400 font-medium">
-                          {exchange.pointsPayerId === session.user.id 
-                            ? calculatePointsBreakdown(exchange.pointsAmount).gross
-                            : calculatePointsBreakdown(exchange.pointsAmount).net}{" "}
+                          {exchange.pointsPayerId === session.user.id
+                            ? calculatePointsBreakdown(exchange.pointsAmount)
+                                .gross
+                            : calculatePointsBreakdown(exchange.pointsAmount)
+                                .net}{" "}
                           {tc("points")}
                         </span>
                         {exchange.escrowLocked && (

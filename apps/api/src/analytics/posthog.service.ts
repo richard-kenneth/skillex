@@ -1,9 +1,6 @@
 import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 import { PostHog } from 'posthog-node';
-import {
-  AnalyticsEvent,
-  type AnalyticsEventProperties,
-} from '@skillex/shared';
+import { AnalyticsEvent, type AnalyticsEventProperties } from '@skillex/shared';
 
 export { AnalyticsEvent };
 export type { AnalyticsEventProperties };

@@ -1,39 +1,51 @@
-import React from 'react';
-import { Pressable, PressableProps, StyleSheet, View, ViewProps } from 'react-native';
+import React from "react";
+import {
+  Pressable,
+  PressableProps,
+  StyleSheet,
+  View,
+  ViewProps,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-} from 'react-native-reanimated';
-import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { RADIUS, SPACING, SHADOWS, TYPOGRAPHY } from '@/constants/theme';
+} from "react-native-reanimated";
+import { ThemedText } from "@/components/themed-text";
+import { useTheme } from "@/hooks/use-theme";
+import { RADIUS, SPACING, SHADOWS, TYPOGRAPHY } from "@/constants/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export interface CardProps extends ViewProps {
-  variant?: 'default' | 'glass' | 'accent' | 'outline';
+  variant?: "default" | "glass" | "accent" | "outline";
   glow?: boolean;
 }
 
-export function Card({ style, children, variant = 'default', glow, ...rest }: CardProps) {
+export function Card({
+  style,
+  children,
+  variant = "default",
+  glow,
+  ...rest
+}: CardProps) {
   const theme = useTheme();
 
   const getVariantStyle = () => {
     switch (variant) {
-      case 'glass':
+      case "glass":
         return {
           backgroundColor: theme.glassBackground,
           borderColor: theme.glassBorder,
         };
-      case 'accent':
+      case "accent":
         return {
           backgroundColor: theme.secondary,
           borderColor: theme.border,
         };
-      case 'outline':
+      case "outline":
         return {
-          backgroundColor: 'transparent',
+          backgroundColor: "transparent",
           borderColor: theme.border,
         };
       default:
@@ -48,9 +60,9 @@ export function Card({ style, children, variant = 'default', glow, ...rest }: Ca
     <View
       style={[
         {
-          borderRadius: RADIUS['2xl'],
+          borderRadius: RADIUS["2xl"],
           borderWidth: 1,
-          overflow: 'hidden',
+          overflow: "hidden",
         },
         getVariantStyle(),
         style,
@@ -63,14 +75,14 @@ export function Card({ style, children, variant = 'default', glow, ...rest }: Ca
 }
 
 export interface PressableCardProps extends PressableProps {
-  variant?: 'default' | 'glass' | 'accent' | 'outline';
+  variant?: "default" | "glass" | "accent" | "outline";
   glow?: boolean;
 }
 
 export function PressableCard({
   style,
   children,
-  variant = 'default',
+  variant = "default",
   glow,
   onPressIn,
   onPressOut,
@@ -95,19 +107,19 @@ export function PressableCard({
 
   const getVariantStyle = () => {
     switch (variant) {
-      case 'glass':
+      case "glass":
         return {
           backgroundColor: theme.glassBackground,
           borderColor: theme.glassBorder,
         };
-      case 'accent':
+      case "accent":
         return {
           backgroundColor: theme.secondary,
           borderColor: theme.border,
         };
-      case 'outline':
+      case "outline":
         return {
-          backgroundColor: 'transparent',
+          backgroundColor: "transparent",
           borderColor: theme.border,
         };
       default:
@@ -124,9 +136,9 @@ export function PressableCard({
       onPressOut={handlePressOut}
       style={[
         {
-          borderRadius: RADIUS['2xl'],
+          borderRadius: RADIUS["2xl"],
           borderWidth: 1,
-          overflow: 'hidden',
+          overflow: "hidden",
         },
         getVariantStyle(),
         animatedStyle,
@@ -143,13 +155,23 @@ export function PressableCard({
 
 export function CardHeader({ style, children, ...rest }: ViewProps) {
   return (
-    <View style={[{ padding: SPACING[4], paddingBottom: SPACING[2], gap: SPACING[0.5] }, style]} {...rest}>
+    <View
+      style={[
+        { padding: SPACING[4], paddingBottom: SPACING[2], gap: SPACING[0.5] },
+        style,
+      ]}
+      {...rest}
+    >
       {children}
     </View>
   );
 }
 
-export function CardTitle({ children, style, numberOfLines }: {
+export function CardTitle({
+  children,
+  style,
+  numberOfLines,
+}: {
   children: React.ReactNode;
   style?: any;
   numberOfLines?: number;
@@ -161,13 +183,22 @@ export function CardTitle({ children, style, numberOfLines }: {
   );
 }
 
-export function CardDescription({ children, style, numberOfLines }: {
+export function CardDescription({
+  children,
+  style,
+  numberOfLines,
+}: {
   children: React.ReactNode;
   style?: any;
   numberOfLines?: number;
 }) {
   return (
-    <ThemedText type="caption" muted style={[{ marginTop: 2 }, style]} numberOfLines={numberOfLines}>
+    <ThemedText
+      type="caption"
+      muted
+      style={[{ marginTop: 2 }, style]}
+      numberOfLines={numberOfLines}
+    >
       {children}
     </ThemedText>
   );
@@ -175,7 +206,13 @@ export function CardDescription({ children, style, numberOfLines }: {
 
 export function CardContent({ style, children, ...rest }: ViewProps) {
   return (
-    <View style={[{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[4] }, style]} {...rest}>
+    <View
+      style={[
+        { paddingHorizontal: SPACING[4], paddingBottom: SPACING[4] },
+        style,
+      ]}
+      {...rest}
+    >
       {children}
     </View>
   );
@@ -190,9 +227,9 @@ export function CardFooter({ style, children, ...rest }: ViewProps) {
           padding: SPACING[4],
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: theme.border,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
         },
         style,
       ]}

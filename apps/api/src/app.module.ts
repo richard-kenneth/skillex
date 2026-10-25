@@ -25,10 +25,13 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { WaitlistModule } from './waitlist/waitlist.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { validateEnv } from './config/env.validation';
+import { EmailModule } from './email/email.module';
+import type { RedisOptions } from 'ioredis';
 
 @Module({
   imports: [
     AnalyticsModule,
+    EmailModule,
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
@@ -44,7 +47,7 @@ import { validateEnv } from './config/env.validation';
     RedisModule,
     BullModule.forRootAsync({
       imports: [RedisModule],
-      useFactory: (redisConfig) => ({
+      useFactory: (redisConfig: RedisOptions) => ({
         connection: redisConfig,
       }),
       inject: [REDIS_CONFIG],

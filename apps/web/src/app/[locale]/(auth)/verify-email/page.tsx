@@ -112,9 +112,7 @@ function VerifyEmailContent() {
           <CardTitle className="text-3xl font-bold tracking-tight">
             {t("verifyEmailTitle")}
           </CardTitle>
-          <CardDescription>
-            {t("verifyEmailDesc")}
-          </CardDescription>
+          <CardDescription>{t("verifyEmailDesc")}</CardDescription>
           {email && (
             <p className="text-sm text-muted-foreground font-medium mt-1">
               {email}
@@ -122,11 +120,7 @@ function VerifyEmailContent() {
           )}
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-6">
-          <InputOTP
-            maxLength={6}
-            value={otp}
-            onChange={setOtp}
-          >
+          <InputOTP maxLength={6} value={otp} onChange={setOtp}>
             <InputOTPGroup>
               <InputOTPSlot index={0} />
               <InputOTPSlot index={1} />

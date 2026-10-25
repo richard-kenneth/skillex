@@ -964,7 +964,7 @@ export class ExchangesService {
     const updatedRequest = await this.prisma.exchangeRequest.update({
       where: { id: requestId },
       data: {
-        [availabilityField]: data as any,
+        [availabilityField]: data,
       },
       include: {
         sender: { select: { id: true, name: true, image: true } },
@@ -1016,8 +1016,10 @@ export class ExchangesService {
       throw new ForbiddenException('You are not part of this exchange');
     }
 
-    const myReview = exchange.reviews.find((r) => r.reviewerId === userId) || null;
-    const theirReview = exchange.reviews.find((r) => r.reviewerId !== userId) || null;
+    const myReview =
+      exchange.reviews.find((r) => r.reviewerId === userId) || null;
+    const theirReview =
+      exchange.reviews.find((r) => r.reviewerId !== userId) || null;
 
     return {
       ...exchange,
@@ -1164,10 +1166,7 @@ export class ExchangesService {
 
       // Apply facilitation fee to both participants (platform revenue on every swap)
       await Promise.allSettled([
-        this.pointsService.applyFacilitationFee(
-          exchange.senderId,
-          exchangeId,
-        ),
+        this.pointsService.applyFacilitationFee(exchange.senderId, exchangeId),
         this.pointsService.applyFacilitationFee(
           exchange.receiverId,
           exchangeId,
@@ -1242,7 +1241,8 @@ export class ExchangesService {
       exchangeId: exchange.id,
       messageId: message.id,
       senderId: userId,
-      receiverId: userId === exchange.senderId ? exchange.receiverId : exchange.senderId,
+      receiverId:
+        userId === exchange.senderId ? exchange.receiverId : exchange.senderId,
       content: content || (fileKey ? 'Sent an attachment' : ''),
     });
 

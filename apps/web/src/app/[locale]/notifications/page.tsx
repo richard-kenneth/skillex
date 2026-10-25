@@ -22,7 +22,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useSession } from "@/lib/auth-client";
@@ -62,7 +68,9 @@ export default function NotificationsPage() {
   const { data: session, isPending: isSessionLoading } = useSession();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<"all" | "exchanges" | "points" | "system">("all");
+  const [activeTab, setActiveTab] = useState<
+    "all" | "exchanges" | "points" | "system"
+  >("all");
   const [isPushSupported, setIsPushSupported] = useState(false);
   const [isPermissionGranted, setIsPermissionGranted] = useState(false);
 
@@ -75,7 +83,8 @@ export default function NotificationsPage() {
   useEffect(() => {
     setIsPushSupported("serviceWorker" in navigator && "PushManager" in window);
     setIsPermissionGranted(
-      typeof window !== "undefined" && (Notification as any).permission === "granted"
+      typeof window !== "undefined" &&
+        window.Notification.permission === "granted",
     );
   }, []);
 
@@ -85,7 +94,7 @@ export default function NotificationsPage() {
     queryFn: async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/notifications`,
-        { credentials: "include" }
+        { credentials: "include" },
       );
       if (!res.ok) throw new Error("Failed to fetch notifications");
       return res.json();
@@ -98,7 +107,7 @@ export default function NotificationsPage() {
     queryFn: async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/users/me`,
-        { credentials: "include" }
+        { credentials: "include" },
       );
       if (!res.ok) throw new Error("Failed to fetch profile");
       return res.json();
@@ -116,12 +125,14 @@ export default function NotificationsPage() {
     mutationFn: async (id: string) => {
       await fetch(
         `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/notifications/${id}/read`,
-        { method: "PATCH", credentials: "include" }
+        { method: "PATCH", credentials: "include" },
       );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["unread-notifications-count"],
+      });
     },
   });
 
@@ -129,12 +140,14 @@ export default function NotificationsPage() {
     mutationFn: async (id: string) => {
       await fetch(
         `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/notifications/${id}`,
-        { method: "DELETE", credentials: "include" }
+        { method: "DELETE", credentials: "include" },
       );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["unread-notifications-count"],
+      });
       toast.success(t("deletedSuccess"));
     },
   });
@@ -143,12 +156,14 @@ export default function NotificationsPage() {
     mutationFn: async () => {
       await fetch(
         `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/notifications/read-all`,
-        { method: "PATCH", credentials: "include" }
+        { method: "PATCH", credentials: "include" },
       );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["unread-notifications-count"],
+      });
       toast.success(t("markedAllReadSuccess"));
     },
   });
@@ -162,13 +177,15 @@ export default function NotificationsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updated),
           credentials: "include",
-        }
+        },
       );
       if (!res.ok) throw new Error("Failed to update preferences");
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-profile-notifications"] });
+      queryClient.invalidateQueries({
+        queryKey: ["user-profile-notifications"],
+      });
       toast.success(t("preferencesSaved"));
     },
   });
@@ -184,7 +201,7 @@ export default function NotificationsPage() {
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
       const permission = await Notification.requestPermission();
-      
+
       if (permission !== "granted") {
         toast.error(t("pushDenied"));
         return;
@@ -212,7 +229,7 @@ export default function NotificationsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(subscription),
           credentials: "include",
-        }
+        },
       );
 
       if (!res.ok) throw new Error("Server failed to save subscription");
@@ -222,7 +239,7 @@ export default function NotificationsPage() {
       // Trigger a test push notification
       await fetch(
         `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/notifications/test-push`,
-        { method: "POST", credentials: "include" }
+        { method: "POST", credentials: "include" },
       );
     } catch (err) {
       console.error(err);
@@ -251,12 +268,14 @@ export default function NotificationsPage() {
           "SESSION_COMPLETED",
           "SESSION_CANCELLED",
           "SESSION_REMINDER",
-        ].includes(n.type)
+        ].includes(n.type),
       );
     }
     if (activeTab === "points") {
       return notifications.filter((n) =>
-        ["POINTS_RECEIVED", "POINTS_WITHDREW", "REFERRAL_APPLIED"].includes(n.type)
+        ["POINTS_RECEIVED", "POINTS_WITHDREW", "REFERRAL_APPLIED"].includes(
+          n.type,
+        ),
       );
     }
     if (activeTab === "system") {
@@ -276,7 +295,7 @@ export default function NotificationsPage() {
             "POINTS_RECEIVED",
             "POINTS_WITHDREW",
             "REFERRAL_APPLIED",
-          ].includes(n.type)
+          ].includes(n.type),
       );
     }
     return notifications;
@@ -316,7 +335,8 @@ export default function NotificationsPage() {
       case "POINTS_WITHDREW":
         return {
           icon: Coins,
-          colorClass: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+          colorClass:
+            "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
         };
       case "REFERRAL_APPLIED":
         return {
@@ -341,9 +361,7 @@ export default function NotificationsPage() {
           <h1 className="text-3xl font-bold tracking-tight text-white">
             {t("title")}
           </h1>
-          <p className="text-zinc-400">
-            {t("subtitle")}
-          </p>
+          <p className="text-zinc-400">{t("subtitle")}</p>
         </div>
 
         {unreadFilteredCount > 0 && (
@@ -371,7 +389,7 @@ export default function NotificationsPage() {
                   "flex-1 py-2 text-xs font-semibold rounded-lg capitalize transition-all cursor-pointer",
                   activeTab === tab
                     ? "bg-zinc-900 text-white shadow-sm border border-white/5"
-                    : "text-zinc-400 hover:text-white"
+                    : "text-zinc-400 hover:text-white",
                 )}
               >
                 {t(`tabs.${tab}`)}
@@ -411,13 +429,13 @@ export default function NotificationsPage() {
                           "flex items-start gap-4 p-5 transition-all relative group",
                           notification.read
                             ? "bg-transparent"
-                            : "bg-primary/5 border-l-2 border-primary"
+                            : "bg-primary/5 border-l-2 border-primary",
                         )}
                       >
                         <div
                           className={cn(
                             "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border shadow-inner",
-                            config.colorClass
+                            config.colorClass,
                           )}
                         >
                           <Icon className="h-5 w-5" />
@@ -428,28 +446,31 @@ export default function NotificationsPage() {
                             <h4
                               className={cn(
                                 "text-sm font-semibold",
-                                notification.read ? "text-zinc-400" : "text-white"
+                                notification.read
+                                  ? "text-zinc-400"
+                                  : "text-white",
                               )}
                             >
                               {notification.title}
                             </h4>
                             <span className="text-xs text-zinc-500">
-                              {new Date(notification.createdAt).toLocaleDateString(
-                                undefined,
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
+                              {new Date(
+                                notification.createdAt,
+                              ).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </span>
                           </div>
 
                           <p
                             className={cn(
                               "text-sm leading-relaxed pr-6",
-                              notification.read ? "text-zinc-500" : "text-zinc-300"
+                              notification.read
+                                ? "text-zinc-500"
+                                : "text-zinc-300",
                             )}
                           >
                             {notification.message}
@@ -462,7 +483,7 @@ export default function NotificationsPage() {
                                 onClick={() =>
                                   handleNotificationClick(
                                     notification.id,
-                                    notification.read
+                                    notification.read,
                                   )
                                 }
                                 className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"
@@ -479,7 +500,9 @@ export default function NotificationsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => markAsReadMutation.mutate(notification.id)}
+                              onClick={() =>
+                                markAsReadMutation.mutate(notification.id)
+                              }
                               className="h-8 w-8 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-900 border border-transparent hover:border-white/5"
                               title={t("markRead")}
                             >
@@ -489,7 +512,9 @@ export default function NotificationsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => deleteMutation.mutate(notification.id)}
+                            onClick={() =>
+                              deleteMutation.mutate(notification.id)
+                            }
                             className="h-8 w-8 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-950/20 border border-transparent hover:border-red-950/40"
                             title={t("delete")}
                           >
@@ -550,13 +575,17 @@ export default function NotificationsPage() {
                       }
                       className={cn(
                         "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none",
-                        preferences.inAppNotifications ? "bg-primary" : "bg-zinc-800"
+                        preferences.inAppNotifications
+                          ? "bg-primary"
+                          : "bg-zinc-800",
                       )}
                     >
                       <span
                         className={cn(
                           "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                          preferences.inAppNotifications ? "translate-x-4" : "translate-x-0"
+                          preferences.inAppNotifications
+                            ? "translate-x-4"
+                            : "translate-x-0",
                         )}
                       />
                     </button>
@@ -585,13 +614,17 @@ export default function NotificationsPage() {
                       }
                       className={cn(
                         "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none",
-                        preferences.emailNotifications ? "bg-primary" : "bg-zinc-800"
+                        preferences.emailNotifications
+                          ? "bg-primary"
+                          : "bg-zinc-800",
                       )}
                     >
                       <span
                         className={cn(
                           "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                          preferences.emailNotifications ? "translate-x-4" : "translate-x-0"
+                          preferences.emailNotifications
+                            ? "translate-x-4"
+                            : "translate-x-0",
                         )}
                       />
                     </button>
@@ -623,7 +656,7 @@ export default function NotificationsPage() {
                         "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none disabled:opacity-40 disabled:cursor-not-allowed",
                         preferences.pushNotifications && isPermissionGranted
                           ? "bg-primary"
-                          : "bg-zinc-800"
+                          : "bg-zinc-800",
                       )}
                     >
                       <span
@@ -631,7 +664,7 @@ export default function NotificationsPage() {
                           "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
                           preferences.pushNotifications && isPermissionGranted
                             ? "translate-x-4"
-                            : "translate-x-0"
+                            : "translate-x-0",
                         )}
                       />
                     </button>

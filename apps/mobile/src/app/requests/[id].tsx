@@ -16,7 +16,6 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useT } from "lib/i18n";
 import {
-
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
@@ -127,7 +126,7 @@ const POINT_PRESETS = [0, 10, 25, 50, 100];
 export default function RequestDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const t = useT('requests');
+  const t = useT("requests");
   const router = useRouter();
 
   const insets = useSafeAreaInsets();
@@ -185,7 +184,7 @@ export default function RequestDetailScreen() {
   const balance =
     typeof balanceQ.data === "number"
       ? balanceQ.data
-      : (balanceQ.data as any)?.balance ?? 0;
+      : ((balanceQ.data as any)?.balance ?? 0);
   const isSender = request?.senderId === currentUserId;
   const otherUser = isSender ? request?.receiver : request?.sender;
   const amIAgreed = isSender
@@ -520,7 +519,10 @@ export default function RequestDetailScreen() {
                       requestId: id!,
                       payload: { messageKey: key as any },
                     });
-                    toast.toast({ title: t("messageSent"), variant: "success" });
+                    toast.toast({
+                      title: t("messageSent"),
+                      variant: "success",
+                    });
                     await q.refetch();
                   } catch (e: any) {
                     toast.toast({
@@ -759,7 +761,7 @@ export default function RequestDetailScreen() {
       <ActionSheet
         open={actionsOpen}
         onClose={() => setActionsOpen(false)}
-        title={t('requestActions')}
+        title={t("requestActions")}
         options={[
           {
             label: t("viewPartnerProfile"),
@@ -778,9 +780,7 @@ export default function RequestDetailScreen() {
                 },
                 {
                   label: t("rejectRequestAction"),
-                  icon: (
-                    <XCircle size={18} color={theme.destructive as any} />
-                  ),
+                  icon: <XCircle size={18} color={theme.destructive as any} />,
                   onPress: () => setConfirmReject(true),
                 },
               ]
@@ -819,7 +819,10 @@ export default function RequestDetailScreen() {
         }
         description={
           hasInsufficientPointsToAccept
-            ? t("insufficientPointsAcceptDesc", { required: request?.pointsProposal ?? 0, balance })
+            ? t("insufficientPointsAcceptDesc", {
+                required: request?.pointsProposal ?? 0,
+                balance,
+              })
             : t("confirmAcceptTermsDesc", {
                 requestedSkill: request?.requestedSkill?.name ?? "",
                 requestedSessions: request?.requestedSkillSessions || 1,
@@ -853,14 +856,16 @@ export default function RequestDetailScreen() {
       <AlertDialog
         open={confirmReject}
         onOpenChange={setConfirmReject}
-        title={t('rejectRequest')}
-        description={t('rejectRequestDesc')}
-        confirmLabel={t('reject')}
+        title={t("rejectRequest")}
+        description={t("rejectRequestDesc")}
+        confirmLabel={t("reject")}
         destructive
         onConfirm={async () => {
           try {
             await rejectQ.mutateAsync(id!);
-            track(AnalyticsEvent.EXCHANGE_REQUEST_REJECTED, { request_id: id! });
+            track(AnalyticsEvent.EXCHANGE_REQUEST_REJECTED, {
+              request_id: id!,
+            });
             toast.toast({ title: t("requestRejected"), variant: "info" });
             router.back();
           } catch (e: any) {
@@ -877,14 +882,16 @@ export default function RequestDetailScreen() {
       <AlertDialog
         open={confirmCancel}
         onOpenChange={setConfirmCancel}
-        title={t('cancelYourRequest')}
-        description={t('cancelYourRequestDesc')}
-        confirmLabel={t('cancelRequest')}
+        title={t("cancelYourRequest")}
+        description={t("cancelYourRequestDesc")}
+        confirmLabel={t("cancelRequest")}
         destructive
         onConfirm={async () => {
           try {
             await cancelQ.mutateAsync(id!);
-            track(AnalyticsEvent.EXCHANGE_REQUEST_CANCELLED, { request_id: id! });
+            track(AnalyticsEvent.EXCHANGE_REQUEST_CANCELLED, {
+              request_id: id!,
+            });
             toast.toast({ title: t("requestCancelled"), variant: "info" });
             router.back();
           } catch (e: any) {
@@ -917,8 +924,8 @@ function HeaderHeroCard({
 }) {
   const theme = useTheme();
   const router = useRouter();
-  const t = useT('requests');
-  const c = useT('common');
+  const t = useT("requests");
+  const c = useT("common");
 
   const peerAvail = getPeerAvailabilityInfo(request, isSender, otherUser, t);
 
@@ -1013,7 +1020,7 @@ function HeaderHeroCard({
                   >
                     {isSender
                       ? request.requestedSkill?.name
-                      : request.offeredSkill?.name ?? "—"}
+                      : (request.offeredSkill?.name ?? "—")}
                   </ThemedText>
                 </View>
               </View>
@@ -1058,7 +1065,7 @@ function HeaderHeroCard({
                       >
                         {isSender
                           ? request.offeredSkill?.name
-                          : request.requestedSkill?.name ?? "—"}
+                          : (request.requestedSkill?.name ?? "—")}
                       </ThemedText>
                     </View>
                   </View>
@@ -1085,7 +1092,10 @@ function HeaderHeroCard({
                   type="smallBold"
                   style={{ fontSize: 11, color: theme.foreground }}
                 >
-                  {t("peerAvailabilityTitle", { name: otherUser?.name ?? c("peer") })}: {peerAvail.days}
+                  {t("peerAvailabilityTitle", {
+                    name: otherUser?.name ?? c("peer"),
+                  })}
+                  : {peerAvail.days}
                 </ThemedText>
                 <ThemedText
                   type="small"
@@ -1108,7 +1118,9 @@ function HeaderHeroCard({
                 type="small"
                 style={{ fontSize: 11, color: theme.mutedForeground }}
               >
-                {t("requestCreatedDate", { date: formatDateTimeShort(request.createdAt) })}
+                {t("requestCreatedDate", {
+                  date: formatDateTimeShort(request.createdAt),
+                })}
               </ThemedText>
             </View>
           </>
@@ -1145,8 +1157,8 @@ function ChatTabSection({
 }) {
   // 1. Declare ALL hooks at the top level
   const theme = useTheme();
-  const t = useT('requests');
-  const c = useT('common');
+  const t = useT("requests");
+  const c = useT("common");
   const chatScrollRef = React.useRef<ScrollView>(null);
 
   const messages = request?.messages ?? [];
@@ -1200,8 +1212,12 @@ function ChatTabSection({
             {t("currentProposedTerms")}
           </ThemedText>
           <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.xs }}>
-            {request.requestedSkill?.name}: {request.requestedSkillSessions || 1}x {request.requestedSkillDuration || 60}m
-            {(request.pointsProposal ?? 0) > 0 ? ` · ${request.pointsProposal} ${c("points")}` : ""}
+            {request.requestedSkill?.name}:{" "}
+            {request.requestedSkillSessions || 1}x{" "}
+            {request.requestedSkillDuration || 60}m
+            {(request.pointsProposal ?? 0) > 0
+              ? ` · ${request.pointsProposal} ${c("points")}`
+              : ""}
           </ThemedText>
         </View>
         <View
@@ -1637,8 +1653,8 @@ function TermsTabSection({
   onGoToExchange,
 }: any) {
   const theme = useTheme();
-  const t = useT('requests');
-  const c = useT('common');
+  const t = useT("requests");
+  const c = useT("common");
 
   if (loading) {
     return (
@@ -1791,7 +1807,8 @@ function TermsTabSection({
                           marginTop: 2,
                         }}
                       >
-                        📅 {DAY_NAMES_LONG[slot.dayOfWeek]} at {formatTimeToAMPM(slot.startTime)}
+                        📅 {DAY_NAMES_LONG[slot.dayOfWeek]} at{" "}
+                        {formatTimeToAMPM(slot.startTime)}
                       </ThemedText>
                       <ThemedText
                         type="small"
@@ -1800,7 +1817,11 @@ function TermsTabSection({
                           fontSize: 11,
                         }}
                       >
-                        {t("proposedBy", { name: isMe ? c("you") : (slot.proposer?.name ?? c("peer")) })}
+                        {t("proposedBy", {
+                          name: isMe
+                            ? c("you")
+                            : (slot.proposer?.name ?? c("peer")),
+                        })}
                       </ThemedText>
                     </View>
                   );
@@ -1838,7 +1859,9 @@ function TermsTabSection({
                 </ThemedText>
               </View>
               <Button
-                leftIcon={<ArrowRight size={16} color={theme.primaryForeground} />}
+                leftIcon={
+                  <ArrowRight size={16} color={theme.primaryForeground} />
+                }
                 onPress={onGoToExchange}
                 style={{ width: "100%" }}
               >
@@ -1879,7 +1902,10 @@ function TermsTabSection({
                       flex: 1,
                     }}
                   >
-                    {t("needPointsToAccept", { pts: request?.pointsProposal ?? 0, balance })}
+                    {t("needPointsToAccept", {
+                      pts: request?.pointsProposal ?? 0,
+                      balance,
+                    })}
                   </ThemedText>
                 </View>
               )}
@@ -1909,10 +1935,7 @@ function TermsTabSection({
                     variant="destructive"
                     onPress={onReject}
                     leftIcon={
-                      <XCircle
-                        size={16}
-                        color={theme.destructiveForeground}
-                      />
+                      <XCircle size={16} color={theme.destructiveForeground} />
                     }
                   >
                     {t("reject")}
@@ -1980,26 +2003,35 @@ function TermsTabSection({
                 gap: 4,
               }}
             >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
                 <CalendarDays size={14} color={theme.foreground} />
                 <ThemedText
                   type="smallBold"
                   style={{ fontSize: 11, color: theme.foreground }}
                 >
-                  {t("peerFreeDaysAndTimes", { name: otherUser?.name ?? c("peer") })}
+                  {t("peerFreeDaysAndTimes", {
+                    name: otherUser?.name ?? c("peer"),
+                  })}
                 </ThemedText>
               </View>
               <ThemedText
                 type="small"
                 style={{ fontSize: 11, color: theme.mutedForeground }}
               >
-                {t("daysTimesSummary", { days: peerAvail.days, times: peerAvail.times })}
+                {t("daysTimesSummary", {
+                  days: peerAvail.days,
+                  times: peerAvail.times,
+                })}
               </ThemedText>
             </View>
 
             {/* Skill 1 Editor */}
             <SkillTermCard
-              label={t("requestedSkillLearnLabel", { skill: request.requestedSkill?.name ?? "" })}
+              label={t("requestedSkillLearnLabel", {
+                skill: request.requestedSkill?.name ?? "",
+              })}
               sessions={reqSessions}
               setSessions={setReqSessions}
               duration={reqDuration}
@@ -2014,7 +2046,9 @@ function TermsTabSection({
             {/* Skill 2 Editor (if swap) */}
             {request.offeredSkill ? (
               <SkillTermCard
-                label={t("offeredSkillTeachLabel", { skill: request.offeredSkill?.name ?? "" })}
+                label={t("offeredSkillTeachLabel", {
+                  skill: request.offeredSkill?.name ?? "",
+                })}
                 sessions={offSessions}
                 setSessions={setOffSessions}
                 duration={offDuration}
@@ -2062,7 +2096,10 @@ function TermsTabSection({
                       flex: 1,
                     }}
                   >
-                    {t("needPointsToPropose", { pts: counterPointsNum, balance })}
+                    {t("needPointsToPropose", {
+                      pts: counterPointsNum,
+                      balance,
+                    })}
                   </ThemedText>
                 </View>
               )}
@@ -2070,7 +2107,9 @@ function TermsTabSection({
               <Button
                 loading={proposeLoading}
                 disabled={hasInsufficientPointsToPropose}
-                leftIcon={<Sparkles size={16} color={theme.primaryForeground} />}
+                leftIcon={
+                  <Sparkles size={16} color={theme.primaryForeground} />
+                }
                 onPress={onPropose}
                 style={{ width: "100%" }}
               >
@@ -2099,8 +2138,8 @@ function PointsNegotiationCard({
   onOpenBreakdown,
 }: any) {
   const theme = useTheme();
-  const t = useT('requests');
-  const c = useT('common');
+  const t = useT("requests");
+  const c = useT("common");
 
   return (
     <View
@@ -2158,9 +2197,7 @@ function PointsNegotiationCard({
             flex: 1,
             paddingVertical: SPACING[2],
             borderRadius: RADIUS.sm,
-            backgroundColor: counterPayerIsMe
-              ? theme.primary
-              : "transparent",
+            backgroundColor: counterPayerIsMe ? theme.primary : "transparent",
             alignItems: "center",
           }}
         >
@@ -2182,9 +2219,7 @@ function PointsNegotiationCard({
             flex: 1,
             paddingVertical: SPACING[2],
             borderRadius: RADIUS.sm,
-            backgroundColor: !counterPayerIsMe
-              ? theme.primary
-              : "transparent",
+            backgroundColor: !counterPayerIsMe ? theme.primary : "transparent",
             alignItems: "center",
           }}
         >
@@ -2392,8 +2427,8 @@ function AvailabilityTabSection({
   updatingAvail,
 }: any) {
   const theme = useTheme();
-  const t = useT('requests');
-  const c = useT('common');
+  const t = useT("requests");
+  const c = useT("common");
 
   if (loading) {
     return (
@@ -2473,7 +2508,9 @@ function AvailabilityTabSection({
                 textTransform: "uppercase",
               }}
             >
-              {t("peerAvailabilityTitle", { name: otherUser?.name ?? c("peer") })}
+              {t("peerAvailabilityTitle", {
+                name: otherUser?.name ?? c("peer"),
+              })}
             </ThemedText>
             <ThemedText type="small" style={{ fontSize: FONT_SIZE.xs }}>
               {t("availDays", { days: peerAvail.days })}
@@ -2559,7 +2596,11 @@ function AvailabilityTabSection({
                         >
                           <Icon
                             size={12}
-                            color={selected ? theme.primaryForeground : theme.mutedForeground}
+                            color={
+                              selected
+                                ? theme.primaryForeground
+                                : theme.mutedForeground
+                            }
                           />
                           <ThemedText type="smallBold" style={{ fontSize: 11 }}>
                             {t(labelKey)}
@@ -2605,8 +2646,7 @@ function SkillTermCard({
   maxDays,
 }: any) {
   const theme = useTheme();
-  const t = useT('requests');
-
+  const t = useT("requests");
 
   const toggleDay = (idx: number) => {
     const s = idx.toString();
@@ -2827,7 +2867,7 @@ function NativeTimePickerField({
   label?: string;
 }) {
   const theme = useTheme();
-  const t = useT('requests');
+  const t = useT("requests");
   const [showPicker, setShowPicker] = React.useState(false);
 
   const dateValue = React.useMemo(() => {
@@ -2923,9 +2963,7 @@ function NativeTimePickerField({
                 paddingHorizontal: SPACING[2.5],
                 paddingVertical: SPACING[1],
                 borderRadius: RADIUS.pill,
-                backgroundColor: isSelected
-                  ? theme.primary
-                  : theme.background,
+                backgroundColor: isSelected ? theme.primary : theme.background,
                 borderWidth: 1,
                 borderColor: isSelected ? theme.primary : theme.border,
               }}
@@ -3032,8 +3070,8 @@ function AgreementRow({
   isMe: boolean;
 }) {
   const theme = useTheme();
-  const t = useT('requests');
-  const c = useT('common');
+  const t = useT("requests");
+  const c = useT("common");
 
   return (
     <View
@@ -3063,9 +3101,7 @@ function AgreementRow({
           type="smallBold"
           style={{
             fontSize: 10,
-            color: agreed
-              ? getAccent("emerald").main
-              : getAccent("amber").main,
+            color: agreed ? getAccent("emerald").main : getAccent("amber").main,
           }}
         >
           {agreed ? t("agreed") : t("statusPending")}
@@ -3112,20 +3148,29 @@ function FeeRow({ label, value, danger, strong, accent }: any) {
   );
 }
 
-function getPeerAvailabilityInfo(request: any, isSender: boolean, otherUser: any, t?: any) {
+function getPeerAvailabilityInfo(
+  request: any,
+  isSender: boolean,
+  otherUser: any,
+  t?: any,
+) {
   const avail = isSender
-    ? request?.receiverAvailability ?? otherUser?.availability
-    : request?.senderAvailability ?? otherUser?.availability;
+    ? (request?.receiverAvailability ?? otherUser?.availability)
+    : (request?.senderAvailability ?? otherUser?.availability);
 
   const days =
     avail?.days && avail.days.length > 0
       ? avail.days.map((d: number) => DAY_NAMES_LONG[d]).join(", ")
-      : t ? t("flexibleAnyDay") : "";
+      : t
+        ? t("flexibleAnyDay")
+        : "";
 
   const times =
     avail?.timeSlots && avail.timeSlots.length > 0
       ? avail.timeSlots.join(", ")
-      : t ? t("flexibleAnyTime") : "";
+      : t
+        ? t("flexibleAnyTime")
+        : "";
 
   return { days, times };
 }

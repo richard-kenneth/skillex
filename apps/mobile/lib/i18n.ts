@@ -32,7 +32,9 @@ interface I18nContextValue {
 const I18nContext = React.createContext<I18nContextValue | null>(null);
 
 function isValidLocale(value: unknown): value is Locale {
-  return typeof value === "string" && SUPPORTED_LOCALES.includes(value as Locale);
+  return (
+    typeof value === "string" && SUPPORTED_LOCALES.includes(value as Locale)
+  );
 }
 
 function getSystemLocale(defaultLocale: Locale = "en"): Locale {
@@ -45,16 +47,25 @@ function getSystemLocale(defaultLocale: Locale = "en"): Locale {
  * 1. Resolves ICU plural patterns `{count, plural, =1 {A} other {B}}`
  * 2. Replaces `{varName}` placeholder variables
  */
-function formatTranslationVars(str: string, vars?: Record<string, string | number>): string {
+function formatTranslationVars(
+  str: string,
+  vars?: Record<string, string | number>,
+): string {
   if (typeof str !== "string") return str;
   let result = str;
   if (vars) {
     if (result.includes("plural,")) {
       const countVal = vars.count !== undefined ? Number(vars.count) : 0;
-      result = result.replace(/\{(\w+),\s*plural,\s*=1\s*\{([^}]*)\}\s*other\s*\{([^}]*)\}\}/g, (_, varName, oneText, otherText) => {
-        const rawVal = vars[varName] !== undefined ? Number(vars[varName]) : countVal;
-        return rawVal === 1 ? oneText : otherText.replace(/#/g, String(rawVal));
-      });
+      result = result.replace(
+        /\{(\w+),\s*plural,\s*=1\s*\{([^}]*)\}\s*other\s*\{([^}]*)\}\}/g,
+        (_, varName, oneText, otherText) => {
+          const rawVal =
+            vars[varName] !== undefined ? Number(vars[varName]) : countVal;
+          return rawVal === 1
+            ? oneText
+            : otherText.replace(/#/g, String(rawVal));
+        },
+      );
     }
     Object.keys(vars).forEach((key) => {
       result = result.replaceAll(`{${key}}`, String(vars[key]));
@@ -145,14 +156,15 @@ export function I18nProvider({
 
 export function useI18n() {
   const ctx = React.useContext(I18nContext);
-  
-  // FIX: Force standalone or fallback hooks to track state/force updates if needed,
-  // but crucially ensure context consumers re-render when `locale` changes.
-  if (!ctx) {
-    const [currentLocale, setCurrentLocale] = React.useState<Locale>(
-      (isValidLocale(i18n.locale) ? i18n.locale : "en") as Locale
-    );
 
+  const [currentLocale, setCurrentLocale] = React.useState<Locale>(
+    (isValidLocale(i18n.locale) ? i18n.locale : "en") as Locale,
+  );
+
+  // FIX: Force standalone or fallback hooks to track state/force updates if
+  // needed, but crucially ensure context consumers re-render when `locale`
+  // changes.
+  if (!ctx) {
     return {
       locale: currentLocale,
       setLocale: (l: Locale) => {
@@ -172,12 +184,12 @@ export function useI18n() {
 }
 
 /**
- * FIXED: Wrapped with React.useMemo / dependencies pointing straight to `locale` 
+ * FIXED: Wrapped with React.useMemo / dependencies pointing straight to `locale`
  * so tab screens immediately invalidate their translation string caches when the language changes.
  */
 export function useT(namespace?: string) {
   const { t, locale } = useI18n();
-  
+
   return React.useMemo(() => {
     return (key: string, vars?: Record<string, string | number>) => {
       const fullKey = namespace ? `${namespace}.${key}` : key;

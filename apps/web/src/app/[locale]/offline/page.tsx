@@ -14,7 +14,7 @@ export default function OfflinePage() {
 
   const handleRetry = () => {
     setIsChecking(true);
-    
+
     // Simulate check
     setTimeout(() => {
       if (navigator.onLine) {
@@ -51,7 +51,7 @@ export default function OfflinePage() {
       <h1 className="mt-8 text-2xl font-bold tracking-tight text-white sm:text-3xl">
         {t("offlineTitle")}
       </h1>
-      
+
       <p className="mt-4 text-sm text-zinc-400 max-w-sm leading-relaxed">
         {t("offlineDescription")}
       </p>
@@ -62,10 +62,12 @@ export default function OfflinePage() {
           disabled={isChecking}
           className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
         >
-          <RefreshCw className={`mr-2 h-4 w-4 ${isChecking ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${isChecking ? "animate-spin" : ""}`}
+          />
           {t("offlineRetryButton")}
         </Button>
-        
+
         <Button
           variant="outline"
           onClick={() => router.back()}

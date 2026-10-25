@@ -1,20 +1,26 @@
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useState } from "react";
 import {
   StyleSheet,
   TextInput,
   TextInputProps,
   View,
   Text,
-} from 'react-native';
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
   interpolateColor,
-} from 'react-native-reanimated';
-import { useTheme } from '@/hooks/use-theme';
-import { FONT_SIZE, RADIUS, SPACING, TYPOGRAPHY, ANIMATION } from '@/constants/theme';
-import { ThemedText } from '@/components/themed-text';
+} from "react-native-reanimated";
+import { useTheme } from "@/hooks/use-theme";
+import {
+  FONT_SIZE,
+  RADIUS,
+  SPACING,
+  TYPOGRAPHY,
+  ANIMATION,
+} from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
 
 export interface InputProps extends TextInputProps {
   label?: string;
@@ -43,7 +49,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
     onBlur,
     ...rest
   },
-  ref
+  ref,
 ) {
   const theme = useTheme();
   const hasError = !!error;
@@ -65,8 +71,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
       <View
         style={[
           {
-            flexDirection: 'row',
-            alignItems: 'center',
+            flexDirection: "row",
+            alignItems: "center",
             borderRadius: RADIUS.lg,
             borderWidth: 1,
             borderColor,
@@ -87,9 +93,9 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
               flex: 1,
               color: theme.foreground,
               fontSize: FONT_SIZE.md,
-              fontWeight: '400',
+              fontWeight: "400",
               paddingVertical: SPACING[2.5],
-              textAlignVertical: multiline ? 'top' : 'center',
+              textAlignVertical: multiline ? "top" : "center",
               minHeight: multiline ? 100 : undefined,
             },
             style,
@@ -114,7 +120,13 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         </ThemedText>
       ) : null}
       {hasError ? (
-        <Text style={{ fontSize: FONT_SIZE.sm, color: theme.destructive, marginLeft: SPACING[0.5] }}>
+        <Text
+          style={{
+            fontSize: FONT_SIZE.sm,
+            color: theme.destructive,
+            marginLeft: SPACING[0.5],
+          }}
+        >
           {error}
         </Text>
       ) : null}
@@ -122,9 +134,19 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   );
 });
 
-export const Textarea = forwardRef<TextInput, InputProps>(function Textarea(props, ref) {
-  return <Input ref={ref} multiline numberOfLines={6} textAlignVertical="top" {...props} />;
-});
+export const Textarea = forwardRef<TextInput, InputProps>(
+  function Textarea(props, ref) {
+    return (
+      <Input
+        ref={ref}
+        multiline
+        numberOfLines={6}
+        textAlignVertical="top"
+        {...props}
+      />
+    );
+  },
+);
 
 export interface LabelProps {
   children?: React.ReactNode;
@@ -143,8 +165,8 @@ export function Label({ children, label, style }: LabelProps) {
 
 const styles = StyleSheet.create({
   slot: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
   },
 });

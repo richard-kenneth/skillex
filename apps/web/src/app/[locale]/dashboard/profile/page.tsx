@@ -7,7 +7,11 @@ import { User as UserIcon } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
   return {
@@ -27,10 +31,13 @@ export default async function ProfilePage() {
   const { user } = session;
 
   // Re-fetch user from API to get the latest bio (since it's not in the base session)
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/me`, {
-    headers: new Headers(await headers()),
-  });
-  
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/me`,
+    {
+      headers: new Headers(await headers()),
+    },
+  );
+
   const fullUser = response.ok ? await response.json() : user;
 
   return (
@@ -41,9 +48,7 @@ export default async function ProfilePage() {
             <UserIcon className="h-8 w-8 text-primary" />
             {t("title")}
           </h1>
-          <p className="text-muted-foreground">
-            {t("description")}
-          </p>
+          <p className="text-muted-foreground">{t("description")}</p>
         </div>
       </div>
 

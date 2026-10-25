@@ -13,13 +13,13 @@ SkillEx is a skill-exchange marketplace. The repository is a pnpm + Turborepo mo
 
 We want contributions where they can be reviewed and maintained well.
 
-| Area | Status | What we welcome |
-| --- | --- | --- |
-| `apps/web` | **Supported** | Features, bug fixes, accessibility, performance, tests, documentation, translations |
-| `apps/api` | **Supported** | Features, bug fixes, tests, validation, security improvements, documentation |
-| `packages/shared` | **Supported** | Types, schemas, utilities, translations, tests |
-| `apps/mobile` | **Community-supported** | JavaScript/TypeScript changes, UI, i18n, accessibility, and Android-testable changes |
-| iOS-native and release work | **Maintainer-led** | Native iOS changes, EAS credentials, app-store releases, LiveKit native upgrades |
+| Area                        | Status                  | What we welcome                                                                      |
+| --------------------------- | ----------------------- | ------------------------------------------------------------------------------------ |
+| `apps/web`                  | **Supported**           | Features, bug fixes, accessibility, performance, tests, documentation, translations  |
+| `apps/api`                  | **Supported**           | Features, bug fixes, tests, validation, security improvements, documentation         |
+| `packages/shared`           | **Supported**           | Types, schemas, utilities, translations, tests                                       |
+| `apps/mobile`               | **Community-supported** | JavaScript/TypeScript changes, UI, i18n, accessibility, and Android-testable changes |
+| iOS-native and release work | **Maintainer-led**      | Native iOS changes, EAS credentials, app-store releases, LiveKit native upgrades     |
 
 The mobile app uses Expo development builds and native modules (including LiveKit WebRTC and a local audio-device module), so Expo Go alone is not enough. Android development works on Windows, Linux, and macOS. iOS-native work requires macOS/Xcode or a cloud build. If you want to work on mobile, open an issue first so we can confirm the change is testable and reviewable. See `docs/adr/0002-mobile-contribution-scope.md` for the full decision.
 
@@ -71,14 +71,47 @@ The individual CLA is administered through the hosted CLA Assistant service. We 
 
 ## Development setup
 
-The current setup is documented in:
+### Prerequisites
 
-- [`README.md`](./README.md)
-- [`apps/api/README.md`](./apps/api/README.md)
-- [`apps/web/README.md`](./apps/web/README.md)
-- [`apps/mobile/README.md`](./apps/mobile/README.md)
+- Node.js 22+
+- pnpm 10.33.2
+- Docker Desktop (or Docker Engine with Compose v2)
 
-The project is actively simplifying local setup. Until the one-command setup and Docker Compose environment land, expect to provide your own PostgreSQL instance and environment variables. Never commit real credentials or `.env` files.
+### Quick start
+
+From the repository root:
+
+```bash
+pnpm install
+pnpm run setup
+pnpm dev
+```
+
+`pnpm run setup` creates the env files, generates local secrets, starts PostgreSQL, Redis, Mailpit, and MinIO, applies migrations, and seeds demo data. Open <http://localhost:3000> and sign in with:
+
+```text
+Email:    demo@skillex.dev
+Password: Password123!
+```
+
+Local service URLs and optional integrations are documented in [`README.md`](./README.md). No paid third-party account is required for the core local workflow. LiveKit, Flutterwave, Resend, R2, OAuth, web push, PostHog, and OER are optional; each feature degrades to a no-op, fallback, or local mock when its keys are absent.
+
+Useful commands:
+
+```bash
+pnpm lint          # check only; safe for CI
+pnpm lint:fix      # apply fixes
+pnpm typecheck
+pnpm test
+pnpm format:check
+pnpm db:reset      # delete local volumes, then re-run pnpm run setup
+```
+
+The API and web app are supported for contributions. The mobile app is community-supported; see [`apps/mobile/README.md`](./apps/mobile/README.md) for the platform requirements. Never commit real credentials or `.env` files.
+
+### Dev container
+
+The repository includes a dev container for VS Code and GitHub Codespaces. It installs Node.js 22, pnpm, and Docker-in-Docker, then runs the same setup flow. See [`.devcontainer/devcontainer.json`](./.devcontainer/devcontainer.json).
 
 ## Branch names
 

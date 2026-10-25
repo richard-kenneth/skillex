@@ -5,8 +5,16 @@ import { toast } from "sonner";
 import { X, Download, Share2, PlusSquare, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+type IOSNavigator = Navigator & { standalone?: boolean };
+
 export function PWARegistration() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -42,8 +50,11 @@ export function PWARegistration() {
         navigator.serviceWorker
           .register("/sw.js")
           .then((registration) => {
-            console.log("Service Worker registered successfully with scope: ", registration.scope);
-            
+            console.log(
+              "Service Worker registered successfully with scope: ",
+              registration.scope,
+            );
+
             // Check for updates
             registration.onupdatefound = () => {
               const installingWorker = registration.installing;
@@ -52,7 +63,8 @@ export function PWARegistration() {
                   if (installingWorker.state === "installed") {
                     if (navigator.serviceWorker.controller) {
                       toast.info("App updated!", {
-                        description: "A new version is available. Please reload.",
+                        description:
+                          "A new version is available. Please reload.",
                         action: {
                           label: "Reload",
                           onClick: () => window.location.reload(),
@@ -73,11 +85,11 @@ export function PWARegistration() {
 
     // 3. Detect if already running in standalone mode (installed)
     const checkStandalone = () => {
-      const isStandaloneMode = 
+      const isStandaloneMode =
         window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as any).standalone === true;
+        (window.navigator as IOSNavigator).standalone === true;
       setIsStandalone(isStandaloneMode);
-      
+
       // Add standalone class to HTML tag for styling adjustments
       if (isStandaloneMode) {
         document.documentElement.classList.add("is-pwa");
@@ -88,13 +100,14 @@ export function PWARegistration() {
     // 4. Handle installation prompt for Android/Chrome
     const handleInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
 
       // Only show the banner if the user hasn't dismissed it recently
       const dismissedTime = localStorage.getItem("pwa-install-dismissed");
       const oneWeek = 7 * 24 * 60 * 60 * 1000;
-      const isRecentlyDismissed = dismissedTime && Date.now() - parseInt(dismissedTime, 10) < oneWeek;
+      const isRecentlyDismissed =
+        dismissedTime && Date.now() - parseInt(dismissedTime, 10) < oneWeek;
 
       if (!isRecentlyDismissed) {
         setShowInstallBanner(true);
@@ -106,25 +119,29 @@ export function PWARegistration() {
     // 5. Detect iOS Safari specifically
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIphone = userAgent.includes("iphone") || userAgent.includes("ipad");
-    const isSafari = userAgent.includes("safari") && !userAgent.includes("crios") && !userAgent.includes("fxios");
-    
+    const isSafari =
+      userAgent.includes("safari") &&
+      !userAgent.includes("crios") &&
+      !userAgent.includes("fxios");
+
     setIsIOS(isIphone && isSafari);
 
     // Check if iOS prompt should show
     const checkIOSPrompt = () => {
       const dismissedTime = localStorage.getItem("pwa-install-dismissed");
       const oneWeek = 7 * 24 * 60 * 60 * 1000;
-      const isRecentlyDismissed = dismissedTime && Date.now() - parseInt(dismissedTime, 10) < oneWeek;
-      
-      const isStandaloneMode = 
+      const isRecentlyDismissed =
+        dismissedTime && Date.now() - parseInt(dismissedTime, 10) < oneWeek;
+
+      const isStandaloneMode =
         window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as any).standalone === true;
+        (window.navigator as IOSNavigator).standalone === true;
 
       if (isIphone && isSafari && !isStandaloneMode && !isRecentlyDismissed) {
         setShowInstallBanner(true);
       }
     };
-    
+
     // Slight timeout to let other animations settle
     const iosTimeout = setTimeout(checkIOSPrompt, 3000);
 
@@ -161,7 +178,7 @@ export function PWARegistration() {
         {/* Glow effect */}
         <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/20 blur-2xl" />
 
-        <button 
+        <button
           onClick={handleDismiss}
           className="absolute right-3 top-3 rounded-full p-1 text-zinc-400 hover:bg-white/10 hover:text-white transition-colors"
           aria-label="Dismiss banner"
@@ -173,13 +190,14 @@ export function PWARegistration() {
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-900 border border-white/5 shadow-inner">
             <Smartphone className="h-6 w-6 text-primary" />
           </div>
-          
+
           <div className="flex-1 pr-6">
             <h3 className="font-semibold text-white text-base leading-snug">
               Install SkillEx
             </h3>
             <p className="mt-1 text-xs text-zinc-400 leading-normal">
-              Access SkillEx directly from your home screen with offline capability and native app feel.
+              Access SkillEx directly from your home screen with offline
+              capability and native app feel.
             </p>
           </div>
         </div>
@@ -196,21 +214,21 @@ export function PWARegistration() {
               </div>
               <div className="flex items-center gap-2 text-xs text-zinc-400">
                 <PlusSquare className="h-3.5 w-3.5 text-zinc-300" />
-                <span>2. Select "Add to Home Screen"</span>
+                <span>2. Select &quot;Add to Home Screen&quot;</span>
               </div>
             </div>
           ) : isInstallable ? (
             <div className="flex items-center justify-end gap-3">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleDismiss}
                 className="text-xs text-zinc-400 hover:text-white"
               >
                 Maybe Later
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 onClick={handleInstallClick}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-4 shadow-lg shadow-primary/20 flex items-center gap-1.5"
               >

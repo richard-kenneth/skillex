@@ -18,8 +18,8 @@ export class NotificationsListener {
     userIds: string[];
     requestId: string;
     message?: any;
-    messageKeyOverride?: string;   // bypass last-message lookup
-    updatedByUserId?: string;      // who triggered the update
+    messageKeyOverride?: string; // bypass last-message lookup
+    updatedByUserId?: string; // who triggered the update
   }) {
     try {
       const request = await this.prisma.exchangeRequest.findUnique({
@@ -39,15 +39,19 @@ export class NotificationsListener {
 
       if (!request) return;
 
-      const otherUser = (userId: string) =>
-        userId === request.senderId ? request.receiver : request.sender;
-
       // Override: availability updated (no DB message is created for this action)
-      if (payload.messageKeyOverride === 'AVAILABILITY_UPDATED' && payload.updatedByUserId) {
+      if (
+        payload.messageKeyOverride === 'AVAILABILITY_UPDATED' &&
+        payload.updatedByUserId
+      ) {
         const updater =
-          payload.updatedByUserId === request.senderId ? request.sender : request.receiver;
+          payload.updatedByUserId === request.senderId
+            ? request.sender
+            : request.receiver;
         const recipientId =
-          payload.updatedByUserId === request.senderId ? request.receiverId : request.senderId;
+          payload.updatedByUserId === request.senderId
+            ? request.receiverId
+            : request.senderId;
 
         await this.notificationsService.createNotification({
           userId: recipientId,
@@ -62,7 +66,7 @@ export class NotificationsListener {
       // Case 1: Request is pending
       if (request.status === 'PENDING') {
         const lastMsg = request.messages[0];
-        
+
         if (!lastMsg) {
           // Newly created request
           await this.notificationsService.createNotification({
@@ -170,7 +174,9 @@ export class NotificationsListener {
       // Case 2: Committed (Exchange created)
       if (request.status === 'COMMITTED') {
         const exchangeId = request.exchange?.id;
-        const redirectLink = exchangeId ? `/exchanges/${exchangeId}` : `/requests/${request.id}`;
+        const redirectLink = exchangeId
+          ? `/exchanges/${exchangeId}`
+          : `/requests/${request.id}`;
 
         // Send notification to both parties
         await this.notificationsService.createNotification({
@@ -516,7 +522,10 @@ export class NotificationsListener {
         }
       }
     } catch (error) {
-      this.logger.error('Error running session reminder background cron:', error);
+      this.logger.error(
+        'Error running session reminder background cron:',
+        error,
+      );
     }
   }
 }

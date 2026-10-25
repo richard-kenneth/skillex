@@ -72,7 +72,6 @@ export class VideoController {
     return this.videoService.getSessionDetails(id, req.user.id);
   }
 
-
   /* ─── Recording Consent ─────────────────────────────────── */
 
   /**

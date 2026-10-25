@@ -11,5 +11,3 @@ export * from "./notifications";
 
 // Translations
 export * from "./translations";
-
-

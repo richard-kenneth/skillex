@@ -17,12 +17,15 @@ export function useRealtimeNotifications() {
 // Premium chime sound synthesized via Web Audio API
 const playPremiumChime = () => {
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as Window & { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (!AudioContextCtor) return;
+    const ctx = new AudioContextCtor();
 
     const now = ctx.currentTime;
-    
+
     // First oscillator (fundamental chime note - E5)
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
@@ -113,7 +116,7 @@ function PushPromoBanner() {
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
       const permission = await Notification.requestPermission();
-      
+
       if (permission !== "granted") {
         toast.error(t("pushDenied"));
         handleLater(); // Treat as later so we store dismiss time
@@ -140,7 +143,7 @@ function PushPromoBanner() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(subscription),
           credentials: "include",
-        }
+        },
       );
 
       if (!res.ok) throw new Error("Server failed to save subscription");
@@ -151,7 +154,7 @@ function PushPromoBanner() {
       // Trigger test push
       await fetch(
         `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/notifications/test-push`,
-        { method: "POST", credentials: "include" }
+        { method: "POST", credentials: "include" },
       );
     } catch (err) {
       console.error(err);
@@ -196,13 +199,23 @@ function PushPromoBanner() {
           </button>
         </div>
       </div>
-      
-      <button 
+
+      <button
         onClick={handleLater}
         className="absolute top-3 right-3 text-zinc-600 hover:text-white transition-colors cursor-pointer"
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
@@ -222,16 +235,16 @@ export function RealtimeNotificationsProvider({
 
     const eventSource = new EventSource(
       `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/notifications/stream`,
-      { withCredentials: true }
+      { withCredentials: true },
     );
 
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        
+
         if (data.type === "NOTIFICATION_CREATED") {
           const notification = data.notification;
-          
+
           // Play notification sound
           playPremiumChime();
 
@@ -239,19 +252,25 @@ export function RealtimeNotificationsProvider({
           toast(notification.title, {
             description: notification.message,
             duration: 5000,
-            action: notification.link ? {
-              label: "View",
-              onClick: () => {
-                window.location.href = notification.link;
-              }
-            } : undefined,
+            action: notification.link
+              ? {
+                  label: "View",
+                  onClick: () => {
+                    window.location.href = notification.link;
+                  },
+                }
+              : undefined,
           });
 
           // Invalidate notifications queries
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
-          queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
+          queryClient.invalidateQueries({
+            queryKey: ["unread-notifications-count"],
+          });
         } else if (data.type === "COUNT_UPDATED") {
-          queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
+          queryClient.invalidateQueries({
+            queryKey: ["unread-notifications-count"],
+          });
         }
       } catch (err) {
         console.error("Error parsing notification stream event:", err);

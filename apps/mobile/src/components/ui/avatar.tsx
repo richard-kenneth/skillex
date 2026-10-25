@@ -1,9 +1,9 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { RADIUS } from '@/constants/theme';
-import { Image as ExpoImage } from 'expo-image';
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import { ThemedText } from "@/components/themed-text";
+import { useTheme } from "@/hooks/use-theme";
+import { RADIUS } from "@/constants/theme";
+import { Image as ExpoImage } from "expo-image";
 
 interface AvatarProps {
   uri?: string | null;
@@ -29,9 +29,9 @@ export function Avatar({
           height: size,
           borderRadius: rounded ? size / 2 : RADIUS.lg,
           backgroundColor: theme.secondary,
-          overflow: 'hidden',
-          alignItems: 'center',
-          justifyContent: 'center',
+          overflow: "hidden",
+          alignItems: "center",
+          justifyContent: "center",
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: theme.border,
         },
@@ -49,12 +49,12 @@ export function Avatar({
         <ThemedText
           style={{
             fontSize: Math.round(size * 0.38),
-            fontWeight: '500',
+            fontWeight: "500",
             color: theme.mutedForeground,
           }}
           numberOfLines={1}
         >
-          {(fallback ?? '?').trim().charAt(0).toUpperCase()}
+          {(fallback ?? "?").trim().charAt(0).toUpperCase()}
         </ThemedText>
       )}
     </View>

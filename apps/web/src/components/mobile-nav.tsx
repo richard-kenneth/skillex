@@ -35,8 +35,8 @@ export function MobileNav() {
       <div className="flex h-12 items-center justify-around px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = 
-            pathname === item.href || 
+          const isActive =
+            pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));
 
           return (
@@ -49,18 +49,18 @@ export function MobileNav() {
                 <Icon
                   className={cn(
                     "h-5 w-5 transition-transform duration-200 group-active:scale-95",
-                    isActive ? "text-primary" : "text-zinc-400"
+                    isActive ? "text-primary" : "text-zinc-400",
                   )}
                 />
                 <span
                   className={cn(
                     "text-[10px] font-medium tracking-tight",
-                    isActive ? "text-primary" : "text-zinc-500"
+                    isActive ? "text-primary" : "text-zinc-500",
                   )}
                 >
                   {t(item.key)}
                 </span>
-                
+
                 {/* Active pill background indicator */}
                 {isActive && (
                   <motion.div

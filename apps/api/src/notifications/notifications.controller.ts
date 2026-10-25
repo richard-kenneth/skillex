@@ -17,7 +17,19 @@ import { Request } from 'express';
 import { Observable, fromEvent, merge } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
-import { NotificationsService } from './notifications.service';
+import {
+  NotificationsService,
+  type PushSubscriptionInput,
+} from './notifications.service';
+
+interface NotificationCreatedEvent {
+  userId?: string;
+  notification?: unknown;
+}
+
+interface UnreadCountUpdatedEvent {
+  userId?: string;
+}
 
 @Controller('notifications')
 @UseGuards(BetterAuthGuard)
@@ -76,7 +88,7 @@ export class NotificationsController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   saveSubscription(
     @Req() req: Request & { user: { id: string } },
-    @Body() subscription: any,
+    @Body() subscription: PushSubscriptionInput,
   ) {
     return this.notificationsService.saveSubscription(
       req.user.id,
@@ -133,12 +145,12 @@ export class NotificationsController {
   streamNotifications(
     @Req() req: Request & { user: { id: string } },
   ): Observable<MessageEvent> {
-    const createdNotifications = fromEvent(
+    const createdNotifications = fromEvent<NotificationCreatedEvent>(
       this.eventEmitter,
       'notification.created',
     ).pipe(
-      filter((payload: any) => payload.userId === req.user.id),
-      map((payload: any) => ({
+      filter((payload) => payload.userId === req.user.id),
+      map((payload) => ({
         data: {
           type: 'NOTIFICATION_CREATED',
           notification: payload.notification,
@@ -146,11 +158,11 @@ export class NotificationsController {
       })),
     );
 
-    const countUpdates = fromEvent(
+    const countUpdates = fromEvent<UnreadCountUpdatedEvent>(
       this.eventEmitter,
       'unread-count.updated',
     ).pipe(
-      filter((payload: any) => payload.userId === req.user.id),
+      filter((payload) => payload.userId === req.user.id),
       map(() => ({
         data: {
           type: 'COUNT_UPDATED',

@@ -46,12 +46,17 @@ export function Navbar() {
   ] as const;
 
   const navItems = isPrelaunch
-    ? (session?.user
-        ? allNavItems.filter((item) => !item.gated)
-        : (isHomePage ? homeAnchorLinks : []))
+    ? session?.user
+      ? allNavItems.filter((item) => !item.gated)
+      : isHomePage
+        ? homeAnchorLinks
+        : []
     : allNavItems;
 
-  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+  const handleAnchorClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
     if (href.startsWith("#")) {
       e.preventDefault();
       const el = document.querySelector(href);
@@ -66,8 +71,16 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center space-x-2 transition-opacity hover:opacity-80">
-            <Code className={cn("h-6 w-6", isHomePage ? "text-violet-400" : "text-primary")} />
+          <Link
+            href="/"
+            className="flex items-center space-x-2 transition-opacity hover:opacity-80"
+          >
+            <Code
+              className={cn(
+                "h-6 w-6",
+                isHomePage ? "text-violet-400" : "text-primary",
+              )}
+            />
             <span className="font-bold text-xl tracking-tight hidden sm:block">
               {tCommon("appName")}
             </span>
@@ -83,9 +96,7 @@ export function Navbar() {
                   onClick={(e) => handleAnchorClick(e, item.href)}
                   className={cn(
                     "text-sm font-medium transition-colors hover:text-white",
-                    pathname === item.href
-                      ? "text-white"
-                      : "text-zinc-400"
+                    pathname === item.href ? "text-white" : "text-zinc-400",
                   )}
                 >
                   {t(item.key)}
@@ -115,36 +126,54 @@ export function Navbar() {
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger className="relative h-9 w-9 rounded-full outline-none ring-offset-background transition-all hover:ring-2 hover:ring-primary/20 cursor-pointer">
-                      <Avatar className="h-9 w-9 border border-white/10">
-                        <AvatarImage src={session.user.image ?? ""} alt={session.user.name ?? "User avatar"} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                          {session.user.name?.charAt(0) ?? "U"}
-                        </AvatarFallback>
-                      </Avatar>
+                    <Avatar className="h-9 w-9 border border-white/10">
+                      <AvatarImage
+                        src={session.user.image ?? ""}
+                        alt={session.user.name ?? "User avatar"}
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                        {session.user.name?.charAt(0) ?? "U"}
+                      </AvatarFallback>
+                    </Avatar>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64 p-2 bg-zinc-950 border-zinc-800" align="end" sideOffset={8}>
+                  <DropdownMenuContent
+                    className="w-64 p-2 bg-zinc-950 border-zinc-800"
+                    align="end"
+                    sideOffset={8}
+                  >
                     <div className="flex flex-col space-y-1 p-2">
-                      <p className="font-semibold text-sm text-white">{session.user.name}</p>
+                      <p className="font-semibold text-sm text-white">
+                        {session.user.name}
+                      </p>
                       <p className="text-xs text-zinc-500 truncate">
                         {session.user.email}
                       </p>
                     </div>
                     <DropdownMenuSeparator className="bg-zinc-800" />
                     <DropdownMenuItem className="p-0">
-                      <Link href="/dashboard" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
+                      <Link
+                        href="/dashboard"
+                        className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900"
+                      >
                         <LayoutDashboard className="h-4 w-4" />
                         <span>{t("dashboard")}</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="p-0">
-                      <Link href="/dashboard/profile" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
+                      <Link
+                        href="/dashboard/profile"
+                        className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900"
+                      >
                         <User className="h-4 w-4" />
                         <span>{t("profile")}</span>
                       </Link>
                     </DropdownMenuItem>
                     {!isPrelaunch && (
                       <DropdownMenuItem className="p-0">
-                        <Link href="/reviews" className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900">
+                        <Link
+                          href="/reviews"
+                          className="flex w-full items-center gap-2 cursor-pointer p-2 rounded-sm text-zinc-300 hover:text-white hover:bg-zinc-900"
+                        >
                           <Star className="h-4 w-4 text-amber-400" />
                           <span>{t("reviews")}</span>
                         </Link>
@@ -165,8 +194,8 @@ export function Navbar() {
               <div className="flex items-center gap-3">
                 {isPrelaunch && isHomePage ? (
                   /* Pre-launch: show Join Waitlist + Sign Up */
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border-0 font-medium px-5"
                     asChild
                   >
@@ -175,16 +204,16 @@ export function Navbar() {
                 ) : (
                   /* Standard auth buttons */
                   <>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       asChild
                       className="hidden sm:flex text-zinc-400 hover:text-white"
                     >
                       <Link href="/sign-in">{t("signIn")}</Link>
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-5"
                       asChild
                     >
@@ -200,41 +229,53 @@ export function Navbar() {
           {navItems.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle Menu</span>
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle Menu</span>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[240px] md:hidden bg-zinc-950 border-zinc-800 p-2">
+              <DropdownMenuContent
+                align="end"
+                className="w-[240px] md:hidden bg-zinc-950 border-zinc-800 p-2"
+              >
                 <div className="flex flex-col gap-1">
                   {navItems.map((item) => (
                     <DropdownMenuItem key={item.href} className="p-0">
-                      <Link 
-                        href={item.href} 
+                      <Link
+                        href={item.href}
                         onClick={(e) => handleAnchorClick(e, item.href)}
                         className={cn(
                           "flex w-full items-center p-2 text-sm rounded-md transition-colors",
-                          pathname === item.href ? "bg-zinc-900 text-white" : "text-zinc-400 hover:bg-zinc-900/50 hover:text-white"
+                          pathname === item.href
+                            ? "bg-zinc-900 text-white"
+                            : "text-zinc-400 hover:bg-zinc-900/50 hover:text-white",
                         )}
                       >
                         {t(item.key)}
                       </Link>
                     </DropdownMenuItem>
                   ))}
-                  
+
                   <DropdownMenuSeparator className="my-2 bg-zinc-800" />
-                  
+
                   {session?.user ? (
                     <>
                       <div className="px-2 py-1.5 mb-1">
-                        <p className="text-sm font-medium text-white truncate">{session.user.name}</p>
-                        <p className="text-xs text-zinc-500 truncate">{session.user.email}</p>
+                        <p className="text-sm font-medium text-white truncate">
+                          {session.user.name}
+                        </p>
+                        <p className="text-xs text-zinc-500 truncate">
+                          {session.user.email}
+                        </p>
                       </div>
                       <DropdownMenuItem className="p-0">
-                        <Link href="/dashboard/profile" className="flex w-full items-center gap-2 p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">
+                        <Link
+                          href="/dashboard/profile"
+                          className="flex w-full items-center gap-2 p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md"
+                        >
                           <User className="h-4 w-4" />
                           <span>{t("profile")}</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="flex w-full items-center gap-2 p-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-950/30 rounded-md cursor-pointer"
                         onClick={() => signOut()}
                       >
@@ -254,10 +295,20 @@ export function Navbar() {
                   ) : (
                     <>
                       <DropdownMenuItem className="p-0">
-                        <Link href="/sign-in" className="flex w-full items-center p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md">{t("signIn")}</Link>
+                        <Link
+                          href="/sign-in"
+                          className="flex w-full items-center p-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md"
+                        >
+                          {t("signIn")}
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem className="p-0">
-                        <Link href="/sign-up" className="flex w-full items-center p-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium">{t("signUp")}</Link>
+                        <Link
+                          href="/sign-up"
+                          className="flex w-full items-center p-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium"
+                        >
+                          {t("signUp")}
+                        </Link>
                       </DropdownMenuItem>
                     </>
                   )}

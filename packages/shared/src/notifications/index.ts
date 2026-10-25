@@ -120,21 +120,23 @@ export function createNotificationStream(
 
   const connect = async () => {
     if (closed) return;
-    const headers = await getAuthHeaders();    
+    const headers = await getAuthHeaders();
 
     // For web, EventSource doesn't support custom headers, so we use the URL with cookie auth
     // For mobile (react-native-sse), headers are supported
     const EventSourceCtor = EventSourceImpl || (globalThis as any).EventSource;
 
-    const isBrowserWeb = typeof (globalThis as any).window !== "undefined" && EventSourceCtor === (globalThis as any).window?.EventSource;
+    const isBrowserWeb =
+      typeof (globalThis as any).window !== "undefined" &&
+      EventSourceCtor === (globalThis as any).window?.EventSource;
 
     // react-native-sse supports headers in the constructor
-    if (!isBrowserWeb) {      
+    if (!isBrowserWeb) {
       eventSource = new (EventSourceCtor as any)(
         `${baseUrl}/notifications/stream`,
         { headers },
       );
-    } else {      
+    } else {
       // Web EventSource - uses cookies for auth
       eventSource = new EventSourceCtor(`${baseUrl}/notifications/stream`, {
         withCredentials: true,

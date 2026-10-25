@@ -57,8 +57,6 @@ interface ChatMessage {
   };
 }
 
-
-
 type RecordingState =
   | "idle"
   | "requesting_consent"
@@ -102,7 +100,10 @@ const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
 
 export default function RoomPage() {
   if (isPrelaunch) return <ComingSoonGate />;
+  return <RoomPageContent />;
+}
 
+function RoomPageContent() {
   const t = useTranslations("room");
   const c = useTranslations("common");
 
@@ -141,7 +142,8 @@ export default function RoomPage() {
         if (!sessionResp.ok) {
           const sessionData = await sessionResp.json().catch(() => null);
           throw new Error(
-            sessionData?.message || `${t("failedGetVideoToken")}: ${sessionResp.statusText}`,
+            sessionData?.message ||
+              `${t("failedGetVideoToken")}: ${sessionResp.statusText}`,
           );
         }
         const sessionDetails = await sessionResp.json();
@@ -164,7 +166,8 @@ export default function RoomPage() {
         if (!tokenResp.ok) {
           const tokenData = await tokenResp.json().catch(() => null);
           throw new Error(
-            tokenData?.message || `${t("failedGetVideoToken")}: ${tokenResp.statusText}`,
+            tokenData?.message ||
+              `${t("failedGetVideoToken")}: ${tokenResp.statusText}`,
           );
         }
         const tokenData = await tokenResp.json();
@@ -292,8 +295,6 @@ function RoomContent({
     }
   }, [recordingState, t]);
 
-
-
   /* ─── Data channel for recording consent signaling ──── */
   const encoder = useRef(new TextEncoder());
   const decoder = useRef(new TextDecoder());
@@ -327,9 +328,13 @@ function RoomContent({
         setRecordingState("recording");
         setShowConsentDialog(false);
         const approvedMinutes = data.approvedMinutes || 0;
-        let stopAt = approvedMinutes ? Date.now() + approvedMinutes * 60 * 1000 : undefined;
+        let stopAt = approvedMinutes
+          ? Date.now() + approvedMinutes * 60 * 1000
+          : undefined;
         if (stopAt && sessionTiming?.session?.endsAt) {
-          const sessionEndTime = new Date(sessionTiming.session.endsAt).getTime();
+          const sessionEndTime = new Date(
+            sessionTiming.session.endsAt,
+          ).getTime();
           stopAt = Math.min(stopAt, sessionEndTime);
         }
         sendSignal({ type: "recording_started", approvedMinutes, stopAt });
@@ -341,7 +346,11 @@ function RoomContent({
           .json()
           .catch(() => ({ message: c("unknownError") }));
         console.error("[Recording] Start API failed:", err);
-        toast.error(t("startRecordingFailed", { error: err.message || c("unknownError") }));
+        toast.error(
+          t("startRecordingFailed", {
+            error: err.message || c("unknownError"),
+          }),
+        );
         setRecordingState("idle");
         sendSignal({ type: "consent_error" });
       }
@@ -390,7 +399,9 @@ function RoomContent({
             if (signal.stopAt) {
               let stopAt = signal.stopAt;
               if (sessionTiming?.session?.endsAt) {
-                const sessionEndTime = new Date(sessionTiming.session.endsAt).getTime();
+                const sessionEndTime = new Date(
+                  sessionTiming.session.endsAt,
+                ).getTime();
                 stopAt = Math.min(stopAt, sessionEndTime);
               }
               setRecordingStopAt(stopAt);
@@ -442,7 +453,9 @@ function RoomContent({
       setShowEstimateDialog(true);
     } catch (err) {
       console.error(err);
-      toast.error(t("failedGetEstimate") || "Failed to check recording estimate.");
+      toast.error(
+        t("failedGetEstimate") || "Failed to check recording estimate.",
+      );
     } finally {
       setIsCheckingEstimate(false);
     }
@@ -567,7 +580,10 @@ function RoomContent({
         const errorData = await resp.json().catch(() => ({}));
         console.error("[Recording] Stop API failed:", errorData);
         toast.error(
-          t("stopRecordingFailed", { error: (errorData as { message?: string }).message || c("unknownError") }),
+          t("stopRecordingFailed", {
+            error:
+              (errorData as { message?: string }).message || c("unknownError"),
+          }),
         );
       }
     } catch (err) {
@@ -727,7 +743,7 @@ function PersistentChatPanel({
         }
       })
       .catch((err) => console.error("[Chat] History fetch failed:", err));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exchangeSessionId]);
 
   // Combine history and real-time livekit messages
@@ -902,9 +918,7 @@ function SessionTimer({
       if (diff <= 0) {
         setRemaining("0:00");
         setIsExpired(true);
-        toast.error(
-          t("sessionEndedDisconnect"),
-        );
+        toast.error(t("sessionEndedDisconnect"));
         // Auto-disconnect after 30 seconds grace
         setTimeout(() => {
           router.push(`/exchanges/${exchangeId}`);
@@ -1021,7 +1035,9 @@ function RecordingControls({
     return (
       <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-blue-400 text-sm font-medium">
         <Loader2 className="h-3 w-3 animate-spin" />
-        {recordingState === "starting" ? t("startingRecording") : t("processing")}
+        {recordingState === "starting"
+          ? t("startingRecording")
+          : t("processing")}
       </span>
     );
   }
@@ -1095,10 +1111,12 @@ function EstimateDialog({
 
   if (!estimate) return null;
 
-  const { rate, userBalance, maxAffordableMinutes, remainingSessionMinutes } = estimate;
+  const { rate, userBalance, maxAffordableMinutes, remainingSessionMinutes } =
+    estimate;
   const fullSessionCost = remainingSessionMinutes * rate;
   const isInsufficient = maxAffordableMinutes < 1;
-  const isPartial = maxAffordableMinutes < remainingSessionMinutes && maxAffordableMinutes >= 1;
+  const isPartial =
+    maxAffordableMinutes < remainingSessionMinutes && maxAffordableMinutes >= 1;
   const isHealthy = maxAffordableMinutes >= remainingSessionMinutes;
 
   return (
@@ -1161,7 +1179,11 @@ function EstimateDialog({
         </div>
 
         <DialogFooter className="flex gap-2 sm:gap-2 pt-2 border-t border-white/10">
-          <Button variant="outline" onClick={onClose} className="border-white/10 hover:bg-zinc-800 hover:text-white text-zinc-300 bg-transparent">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="border-white/10 hover:bg-zinc-800 hover:text-white text-zinc-300 bg-transparent"
+          >
             {c("cancel")}
           </Button>
           {!isInsufficient && (
@@ -1200,7 +1222,7 @@ function ConsentDialog({
             {t("consentDialogTitle")}
           </DialogTitle>
           <DialogDescription className="text-left space-y-3 pt-2">
-              {t("consentDialogDesc")}
+            {t("consentDialogDesc")}
             <p className="text-sm text-amber-400">
               {t("consentDialogWarning")}
             </p>

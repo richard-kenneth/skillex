@@ -5,7 +5,13 @@ import { useRef, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { PLATFORM_STATS } from "@skillex/shared";
 
-function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
+function AnimatedCounter({
+  target,
+  suffix = "",
+}: {
+  target: number;
+  suffix?: string;
+}) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [display, setDisplay] = useState(0);
@@ -28,7 +34,8 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
 
   return (
     <span ref={ref} className="tabular-nums">
-      {display}{suffix}
+      {display}
+      {suffix}
     </span>
   );
 }

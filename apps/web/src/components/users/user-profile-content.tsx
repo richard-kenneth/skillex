@@ -77,10 +77,14 @@ export function UserProfileContent({
   const seeking = user.skills.filter((s) => s.type === "SEEKING");
 
   const mySeekingIds = new Set(
-    currentUserSkills.filter((s) => s.type === "SEEKING").map((s) => s.skill.id),
+    currentUserSkills
+      .filter((s) => s.type === "SEEKING")
+      .map((s) => s.skill.id),
   );
   const myOfferingIds = new Set(
-    currentUserSkills.filter((s) => s.type === "OFFERING").map((s) => s.skill.id),
+    currentUserSkills
+      .filter((s) => s.type === "OFFERING")
+      .map((s) => s.skill.id),
   );
 
   const getSponsor = (skill: UserSkill["skill"]) => {
@@ -103,7 +107,8 @@ export function UserProfileContent({
         />
       )}
       <span className="text-[10px] font-medium text-muted-foreground">
-        {tSponsors("sponsoredBy")} <span className="text-primary font-bold">{category.sponsorName}</span>
+        {tSponsors("sponsoredBy")}{" "}
+        <span className="text-primary font-bold">{category.sponsorName}</span>
       </span>
     </a>
   );
@@ -114,14 +119,20 @@ export function UserProfileContent({
   const reviewsCount = reviews.length;
   const avgRating =
     reviewsCount > 0
-      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount).toFixed(1)
+      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount).toFixed(
+          1,
+        )
       : null;
 
   return (
     <div className="container py-8 max-w-4xl mx-auto px-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Back navigation */}
       <div>
-        <Button variant="ghost" asChild className="gap-2 text-muted-foreground hover:text-foreground">
+        <Button
+          variant="ghost"
+          asChild
+          className="gap-2 text-muted-foreground hover:text-foreground"
+        >
           <Link href="/matches">
             <ArrowLeft className="h-4 w-4" />
             {t("backToMatches")}
@@ -142,7 +153,10 @@ export function UserProfileContent({
                 src={user.image ?? ""}
                 className="h-28 w-28 border-4 border-background shadow-2xl transition-transform hover:scale-102"
               >
-                <AvatarImage src={user.image ?? ""} alt={user.name ?? tMatches("anonymous")} />
+                <AvatarImage
+                  src={user.image ?? ""}
+                  alt={user.name ?? tMatches("anonymous")}
+                />
                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-3xl">
                   {user.name?.charAt(0) ?? "U"}
                 </AvatarFallback>
@@ -157,7 +171,8 @@ export function UserProfileContent({
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                     <span>{avgRating}</span>
                     <span className="text-muted-foreground font-normal">
-                      ({reviewsCount} {reviewsCount === 1 ? "review" : "reviews"})
+                      ({reviewsCount}{" "}
+                      {reviewsCount === 1 ? "review" : "reviews"})
                     </span>
                   </div>
                 )}
@@ -200,16 +215,24 @@ export function UserProfileContent({
                         className="p-4 rounded-xl border border-border/40 bg-muted/20 flex flex-col justify-between"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-sm">{s.skill.name}</span>
+                          <span className="font-semibold text-sm">
+                            {s.skill.name}
+                          </span>
                           <Badge
-                            variant={mySeekingIds.has(s.skill.id) ? "default" : "secondary"}
+                            variant={
+                              mySeekingIds.has(s.skill.id)
+                                ? "default"
+                                : "secondary"
+                            }
                             className={
                               mySeekingIds.has(s.skill.id)
                                 ? "bg-green-500/20 text-green-400 border-green-500/30 text-xs"
                                 : "text-xs"
                             }
                           >
-                            {mySeekingIds.has(s.skill.id) ? tMatches("matchScore") : ""}
+                            {mySeekingIds.has(s.skill.id)
+                              ? tMatches("matchScore")
+                              : ""}
                             {s.experienceLevel ? ` • ${s.experienceLevel}` : ""}
                           </Badge>
                         </div>
@@ -218,7 +241,9 @@ export function UserProfileContent({
                     );
                   })
                 ) : (
-                  <p className="text-sm text-muted-foreground italic">{t("noOffering")}</p>
+                  <p className="text-sm text-muted-foreground italic">
+                    {t("noOffering")}
+                  </p>
                 )}
               </div>
             </div>
@@ -236,7 +261,9 @@ export function UserProfileContent({
                       key={s.id}
                       className="p-4 rounded-xl border border-border/40 bg-muted/20 flex items-center justify-between"
                     >
-                      <span className="font-semibold text-sm">{s.skill.name}</span>
+                      <span className="font-semibold text-sm">
+                        {s.skill.name}
+                      </span>
                       <Badge
                         variant="outline"
                         className={
@@ -245,13 +272,17 @@ export function UserProfileContent({
                             : "border-border/60 text-muted-foreground text-xs"
                         }
                       >
-                        {myOfferingIds.has(s.skill.id) ? tMatches("matchScore") : ""}
+                        {myOfferingIds.has(s.skill.id)
+                          ? tMatches("matchScore")
+                          : ""}
                         {s.experienceLevel ? ` • ${s.experienceLevel}` : ""}
                       </Badge>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground italic">{t("noSeeking")}</p>
+                  <p className="text-sm text-muted-foreground italic">
+                    {t("noSeeking")}
+                  </p>
                 )}
               </div>
             </div>
@@ -281,7 +312,9 @@ export function UserProfileContent({
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-xs font-medium">{rev.reviewer.name || tMatches("anonymous")}</p>
+                      <p className="text-xs font-medium">
+                        {rev.reviewer.name || tMatches("anonymous")}
+                      </p>
                       <p className="text-[10px] text-muted-foreground">
                         {new Date(rev.createdAt).toLocaleDateString()}
                       </p>
@@ -292,7 +325,9 @@ export function UserProfileContent({
                       <Star
                         key={star}
                         className={`h-3.5 w-3.5 ${
-                          rev.rating >= star ? "fill-amber-400" : "text-zinc-700 fill-none"
+                          rev.rating >= star
+                            ? "fill-amber-400"
+                            : "text-zinc-700 fill-none"
                         }`}
                       />
                     ))}
@@ -301,7 +336,11 @@ export function UserProfileContent({
                 {rev.tags && rev.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 pt-1">
                     {rev.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-[10px] px-2 py-0.5">
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="text-[10px] px-2 py-0.5"
+                      >
                         {tag.replace(/_/g, " ")}
                       </Badge>
                     ))}

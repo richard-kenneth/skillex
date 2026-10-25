@@ -11,7 +11,7 @@ export async function getSession() {
 
   try {
     const response = await fetch(url, {
-      headers: new Headers(await headers())
+      headers: new Headers(await headers()),
     });
 
     if (!response.ok) {

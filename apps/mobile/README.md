@@ -18,10 +18,12 @@ From the repository root:
 
 ```bash
 pnpm install
-cp apps/mobile/.env.example apps/mobile/.env
+pnpm run setup
 ```
 
-Fill in the values in `apps/mobile/.env`. Never commit real credentials.
+`pnpm run setup` creates `apps/mobile/.env` with local API URLs and seeds demo data. The default login is `demo@skillex.dev` / `Password123!`.
+
+If you already have the local services running, `pnpm run setup -- --skip-install` is safe to re-run. Never commit real credentials.
 
 ## Run
 
@@ -40,6 +42,8 @@ pnpm --filter mobile web
 ```
 
 The web target is useful for quick UI work, but it is not a substitute for testing native audio, video, push notifications, or device routing.
+
+The dev container in this repository is suitable for JavaScript/TypeScript work and Android tooling, but iOS-native builds still require macOS/Xcode or a cloud build. Point `EXPO_PUBLIC_API_BASE_URL` at a reachable API if you run the app on a physical device.
 
 ## Testing expectations
 

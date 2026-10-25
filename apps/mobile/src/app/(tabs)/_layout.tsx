@@ -1,14 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Pressable, Platform, Keyboard } from 'react-native';
-import { Tabs } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LayoutDashboard, Users, RefreshCw, Coins, User } from 'lucide-react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { ThemedText } from '@/components/themed-text';
-import { RADIUS, SPACING, ICON_SIZE, SHADOWS, ANIMATION } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { useT } from 'lib/i18n';
-import { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs/types';
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, Pressable, Platform, Keyboard } from "react-native";
+import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  LayoutDashboard,
+  Users,
+  RefreshCw,
+  Coins,
+  User,
+} from "lucide-react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import { ThemedText } from "@/components/themed-text";
+import {
+  RADIUS,
+  SPACING,
+  ICON_SIZE,
+  SHADOWS,
+  ANIMATION,
+} from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { useT } from "lib/i18n";
+import { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs/types";
 
 function AnimatedTabItem({
   route,
@@ -37,7 +53,10 @@ function AnimatedTabItem({
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, ANIMATION.spring as any ?? { damping: 15, stiffness: 150 });
+    scale.value = withSpring(
+      1,
+      (ANIMATION.spring as any) ?? { damping: 15, stiffness: 150 },
+    );
   };
 
   return (
@@ -71,7 +90,7 @@ function AnimatedTabItem({
           type="badge"
           style={{
             color: isFocused ? theme.foreground : theme.mutedForeground,
-            fontWeight: isFocused ? '600' : '400',
+            fontWeight: isFocused ? "600" : "400",
             fontSize: 10,
             marginTop: 2,
           }}
@@ -87,17 +106,17 @@ function AnimatedTabItem({
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const t = useT('nav');
+  const t = useT("nav");
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setIsKeyboardVisible(true)
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setIsKeyboardVisible(true),
     );
     const hideSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setIsKeyboardVisible(false)
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setIsKeyboardVisible(false),
     );
     return () => {
       showSub.remove();
@@ -109,7 +128,10 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     return null;
   }
 
-  const icons: Record<string, (props: { color: string; size: number }) => React.ReactNode> = {
+  const icons: Record<
+    string,
+    (props: { color: string; size: number }) => React.ReactNode
+  > = {
     index: (props) => <LayoutDashboard {...props} />,
     matches: (props) => <Users {...props} />,
     exchanges: (props) => <RefreshCw {...props} />,
@@ -118,11 +140,11 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   };
 
   const labels: Record<string, string> = {
-    index: t('dashboard'),
-    matches: t('matches'),
-    exchanges: t('exchanges'),
-    points: t('points'),
-    profile: t('profile'),
+    index: t("dashboard"),
+    matches: t("matches"),
+    exchanges: t("exchanges"),
+    points: t("points"),
+    profile: t("profile"),
   };
 
   const bottomInset = Math.max(insets.bottom, 8);
@@ -153,7 +175,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
           const onPress = () => {
             const event = navigation.emit({
-              type: 'tabPress',
+              type: "tabPress",
               target: route.key,
               canPreventDefault: true,
             });
@@ -183,33 +205,33 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabsLayout() {
-  const t = useT('nav');
+  const t = useT("nav");
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen name="index" options={{ title: t('dashboard') }} />
-      <Tabs.Screen name="matches" options={{ title: t('matches') }} />
-      <Tabs.Screen name="exchanges" options={{ title: t('exchanges') }} />
-      <Tabs.Screen name="points" options={{ title: t('points') }} />
-      <Tabs.Screen name="profile" options={{ title: t('profile') }} />
+      <Tabs.Screen name="index" options={{ title: t("dashboard") }} />
+      <Tabs.Screen name="matches" options={{ title: t("matches") }} />
+      <Tabs.Screen name="exchanges" options={{ title: t("exchanges") }} />
+      <Tabs.Screen name="points" options={{ title: t("points") }} />
+      <Tabs.Screen name="profile" options={{ title: t("profile") }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
   tabBarFloatingWrapper: {
-    position: 'absolute',
+    position: "absolute",
     left: SPACING[3],
     right: SPACING[3],
-    alignItems: 'center',
+    alignItems: "center",
   },
   glassDockContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    width: "100%",
     maxWidth: 520,
     borderRadius: RADIUS.pill,
     borderWidth: 1,
@@ -217,14 +239,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING[2],
   },
   tabItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 2,
   },
   iconWrapper: {
     width: 38,
     height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
