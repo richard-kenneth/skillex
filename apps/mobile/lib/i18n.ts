@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { en, es, fr, pt } from "@skil-ex2/shared";
+import { en, es, fr, pt } from "@skillex/shared";
 import { getLocales } from "expo-localization";
 import { I18n } from "i18n-js";
 import React from "react";

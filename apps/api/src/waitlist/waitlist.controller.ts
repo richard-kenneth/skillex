@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { JoinWaitlistSchema, type JoinWaitlistDto } from '@skil-ex2/shared';
+import { JoinWaitlistSchema, type JoinWaitlistDto } from '@skillex/shared';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
 import { WaitlistService } from './waitlist.service';
 

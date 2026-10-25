@@ -6,7 +6,7 @@ import {
   POINT_TO_USD_RATE,
   PurchasePointsDto,
   WithdrawPointsDto,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { RatesService } from '../rates/rates.service';
 import { PostHogService } from '../analytics/posthog.service';
@@ -303,7 +303,7 @@ export class PointsService {
           account_bank: data.bankCode,
           account_number: data.accountNumber,
           amount: amountToTransfer,
-          narration: 'Skil-Ex Points Withdrawal',
+          narration: 'SkillEx Points Withdrawal',
           currency: 'NGN',
           reference,
         }),

@@ -371,7 +371,7 @@ export class NotificationsService {
                 : ''
             }
             <p style="color: #718096; font-size: 12px; margin-top: 32px; border-t: 1px solid #edf2f7; padding-top: 16px;">
-              This is a transactional email from Skill Exchange. You can adjust your notification settings in your profile dashboard.
+              This is a transactional email from SkillEx. You can adjust your notification settings in your profile dashboard.
             </p>
           </div>
         `,

@@ -12,7 +12,7 @@ import {
   ProposeTermsAndSlotsDto,
   SendMessageDto,
   type UpdateAvailabilityDto,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import { ExchangeRequest, SessionStatus } from '../generated/prisma/client';
 import { PointsService } from '../points/points.service';
 import { PrismaService } from '../prisma/prisma.service';

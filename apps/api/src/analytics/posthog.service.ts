@@ -3,7 +3,7 @@ import { PostHog } from 'posthog-node';
 import {
   AnalyticsEvent,
   type AnalyticsEventProperties,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 
 export { AnalyticsEvent };
 export type { AnalyticsEventProperties };

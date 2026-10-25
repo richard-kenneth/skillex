@@ -74,7 +74,7 @@ import {
   formatDateShort,
   calculateAverageRating,
   calculatePointsBreakdown,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 
 type PrimaryTab = 'discover' | 'requests';
 type RequestSubTab = 'received' | 'sent';

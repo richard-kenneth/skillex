@@ -15,7 +15,7 @@ import { useCurrentUser, useExchanges } from '@/lib/api-hooks';
 import {
   getExchangeStatusColor, calculateExchangeProgress,
   calculatePointsBreakdown, formatDateShort, formatDateTimeShort,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import {
   ArrowRightLeft, Handshake, CalendarCheck, Video, ChevronRight, Coins, Users, Clock, Lock,
   MessageCircle,

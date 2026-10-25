@@ -29,7 +29,7 @@ import {
   UpdateAvailabilitySchema,
   type UpdateSessionStatusDto,
   UpdateSessionStatusSchema,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import { Request } from 'express';
 import { Observable, fromEvent, merge } from 'rxjs';
 import { filter, map } from 'rxjs/operators';

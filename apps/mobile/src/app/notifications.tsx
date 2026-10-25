@@ -39,7 +39,7 @@ import {
   POINTS_NOTIFICATION_TYPES,
   formatDateTimeShort,
   getNotificationMeta,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { useNavigation, useRouter } from "expo-router";
 import {
   ArrowLeft,

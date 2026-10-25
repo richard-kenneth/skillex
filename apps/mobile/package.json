@@ -2,6 +2,14 @@
   "name": "mobile",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "author": "Richard Kenneth",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/richard-kenneth/skillex.git",
+    "directory": "apps/mobile"
+  },
   "dependencies": {
     "@better-auth/expo": "^1.6.25",
     "@config-plugins/react-native-webrtc": "^15.0.1",
@@ -12,7 +20,7 @@
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@react-native-community/datetimepicker": "9.1.0",
     "@react-navigation/bottom-tabs": "^7.18.14",
-    "@skil-ex2/shared": "workspace:*",
+    "@skillex/shared": "workspace:*",
     "@tanstack/react-query": "^5.100.3",
     "audio-device-detector": "file:./modules/audio-device-detector",
     "better-auth": "^1.6.25",
@@ -72,6 +80,5 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint"
-  },
-  "private": true
+  }
 }

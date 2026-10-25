@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Échange de Compétences",
+    "appName": "SkillEx",
     "loading": "Chargement...",
     "error": "Erreur",
     "success": "Succès",
@@ -68,20 +68,20 @@
     "offlineToast": "Toujours hors ligne. Réessai..."
   },
   "metadata": {
-    "homeTitle": "Échange de compétences | Apprendre, enseigner, grandir",
+    "homeTitle": "SkillEx | Apprendre, enseigner, grandir",
     "homeDescription": "Maîtrisez de nouvelles compétences en enseignant ce que vous savez. Échanges de compétences en vidéo 1-à-1 avec des apprenants du monde entier.",
-    "matchesTitle": "Mes correspondances | Échange de compétences",
+    "matchesTitle": "Mes correspondances | SkillEx",
     "matchesDescription": "Affichez vos correspondances de compétences, vos correspondances partielles et connectez-vous avec des partenaires d'apprentissage potentiels.",
-    "exchangesTitle": "Mes échanges | Échange de compétences",
-    "pointsTitle": "Solde de points et transactions | Échange de compétences",
-    "dashboardTitle": "Tableau de bord | Échange de compétences",
-    "profileTitle": "Paramètres du profil | Échange de compétences",
-    "signinTitle": "Se connecter | Échange de compétences",
-    "signupTitle": "S'inscrire | Échange de compétences",
-    "forgotPasswordTitle": "Mot de passe oublié | Échange de compétences",
-    "resetPasswordTitle": "Réinitialiser le mot de passe | Échange de compétences",
-    "roomTitle": "Session vidéo en direct | Échange de compétences",
-    "offlineTitlePage": "Vous êtes hors ligne | Échange de compétences"
+    "exchangesTitle": "Mes échanges | SkillEx",
+    "pointsTitle": "Solde de points et transactions | SkillEx",
+    "dashboardTitle": "Tableau de bord | SkillEx",
+    "profileTitle": "Paramètres du profil | SkillEx",
+    "signinTitle": "Se connecter | SkillEx",
+    "signupTitle": "S'inscrire | SkillEx",
+    "forgotPasswordTitle": "Mot de passe oublié | SkillEx",
+    "resetPasswordTitle": "Réinitialiser le mot de passe | SkillEx",
+    "roomTitle": "Session vidéo en direct | SkillEx",
+    "offlineTitlePage": "Vous êtes hors ligne | SkillEx"
   },
   "nav": {
     "home": "Accueil",
@@ -188,7 +188,7 @@
     "pointsReferralReward": "200 points par parrainage",
 
     "platformTitle": "Disponible partout",
-    "platformSubtitle": "Utilisez Skill Exchange sur n'importe quel appareil, dans votre langue.",
+    "platformSubtitle": "Utilisez SkillEx sur n'importe quel appareil, dans votre langue.",
     "platformWeb": "Application Web (PWA)",
     "platformWebDesc": "Fonctionne sur tous les navigateurs. Installez-la comme une app native.",
     "platformAndroid": "Application Android",
@@ -206,8 +206,8 @@
     "trustOpenDesc": "Développé avec Next.js, NestJS, PostgreSQL, LiveKit et Prisma.",
 
     "faqTitle": "Foire aux questions",
-    "faqSubtitle": "Tout ce que vous devez savoir sur Skill Exchange.",
-    "faq1Q": "Skill Exchange est-il gratuit ?",
+    "faqSubtitle": "Tout ce que vous devez savoir sur SkillEx.",
+    "faq1Q": "SkillEx est-il gratuit ?",
     "faq1A": "Oui ! Vous pouvez échanger des compétences gratuitement grâce aux échanges directs.",
     "faq2Q": "Comment fonctionnent les points ?",
     "faq2A": "Les points sont la monnaie de la plateforme. Vous pouvez en acheter, en gagner ou en recevoir.",
@@ -218,7 +218,7 @@
     "faq5Q": "Comment fonctionne le programme de parrainage ?",
     "faq5A": "Partagez votre lien unique. Dès que votre ami termine son premier échange, vous gagnez 200 points.",
     "faq6Q": "En quelles langues la plateforme est-elle disponible ?",
-    "faq6A": "Skill Exchange est disponible en anglais, français, espagnol et portugais.",
+    "faq6A": "SkillEx est disponible en anglais, français, espagnol et portugais.",
     "faq7Q": "Quand aura lieu le lancement officiel ?",
     "faq7A": "Nous finalisons la plateforme. Rejoignez la liste d'attente ou configurez votre profil !",
 
@@ -228,7 +228,7 @@
     "footerTagline": "Apprenez, Enseignez, Progressez. Échangez des compétences en toute sécurité.",
     "footerPrivacy": "Politique de confidentialité",
     "footerTerms": "Conditions d'utilisation",
-    "footerRights": "© {year} Skill Exchange. Tous droits réservés.",
+    "footerRights": "© {year} SkillEx. Tous droits réservés.",
 
     "comingSoonTitle": "Bientôt disponible",
     "comingSoonDesc": "Cette fonctionnalité sera bientôt disponible. Configurez votre profil pour être prêt !",
@@ -236,9 +236,9 @@
   },
   "auth": {
     "signInTitle": "Bon retour",
-    "signInDescription": "Connectez-vous à votre compte Skill Exchange",
+    "signInDescription": "Connectez-vous à votre compte SkillEx",
     "signUpTitle": "Créer un compte",
-    "signUpDescription": "Rejoignez la communauté Skill Exchange",
+    "signUpDescription": "Rejoignez la communauté SkillEx",
     "email": "E-mail",
     "emailPlaceholder": "nom@exemple.com",
     "password": "Mot de passe",
@@ -1038,7 +1038,7 @@
     "errorLoading": "Échec du chargement des données de points",
     "resolveAccountFailed": "Impossible de résoudre le compte",
     "resolveAccountError": "Échec de la résolution du compte",
-    "purchaseTitle": "Achat de points Skil-Ex",
+    "purchaseTitle": "Achat de points SkillEx",
     "purchaseDesc": "Recharge de points de l'application",
     "purchaseFailed": "Échec de l'achat",
     "somethingWentWrong": "Quelque chose a mal tourné",
@@ -1381,7 +1381,7 @@
     "close": "Fermer",
     "exchangeLabel": "Échange",
     "linkCopied": "Lien copié",
-    "shareReferralMessage": "Rejoignez Skil-Ex avec mon lien de parrainage pour apprendre et gagner des points ! {link}",
+    "shareReferralMessage": "Rejoignez SkillEx avec mon lien de parrainage pour apprendre et gagner des points ! {link}",
     "inviteFriendsDesc": "Gagnez 200 pts par parrainage. Votre code :",
     "copy": "Copier",
     "shareLink": "Partager le lien",
@@ -1464,8 +1464,8 @@
     "person": "personne",
     "rewardReceived": "Récompense de Parrainage",
     "bonusReceived": "Bonus de Parrainage",
-    "shareSubject": "Échange de Compétences",
-    "shareLinkText": "Rejoignez-moi sur Skill Exchange ! Utilisez mon code de parrainage : {code}",
+    "shareSubject": "SkillEx",
+    "shareLinkText": "Rejoignez-moi sur SkillEx ! Utilisez mon code de parrainage : {code}",
     "errorLoading": "Échec du chargement des données de parrainage",
     "applyPlaceholderExample": "ex. ALEX-88F2",
     "appliedTitle": "Code appliqué",
@@ -1546,7 +1546,7 @@
     "unreadCount": "{count} non lus"
   },
   "onboarding": {
-    "wizardTitle": "Bienvenue sur Skill Exchange",
+    "wizardTitle": "Bienvenue sur SkillEx",
     "wizardDesc": "Un guide rapide pour configurer votre profil et commencer à échanger des compétences.",
     "skipForNow": "Ignorer pour l'instant",
     "back": "Retour",
@@ -1564,7 +1564,7 @@
     "profileItem3": "Rédigez une courte biographie",
     "profileCta": "Aller aux paramètres du profil",
     "skillsTitle": "Ajoutez vos compétences",
-    "skillsDesc": "Les compétences sont au cœur de Skill Exchange. Ajoutez ce que vous pouvez enseigner et ce que vous voulez apprendre.",
+    "skillsDesc": "Les compétences sont au cœur de SkillEx. Ajoutez ce que vous pouvez enseigner et ce que vous voulez apprendre.",
     "skillsOffer": "Compétences offertes",
     "skillsOfferDesc": "Connaissances ou expertises que vous pouvez enseigner en échange d'autres compétences.",
     "skillsSeek": "Compétences recherchées",
@@ -1577,7 +1577,7 @@
     "matchType2": "Plus de correspondances",
     "matchType2Desc": "Utilisateurs qui proposent des compétences que vous recherchez. Échangez avec vos points pour plus de flexibilité.",
     "doneTitle": "Vous y êtes presque !",
-    "doneDesc": "Voici votre liste de configuration. Complétez les éléments restants pour tirer le meilleur parti de Skill Exchange.",
+    "doneDesc": "Voici votre liste de configuration. Complétez les éléments restants pour tirer le meilleur parti de SkillEx.",
     "doneItem1": "Compléter votre profil",
     "doneItem2": "Ajouter une compétence que vous offrez",
     "doneItem3": "Ajouter une compétence que vous voulez apprendre",
@@ -1668,7 +1668,7 @@
     "cancel": "Annuler",
     "sendRequest": "Envoyer la demande",
     "invalid": "Invalide",
-    "shareProfileMessage": "Découvrez {name} sur Skil-Ex",
+    "shareProfileMessage": "Découvrez {name} sur SkillEx",
     "thisUser": "cet utilisateur"
   }
 }

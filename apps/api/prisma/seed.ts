@@ -1,7 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as dotenv from 'dotenv';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { SEED_CATEGORIES } from '@skil-ex2/shared';
+import { SEED_CATEGORIES } from '@skillex/shared';
 
 dotenv.config();
 
@@ -36,7 +36,7 @@ async function main() {
     },
   });
 
-  console.log('Seeding categories and skills from @skil-ex2/shared...');
+  console.log('Seeding categories and skills from @skillex/shared...');
 
   for (const cat of SEED_CATEGORIES) {
     const category = await prisma.category.upsert({

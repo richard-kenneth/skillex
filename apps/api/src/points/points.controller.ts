@@ -13,7 +13,7 @@ import {
   PurchasePointsSchema,
   type WithdrawPointsDto,
   WithdrawPointsSchema,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import { Request } from 'express';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';

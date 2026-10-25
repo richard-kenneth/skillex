@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_CLIENT_BASE_URL!),
-  title: "Skill Exchange | Learn, Teach, Grow",
+  title: "SkillEx | Learn, Teach, Grow",
   description:
     "Master new skills by teaching what you know. 1-on-1 live video skill swaps with learners worldwide.",
   keywords: [
@@ -37,18 +37,18 @@ export const metadata: Metadata = {
     "online learning",
     "knowledge exchange",
   ],
-  authors: [{ name: "Skill Exchange" }],
-  creator: "Skill Exchange",
-  publisher: "Skill Exchange",
+  authors: [{ name: "SkillEx" }],
+  creator: "SkillEx",
+  publisher: "SkillEx",
   openGraph: {
     type: "website",
-    siteName: "Skill Exchange",
+    siteName: "SkillEx",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Skill Exchange — Master new skills by trading what you know",
+        alt: "SkillEx — Master new skills by trading what you know",
       },
     ],
   },
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Skill Exchange",
+    title: "SkillEx",
   },
   formatDetection: {
     telephone: false,

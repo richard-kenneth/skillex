@@ -176,10 +176,10 @@ export function PWARegistration() {
           
           <div className="flex-1 pr-6">
             <h3 className="font-semibold text-white text-base leading-snug">
-              Install Skill Exchange
+              Install SkillEx
             </h3>
             <p className="mt-1 text-xs text-zinc-400 leading-normal">
-              Access Skill Exchange directly from your home screen with offline capability and native app feel.
+              Access SkillEx directly from your home screen with offline capability and native app feel.
             </p>
           </div>
         </div>

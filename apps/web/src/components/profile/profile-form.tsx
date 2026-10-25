@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useR2Upload } from "@/hooks/use-r2-upload";
 import { authClient, useSession } from "@/lib/auth-client";
 import { valibotResolver } from "@hookform/resolvers/valibot";
-import { ProfileFormPayload, ProfileFormSchema } from "@skil-ex2/shared";
+import { ProfileFormPayload, ProfileFormSchema } from "@skillex/shared";
 import { Loader2, Upload, User, Award, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";

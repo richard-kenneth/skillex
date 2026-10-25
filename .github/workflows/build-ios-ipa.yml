@@ -89,14 +89,14 @@ jobs:
           mkdir -p "$RUNNER_TEMP/Payload"
           cp -R "$APP_PATH" "$RUNNER_TEMP/Payload/"
           cd "$RUNNER_TEMP"
-          zip -r -9 "SkillExchange.ipa" Payload
+          zip -r -9 "SkillEx.ipa" Payload
 
-          echo "IPA created: $RUNNER_TEMP/SkillExchange.ipa"
-          ls -lh "$RUNNER_TEMP/SkillExchange.ipa"
+          echo "IPA created: $RUNNER_TEMP/SkillEx.ipa"
+          ls -lh "$RUNNER_TEMP/SkillEx.ipa"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SkillExchange-iOS
-          path: ${{ runner.temp }}/SkillExchange.ipa
+          name: SkillEx-iOS
+          path: ${{ runner.temp }}/SkillEx.ipa
           if-no-files-found: error

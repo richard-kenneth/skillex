@@ -26,7 +26,7 @@
       "audio-device-detector": [
         "./modules/audio-device-detector/index.ts"
       ],
-      "@skil-ex2/shared": [
+      "@skillex/shared": [
         "../../packages/shared/index.ts"
       ],
       "@/lib/api-hooks": [

@@ -1,6 +1,6 @@
 /**
  * Push notification service for mobile app.
- * Uses the shared notification client from @skil-ex2/shared for API calls.
+ * Uses the shared notification client from @skillex/shared for API calls.
  * Handles push token registration, permission requests, and notification handling.
  * Mirrors the web push implementation for easier maintainability.
  */
@@ -8,7 +8,7 @@ import {
   createNotificationClient,
   createNotificationStream,
   type NotificationApiClient,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { authClient } from "lib/auth";
@@ -200,7 +200,7 @@ export function setupNotificationListeners(
 
 /**
  * Set up SSE stream for real-time notifications (mirrors web's RealtimeNotificationsProvider)
- * Uses the shared createNotificationStream from @skil-ex2/shared
+ * Uses the shared createNotificationStream from @skillex/shared
  */
 export function setupRealtimeNotifications(
   onNotification: (notification: any) => void,

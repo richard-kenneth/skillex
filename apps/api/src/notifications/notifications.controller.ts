@@ -109,13 +109,13 @@ export class NotificationsController {
       this.notificationsService.sendWebPush(
         req.user.id,
         'Test Notification 🚀',
-        'It works! Web Push is successfully configured on Skill Exchange.',
+        'It works! Web Push is successfully configured on SkillEx.',
         '/dashboard',
       ),
       this.notificationsService.sendMobilePush(
         req.user.id,
         'Test Notification 🚀',
-        'It works! Mobile Push is successfully configured on Skill Exchange.',
+        'It works! Mobile Push is successfully configured on SkillEx.',
         '/dashboard',
         'SYSTEM',
       ),

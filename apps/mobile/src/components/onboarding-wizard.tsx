@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Avatar, Badge, Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, useToast } from '@/components/ui';
 import { useRouter } from 'expo-router';
 import { useT, useI18n } from 'lib/i18n';
-import { isOnboardingComplete, onboardingProgress } from '@skil-ex2/shared';
+import { isOnboardingComplete, onboardingProgress } from '@skillex/shared';
 import {
   Sparkles,
   User,

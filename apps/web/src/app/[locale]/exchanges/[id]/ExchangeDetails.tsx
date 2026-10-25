@@ -20,7 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Link, useRouter } from "@/i18n/navigation";
-import { calculatePointsBreakdown } from "@skil-ex2/shared";
+import { calculatePointsBreakdown } from "@skillex/shared";
 import {
   ArrowRightLeft,
   BookOpen,

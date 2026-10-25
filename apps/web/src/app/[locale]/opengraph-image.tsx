@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
 
-export const alt = "Skill Exchange — Master new skills by trading what you know";
+export const alt = "SkillEx — Master new skills by trading what you know";
 export const size = {
   width: 1200,
   height: 630,

@@ -1,6 +1,6 @@
-# Skil-Ex2 API
+# SkillEx API
 
-This is the backend for the Skil-Ex2 platform, built with [NestJS](https://nestjs.com/). It provides a robust and scalable GraphQL/REST API to power the frontend.
+This is the backend for the SkillEx platform, built with [NestJS](https://nestjs.com/). It provides a robust and scalable GraphQL/REST API to power the frontend.
 
 ## 🛠️ Core Technologies
 

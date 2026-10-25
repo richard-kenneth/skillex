@@ -1,56 +1,56 @@
-# Welcome to your Expo app 👋
+# SkillEx Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The SkillEx mobile app is built with [Expo](https://expo.dev) and [React Native](https://reactnative.dev), using Expo Router for file-based navigation.
 
-## Get started
+## Requirements
 
-1. Install dependencies
+- Node.js 20+
+- pnpm 10.33.2 (pinned in the repository root)
+- Android Studio and an Android emulator/device for Android development
+- macOS with Xcode for local iOS development
+- An Expo development build; Expo Go alone is not sufficient because the app uses native modules
 
-   ```bash
-   npm install
-   ```
+The app depends on LiveKit React Native WebRTC and the local `audio-device-detector` Expo module. Those native dependencies require a development client, and the generated `android/` and `ios/` directories are not committed.
 
-2. Start the app
+## Setup
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+From the repository root:
 
 ```bash
-npm run reset-project
+pnpm install
+cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Fill in the values in `apps/mobile/.env`. Never commit real credentials.
 
-### Other setup steps
+## Run
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+# Start the Expo development server
+pnpm --filter mobile start
 
-## Learn more
+# Build and run on Android
+pnpm --filter mobile android
 
-To learn more about developing your project with Expo, look at the following resources:
+# Build and run on iOS (macOS only)
+pnpm --filter mobile ios
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+# Start the partial web target
+pnpm --filter mobile web
+```
 
-## Join the community
+The web target is useful for quick UI work, but it is not a substitute for testing native audio, video, push notifications, or device routing.
 
-Join our community of developers creating universal apps.
+## Testing expectations
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+When you open a mobile pull request, state what you tested and on which platform. For example:
+
+- `Android emulator, Pixel 7, API 35`
+- `JS-only change; not run on a device`
+- `iOS simulator, iPhone 16` (if you have macOS/Xcode)
+
+## Contributing
+
+Mobile contributions are **community-supported**. JavaScript/TypeScript changes, UI, i18n, accessibility, and Android-testable changes are welcome. Native iOS changes, EAS credentials, app-store releases, and LiveKit native upgrades remain maintainer-led.
+
+Open an issue before starting significant mobile work. See [`docs/adr/0002-mobile-contribution-scope.md`](../../docs/adr/0002-mobile-contribution-scope.md) for the full policy and [`CONTRIBUTING.md`](../../CONTRIBUTING.md) for the CLA and review process.

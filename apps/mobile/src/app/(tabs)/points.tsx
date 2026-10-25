@@ -23,7 +23,7 @@ import {
   POINT_TO_USD_RATE, DEFAULT_WITHDRAWAL_SPREAD, MIN_PURCHASE_POINTS,
   MIN_WITHDRAWAL_POINTS, getCurrencyDecimals, applyCurrencyPrecision,
   getTransactionMeta, formatDateShort, TransactionType,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import {
   ArrowDownLeft, ArrowDownRight, ArrowUpRight, Banknote, Coins, Landmark,
   Lock, Plus, Unlock, Wallet, Zap, RefreshCw, CheckCircle2, Loader2, Gift, ShieldCheck,

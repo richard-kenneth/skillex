@@ -40,7 +40,7 @@ import {
   isOnboardingComplete,
   OnboardingFlags,
   onboardingProgress,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import { useRouter } from 'expo-router';
 import {
   ArrowUpRight,

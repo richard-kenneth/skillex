@@ -58,7 +58,7 @@ import {
   QUERY_KEYS,
   REVIEW_TAG_LABELS,
   SkillType,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router, useRouter } from "expo-router";

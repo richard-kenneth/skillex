@@ -12,7 +12,7 @@ import { Request } from 'express';
 import { ReviewsService } from './reviews.service';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
-import { CreateReviewSchema, type CreateReviewDto } from '@skil-ex2/shared';
+import { CreateReviewSchema, type CreateReviewDto } from '@skillex/shared';
 
 @Controller('reviews')
 export class ReviewsController {

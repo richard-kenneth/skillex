@@ -1,5 +1,5 @@
 import { posthog } from './posthog';
-import { AnalyticsEvent, type AnalyticsEventProperties } from '@skil-ex2/shared';
+import { AnalyticsEvent, type AnalyticsEventProperties } from '@skillex/shared';
 
 export { AnalyticsEvent };
 export type { AnalyticsEventProperties };

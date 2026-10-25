@@ -116,7 +116,7 @@ import {
   formatDateShort,
   formatDateTimeShort,
   getExchangeStatusColor,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { ReviewCard } from "../(tabs)/profile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetch } from 'expo/fetch'

@@ -16,7 +16,7 @@ import {
   MIN_PURCHASE_POINTS,
   MIN_WITHDRAWAL_POINTS,
   POINT_TO_USD_RATE,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { closePaymentModal, useFlutterwave } from "flutterwave-react-v3";
 import {
   ArrowDownLeft,
@@ -272,8 +272,8 @@ export default function PointsPage() {
       ? "banktransfer,card,mobilemoney,ussd"
       : "card,mobilemoney,ussd",
     customer: paymentConfig?.customer || {
-      email: "user@skil-ex.com",
-      name: "Skil-Ex User",
+      email: "user@example.com",
+      name: "SkillEx User",
       phone_number: "0000000000",
     },
     customizations: {

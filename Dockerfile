@@ -25,7 +25,7 @@ COPY apps/api ./apps/api
 RUN pnpm --filter api exec prisma generate
 
 # Build the shared library and the NestJS API
-RUN pnpm --filter @skil-ex2/shared build
+RUN pnpm --filter @skillex/shared build
 RUN pnpm --filter api build
 
 # Prune devDependencies to reduce image size
@@ -39,9 +39,9 @@ ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 
 # Explicitly place the built shared package into node_modules for hoisted resolution
-RUN mkdir -p ./node_modules/@skil-ex2/shared
-COPY --from=builder /app/packages/shared/dist ./node_modules/@skil-ex2/shared/dist
-COPY --from=builder /app/packages/shared/package.json ./node_modules/@skil-ex2/shared/package.json
+RUN mkdir -p ./node_modules/@skillex/shared
+COPY --from=builder /app/packages/shared/dist ./node_modules/@skillex/shared/dist
+COPY --from=builder /app/packages/shared/package.json ./node_modules/@skillex/shared/package.json
 
 # Copy API built files and prisma setup
 COPY --from=builder /app/apps/api/dist ./apps/api/dist

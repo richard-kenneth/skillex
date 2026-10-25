@@ -1,6 +1,13 @@
 {
-  "name": "skil-ex2",
+  "name": "skillex",
+  "version": "1.0.0",
   "private": true,
+  "license": "AGPL-3.0-only",
+  "author": "Richard Kenneth",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/richard-kenneth/skillex.git"
+  },
   "packageManager": "pnpm@10.33.2",
   "scripts": {
     "build": "turbo run build",
@@ -29,11 +36,5 @@
       "sharp",
       "unrs-resolver"
     ]
-  },
-  "version": "1.0.0",
-  "dependencies": {
-    "expo": "~57.0.7",
-    "react": "19.2.3",
-    "react-native": "0.86.0"
   }
 }

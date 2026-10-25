@@ -2,6 +2,13 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
+  "author": "Richard Kenneth",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/richard-kenneth/skillex.git",
+    "directory": "apps/web"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -17,7 +24,7 @@
     "@livekit/components-styles": "^1.2.0",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
-    "@skil-ex2/shared": "workspace:*",
+    "@skillex/shared": "workspace:*",
     "@tanstack/react-query": "^5.100.3",
     "@types/nodemailer": "^8.0.0",
     "@vercel/analytics": "^2.0.1",

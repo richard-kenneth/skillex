@@ -1,8 +1,8 @@
 /**
  * Shared React Query hooks — produced by the platform-agnostic factory
- * from `@skil-ex2/shared`. Re-export these throughout the mobile app.
+ * from `@skillex/shared`. Re-export these throughout the mobile app.
  */
-import { createApiHooks } from '@skil-ex2/shared';
+import { createApiHooks } from '@skillex/shared';
 import { api } from './api-shared';
 import { queryClient } from './query-client';
 

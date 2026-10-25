@@ -41,7 +41,7 @@ import {
   calculateAverageRating,
   CreateExchangeRequestSchema,
   REVIEW_TAG_LABELS,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
   ArrowLeft,

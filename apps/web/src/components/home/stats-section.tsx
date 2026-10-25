@@ -3,7 +3,7 @@
 import { motion, useInView, useSpring, useMotionValue } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { PLATFORM_STATS } from "@skil-ex2/shared";
+import { PLATFORM_STATS } from "@skillex/shared";
 
 function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);

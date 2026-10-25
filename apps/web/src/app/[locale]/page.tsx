@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props) {
       title: t("homeTitle"),
       description: t("homeDescription"),
       url: `${baseUrl}/${locale}`,
-      siteName: "Skill Exchange",
+      siteName: "SkillEx",
       locale: locale,
       type: "website",
       images: [
@@ -78,14 +78,14 @@ export default async function HomePage({ params }: Props) {
         "@type": "WebSite",
         "@id": `${baseUrl}/${locale}/#website`,
         "url": `${baseUrl}/${locale}`,
-        "name": "Skill Exchange",
+        "name": "SkillEx",
         "description": t("homeDescription"),
         "inLanguage": locale,
       },
       {
         "@type": "Organization",
         "@id": `${baseUrl}/${locale}/#organization`,
-        "name": "Skill Exchange",
+        "name": "SkillEx",
         "url": `${baseUrl}/${locale}`,
         "logo": {
           "@type": "ImageObject",
@@ -98,7 +98,7 @@ export default async function HomePage({ params }: Props) {
       {
         "@type": "SoftwareApplication",
         "@id": `${baseUrl}/${locale}/#application`,
-        "name": "Skill Exchange",
+        "name": "SkillEx",
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "Web",
         // TODO: Replace with below when we launch on other platforms

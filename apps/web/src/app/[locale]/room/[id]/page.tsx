@@ -28,7 +28,7 @@ import {
   type RecordingConsentPayload,
   type StartRecordingPayload,
   type StopRecordingPayload,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { Track } from "livekit-client";
 import {
   AlertCircle,

@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { AnalyticsEvent, track } from "@/lib/analytics";
 import { useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
-import { calculatePointsBreakdown } from "@skil-ex2/shared";
+import { calculatePointsBreakdown } from "@skillex/shared";
 
 import { Info } from "lucide-react";
 import {

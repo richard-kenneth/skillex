@@ -28,7 +28,7 @@ export const getAuthConfig = (prisma: PrismaClient): BetterAuthOptions => ({
             subject: 'Verify your email address',
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #1a202c; margin-bottom: 16px;">Welcome to SkilEx!</h2>
+                <h2 style="color: #1a202c; margin-bottom: 16px;">Welcome to SkillEx!</h2>
                 <p style="color: #4a5568; line-height: 1.6; margin-bottom: 24px;">
                   Please verify your email address using the code below. This code will expire in 10 minutes.
                 </p>

@@ -93,7 +93,7 @@ import {
   DAY_NAMES_SHORT,
   formatDateTimeShort,
   getRequestStatusColor,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { AnalyticsEvent, track } from "@/lib/analytics";
 
 type Tab = "messages" | "terms" | "availability";

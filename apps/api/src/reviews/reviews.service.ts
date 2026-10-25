@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
-import { type CreateReviewDto } from '@skil-ex2/shared';
+import { type CreateReviewDto } from '@skillex/shared';
 
 @Injectable()
 export class ReviewsService {

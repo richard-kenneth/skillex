@@ -50,18 +50,18 @@ export class WaitlistService {
     const displayName = name || 'there';
     const fromAddress =
       process.env.ONBOARDING_EMAIL_FROM ||
-      'Skill Exchange <noreply@skilex.com>';
+      'SkillEx <noreply@skilex.com>';
 
     try {
       await this.resend.emails.send({
         from: fromAddress,
         to: email,
-        subject: "You're on the Skill Exchange waitlist! 🎉",
+        subject: "You're on the SkillEx waitlist! 🎉",
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 40px 20px;">
             <h1 style="font-size: 24px; font-weight: 700; color: #fafafa; margin-bottom: 16px;">Hey ${displayName}! 👋</h1>
             <p style="font-size: 16px; color: #a1a1aa; line-height: 1.6;">
-              You've been added to the <strong style="color: #fafafa;">Skill Exchange</strong> waitlist. We're building a platform where you can trade your skills with others through live video sessions.
+              You've been added to the <strong style="color: #fafafa;">SkillEx</strong> waitlist. We're building a platform where you can trade your skills with others through live video sessions.
             </p>
             <p style="font-size: 16px; color: #a1a1aa; line-height: 1.6;">
               We'll let you know as soon as we're ready for you. In the meantime, you can set up your profile early so you're ready to start exchanging skills on day one.
@@ -74,7 +74,7 @@ export class WaitlistService {
             </div>
             <p style="font-size: 14px; color: #71717a; line-height: 1.6;">
               Thanks for your interest!<br/>
-              — The Skill Exchange Team
+              — The SkillEx Team
             </p>
           </div>
         `,

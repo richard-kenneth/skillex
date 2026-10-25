@@ -1,6 +1,6 @@
-# Skil-Ex2 Web App
+# SkillEx Web App
 
-The primary frontend for Skil-Ex2, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
+The primary frontend for SkillEx, built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/).
 
 ## 🛠️ Core Technologies
 

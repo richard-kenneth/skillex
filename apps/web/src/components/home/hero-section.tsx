@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { WaitlistForm } from "./waitlist-form";
 import { track, AnalyticsEvent } from "@/lib/analytics";
 
-import { SEED_CATEGORIES } from "@skil-ex2/shared";
+import { SEED_CATEGORIES } from "@skillex/shared";
 
 // Representative skills sampled evenly across all seeded categories
 const floatingSkills = SEED_CATEGORIES.flatMap((cat) => [cat.skills[0], cat.skills[1]]);

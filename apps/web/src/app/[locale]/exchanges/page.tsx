@@ -13,7 +13,7 @@ import { ArrowRight, ArrowRightLeft, Clock, Coins, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { calculatePointsBreakdown } from "@skil-ex2/shared";
+import { calculatePointsBreakdown } from "@skillex/shared";
 import { ComingSoonGate } from "@/components/home/coming-soon-gate";
 
 const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
