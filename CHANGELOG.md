@@ -45,6 +45,11 @@ once versioned releases begin.
 - Branded 1280x640 social preview image, also used as the README banner.
 - GitHub repository settings runbook covering metadata, security features,
   rulesets, Actions permissions, Discussions, and the CLA Assistant.
+- Seeded backlog with 9 `good first issue` and 6 `help wanted` issues covering
+  API security, tests, accessibility, mobile CI, i18n, self-hosting, and E2E
+  coverage.
+- `👋 Start here` discussion linking setup, contribution guidance, and the
+  starter backlog.
 
 ### Changed
 
@@ -59,6 +64,8 @@ once versioned releases begin.
 - Clarified the full list of seeded demo email addresses in the README.
 - Updated the mobile guide to cover development builds, device networking,
   push notifications, LiveKit, native modules, and platform testing.
+- Added `area: api`, `area: web`, `area: mobile`, `priority: high`,
+  `needs triage`, and `blocked` labels, and renamed `documentation` to `docs`.
 
 ### Fixed
 

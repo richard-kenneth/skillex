@@ -1,8 +1,8 @@
 # GitHub repository settings
 
 This runbook records the repository settings that cannot be expressed as files in
-Git. It covers Phase 4 of the open-source launch plan and the checks needed before
-the repository is made public.
+Git. It covers the GitHub-side parts of Phases 4 and 5 of the open-source launch
+plan and the checks needed before the repository is made public.
 
 The repository is still **private**. Several GitHub security features are only
 available on public repositories, or require GitHub Advanced Security on private
@@ -26,6 +26,8 @@ immediately after the visibility change, before announcing the launch.
 | Fork PR approval for first-time contributors   | After public                                              |
 | Social preview image                           | Ready; upload pending                                     |
 | Discussions categories                         | Two policy categories pending                             |
+| Start here discussion                          | Posted; pin pending                                       |
+| Issue labels and backlog                       | Applied                                                   |
 | CLA Assistant                                  | Pending legal review                                      |
 | Organization and 2FA                           | Recommended later                                         |
 
@@ -184,8 +186,30 @@ Create these two policy categories manually in **Discussions > Categories**:
 The templates in `.github/DISCUSSION_TEMPLATE/` use the `corporate-cla` and
 `trademark` slugs.
 
-Pin a short **Start here** post that links to `README.md`, `CONTRIBUTING.md`,
-`ROADMAP.md`, and `SUPPORT.md`. Do not post personal contact details.
+The **👋 Start here** post is published at
+<https://github.com/richard-kenneth/skillex/discussions/17>. GitHub's public API
+can create a discussion but does not expose a mutation to pin one. Pin it
+manually from the discussion's **...** menu. Do not post personal contact
+details.
+
+## Labels and backlog
+
+The repository uses these labels for triage and contributor discovery:
+
+| Label                                    | Purpose                                        |
+| ---------------------------------------- | ---------------------------------------------- |
+| `good first issue`                       | Small, self-contained entry points             |
+| `help wanted`                            | Larger features or audits open to contributors |
+| `docs`                                   | Documentation-only work                        |
+| `area: api`, `area: web`, `area: mobile` | The part of the monorepo affected              |
+| `priority: high`                         | Address before or soon after launch            |
+| `needs triage`                           | Waiting for maintainer review                  |
+| `blocked`                                | Waiting on another issue or external work      |
+
+The seeded backlog contains 9 `good first issue` and 6 `help wanted` issues.
+Browse it at <https://github.com/richard-kenneth/skillex/issues>. Keep the number
+of open starter issues small enough to review within 48 hours, and close or
+relabel issues that are no longer actionable.
 
 ## CLA Assistant
 
@@ -209,6 +233,8 @@ gh api repos/richard-kenneth/skillex/rules/branches/main
 gh api repos/richard-kenneth/skillex/actions/permissions/workflow
 gh api repos/richard-kenneth/skillex/vulnerability-alerts
 gh api repos/richard-kenneth/skillex/automated-security-fixes
+gh label list --repo richard-kenneth/skillex --limit 100
+gh issue list --repo richard-kenneth/skillex --limit 50
 ```
 
 After public, also verify:
