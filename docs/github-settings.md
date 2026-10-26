@@ -36,7 +36,7 @@ immediately after the visibility change, before announcing the launch.
 | Setting     | Value                                                                                                     |
 | ----------- | --------------------------------------------------------------------------------------------------------- |
 | Description | `Open-source skill-exchange marketplace: trade skills, earn points, learn live. Next.js + NestJS + Expo.` |
-| Homepage    | `https://skil-ex2-web.vercel.app` (existing deployment; replace when a public landing page exists)        |
+| Homepage    | `https://skil-ex2-web.vercel.app` (landing page and waitlist; redeploy current `main` before launch)      |
 | Visibility  | **Private** until the launch gates are cleared                                                            |
 
 Topics: `skill-exchange`, `marketplace`, `nextjs`, `nestjs`, `expo`,
@@ -257,4 +257,6 @@ Do not change the repository to public until:
 - the Phase 1 and Phase 2 blockers in the launch plan are resolved.
 
 See [`SECURITY.md`](../SECURITY.md), [`CONTRIBUTING.md`](../CONTRIBUTING.md), and
-[`docs/legal/cla-signing.md`](./legal/cla-signing.md).
+[`docs/legal/cla-signing.md`](./legal/cla-signing.md). The launch sequence,
+day-zero checklist, and channel plan are in
+[`docs/launch/README.md`](./launch/README.md).

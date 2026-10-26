@@ -12,6 +12,8 @@ The project is a pnpm + Turborepo monorepo with a Next.js web app, a NestJS API,
 
 > **Status:** pre-launch. The repository is being prepared for its first public release. The local development stack is designed to run with **zero paid accounts**.
 
+**Live site:** [landing page and waitlist](https://skil-ex2-web.vercel.app/?utm_source=github&utm_medium=readme&utm_campaign=v0.1.0). The full marketplace is not hosted as a public demo yet; the local stack is the supported way to try the product today.
+
 ## Quick start
 
 ### Prerequisites
@@ -237,6 +239,7 @@ The AGPL does not grant rights to the SkillEx name, logo, or other brand identif
 
 ## Links
 
+- Live site and waitlist: <https://skil-ex2-web.vercel.app/?utm_source=github&utm_medium=readme&utm_campaign=v0.1.0>
 - Repository: <https://github.com/richard-kenneth/skillex>
 - Issues: <https://github.com/richard-kenneth/skillex/issues>
 - Discussions: <https://github.com/richard-kenneth/skillex/discussions>

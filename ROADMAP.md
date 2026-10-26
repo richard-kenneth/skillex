@@ -18,13 +18,16 @@ Status meanings:
       dev-container flows on a machine with Docker.
 - [ ] Complete legal review of the CLA, Corporate CLA, `SECURITY.md`, and
       `PRIVACY.md`.
-- [ ] Finish the GitHub setup: private vulnerability reporting, secret scanning
-      and push protection, Dependabot, CodeQL, branch protection, Discussions,
-      and CLA Assistant.
-- [ ] Publish the remaining community files: issue forms, Code of Conduct,
-      support guide, architecture notes, environment-variable reference, and
-      mobile development guide.
-- [ ] Run the first public release checklist and tag `v0.1.0`.
+- [ ] Install and test the CLA Assistant after legal review.
+- [ ] Finish the post-public GitHub setup: private vulnerability reporting,
+      secret scanning and push protection, and fork pull-request approval.
+      CodeQL advanced setup, Dependabot, the `main` ruleset, Discussions, labels,
+      and the starter backlog are already in place.
+- [ ] Add a real screenshot or demo GIF to the README, and redeploy the landing
+      page from the current `main` so the SkillEx branding and waitlist are
+      current.
+- [ ] Run the first public release checklist and tag `v0.1.0`. Confirm the
+      required CI check name on the first pull request.
 
 ## Next — first public releases
 
@@ -38,7 +41,6 @@ Status meanings:
 - [ ] Add a self-hosting guide for the API, web app, PostgreSQL, Redis, object
       storage, and optional LiveKit.
 - [ ] Automate releases and `CHANGELOG.md` with release-please.
-- [ ] Add Dependabot groups and a CodeQL workflow.
 - [ ] Improve first-run diagnostics in `pnpm run setup` for common Docker,
       port, and database problems.
 
@@ -59,9 +61,16 @@ Status meanings:
 
 - [x] Choose AGPL-3.0-only and publish the license, notice, and trademark
       policy.
-- [x] Adopt individual and corporate CLAs.
-- [x] Publish the contribution guide, security policy, privacy notice, and
-      architecture decision records.
+- [x] Adopt individual and corporate CLAs, and publish the privacy notice and
+      CLA signing runbook.
+- [x] Publish the contribution guide, security policy, and architecture decision
+      records.
+- [x] Publish the issue forms, Code of Conduct, support guide, architecture
+      notes, environment-variable reference, mobile development guide, and
+      GitHub settings runbook.
+- [x] Apply the repository description, topics, Discussions, squash-only merges,
+      auto-delete branches, Dependabot alerts and updates, and the `main`
+      ruleset. Commit the CodeQL and OpenSSF Scorecard workflows.
 - [x] Add a zero-account local stack with PostgreSQL, Redis, Mailpit, MinIO, and
       optional LiveKit.
 - [x] Make optional integrations degrade safely and validate environment
@@ -70,6 +79,9 @@ Status meanings:
 - [x] Add one-command setup, root quality scripts, PR CI, and dev-container
       support.
 - [x] Add example service tests for exchanges and points.
+- [x] Seed 9 `good first issue`s and 6 `help wanted` issues, and publish the
+      Start here discussion.
+- [x] Add the live landing page and waitlist link to the README.
 
 ## How to help
 

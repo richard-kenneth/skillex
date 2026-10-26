@@ -50,6 +50,12 @@ once versioned releases begin.
   coverage.
 - `👋 Start here` discussion linking setup, contribution guidance, and the
   starter backlog.
+- Launch runbook with blocking gates, a day-zero checklist, channel sequencing,
+  metrics, and incident response.
+- Draft `v0.1.0` release notes, channel-ready announcement copy, a directory and
+  newsletter checklist, and a build-in-public article draft.
+- Demo capture guide covering storyboard, privacy checks, file sizes, and README
+  insertion for a real screenshot or GIF.
 
 ### Changed
 
@@ -66,6 +72,9 @@ once versioned releases begin.
   push notifications, LiveKit, native modules, and platform testing.
 - Added `area: api`, `area: web`, `area: mobile`, `priority: high`,
   `needs triage`, and `blocked` labels, and renamed `documentation` to `docs`.
+- Added the live landing page and waitlist link to the README.
+- Refreshed the roadmap so completed community and GitHub work moves to Done and
+  only the remaining launch gates stay in Now.
 
 ### Fixed
 
