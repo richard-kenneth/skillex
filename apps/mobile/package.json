@@ -15,7 +15,7 @@
     "@skil-ex2/shared": "workspace:*",
     "@tanstack/react-query": "^5.100.3",
     "audio-device-detector": "file:./modules/audio-device-detector",
-    "better-auth": "^1.6.25",
+    "better-auth": "^1.7.7",
     "expo": "^57.0.8",
     "expo-application": "~57.0.1",
     "expo-build-properties": "~57.0.8",
