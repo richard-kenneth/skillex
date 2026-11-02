@@ -94,6 +94,12 @@ once versioned releases begin.
 
 ### Fixed
 
+- Ensured the API build emits `dist/main.js` when it runs after the typecheck
+  script. The incremental build cache could otherwise make `nest build` skip
+  output after `dist` was cleared.
+- Fixed presigned uploads against local S3-compatible storage. Loopback
+  endpoints now use path-style URLs, and the AWS SDK no longer adds an
+  empty-body checksum that strict S3 servers rejected with `BadDigest`.
 - Removed `posthog-react-native` from the Expo config plugins list; it is not a
   config plugin and caused `expo config` and `expo prebuild` to fail.
 - Prevented Android builds from failing when the gitignored Firebase

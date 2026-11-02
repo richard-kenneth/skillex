@@ -13,6 +13,25 @@ import {
 import { ConfigService } from '@nestjs/config';
 
 /**
+ * True for endpoints that point back at the local machine, where virtual-hosted
+ * bucket subdomains are not resolvable.
+ */
+export function isLoopbackEndpoint(endpoint: string): boolean {
+  try {
+    const { hostname } = new URL(endpoint);
+    return (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname === '[::1]' ||
+      hostname.endsWith('.localhost')
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Cloudflare R2 (or any S3-compatible store).
  *
  * Storage is optional. When credentials are incomplete the service logs that
@@ -49,6 +68,17 @@ export class R2Service {
     this.s3Client = new S3Client({
       region: 'auto',
       endpoint,
+      // Local S3-compatible services (SeaweedFS, MinIO) are reached at
+      // http://localhost:<port>/<bucket>/<key>. Virtual-hosted URLs such as
+      // <bucket>.localhost do not resolve on most machines, so use path-style
+      // addressing for loopback endpoints. Cloudflare R2 keeps its default.
+      forcePathStyle: isLoopbackEndpoint(endpoint),
+      // The SDK adds a checksum of the (empty) command body to presigned PUT
+      // URLs by default. The client then uploads different bytes, and strict
+      // S3 implementations reject the request with BadDigest. Checksums are
+      // not required for these uploads, so let the caller opt in explicitly.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
       credentials: {
         accessKeyId,
         secretAccessKey,
