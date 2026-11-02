@@ -33,6 +33,8 @@ pnpm dev
 ```
 
 > `setup` is also a pnpm built-in command, so run this project's script as `pnpm run setup`.
+>
+> On Windows, setup also checks the default Docker Desktop install location when `docker` is not on `PATH`.
 
 `pnpm run setup` is idempotent. It:
 
@@ -40,6 +42,12 @@ pnpm dev
 2. generates local-only secrets;
 3. starts PostgreSQL, Redis, Mailpit, and SeaweedFS with Docker Compose;
 4. builds the shared package, generates the Prisma client, applies migrations, and seeds demo data.
+
+Host ports are configurable. If PostgreSQL, Redis, Mailpit, or SeaweedFS is
+already installed on this machine, change the conflicting `*_PORT` value in the
+repository `.env` file and rerun `pnpm run setup`. Setup stops with an
+actionable error instead of connecting to the wrong service, and rewrites the
+local URLs in `apps/api/.env` to match. Core services bind to `127.0.0.1`.
 
 Then open:
 
@@ -211,12 +219,13 @@ See [`apps/mobile/README.md`](./apps/mobile/README.md) for the quick version and
 
 ## Dev container / Codespaces
 
-The repository includes a [development container](./.devcontainer/devcontainer.json) with Node.js 22, pnpm, Docker-in-Docker, and the recommended VS Code extensions. Open the repository in a dev container or GitHub Codespace; the post-create script installs dependencies, starts the local services, migrates, and seeds the database.
+The repository includes a [development container](./.devcontainer/devcontainer.json) with Node.js 22, pnpm, Docker-in-Docker, and the recommended VS Code extensions. Open the repository in a dev container or GitHub Codespace; the post-create script installs dependencies, starts the local services, migrates, and seeds the database. If you change local service ports in `.env`, update `forwardPorts` in `.devcontainer/devcontainer.json` to match.
 
 ## Troubleshooting
 
-- **`pnpm run setup` says Docker is not available.** Start Docker Desktop, wait for it to finish starting, then rerun `pnpm run setup`.
-- **A port is already in use.** Change the published port in `docker-compose.yml` and update the matching URL in `apps/api/.env` or `apps/web/.env.local`.
+- **`pnpm run setup` says Docker is not available.** Start Docker Desktop, wait for it to finish starting, then rerun `pnpm run setup`. On Windows, setup also checks the default Docker Desktop install location when `docker` is not on `PATH`.
+- **A port is already in use.** Change the matching `*_PORT` value in the repository `.env` file (for example `POSTGRES_PORT=55432`) and rerun `pnpm run setup`. Setup rewrites the local URLs in `apps/api/.env` to match. If an older copy of the stack is still running, stop it first with `pnpm db:down`.
+- **The web dev server crashes with a Turbopack internal error.** Delete the local Next.js cache with `rm -rf apps/web/.next` (PowerShell: `Remove-Item -Recurse -Force apps/web/.next`) and restart `pnpm dev`. The cache can be corrupted by an interrupted build.
 - **Email does not arrive.** Open Mailpit at <http://localhost:8025>. Check that `EMAIL_TRANSPORT=auto` and `SMTP_HOST=localhost`.
 - **The API rejects the environment.** Read the startup error; it names the missing or inconsistent variable. A common cause is setting only one value of a pair (for example, a Flutterwave secret without its webhook hash).
 - **The database is in a bad state.** Run `pnpm db:reset` and then `pnpm run setup -- --skip-install`.

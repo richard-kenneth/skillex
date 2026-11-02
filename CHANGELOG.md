@@ -24,6 +24,10 @@ once versioned releases begin.
   contacts.
 - Replaced the retired MinIO community image with SeaweedFS for the local
   S3-compatible stack.
+- Made the local Compose host ports configurable through the repository `.env`
+  file, bound the core services to `127.0.0.1`, and made `pnpm run setup` stop
+  with an actionable message when a port is already in use instead of running
+  migrations against a different local database.
 
 ### Added
 
@@ -100,6 +104,8 @@ once versioned releases begin.
 - Fixed presigned uploads against local S3-compatible storage. Loopback
   endpoints now use path-style URLs, and the AWS SDK no longer adds an
   empty-body checksum that strict S3 servers rejected with `BadDigest`.
+- Made `pnpm run setup` and the `db:*` scripts find the Docker Desktop CLI on
+  Windows when it is installed outside `PATH`.
 - Removed `posthog-react-native` from the Expo config plugins list; it is not a
   config plugin and caused `expo config` and `expo prebuild` to fail.
 - Prevented Android builds from failing when the gitignored Firebase

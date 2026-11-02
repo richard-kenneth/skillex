@@ -7,6 +7,15 @@ name: skillex
 #   docker compose run --rm storage-init
 #   docker compose --profile video up -d # core services + LiveKit
 #
+# Host ports are configurable so the stack does not fight an existing local
+# PostgreSQL, Redis, or object store. Change the matching value in the root
+# `.env` file (see `.env.example`) and rerun `pnpm run setup`, which rewrites
+# the local URLs in `apps/api/.env` to match.
+#
+# Core services bind to 127.0.0.1 so a port clash fails loudly instead of
+# silently routing `localhost` to a different program. LiveKit stays on all
+# interfaces because device testing needs the LAN address.
+#
 # Credentials in this file are development-only. Never reuse them in production.
 
 services:
@@ -18,7 +27,7 @@ services:
       POSTGRES_PASSWORD: skillex
       POSTGRES_DB: skillex
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -32,7 +41,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -50,8 +59,8 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
     ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # Web UI
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025" # SMTP
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025" # Web UI
 
   # S3-compatible stand-in for Cloudflare R2. The S3 API is on :9000 and the
   # filer UI is on :9001. SeaweedFS is Apache-2.0 and actively maintained; the
@@ -64,8 +73,8 @@ services:
       AWS_SECRET_ACCESS_KEY: skillex-dev-secret
       S3_BUCKET: skillex-uploads
     ports:
-      - "9000:8333" # S3 API
-      - "9001:8888" # Filer UI
+      - "127.0.0.1:${SEAWEEDFS_S3_PORT:-9000}:8333" # S3 API
+      - "127.0.0.1:${SEAWEEDFS_UI_PORT:-9001}:8888" # Filer UI
     volumes:
       - seaweedfs-data:/data
     healthcheck:
@@ -99,9 +108,9 @@ services:
     restart: unless-stopped
     command: ["--dev", "--bind", "0.0.0.0"]
     ports:
-      - "7880:7880" # WebSocket / HTTP
-      - "7881:7881" # RTC TCP
-      - "7882:7882/udp" # RTC UDP
+      - "${LIVEKIT_PORT:-7880}:7880" # WebSocket / HTTP
+      - "${LIVEKIT_RTC_TCP_PORT:-7881}:7881" # RTC TCP
+      - "${LIVEKIT_RTC_UDP_PORT:-7882}:7882/udp" # RTC UDP
 
 volumes:
   postgres-data:
