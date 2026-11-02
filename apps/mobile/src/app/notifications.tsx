@@ -39,7 +39,7 @@ import {
   POINTS_NOTIFICATION_TYPES,
   formatDateTimeShort,
   getNotificationMeta,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { useNavigation, useRouter } from "expo-router";
 import {
   ArrowLeft,
@@ -88,7 +88,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
-  const t = useT('notifications');
+  const t = useT("notifications");
 
   const [tab, setTab] = React.useState<FilterTab>("all");
   const [sheetOpen, setSheetOpen] = React.useState<string | null>(null);
@@ -134,8 +134,12 @@ export default function NotificationsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <CustomHeader
-        title={t('title') + ' 🔔'}
-        subtitle={unreadCount > 0 ? t('unreadCount', { count: unreadCount }) : t('allCaughtUp')}
+        title={t("title") + " 🔔"}
+        subtitle={
+          unreadCount > 0
+            ? t("unreadCount", { count: unreadCount })
+            : t("allCaughtUp")
+        }
         showBack={true}
         showNotifications={false}
         rightAction={
@@ -147,9 +151,15 @@ export default function NotificationsScreen() {
               onPress={async () => {
                 try {
                   await markAllQ.mutateAsync();
-                  toast.toast({ title: t('markedAllRead'), variant: 'success' });
+                  toast.toast({
+                    title: t("markedAllRead"),
+                    variant: "success",
+                  });
                 } catch {
-                  toast.toast({ title: t('couldNotMarkAllRead'), variant: 'error' });
+                  toast.toast({
+                    title: t("couldNotMarkAllRead"),
+                    variant: "error",
+                  });
                 }
               }}
             >
@@ -159,25 +169,38 @@ export default function NotificationsScreen() {
         }
       />
 
-      <View style={{ width: "100%", maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: "center" }}>
-        <View style={{ paddingHorizontal: SPACING[4], paddingVertical: SPACING[3] }}>
+      <View
+        style={{
+          width: "100%",
+          maxWidth: MAX_CONTENT_WIDTH,
+          flex: 1,
+          alignSelf: "center",
+        }}
+      >
+        <View
+          style={{ paddingHorizontal: SPACING[4], paddingVertical: SPACING[3] }}
+        >
           <Tabs<FilterTab>
             variant="pills"
             value={tab}
             onChange={setTab}
             items={[
-              { value: "all", label: t('filterAll'), badge: unreadCount || undefined },
+              {
+                value: "all",
+                label: t("filterAll"),
+                badge: unreadCount || undefined,
+              },
               {
                 value: "exchanges",
-                label: t('filterExchanges'),
+                label: t("filterExchanges"),
                 badge: unexchCount || undefined,
               },
               {
                 value: "points",
-                label: t('filterPoints'),
+                label: t("filterPoints"),
                 badge: unptsCount || undefined,
               },
-              { value: "system", label: t('filterSystem') },
+              { value: "system", label: t("filterSystem") },
             ]}
           />
         </View>
@@ -229,11 +252,17 @@ export default function NotificationsScreen() {
                 >
                   <Bell size={24} color={theme.foreground} />
                 </View>
-                <ThemedText type="default" style={{ fontWeight: '600', color: theme.foreground }}>
-                  {t('noNotificationsTitle')}
+                <ThemedText
+                  type="default"
+                  style={{ fontWeight: "600", color: theme.foreground }}
+                >
+                  {t("noNotificationsTitle")}
                 </ThemedText>
-                <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: "center" }}>
-                  {t('noNotificationsDesc')}
+                <ThemedText
+                  type="small"
+                  style={{ color: theme.mutedForeground, textAlign: "center" }}
+                >
+                  {t("noNotificationsDesc")}
                 </ThemedText>
               </View>
             )
@@ -255,8 +284,12 @@ export default function NotificationsScreen() {
                   flexDirection: "row",
                   gap: SPACING[3],
                   alignItems: "center",
-                  borderColor: isUnread ? "rgba(99, 102, 241, 0.4)" : "rgba(63, 63, 70, 0.4)",
-                  backgroundColor: isUnread ? "rgba(99, 102, 241, 0.08)" : "rgba(24, 24, 27, 0.7)",
+                  borderColor: isUnread
+                    ? "rgba(99, 102, 241, 0.4)"
+                    : "rgba(63, 63, 70, 0.4)",
+                  backgroundColor: isUnread
+                    ? "rgba(99, 102, 241, 0.08)"
+                    : "rgba(24, 24, 27, 0.7)",
                 }}
               >
                 <View
@@ -338,32 +371,29 @@ export default function NotificationsScreen() {
                 <ActionSheet
                   open={sheetOpen === n.id}
                   onClose={() => setSheetOpen(null)}
-                  title={t('actionsTitle')}
+                  title={t("actionsTitle")}
                   options={[
                     ...(!n.read
                       ? [
                           {
-                            label: t('markAsRead'),
+                            label: t("markAsRead"),
                             icon: (
-                              <CheckCheck
-                                size={16}
-                                color={theme.foreground}
-                              />
+                              <CheckCheck size={16} color={theme.foreground} />
                             ),
                             onPress: () => {
                               markReadQ.mutate(n.id);
-                              toast.toast({ title: t('markedRead') });
+                              toast.toast({ title: t("markedRead") });
                             },
                           },
                         ]
                       : []),
                     {
-                      label: t('delete'),
+                      label: t("delete"),
                       destructive: true,
                       icon: <Trash2 size={16} color="#ef4444" />,
                       onPress: () => {
                         deleteQ.mutate(n.id);
-                        toast.toast({ title: t('deleted') });
+                        toast.toast({ title: t("deleted") });
                       },
                     },
                   ]}

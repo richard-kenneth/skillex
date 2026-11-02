@@ -14,7 +14,9 @@ export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "metadata" });
-  const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2-web.vercel.app";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_CLIENT_BASE_URL ||
+    "https://skil-ex2-web.vercel.app";
 
   return {
     title: t("homeTitle"),
@@ -32,7 +34,7 @@ export async function generateMetadata({ params }: Props) {
       title: t("homeTitle"),
       description: t("homeDescription"),
       url: `${baseUrl}/${locale}`,
-      siteName: "Skill Exchange",
+      siteName: "SkillEx",
       locale: locale,
       type: "website",
       images: [
@@ -59,15 +61,17 @@ export default async function HomePage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "metadata" });
   const tHome = await getTranslations({ locale, namespace: "home" });
-  const baseUrl = process.env.NEXT_PUBLIC_CLIENT_BASE_URL || "https://skil-ex2-web.vercel.app";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_CLIENT_BASE_URL ||
+    "https://skil-ex2-web.vercel.app";
 
   // Structured Data (JSON-LD) for Search Engines & Rich Results
   const faqItems = ["1", "2", "3", "4", "5", "6", "7"].map((key) => ({
     "@type": "Question",
-    "name": tHome(`faq${key}Q`),
-    "acceptedAnswer": {
+    name: tHome(`faq${key}Q`),
+    acceptedAnswer: {
       "@type": "Answer",
-      "text": tHome(`faq${key}A`),
+      text: tHome(`faq${key}A`),
     },
   }));
 
@@ -77,43 +81,43 @@ export default async function HomePage({ params }: Props) {
       {
         "@type": "WebSite",
         "@id": `${baseUrl}/${locale}/#website`,
-        "url": `${baseUrl}/${locale}`,
-        "name": "Skill Exchange",
-        "description": t("homeDescription"),
-        "inLanguage": locale,
+        url: `${baseUrl}/${locale}`,
+        name: "SkillEx",
+        description: t("homeDescription"),
+        inLanguage: locale,
       },
       {
         "@type": "Organization",
         "@id": `${baseUrl}/${locale}/#organization`,
-        "name": "Skill Exchange",
-        "url": `${baseUrl}/${locale}`,
-        "logo": {
+        name: "SkillEx",
+        url: `${baseUrl}/${locale}`,
+        logo: {
           "@type": "ImageObject",
-          "url": `${baseUrl}/icon-512.png`,
-          "width": 512,
-          "height": 512,
+          url: `${baseUrl}/icon-512.png`,
+          width: 512,
+          height: 512,
         },
-        "sameAs": [],
+        sameAs: [],
       },
       {
         "@type": "SoftwareApplication",
         "@id": `${baseUrl}/${locale}/#application`,
-        "name": "Skill Exchange",
-        "applicationCategory": "EducationalApplication",
-        "operatingSystem": "Web",
+        name: "SkillEx",
+        applicationCategory: "EducationalApplication",
+        operatingSystem: "Web",
         // TODO: Replace with below when we launch on other platforms
         // "operatingSystem": "Web, Android, iOS",
-        "offers": {
+        offers: {
           "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD",
+          price: "0",
+          priceCurrency: "USD",
         },
-        "description": t("homeDescription"),
+        description: t("homeDescription"),
       },
       {
         "@type": "FAQPage",
         "@id": `${baseUrl}/${locale}/#faq`,
-        "mainEntity": faqItems,
+        mainEntity: faqItems,
       },
     ],
   };

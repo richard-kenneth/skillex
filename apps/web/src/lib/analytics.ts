@@ -1,5 +1,5 @@
 import posthog from "posthog-js";
-import { AnalyticsEvent, type AnalyticsEventProperties } from "@skil-ex2/shared";
+import { AnalyticsEvent, type AnalyticsEventProperties } from "@skillex/shared";
 
 export { AnalyticsEvent };
 export type { AnalyticsEventProperties };
@@ -23,7 +23,7 @@ export function track<E extends keyof AnalyticsEventProperties>(
  */
 export function identifyUser(
   userId: string,
-  properties?: { email?: string; name?: string; [key: string]: unknown }
+  properties?: { email?: string; name?: string; [key: string]: unknown },
 ): void {
   if (typeof window !== "undefined") {
     posthog.identify(userId, properties);

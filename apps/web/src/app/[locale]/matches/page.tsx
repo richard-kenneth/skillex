@@ -12,7 +12,11 @@ const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
   return {
@@ -52,11 +56,13 @@ export default async function MatchesPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-6">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground">
-            {t("description")}
-          </p>
+          <p className="text-muted-foreground">{t("description")}</p>
         </div>
-        <Button variant="outline" asChild className="gap-2 border-zinc-800 hover:bg-zinc-900">
+        <Button
+          variant="outline"
+          asChild
+          className="gap-2 border-zinc-800 hover:bg-zinc-900"
+        >
           <Link href="/matches/requests">
             <Inbox className="h-4 w-4" />
             {t("myRequests")}

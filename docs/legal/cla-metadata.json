@@ -1,0 +1,27 @@
+{
+  "name": {
+    "title": "Full name (optional)",
+    "type": "string",
+    "githubKey": "name",
+    "required": false,
+    "description": "Used only for CLA records. Your GitHub username is recorded automatically."
+  },
+  "email": {
+    "title": "Email (optional)",
+    "type": "string",
+    "githubKey": "email",
+    "required": false,
+    "description": "Used only for CLA administration. You can leave this blank."
+  },
+  "adult": {
+    "title": "I confirm that I am at least 18 years old",
+    "type": "boolean",
+    "required": true,
+    "description": "If you are under 18, do not sign here. Email legal@richardkenneth.com before contributing."
+  },
+  "agreement": {
+    "title": "I have read and agree to the SkillEx Individual CLA",
+    "type": "boolean",
+    "required": true
+  }
+}

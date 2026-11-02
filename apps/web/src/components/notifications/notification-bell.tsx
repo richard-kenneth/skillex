@@ -47,7 +47,7 @@ export function NotificationBell() {
     queryFn: async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/notifications/unread-count`,
-        { credentials: "include" }
+        { credentials: "include" },
       );
       if (!res.ok) throw new Error("Failed to fetch unread count");
       return res.json();
@@ -62,7 +62,7 @@ export function NotificationBell() {
     queryFn: async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/notifications`,
-        { credentials: "include" }
+        { credentials: "include" },
       );
       if (!res.ok) throw new Error("Failed to fetch notifications");
       return res.json();
@@ -78,12 +78,14 @@ export function NotificationBell() {
         {
           method: "PATCH",
           credentials: "include",
-        }
+        },
       );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["unread-notifications-count"],
+      });
     },
   });
 
@@ -95,12 +97,14 @@ export function NotificationBell() {
         {
           method: "PATCH",
           credentials: "include",
-        }
+        },
       );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["unread-notifications-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["unread-notifications-count"],
+      });
     },
   });
 
@@ -139,7 +143,8 @@ export function NotificationBell() {
       case "POINTS_WITHDREW":
         return {
           icon: Coins,
-          colorClass: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+          colorClass:
+            "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
         };
       case "REFERRAL_APPLIED":
         return {
@@ -180,9 +185,7 @@ export function NotificationBell() {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-900">
-          <h3 className="font-semibold text-white text-sm">
-            {t("title")}
-          </h3>
+          <h3 className="font-semibold text-white text-sm">{t("title")}</h3>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -225,7 +228,10 @@ export function NotificationBell() {
                     key={notification.id}
                     className="p-0"
                     onClick={() =>
-                      handleNotificationClick(notification.id, notification.read)
+                      handleNotificationClick(
+                        notification.id,
+                        notification.read,
+                      )
                     }
                   >
                     <Link
@@ -235,7 +241,7 @@ export function NotificationBell() {
                       <div
                         className={cn(
                           "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
-                          config.colorClass
+                          config.colorClass,
                         )}
                       >
                         <Icon className="h-4 w-4" />
@@ -246,7 +252,9 @@ export function NotificationBell() {
                           <p
                             className={cn(
                               "text-xs font-semibold leading-none truncate",
-                              notification.read ? "text-zinc-400" : "text-white"
+                              notification.read
+                                ? "text-zinc-400"
+                                : "text-white",
                             )}
                           >
                             {notification.title}
@@ -260,7 +268,7 @@ export function NotificationBell() {
                             "text-xs leading-normal line-clamp-2",
                             notification.read
                               ? "text-zinc-500"
-                              : "text-zinc-300"
+                              : "text-zinc-300",
                           )}
                         >
                           {notification.message}
@@ -273,7 +281,7 @@ export function NotificationBell() {
                               day: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
-                            }
+                            },
                           )}
                         </p>
                       </div>

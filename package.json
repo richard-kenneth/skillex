@@ -1,39 +1,32 @@
 {
-  "name": "skil-ex2",
+  "name": "skillex",
+  "version": "1.0.0",
   "private": true,
+  "license": "AGPL-3.0-only",
+  "author": "Richard Kenneth",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/richard-kenneth/skillex.git"
+  },
   "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
+    "setup": "node scripts/setup.mjs",
+    "db:up": "docker compose up -d --wait postgres redis mailpit seaweedfs && docker compose run --rm storage-init",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && pnpm db:up"
   },
   "devDependencies": {
     "turbo": "^2.9.6"
-  },
-  "pnpm": {
-    "overrides": {
-      "chokidar": "^5.0.0",
-      "react": "19.2.3",
-      "react-dom": "19.2.3",
-      "@tanstack/react-query": "5.100.3"
-    },
-    "onlyBuiltDependencies": [
-      "@nestjs/core",
-      "@parcel/watcher",
-      "@prisma/engines",
-      "@swc/core",
-      "core-js",
-      "esbuild",
-      "msw",
-      "prisma",
-      "sharp",
-      "unrs-resolver"
-    ]
-  },
-  "version": "1.0.0",
-  "dependencies": {
-    "expo": "~57.0.7",
-    "react": "19.2.3",
-    "react-native": "0.86.0"
   }
 }

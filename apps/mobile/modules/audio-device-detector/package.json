@@ -15,8 +15,8 @@
     "headphones",
     "bluetooth"
   ],
-  "author": "",
-  "license": "MIT",
+  "author": "Richard Kenneth",
+  "license": "AGPL-3.0-only",
   "peerDependencies": {
     "expo": "*"
   }

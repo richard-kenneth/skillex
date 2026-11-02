@@ -7,14 +7,9 @@
  * style object / array suitable for passing to RN `style` props.
  */
 
-import { StyleProp, StyleSheet } from 'react-native';
+import { StyleProp, StyleSheet } from "react-native";
 
-type StyleValue =
-  | StyleProp<any>
-  | undefined
-  | null
-  | false
-  | StyleValue[];
+type StyleValue = StyleProp<any> | undefined | null | false | StyleValue[];
 
 export function cn(...inputs: StyleValue[]): StyleProp<any> {
   const flat: any[] = [];

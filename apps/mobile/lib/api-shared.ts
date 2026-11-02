@@ -1,11 +1,11 @@
 /**
  * Shared API client instance wired up to the Expo/better-auth stack.
- * Uses the platform-agnostic `createApiClient` from @skil-ex2/shared.
+ * Uses the platform-agnostic `createApiClient` from @skillex/shared.
  */
-import { createApiClient } from '@skil-ex2/shared';
-import { authClient } from './auth';
+import { createApiClient } from "@skillex/shared";
+import { authClient } from "./auth";
 
-const API_BASE = `${process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3001'}/api`;
+const API_BASE = `${process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3001"}/api`;
 
 export const api = createApiClient({
   baseUrl: API_BASE,

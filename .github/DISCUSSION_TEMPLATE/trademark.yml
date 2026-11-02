@@ -1,0 +1,42 @@
+title: "[Trademark] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for trademark permission requests or to report possible misuse of the SkillEx name or logo.
+
+        Read [`TRADEMARK.md`](../../TRADEMARK.md) first. **Do not post confidential information, personal email addresses, or legal documents in this discussion.** A maintainer will arrange a private channel if needed.
+  - type: input
+    id: organization
+    attributes:
+      label: Your name or organization
+    validations:
+      required: true
+  - type: input
+    id: use
+    attributes:
+      label: Intended use
+      description: Product, service, event, or community use.
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL or location of the proposed use
+      description: Optional. Leave blank if the use is not published yet.
+    validations:
+      required: false
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Describe the request or the possible misuse. Do not include confidential information.
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have read TRADEMARK.md.
+          required: true

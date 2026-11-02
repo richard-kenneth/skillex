@@ -65,9 +65,7 @@ export function MatchesContent({
         <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-6">
           <Search className="h-8 w-8 text-muted-foreground opacity-50" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">
-          {t("addSkillsTitle")}
-        </h3>
+        <h3 className="text-xl font-semibold mb-2">{t("addSkillsTitle")}</h3>
         <p className="text-muted-foreground max-w-sm mx-auto mb-8 px-4">
           {t("addSkillsDesc")}
         </p>

@@ -1,12 +1,26 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, X, Search, Award, Briefcase, GraduationCap, CheckCircle2 } from "lucide-react";
+import {
+  Plus,
+  X,
+  Search,
+  Award,
+  Briefcase,
+  GraduationCap,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
@@ -40,7 +54,9 @@ export function SkillManager({}: SkillManagerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Skill[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [activeTab, setActiveTab] = useState<"OFFERING" | "SEEKING">("OFFERING");
+  const [activeTab, setActiveTab] = useState<"OFFERING" | "SEEKING">(
+    "OFFERING",
+  );
   const t = useTranslations("profile");
   const searchParams = useSearchParams();
   const step = searchParams.get("step");
@@ -50,9 +66,12 @@ export function SkillManager({}: SkillManagerProps) {
 
   const fetchUserSkills = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/my`, {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/my`,
+        {
+          credentials: "include",
+        },
+      );
       if (!response.ok) throw new Error(t("failedFetchSkills"));
       const data: UserSkill[] = await response.json();
       setOfferingSkills(data.filter((s) => s.type === "OFFERING"));
@@ -73,7 +92,9 @@ export function SkillManager({}: SkillManagerProps) {
     }
     setIsSearching(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/search?q=${encodeURIComponent(query)}`,
+      );
       if (!response.ok) throw new Error(t("failedSearchSkills"));
       const data = await response.json();
       setSearchResults(data);
@@ -84,13 +105,10 @@ export function SkillManager({}: SkillManagerProps) {
     }
   };
 
-  const debouncedSearch = useCallback(
-    (query: string) => {
-      const timeoutId = setTimeout(() => searchSkills(query), 300);
-      return () => clearTimeout(timeoutId);
-    },
-    []
-  );
+  const debouncedSearch = useCallback((query: string) => {
+    const timeoutId = setTimeout(() => searchSkills(query), 300);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   useEffect(() => {
     const cleanup = debouncedSearch(searchQuery);
@@ -99,41 +117,52 @@ export function SkillManager({}: SkillManagerProps) {
 
   const addSkill = async (skillId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/my`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          skillId,
-          type: activeTab,
-          experienceLevel: "Intermediate", // Logic uses this, but maybe I should localize the DISPLAY if needed. I'll leave as is for now as it's a backend value.
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/my`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            skillId,
+            type: activeTab,
+            experienceLevel: "Intermediate", // Logic uses this, but maybe I should localize the DISPLAY if needed. I'll leave as is for now as it's a backend value.
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || t("failedToAddSkill"));
       }
 
-      track(AnalyticsEvent.SKILL_ADDED, { skill_type: activeTab.toLowerCase() });
+      track(AnalyticsEvent.SKILL_ADDED, {
+        skill_type: activeTab.toLowerCase(),
+      });
       toast.success(t("skillAdded"));
       setSearchQuery("");
       setSearchResults([]);
       fetchUserSkills();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : t("failedToAddSkill");
+      const errorMessage =
+        error instanceof Error ? error.message : t("failedToAddSkill");
       toast.error(errorMessage);
     }
   };
 
   const removeSkill = async (userSkillId: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/my/${userSkillId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL}/api/skills/my/${userSkillId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
       if (!response.ok) throw new Error(t("failedToRemoveSkill"));
-      track(AnalyticsEvent.SKILL_REMOVED, { skill_type: activeTab.toLowerCase() });
+      track(AnalyticsEvent.SKILL_REMOVED, {
+        skill_type: activeTab.toLowerCase(),
+      });
       toast.success(t("skillRemoved"));
       fetchUserSkills();
     } catch (error: unknown) {
@@ -149,23 +178,25 @@ export function SkillManager({}: SkillManagerProps) {
           <Award className="h-5 w-5 text-primary" />
           {t("skillsTitle")}
         </CardTitle>
-        <CardDescription>
-          {t("skillsDesc")}
-        </CardDescription>
+        <CardDescription>{t("skillsDesc")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {step === "skills" && (
-          <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-300 ${
-            offeringSkills.length > 0 && seekingSkills.length > 0
-              ? "border-green-500/20 bg-green-500/5 text-green-500"
-              : "border-amber-500/20 bg-amber-500/5 text-amber-500"
-          }`}>
+          <div
+            className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-300 ${
+              offeringSkills.length > 0 && seekingSkills.length > 0
+                ? "border-green-500/20 bg-green-500/5 text-green-500"
+                : "border-amber-500/20 bg-amber-500/5 text-amber-500"
+            }`}
+          >
             <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg flex-shrink-0 ${
-                offeringSkills.length > 0 && seekingSkills.length > 0
-                  ? "bg-green-500/10 text-green-500"
-                  : "bg-amber-500/10 text-amber-500"
-              }`}>
+              <div
+                className={`p-2 rounded-lg flex-shrink-0 ${
+                  offeringSkills.length > 0 && seekingSkills.length > 0
+                    ? "bg-green-500/10 text-green-500"
+                    : "bg-amber-500/10 text-amber-500"
+                }`}
+              >
                 {offeringSkills.length > 0 && seekingSkills.length > 0 ? (
                   <CheckCircle2 className="h-5 w-5" />
                 ) : (
@@ -224,12 +255,16 @@ export function SkillManager({}: SkillManagerProps) {
             <Search className="h-4 w-4" />
           </div>
           <Input
-            placeholder={activeTab === "OFFERING" ? t("searchSkillOffer") : t("searchSkillSeek")}
+            placeholder={
+              activeTab === "OFFERING"
+                ? t("searchSkillOffer")
+                : t("searchSkillSeek")
+            }
             className="pl-10 bg-background/50 focus:bg-background h-11 transition-all border-border/60"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          
+
           {searchQuery && searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-2 p-2 bg-popover text-popover-foreground rounded-xl shadow-2xl border border-border/50 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="grid gap-1">
@@ -242,7 +277,9 @@ export function SkillManager({}: SkillManagerProps) {
                     <div className="flex flex-col">
                       <span className="font-medium">{skill.name}</span>
                       {skill.category && (
-                        <span className="text-xs text-muted-foreground">{skill.category.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {skill.category.name}
+                        </span>
                       )}
                     </div>
                     <Plus className="h-4 w-4 opacity-0 group-hover/item:opacity-100 transition-opacity text-primary" />
@@ -251,7 +288,7 @@ export function SkillManager({}: SkillManagerProps) {
               </div>
             </div>
           )}
-          
+
           {searchQuery && searchResults.length === 0 && !isSearching && (
             <div className="absolute top-full left-0 right-0 mt-2 p-4 bg-popover text-popover-foreground rounded-xl shadow-2xl border border-border/50 z-50 text-center text-sm">
               {t("noSkillsFound", { query: searchQuery })}
@@ -275,25 +312,30 @@ export function SkillManager({}: SkillManagerProps) {
               )}
             </h4>
             <div className="flex flex-wrap gap-2 min-h-[40px]">
-              {(activeTab === "OFFERING" ? offeringSkills : seekingSkills).length > 0 ? (
-                (activeTab === "OFFERING" ? offeringSkills : seekingSkills).map((userSkill) => (
-                  <Badge
-                    key={userSkill.id}
-                    variant="secondary"
-                    className="px-3 py-1.5 flex items-center gap-2 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary transition-all pr-1 group/badge"
-                  >
-                    {userSkill.skill.name}
-                    <button
-                      onClick={() => removeSkill(userSkill.id)}
-                      className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+              {(activeTab === "OFFERING" ? offeringSkills : seekingSkills)
+                .length > 0 ? (
+                (activeTab === "OFFERING" ? offeringSkills : seekingSkills).map(
+                  (userSkill) => (
+                    <Badge
+                      key={userSkill.id}
+                      variant="secondary"
+                      className="px-3 py-1.5 flex items-center gap-2 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary transition-all pr-1 group/badge"
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))
+                      {userSkill.skill.name}
+                      <button
+                        onClick={() => removeSkill(userSkill.id)}
+                        className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ),
+                )
               ) : (
                 <div className="text-sm text-muted-foreground bg-muted/30 w-full p-4 rounded-lg border border-dashed border-border/50 text-center">
-                  {activeTab === "OFFERING" ? t("noOfferingSkills") : t("noSeekingSkills")}
+                  {activeTab === "OFFERING"
+                    ? t("noOfferingSkills")
+                    : t("noSeekingSkills")}
                 </div>
               )}
             </div>

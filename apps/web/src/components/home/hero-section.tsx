@@ -8,10 +8,13 @@ import { useTranslations } from "next-intl";
 import { WaitlistForm } from "./waitlist-form";
 import { track, AnalyticsEvent } from "@/lib/analytics";
 
-import { SEED_CATEGORIES } from "@skil-ex2/shared";
+import { SEED_CATEGORIES } from "@skillex/shared";
 
 // Representative skills sampled evenly across all seeded categories
-const floatingSkills = SEED_CATEGORIES.flatMap((cat) => [cat.skills[0], cat.skills[1]]);
+const floatingSkills = SEED_CATEGORIES.flatMap((cat) => [
+  cat.skills[0],
+  cat.skills[1],
+]);
 
 export function HeroSection() {
   const t = useTranslations("home");
@@ -56,8 +59,8 @@ export function HeroSection() {
             }}
             className="absolute hidden md:block rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-400 backdrop-blur-sm"
             style={{
-              left: `${10 + (i * 8) % 80}%`,
-              top: `${15 + (i * 13) % 70}%`,
+              left: `${10 + ((i * 8) % 80)}%`,
+              top: `${15 + ((i * 13) % 70)}%`,
             }}
           >
             {skill}
@@ -112,7 +115,11 @@ export function HeroSection() {
             >
               <Link
                 href="/sign-up"
-                onClick={() => track(AnalyticsEvent.PROFILE_SETUP_CLICKED, { source: "hero" })}
+                onClick={() =>
+                  track(AnalyticsEvent.PROFILE_SETUP_CLICKED, {
+                    source: "hero",
+                  })
+                }
                 className="flex items-center gap-2"
               >
                 {t("earlyAccessArrow")}

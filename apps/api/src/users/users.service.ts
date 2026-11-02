@@ -1,5 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { UpdateProfileDto } from '@skil-ex2/shared';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { UpdateProfileDto } from '@skillex/shared';
 import { IncomingHttpHeaders } from 'http';
 import { AuthService } from '../auth/auth.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -44,8 +49,58 @@ export class UsersService {
     });
   }
 
+  /**
+   * Public profile view. Never include email, balance, referral details,
+   * notification preferences, or other private account fields here.
+   */
   async getProfile(userId: string) {
-    const user = await this.findOne(userId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        bio: true,
+        createdAt: true,
+        skills: {
+          select: {
+            id: true,
+            type: true,
+            experienceLevel: true,
+            createdAt: true,
+            skill: {
+              select: {
+                id: true,
+                name: true,
+                category: {
+                  select: { id: true, name: true },
+                },
+              },
+            },
+          },
+        },
+        receivedReviews: {
+          select: {
+            id: true,
+            rating: true,
+            tags: true,
+            createdAt: true,
+            reviewer: {
+              select: { id: true, name: true, image: true },
+            },
+            exchange: {
+              select: {
+                id: true,
+                taughtSkill: { select: { id: true, name: true } },
+                receivedSkill: { select: { id: true, name: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
@@ -58,17 +113,29 @@ export class UsersService {
   }
 
   async updateAvatar(url: string, requestHeaders: IncomingHttpHeaders) {
-    const secureHeaders = new Headers();
+    const internalSecret = process.env.INTERNAL_SECRET;
 
-    for (const [key, value] of Object.entries(requestHeaders)) {
-      if (typeof value === 'string') {
-        secureHeaders.set(key, value);
-      } else if (Array.isArray(value)) {
-        value.forEach((v) => secureHeaders.append(key, v));
-      }
+    if (!internalSecret) {
+      this.logger.error(
+        'INTERNAL_SECRET is not configured; refusing to update an avatar',
+      );
+      throw new InternalServerErrorException(
+        'Avatar updates are temporarily unavailable',
+      );
     }
 
-    secureHeaders.set('x-server-secret', process.env.INTERNAL_SECRET!);
+    const secureHeaders = new Headers();
+
+    // Forward only the credentials Better Auth needs to identify the user.
+    // Do not copy arbitrary client-controlled headers into an internal call.
+    if (requestHeaders.authorization) {
+      secureHeaders.set('authorization', requestHeaders.authorization);
+    }
+    if (requestHeaders.cookie) {
+      secureHeaders.set('cookie', requestHeaders.cookie);
+    }
+
+    secureHeaders.set('x-server-secret', internalSecret);
 
     return this.authService.auth.api.updateUser({
       body: {

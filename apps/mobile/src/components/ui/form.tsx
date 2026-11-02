@@ -1,13 +1,13 @@
-import React from 'react';
-import { View, StyleSheet, Pressable, ViewStyle } from 'react-native';
+import React from "react";
+import { View, StyleSheet, Pressable, ViewStyle } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-} from 'react-native-reanimated';
-import { useTheme } from '@/hooks/use-theme';
-import { SPACING, RADIUS, ANIMATION } from '@/constants/theme';
-import { ThemedText } from '@/components/themed-text';
+} from "react-native-reanimated";
+import { useTheme } from "@/hooks/use-theme";
+import { SPACING, RADIUS, ANIMATION } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
 
 // ─── Switch ─────────────────────────────────────────────────────────────────
 
@@ -20,7 +20,14 @@ export interface SwitchProps {
   style?: ViewStyle;
 }
 
-export function Switch({ value, onValueChange, disabled, label, description, style }: SwitchProps) {
+export function Switch({
+  value,
+  onValueChange,
+  disabled,
+  label,
+  description,
+  style,
+}: SwitchProps) {
   const theme = useTheme();
   const thumbX = useSharedValue(value ? 18 : 2);
 
@@ -35,7 +42,12 @@ export function Switch({ value, onValueChange, disabled, label, description, sty
   return (
     <View
       style={[
-        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING[4] },
+        {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: SPACING[4],
+        },
         style,
       ]}
     >
@@ -57,7 +69,7 @@ export function Switch({ value, onValueChange, disabled, label, description, sty
           borderRadius: 10,
           backgroundColor: value ? theme.primary : theme.muted,
           opacity: disabled ? 0.4 : 1,
-          justifyContent: 'center',
+          justifyContent: "center",
         }}
       >
         <Animated.View
@@ -66,7 +78,9 @@ export function Switch({ value, onValueChange, disabled, label, description, sty
               width: 16,
               height: 16,
               borderRadius: 8,
-              backgroundColor: value ? theme.primaryForeground : theme.mutedForeground,
+              backgroundColor: value
+                ? theme.primaryForeground
+                : theme.mutedForeground,
             },
             thumbStyle,
           ]}
@@ -80,18 +94,26 @@ export function Switch({ value, onValueChange, disabled, label, description, sty
 
 export function Separator({
   style,
-  orientation = 'horizontal',
+  orientation = "horizontal",
 }: {
   style?: any;
-  orientation?: 'horizontal' | 'vertical';
+  orientation?: "horizontal" | "vertical";
 }) {
   const theme = useTheme();
   return (
     <View
       style={[
-        orientation === 'horizontal'
-          ? { height: StyleSheet.hairlineWidth, width: '100%', backgroundColor: theme.border }
-          : { width: StyleSheet.hairlineWidth, height: '100%', backgroundColor: theme.border },
+        orientation === "horizontal"
+          ? {
+              height: StyleSheet.hairlineWidth,
+              width: "100%",
+              backgroundColor: theme.border,
+            }
+          : {
+              width: StyleSheet.hairlineWidth,
+              height: "100%",
+              backgroundColor: theme.border,
+            },
         style,
       ]}
     />
@@ -100,7 +122,15 @@ export function Separator({
 
 // ─── Progress ───────────────────────────────────────────────────────────────
 
-export function Progress({ value, style, color }: { value: number; style?: any; color?: string }) {
+export function Progress({
+  value,
+  style,
+  color,
+}: {
+  value: number;
+  style?: any;
+  color?: string;
+}) {
   const theme = useTheme();
   const clamped = Math.min(100, Math.max(0, value));
   const width = useSharedValue(clamped);
@@ -117,10 +147,10 @@ export function Progress({ value, style, color }: { value: number; style?: any; 
     <View
       style={[
         {
-          width: '100%',
+          width: "100%",
           height: 6,
           borderRadius: 3,
-          overflow: 'hidden',
+          overflow: "hidden",
           backgroundColor: theme.secondary,
         },
         style,
@@ -129,7 +159,7 @@ export function Progress({ value, style, color }: { value: number; style?: any; 
       <Animated.View
         style={[
           {
-            height: '100%',
+            height: "100%",
             backgroundColor: color ?? theme.foreground,
             borderRadius: 3,
           },

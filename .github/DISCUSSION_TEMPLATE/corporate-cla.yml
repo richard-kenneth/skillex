@@ -1,0 +1,39 @@
+title: "[Corporate CLA] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to request a Corporate Contributor License Agreement. You can also email **legal@richardkenneth.com** instead of opening a public discussion.
+
+        **Do not post the signed agreement, employee names or GitHub usernames, email addresses, or confidential information in this discussion.** A maintainer will reply with a private submission channel. Schedule A (the list of Authorized Contributors) is sent only through that private channel.
+
+        Read [`CLA-CORPORATE.md`](../../CLA-CORPORATE.md) before submitting this request.
+  - type: input
+    id: corporation
+    attributes:
+      label: Corporation legal name
+      description: The legal entity that will sign the agreement.
+    validations:
+      required: true
+  - type: input
+    id: country
+    attributes:
+      label: Country of incorporation
+    validations:
+      required: true
+  - type: input
+    id: contributor-count
+    attributes:
+      label: Approximate number of contributors to be covered
+      description: A number only. Names and GitHub usernames are sent privately in Schedule A.
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I have read CLA-CORPORATE.md and I am authorized to request a corporate CLA on behalf of this corporation.
+          required: true
+        - label: I understand that the signed agreement and Schedule A must be submitted through a private channel, not in this discussion.
+          required: true

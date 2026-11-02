@@ -1,4 +1,4 @@
-import { en, es, fr, pt } from "@skil-ex2/shared";
+import { en, es, fr, pt } from "@skillex/shared";
 import { getRequestConfig } from "next-intl/server";
 import { routing } from "./routing";
 

@@ -11,6 +11,7 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   type AcceptSlotsDto,
@@ -29,13 +30,25 @@ import {
   UpdateAvailabilitySchema,
   type UpdateSessionStatusDto,
   UpdateSessionStatusSchema,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import { Request } from 'express';
 import { Observable, fromEvent, merge } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
 import { ExchangesService } from './exchanges.service';
+
+interface ExchangeUpdatedEvent {
+  userIds?: string[];
+  requestId?: string;
+  message?: string;
+}
+
+interface SessionUpdatedEvent {
+  userIds?: string[];
+  exchangeId?: string;
+  sessionId?: string;
+}
 
 @Controller('exchanges')
 @UseGuards(BetterAuthGuard)
@@ -49,12 +62,12 @@ export class ExchangesController {
   streamEvents(
     @Req() req: Request & { user: { id: string } },
   ): Observable<MessageEvent> {
-    const exchangeUpdates = fromEvent(
+    const exchangeUpdates = fromEvent<ExchangeUpdatedEvent>(
       this.eventEmitter,
       'exchange.updated',
     ).pipe(
-      filter((payload: any) => payload.userIds?.includes(req.user.id)),
-      map((payload: any) => ({
+      filter((payload) => payload.userIds?.includes(req.user.id) ?? false),
+      map((payload) => ({
         data: {
           requestId: payload.requestId,
           message: payload.message,
@@ -62,9 +75,12 @@ export class ExchangesController {
       })),
     );
 
-    const sessionUpdates = fromEvent(this.eventEmitter, 'session.updated').pipe(
-      filter((payload: any) => payload.userIds?.includes(req.user.id)),
-      map((payload: any) => ({
+    const sessionUpdates = fromEvent<SessionUpdatedEvent>(
+      this.eventEmitter,
+      'session.updated',
+    ).pipe(
+      filter((payload) => payload.userIds?.includes(req.user.id) ?? false),
+      map((payload) => ({
         data: {
           exchangeId: payload.exchangeId,
           sessionId: payload.sessionId,
@@ -73,7 +89,7 @@ export class ExchangesController {
       })),
     );
 
-    return merge(exchangeUpdates, sessionUpdates) as Observable<MessageEvent>;
+    return merge(exchangeUpdates, sessionUpdates);
   }
 
   @Get('matches')
@@ -92,6 +108,7 @@ export class ExchangesController {
   }
 
   @Post('request')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @UsePipes(new ValibotValidationPipe(CreateExchangeRequestSchema))
   createRequest(
     @Req() req: Request & { user: { id: string } },
@@ -219,6 +236,7 @@ export class ExchangesController {
 
   @Post(':id/chat')
   @UseGuards(BetterAuthGuard)
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
   sendChatMessage(
     @Req() req: Request & { user: { id: string } },
     @Param('id') exchangeId: string,
@@ -246,6 +264,7 @@ export class ExchangesController {
 
   @Post(':id/chat/upload')
   @UseGuards(BetterAuthGuard)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   getChatUploadUrl(
     @Req() req: Request & { user: { id: string } },
     @Param('id') exchangeId: string,

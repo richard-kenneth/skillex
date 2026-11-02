@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { AnalyticsEvent, track } from "@/lib/analytics";
 import { useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
-import { calculatePointsBreakdown } from "@skil-ex2/shared";
+import { calculatePointsBreakdown } from "@skillex/shared";
 
 import { Info } from "lucide-react";
 import {
@@ -131,9 +131,7 @@ export function RequestDialog({
         <div className="space-y-5 py-4">
           {/* Select skill to learn */}
           <div className="space-y-2">
-            <p className="text-sm font-medium">
-              {t("whatToLearn")}
-            </p>
+            <p className="text-sm font-medium">{t("whatToLearn")}</p>
             <div className="flex flex-wrap gap-2">
               {theirOffering.map((s) => (
                 <Badge
@@ -240,20 +238,40 @@ export function RequestDialog({
                 </button>
               </div>
             )}
-            
+
             {pointsAmount > 0 && (
               <div className="pt-2 border-t border-border/50 flex items-center justify-between">
                 <div className="text-sm font-medium">
                   {payerIsMe ? (
-                    <span className="text-red-500">{tc("youPay")}: {format.number(calculatePointsBreakdown(pointsAmount).gross)} {tc("points")}</span>
+                    <span className="text-red-500">
+                      {tc("youPay")}:{" "}
+                      {format.number(
+                        calculatePointsBreakdown(pointsAmount).gross,
+                      )}{" "}
+                      {tc("points")}
+                    </span>
                   ) : (
-                    <span className="text-emerald-500">{tc("youReceive")}: {format.number(calculatePointsBreakdown(pointsAmount).net)} {tc("points")}</span>
+                    <span className="text-emerald-500">
+                      {tc("youReceive")}:{" "}
+                      {format.number(
+                        calculatePointsBreakdown(pointsAmount).net,
+                      )}{" "}
+                      {tc("points")}
+                    </span>
                   )}
                 </div>
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger render={<Info className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-help" />} />
-                    <TooltipContent side="top" align="center" className="w-72 p-4 z-[100] shadow-md border bg-popover text-popover-foreground">
+                    <TooltipTrigger
+                      render={
+                        <Info className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
+                      }
+                    />
+                    <TooltipContent
+                      side="top"
+                      align="center"
+                      className="w-72 p-4 z-[100] shadow-md border bg-popover text-popover-foreground"
+                    >
                       <div className="space-y-2">
                         <h4 className="font-medium text-sm">
                           {tc("pointsBreakdown")}
@@ -261,15 +279,31 @@ export function RequestDialog({
                         <div className="text-sm space-y-1 text-muted-foreground">
                           <div className="flex justify-between">
                             <span>{tc("grossAmount")}:</span>
-                            <span className="text-foreground font-medium">{format.number(calculatePointsBreakdown(pointsAmount).gross)} {tc("points")}</span>
+                            <span className="text-foreground font-medium">
+                              {format.number(
+                                calculatePointsBreakdown(pointsAmount).gross,
+                              )}{" "}
+                              {tc("points")}
+                            </span>
                           </div>
                           <div className="flex justify-between text-red-500/80">
                             <span>{tc("platformFee")}:</span>
-                            <span>-{format.number(calculatePointsBreakdown(pointsAmount).fee)} {tc("points")}</span>
+                            <span>
+                              -
+                              {format.number(
+                                calculatePointsBreakdown(pointsAmount).fee,
+                              )}{" "}
+                              {tc("points")}
+                            </span>
                           </div>
                           <div className="flex justify-between font-medium text-emerald-500 pt-1 border-t border-border/40">
                             <span>{tc("netGain")}:</span>
-                            <span>{format.number(calculatePointsBreakdown(pointsAmount).net)} {tc("points")}</span>
+                            <span>
+                              {format.number(
+                                calculatePointsBreakdown(pointsAmount).net,
+                              )}{" "}
+                              {tc("points")}
+                            </span>
                           </div>
                         </div>
                       </div>

@@ -67,9 +67,9 @@ export default async function ReviewsPage({
   const reviewsCount = reviews.length;
   const avgRating =
     reviewsCount > 0
-      ? (
-          reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount
-        ).toFixed(1)
+      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount).toFixed(
+          1,
+        )
       : "0.0";
 
   return (
@@ -114,7 +114,8 @@ export default async function ReviewsPage({
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">No reviews yet</h3>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Complete skill exchanges with other users to build your reputation and earn your first review!
+              Complete skill exchanges with other users to build your reputation
+              and earn your first review!
             </p>
           </div>
         </Card>
@@ -161,7 +162,9 @@ export default async function ReviewsPage({
               </CardHeader>
               <CardContent className="space-y-4 pt-0">
                 <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/20">
-                  <span className="font-medium text-foreground">Exchange: </span>
+                  <span className="font-medium text-foreground">
+                    Exchange:{" "}
+                  </span>
                   {rev.exchange.taughtSkill?.name}
                   {rev.exchange.receivedSkill &&
                     ` ↔ ${rev.exchange.receivedSkill.name}`}

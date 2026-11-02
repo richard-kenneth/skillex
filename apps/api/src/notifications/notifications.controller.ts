@@ -11,12 +11,25 @@ import {
   Sse,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Request } from 'express';
 import { Observable, fromEvent, merge } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
-import { NotificationsService } from './notifications.service';
+import {
+  NotificationsService,
+  type PushSubscriptionInput,
+} from './notifications.service';
+
+interface NotificationCreatedEvent {
+  userId?: string;
+  notification?: unknown;
+}
+
+interface UnreadCountUpdatedEvent {
+  userId?: string;
+}
 
 @Controller('notifications')
 @UseGuards(BetterAuthGuard)
@@ -58,6 +71,7 @@ export class NotificationsController {
   }
 
   @Patch('preferences')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   updatePreferences(
     @Req() req: Request & { user: { id: string } },
     @Body()
@@ -71,9 +85,10 @@ export class NotificationsController {
   }
 
   @Post('push-subscription')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   saveSubscription(
     @Req() req: Request & { user: { id: string } },
-    @Body() subscription: any,
+    @Body() subscription: PushSubscriptionInput,
   ) {
     return this.notificationsService.saveSubscription(
       req.user.id,
@@ -83,6 +98,7 @@ export class NotificationsController {
 
   // Mobile push token registration (Expo)
   @Post('push-token')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   savePushToken(
     @Req() req: Request & { user: { id: string } },
     @Body() body: { token: string; platform: string },
@@ -95,6 +111,7 @@ export class NotificationsController {
   }
 
   @Delete('push-token')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   removePushToken(
     @Req() req: Request & { user: { id: string } },
     @Body() body: { token: string },
@@ -103,19 +120,20 @@ export class NotificationsController {
   }
 
   @Post('test-push')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   testPush(@Req() req: Request & { user: { id: string } }) {
     // Send test push to both web and mobile
     return Promise.all([
       this.notificationsService.sendWebPush(
         req.user.id,
         'Test Notification 🚀',
-        'It works! Web Push is successfully configured on Skill Exchange.',
+        'It works! Web Push is successfully configured on SkillEx.',
         '/dashboard',
       ),
       this.notificationsService.sendMobilePush(
         req.user.id,
         'Test Notification 🚀',
-        'It works! Mobile Push is successfully configured on Skill Exchange.',
+        'It works! Mobile Push is successfully configured on SkillEx.',
         '/dashboard',
         'SYSTEM',
       ),
@@ -123,15 +141,16 @@ export class NotificationsController {
   }
 
   @Sse('stream')
+  @SkipThrottle()
   streamNotifications(
     @Req() req: Request & { user: { id: string } },
   ): Observable<MessageEvent> {
-    const createdNotifications = fromEvent(
+    const createdNotifications = fromEvent<NotificationCreatedEvent>(
       this.eventEmitter,
       'notification.created',
     ).pipe(
-      filter((payload: any) => payload.userId === req.user.id),
-      map((payload: any) => ({
+      filter((payload) => payload.userId === req.user.id),
+      map((payload) => ({
         data: {
           type: 'NOTIFICATION_CREATED',
           notification: payload.notification,
@@ -139,11 +158,11 @@ export class NotificationsController {
       })),
     );
 
-    const countUpdates = fromEvent(
+    const countUpdates = fromEvent<UnreadCountUpdatedEvent>(
       this.eventEmitter,
       'unread-count.updated',
     ).pipe(
-      filter((payload: any) => payload.userId === req.user.id),
+      filter((payload) => payload.userId === req.user.id),
       map(() => ({
         data: {
           type: 'COUNT_UPDATED',

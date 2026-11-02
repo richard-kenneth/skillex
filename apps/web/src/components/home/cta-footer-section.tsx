@@ -47,7 +47,11 @@ export function CTAFooterSection() {
             {/* Secondary CTA */}
             <Link
               href="/sign-up"
-              onClick={() => track(AnalyticsEvent.PROFILE_SETUP_CLICKED, { source: "footer" })}
+              onClick={() =>
+                track(AnalyticsEvent.PROFILE_SETUP_CLICKED, {
+                  source: "footer",
+                })
+              }
               className="mt-4 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
             >
               {t("ctaOrSetup")}

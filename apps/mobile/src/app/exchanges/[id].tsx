@@ -28,7 +28,11 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import { useVideoPlayer, VideoView, isPictureInPictureSupported } from "expo-video";
+import {
+  useVideoPlayer,
+  VideoView,
+  isPictureInPictureSupported,
+} from "expo-video";
 import { Image as ExpoImage } from "expo-image";
 import {
   AlertTriangle,
@@ -116,10 +120,10 @@ import {
   formatDateShort,
   formatDateTimeShort,
   getExchangeStatusColor,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { ReviewCard } from "../(tabs)/profile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { fetch } from 'expo/fetch'
+import { fetch } from "expo/fetch";
 import { AnalyticsEvent, track } from "@/lib/analytics";
 
 type Tab = "overview" | "sessions" | "chat" | "details" | "review";
@@ -130,8 +134,6 @@ function InAppVideoPlayer({ url }: { url: string }) {
   const isPiPSupported = isPictureInPictureSupported();
   const fullscreenIntervalRef = useRef<any>(null);
 
-  
-  
   const player = useVideoPlayer(url, (p) => {
     p.loop = false;
     p.preservesPitch = true;
@@ -145,7 +147,7 @@ function InAppVideoPlayer({ url }: { url: string }) {
         await videoViewRef.current.startPictureInPicture();
       }
     } catch (e) {
-      console.warn('[PiP] Could not start PiP:', e);
+      console.warn("[PiP] Could not start PiP:", e);
     }
   };
 
@@ -155,7 +157,11 @@ function InAppVideoPlayer({ url }: { url: string }) {
         ref={videoViewRef}
         style={styles.video}
         player={player}
-        fullscreenOptions={{ enable: true, orientation: 'landscape', autoExitOnRotate: true }}
+        fullscreenOptions={{
+          enable: true,
+          orientation: "landscape",
+          autoExitOnRotate: true,
+        }}
         allowsPictureInPicture
         startsPictureInPictureAutomatically
       />
@@ -163,20 +169,23 @@ function InAppVideoPlayer({ url }: { url: string }) {
         <Pressable
           onPress={handleStartPiP}
           style={{
-            alignSelf: 'flex-start',
-            flexDirection: 'row',
-            alignItems: 'center',
+            alignSelf: "flex-start",
+            flexDirection: "row",
+            alignItems: "center",
             gap: 6,
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: RADIUS.pill,
-            backgroundColor: 'rgba(24, 24, 27, 0.8)',
+            backgroundColor: "rgba(24, 24, 27, 0.8)",
             borderWidth: 1,
-            borderColor: '#27272a',
+            borderColor: "#27272a",
           }}
         >
           <ExternalLink size={14} color="#a1a1aa" />
-          <ThemedText type="smallBold" style={{ fontSize: 11, color: '#a1a1aa' }}>
+          <ThemedText
+            type="smallBold"
+            style={{ fontSize: 11, color: "#a1a1aa" }}
+          >
             Picture in Picture
           </ThemedText>
         </Pressable>
@@ -188,9 +197,9 @@ function InAppVideoPlayer({ url }: { url: string }) {
 export default function ExchangeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const t = useT('exchanges');
-  const tc = useT('common');
-  const tr = useT('review');
+  const t = useT("exchanges");
+  const tc = useT("common");
+  const tr = useT("review");
   const router = useRouter();
 
   const insets = useSafeAreaInsets();
@@ -207,8 +216,12 @@ export default function ExchangeDetailScreen() {
   // Modals & Sheets
   const [playbackUrl, setPlaybackUrl] = React.useState<string | null>(null);
   const [sessionChatOpen, setSessionChatOpen] = React.useState(false);
-  const [sessionChatTitle, setSessionChatTitle] = React.useState("Session Chat History");
-  const [activeSessionId, setActiveSessionId] = React.useState<string | null>(null);
+  const [sessionChatTitle, setSessionChatTitle] = React.useState(
+    "Session Chat History",
+  );
+  const [activeSessionId, setActiveSessionId] = React.useState<string | null>(
+    null,
+  );
   const sessionChatQ = useSessionChatMessages(activeSessionId ?? "", {
     enabled: !!activeSessionId,
   });
@@ -217,7 +230,8 @@ export default function ExchangeDetailScreen() {
   const [pointsModalOpen, setPointsModalOpen] = React.useState(false);
 
   const [tab, setTab] = React.useState<Tab>("overview");
-  const [sessionFilter, setSessionFilter] = React.useState<SessionFilter>("all");
+  const [sessionFilter, setSessionFilter] =
+    React.useState<SessionFilter>("all");
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [confirmComplete, setConfirmComplete] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -228,18 +242,30 @@ export default function ExchangeDetailScreen() {
   const [tags, setTags] = React.useState<string[]>([]);
   const [tagSheet, setTagSheet] = React.useState(false);
 
-  const handleUpdateSessionStatus = async (sessionId: string, status: string) => {
+  const handleUpdateSessionStatus = async (
+    sessionId: string,
+    status: string,
+  ) => {
     try {
       await updateSessionStatusQ.mutateAsync({
         exchangeId: id!,
         sessionId,
         status,
       });
-      track(AnalyticsEvent.SESSION_STATUS_UPDATED, { status, exchange_id: id || undefined });
-      toast.toast({ title: `Session marked as ${status.toLowerCase()}`, variant: "success" });
+      track(AnalyticsEvent.SESSION_STATUS_UPDATED, {
+        status,
+        exchange_id: id || undefined,
+      });
+      toast.toast({
+        title: `Session marked as ${status.toLowerCase()}`,
+        variant: "success",
+      });
       q.refetch();
     } catch {
-      toast.toast({ title: "Failed to update session status", variant: "error" });
+      toast.toast({
+        title: "Failed to update session status",
+        variant: "error",
+      });
     }
   };
 
@@ -256,7 +282,9 @@ export default function ExchangeDetailScreen() {
 
   // Open READ-ONLY Session Chat History using React Query hooks
   const handleViewSessionChat = (sessionId: string, skillName?: string) => {
-    setSessionChatTitle(skillName ? `Session Chat (${skillName})` : "Session Chat History");
+    setSessionChatTitle(
+      skillName ? `Session Chat (${skillName})` : "Session Chat History",
+    );
     setActiveSessionId(sessionId);
     setSessionChatOpen(true);
     markSessionChatReadQ.mutate(sessionId);
@@ -268,32 +296,62 @@ export default function ExchangeDetailScreen() {
   const progress = exchange ? calculateExchangeProgress(exchange) : 0;
 
   const isSender = exchange?.senderId === currentUser?.id;
-  const other = isSender ? (exchange?.receiver ?? exchange?.otherUser) : (exchange?.sender ?? exchange?.otherUser);
-  const partnerCompleted = isSender ? exchange?.receiverCompleted : exchange?.senderCompleted;
-  const iAmCompleted = isSender ? exchange?.senderCompleted : exchange?.receiverCompleted;
+  const other = isSender
+    ? (exchange?.receiver ?? exchange?.otherUser)
+    : (exchange?.sender ?? exchange?.otherUser);
+  const partnerCompleted = isSender
+    ? exchange?.receiverCompleted
+    : exchange?.senderCompleted;
+  const iAmCompleted = isSender
+    ? exchange?.senderCompleted
+    : exchange?.receiverCompleted;
 
   const pointsVal = exchange?.pointsAmount ?? exchange?.pointsValue ?? 0;
-  const isPayer = exchange?.pointsPayerId ? exchange.pointsPayerId === currentUser?.id : isSender;
+  const isPayer = exchange?.pointsPayerId
+    ? exchange.pointsPayerId === currentUser?.id
+    : isSender;
   const points = pointsVal > 0 ? calculatePointsBreakdown(pointsVal) : null;
   const displayPoints = points ? (isPayer ? points.gross : points.net) : 0;
 
   const sessions = exchange?.sessions ?? [];
-  const taughtSkill = exchange?.taughtSkill ?? { name: exchange?.taughtSkillName ?? "Skill" };
-  const receivedSkill = exchange?.receivedSkill ?? (exchange?.receivedSkillName ? { name: exchange.receivedSkillName } : null);
+  const taughtSkill = exchange?.taughtSkill ?? {
+    name: exchange?.taughtSkillName ?? "Skill",
+  };
+  const receivedSkill =
+    exchange?.receivedSkill ??
+    (exchange?.receivedSkillName ? { name: exchange.receivedSkillName } : null);
   const isTwoWay = !!receivedSkill;
 
-  const taughtSessions = sessions.filter((s: any) => s.skillId === exchange?.taughtSkillId);
-  const receivedSessions = isTwoWay ? sessions.filter((s: any) => s.skillId !== exchange?.taughtSkillId) : [];
+  const taughtSessions = sessions.filter(
+    (s: any) => s.skillId === exchange?.taughtSkillId,
+  );
+  const receivedSessions = isTwoWay
+    ? sessions.filter((s: any) => s.skillId !== exchange?.taughtSkillId)
+    : [];
 
-  const completedSessionsCount = sessions.filter((s: any) => s.status === "COMPLETED").length;
-  const rawTotal = (exchange?.requestedSkillSessions ?? 0) + (isTwoWay ? (exchange?.offeredSkillSessions ?? 0) : 0);
-  const totalSessionsCount = Math.max(rawTotal || sessions.length, completedSessionsCount);
+  const completedSessionsCount = sessions.filter(
+    (s: any) => s.status === "COMPLETED",
+  ).length;
+  const rawTotal =
+    (exchange?.requestedSkillSessions ?? 0) +
+    (isTwoWay ? (exchange?.offeredSkillSessions ?? 0) : 0);
+  const totalSessionsCount = Math.max(
+    rawTotal || sessions.length,
+    completedSessionsCount,
+  );
 
-  const canComplete = exchange?.status === "IN_PROGRESS" || exchange?.status === "ACCEPTED" || exchange?.status === "SCHEDULED" || exchange?.status === "COMMITTED";
+  const canComplete =
+    exchange?.status === "IN_PROGRESS" ||
+    exchange?.status === "ACCEPTED" ||
+    exchange?.status === "SCHEDULED" ||
+    exchange?.status === "COMMITTED";
   const canReview = exchange?.status === "COMPLETED" && !exchange?.myReview;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={["top", "bottom"]}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: theme.background }}
+      edges={["top", "bottom"]}
+    >
       <ThemedView type="background" style={{ flex: 1, alignItems: "center" }}>
         {/* Top Navbar */}
         <View
@@ -324,11 +382,26 @@ export default function ExchangeDetailScreen() {
             <ArrowLeft size={18} color={theme.foreground} />
           </Pressable>
 
-          <View style={{ flex: 1, alignItems: "center", paddingHorizontal: SPACING[2] }}>
-            <ThemedText type="smallBold" numberOfLines={1} style={{ fontSize: FONT_SIZE.md }}>
+          <View
+            style={{
+              flex: 1,
+              alignItems: "center",
+              paddingHorizontal: SPACING[2],
+            }}
+          >
+            <ThemedText
+              type="smallBold"
+              numberOfLines={1}
+              style={{ fontSize: FONT_SIZE.md }}
+            >
               {taughtSkill.name} {isTwoWay ? `↔ ${receivedSkill?.name}` : ""}
             </ThemedText>
-            <ThemedText type="caption" muted numberOfLines={1} style={{ fontSize: FONT_SIZE.xs }}>
+            <ThemedText
+              type="caption"
+              muted
+              numberOfLines={1}
+              style={{ fontSize: FONT_SIZE.xs }}
+            >
               {tc("with", { name: other?.name ?? t("peerTrader") })}
             </ThemedText>
           </View>
@@ -372,7 +445,14 @@ export default function ExchangeDetailScreen() {
           }
           style={{ width: "100%" }}
         >
-          <View style={{ width: "100%", maxWidth: MAX_CONTENT_WIDTH, gap: SPACING[4], paddingTop: SPACING[3] }}>
+          <View
+            style={{
+              width: "100%",
+              maxWidth: MAX_CONTENT_WIDTH,
+              gap: SPACING[4],
+              paddingTop: SPACING[3],
+            }}
+          >
             {/* Top User & Skills Hero Card */}
             <Card style={{ backgroundColor: theme.card }}>
               <CardContent style={{ paddingTop: SPACING[4], gap: SPACING[3] }}>
@@ -380,18 +460,48 @@ export default function ExchangeDetailScreen() {
                   <SkeletonText lines={4} />
                 ) : (
                   <>
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <Pressable
-                        onPress={() => other?.id && router.push(`/users/${other.id}` as any)}
-                        style={{ flexDirection: "row", alignItems: "center", gap: SPACING[3], flex: 1 }}
+                        onPress={() =>
+                          other?.id && router.push(`/users/${other.id}` as any)
+                        }
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: SPACING[3],
+                          flex: 1,
+                        }}
                       >
-                        <Avatar uri={other?.image} fallback={other?.name} size={48} />
+                        <Avatar
+                          uri={other?.image}
+                          fallback={other?.name}
+                          size={48}
+                        />
                         <View style={{ flex: 1 }}>
-                          <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg, fontWeight: "700" }}>
+                          <ThemedText
+                            type="cardTitle"
+                            style={{
+                              fontSize: FONT_SIZE.lg,
+                              fontWeight: "700",
+                            }}
+                          >
                             {other?.name ?? t("peerTrader")}
                           </ThemedText>
-                          <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
-                            {isSender ? t("learningFrom") : t("teaching")} • {tc("sessions_count", { count: totalSessionsCount })}
+                          <ThemedText
+                            type="caption"
+                            muted
+                            style={{ fontSize: FONT_SIZE.xs }}
+                          >
+                            {isSender ? t("learningFrom") : t("teaching")} •{" "}
+                            {tc("sessions_count", {
+                              count: totalSessionsCount,
+                            })}
                           </ThemedText>
                         </View>
                       </Pressable>
@@ -405,18 +515,34 @@ export default function ExchangeDetailScreen() {
                     <View style={{ gap: SPACING[2] }}>
                       <SkillRow
                         accent="emerald"
-                        icon={<GraduationCap size={16} color={getAccent("emerald").main} />}
+                        icon={
+                          <GraduationCap
+                            size={16}
+                            color={getAccent("emerald").main}
+                          />
+                        }
                         title={isSender ? t("youLearn") : t("youTeach")}
                         name={taughtSkill.name}
-                        detail={t("sessionsCountDuration", { sessions: exchange?.requestedSkillSessions ?? 1, duration: exchange?.requestedSkillDuration ?? 60 })}
+                        detail={t("sessionsCountDuration", {
+                          sessions: exchange?.requestedSkillSessions ?? 1,
+                          duration: exchange?.requestedSkillDuration ?? 60,
+                        })}
                       />
                       {isTwoWay ? (
                         <SkillRow
                           accent="indigo"
-                          icon={<BookOpen size={16} color={getAccent("indigo").main} />}
+                          icon={
+                            <BookOpen
+                              size={16}
+                              color={getAccent("indigo").main}
+                            />
+                          }
                           title={isSender ? t("youTeach") : t("youLearn")}
                           name={receivedSkill?.name}
-                          detail={t("sessionsCountDuration", { sessions: exchange?.offeredSkillSessions ?? 1, duration: exchange?.offeredSkillDuration ?? 60 })}
+                          detail={t("sessionsCountDuration", {
+                            sessions: exchange?.offeredSkillSessions ?? 1,
+                            duration: exchange?.offeredSkillDuration ?? 60,
+                          })}
                         />
                       ) : null}
                     </View>
@@ -431,17 +557,42 @@ export default function ExchangeDetailScreen() {
                 {/* 1. Progress Card */}
                 <Card>
                   <CardHeader style={{ paddingBottom: 0 }}>
-                    <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground }}>
+                    <CardTitle
+                      style={{
+                        fontSize: FONT_SIZE.sm,
+                        color: theme.mutedForeground,
+                      }}
+                    >
                       {t("exchangeProgress")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent style={{ gap: SPACING[2] }}>
-                    <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}>
-                      <ThemedText type="title" style={{ fontSize: FONT_SIZE["2xl"], fontWeight: "800", color: theme.primary }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "baseline",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <ThemedText
+                        type="title"
+                        style={{
+                          fontSize: FONT_SIZE["2xl"],
+                          fontWeight: "800",
+                          color: theme.primary,
+                        }}
+                      >
                         {progress}%
                       </ThemedText>
-                      <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
-                        {t("sessionsCompletedOf", { completed: completedSessionsCount, total: totalSessionsCount || sessions.length })}
+                      <ThemedText
+                        type="caption"
+                        muted
+                        style={{ fontSize: FONT_SIZE.xs }}
+                      >
+                        {t("sessionsCompletedOf", {
+                          completed: completedSessionsCount,
+                          total: totalSessionsCount || sessions.length,
+                        })}
                       </ThemedText>
                     </View>
                     <Progress value={progress} />
@@ -451,18 +602,40 @@ export default function ExchangeDetailScreen() {
                 {/* 2. Points & Escrow Card */}
                 <Card>
                   <CardHeader style={{ paddingBottom: 0 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                      <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <CardTitle
+                        style={{
+                          fontSize: FONT_SIZE.sm,
+                          color: theme.mutedForeground,
+                        }}
+                      >
                         {t("pointsAndEscrow")}
                       </CardTitle>
                       {points ? (
                         <Pressable
                           onPress={() => setPointsModalOpen(true)}
-                          style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
                           hitSlop={8}
                         >
                           <Info size={14} color={theme.primary} />
-                          <ThemedText type="caption" style={{ color: theme.primary, fontWeight: "600", fontSize: FONT_SIZE.xs }}>
+                          <ThemedText
+                            type="caption"
+                            style={{
+                              color: theme.primary,
+                              fontWeight: "600",
+                              fontSize: FONT_SIZE.xs,
+                            }}
+                          >
                             {t("breakdown")}
                           </ThemedText>
                         </Pressable>
@@ -470,8 +643,20 @@ export default function ExchangeDetailScreen() {
                     </View>
                   </CardHeader>
                   <CardContent style={{ gap: SPACING[1.5] }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
-                      <ThemedText type="title" style={{ fontSize: FONT_SIZE["2xl"], fontWeight: "800" }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: SPACING[2],
+                      }}
+                    >
+                      <ThemedText
+                        type="title"
+                        style={{
+                          fontSize: FONT_SIZE["2xl"],
+                          fontWeight: "800",
+                        }}
+                      >
                         {displayPoints}
                       </ThemedText>
                       <Coins size={22} color={getAccent("amber").main} />
@@ -491,13 +676,24 @@ export default function ExchangeDetailScreen() {
                           }}
                         >
                           <Lock size={10} color={getAccent("amber").main} />
-                          <ThemedText type="caption" style={{ fontSize: 10, color: getAccent("amber").main, fontWeight: "700" }}>
+                          <ThemedText
+                            type="caption"
+                            style={{
+                              fontSize: 10,
+                              color: getAccent("amber").main,
+                              fontWeight: "700",
+                            }}
+                          >
                             {t("escrowed")}
                           </ThemedText>
                         </View>
                       ) : null}
                     </View>
-                    <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
+                    <ThemedText
+                      type="caption"
+                      muted
+                      style={{ fontSize: FONT_SIZE.xs }}
+                    >
                       {pointsVal === 0
                         ? t("directSkillExchangeZeroPoints")
                         : isPayer
@@ -510,13 +706,27 @@ export default function ExchangeDetailScreen() {
                 {/* 3. Completion Card */}
                 <Card>
                   <CardHeader style={{ paddingBottom: 0 }}>
-                    <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground }}>
+                    <CardTitle
+                      style={{
+                        fontSize: FONT_SIZE.sm,
+                        color: theme.mutedForeground,
+                      }}
+                    >
                       {t("exchangeStatus")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent style={{ gap: SPACING[2.5] }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                      <ThemedText type="default" style={{ fontWeight: "700", fontSize: FONT_SIZE.md }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <ThemedText
+                        type="default"
+                        style={{ fontWeight: "700", fontSize: FONT_SIZE.md }}
+                      >
                         {exchange?.status === "COMPLETED"
                           ? t("exchangeCompleted")
                           : iAmCompleted
@@ -538,8 +748,19 @@ export default function ExchangeDetailScreen() {
                           borderColor: getAccent("emerald").border,
                         }}
                       >
-                        <CheckCircle2 size={16} color={getAccent("emerald").main} />
-                        <ThemedText type="caption" style={{ color: getAccent("emerald").main, fontSize: FONT_SIZE.xs, flex: 1, fontWeight: "600" }}>
+                        <CheckCircle2
+                          size={16}
+                          color={getAccent("emerald").main}
+                        />
+                        <ThemedText
+                          type="caption"
+                          style={{
+                            color: getAccent("emerald").main,
+                            fontSize: FONT_SIZE.xs,
+                            flex: 1,
+                            fontWeight: "600",
+                          }}
+                        >
                           {t("partnerMarkedComplete", { name: other?.name })}
                         </ThemedText>
                       </View>
@@ -552,9 +773,18 @@ export default function ExchangeDetailScreen() {
                         onPress={() => setConfirmComplete(true)}
                         loading={completeQ.isPending}
                         disabled={iAmCompleted}
-                        leftIcon={<CheckCircle2 size={16} color={iAmCompleted ? theme.mutedForeground : "#fff"} />}
+                        leftIcon={
+                          <CheckCircle2
+                            size={16}
+                            color={
+                              iAmCompleted ? theme.mutedForeground : "#fff"
+                            }
+                          />
+                        }
                       >
-                        {iAmCompleted ? t("markedComplete") : t("markExchangeComplete")}
+                        {iAmCompleted
+                          ? t("markedComplete")
+                          : t("markExchangeComplete")}
                       </Button>
                     ) : null}
                   </CardContent>
@@ -608,7 +838,10 @@ export default function ExchangeDetailScreen() {
             )}
 
             {tab === "chat" && (
-              <ExchangeChatBody exchangeId={id!} currentUserId={currentUser?.id} />
+              <ExchangeChatBody
+                exchangeId={id!}
+                currentUserId={currentUser?.id}
+              />
             )}
 
             {tab === "details" && (
@@ -640,7 +873,10 @@ export default function ExchangeDetailScreen() {
                       exchange_id: id!,
                       rating,
                     });
-                    toast.toast({ title: "Review submitted!", variant: "success" });
+                    toast.toast({
+                      title: "Review submitted!",
+                      variant: "success",
+                    });
                     setComment("");
                     setTags([]);
                     await q.refetch();
@@ -648,12 +884,17 @@ export default function ExchangeDetailScreen() {
                     if (e instanceof v.ValiError) {
                       toast.toast({
                         title: "Invalid review",
-                        description: (e.issues[0] as any)?.message ?? "Please check inputs",
+                        description:
+                          (e.issues[0] as any)?.message ??
+                          "Please check inputs",
                         variant: "error",
                       });
                       return;
                     }
-                    toast.toast({ title: "Could not submit review", variant: "error" });
+                    toast.toast({
+                      title: "Could not submit review",
+                      variant: "error",
+                    });
                   }
                 }}
                 submitting={reviewQ.isPending}
@@ -698,10 +939,25 @@ export default function ExchangeDetailScreen() {
               borderColor: theme.border,
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: SPACING[2],
+                }}
+              >
                 <Coins size={20} color={getAccent("amber").main} />
-                <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg, fontWeight: "700" }}>
+                <ThemedText
+                  type="cardTitle"
+                  style={{ fontSize: FONT_SIZE.lg, fontWeight: "700" }}
+                >
                   {tc("pointsBreakdown")}
                 </ThemedText>
               </View>
@@ -713,19 +969,39 @@ export default function ExchangeDetailScreen() {
             {points ? (
               <View style={{ gap: SPACING[3] }}>
                 <Row label={t("grossAmount")} value={`${points.gross} pts`} />
-                <Row label={t("platformFee")} value={`-${points.fee} pts`} dim />
+                <Row
+                  label={t("platformFee")}
+                  value={`-${points.fee} pts`}
+                  dim
+                />
                 <Separator />
-                <Row label={t("netGain")} value={`${points.net} pts`} strong accent="emerald" main />
+                <Row
+                  label={t("netGain")}
+                  value={`${points.net} pts`}
+                  strong
+                  accent="emerald"
+                  main
+                />
               </View>
             ) : (
-              <ThemedText type="small" muted>{t("noPointsDetails")}</ThemedText>
+              <ThemedText type="small" muted>
+                {t("noPointsDetails")}
+              </ThemedText>
             )}
 
-            <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs, lineHeight: 18 }}>
+            <ThemedText
+              type="caption"
+              muted
+              style={{ fontSize: FONT_SIZE.xs, lineHeight: 18 }}
+            >
               {t("pointsEscrowPolicyDesc")}
             </ThemedText>
 
-            <Button size="sm" variant="default" onPress={() => setPointsModalOpen(false)}>
+            <Button
+              size="sm"
+              variant="default"
+              onPress={() => setPointsModalOpen(false)}
+            >
               {tc("close")}
             </Button>
           </View>
@@ -739,7 +1015,13 @@ export default function ExchangeDetailScreen() {
         animationType="slide"
         onRequestClose={() => setSessionChatOpen(false)}
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" }}>
+        <SafeAreaView
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "flex-end",
+          }}
+        >
           <View
             style={{
               height: "75%",
@@ -750,10 +1032,25 @@ export default function ExchangeDetailScreen() {
               gap: SPACING[3],
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: SPACING[2],
+                }}
+              >
                 <MessageSquare size={18} color={theme.primary} />
-                <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg, fontWeight: "700" }}>
+                <ThemedText
+                  type="cardTitle"
+                  style={{ fontSize: FONT_SIZE.lg, fontWeight: "700" }}
+                >
                   {sessionChatTitle}
                 </ThemedText>
               </View>
@@ -766,36 +1063,78 @@ export default function ExchangeDetailScreen() {
 
             {sessionChatQ.isLoading ? (
               <SkeletonText lines={5} />
-            ) : !(sessionChatQ.data?.messages?.length) ? (
-              <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: SPACING[2] }}>
+            ) : !sessionChatQ.data?.messages?.length ? (
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: SPACING[2],
+                }}
+              >
                 <MessageCircle size={32} color={theme.mutedForeground} />
                 <ThemedText type="default" style={{ fontWeight: "700" }}>
                   {t("noRoomChatMessages")}
                 </ThemedText>
-                <ThemedText type="caption" muted style={{ textAlign: "center", maxWidth: 260 }}>
+                <ThemedText
+                  type="caption"
+                  muted
+                  style={{ textAlign: "center", maxWidth: 260 }}
+                >
                   {t("livekitChatDesc")}
                 </ThemedText>
               </View>
             ) : (
               <FlatList
-                data={(sessionChatQ.data as any)?.messages ?? (sessionChatQ.data as any) ?? []}
+                data={
+                  (sessionChatQ.data as any)?.messages ??
+                  (sessionChatQ.data as any) ??
+                  []
+                }
                 keyExtractor={(m, idx) => m.id ?? String(idx)}
                 contentContainerStyle={{ gap: SPACING[3] }}
                 renderItem={({ item: m }) => {
-                  const mine = m.senderId === currentUser?.id || m.sender?.id === currentUser?.id;
-                  const timeStr = new Date(m.timestamp || m.createdAt || "").toLocaleTimeString(undefined, {
+                  const mine =
+                    m.senderId === currentUser?.id ||
+                    m.sender?.id === currentUser?.id;
+                  const timeStr = new Date(
+                    m.timestamp || m.createdAt || "",
+                  ).toLocaleTimeString(undefined, {
                     hour: "2-digit",
                     minute: "2-digit",
                   });
                   return (
-                    <View style={{ flexDirection: "row", gap: SPACING[2.5], alignItems: "flex-start" }}>
-                      <Avatar uri={m.sender?.image} fallback={m.sender?.name} size={32} />
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: SPACING[2.5],
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Avatar
+                        uri={m.sender?.image}
+                        fallback={m.sender?.name}
+                        size={32}
+                      />
                       <View style={{ flex: 1, gap: 2 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
-                          <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.xs }}>
-                            {mine ? tc("you") : m.sender?.name ?? "User"}
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: SPACING[2],
+                          }}
+                        >
+                          <ThemedText
+                            type="smallBold"
+                            style={{ fontSize: FONT_SIZE.xs }}
+                          >
+                            {mine ? tc("you") : (m.sender?.name ?? "User")}
                           </ThemedText>
-                          <ThemedText type="caption" muted style={{ fontSize: 10 }}>
+                          <ThemedText
+                            type="caption"
+                            muted
+                            style={{ fontSize: 10 }}
+                          >
                             {timeStr}
                           </ThemedText>
                         </View>
@@ -808,7 +1147,10 @@ export default function ExchangeDetailScreen() {
                             borderColor: theme.border,
                           }}
                         >
-                          <ThemedText type="small" style={{ fontSize: FONT_SIZE.sm }}>
+                          <ThemedText
+                            type="small"
+                            style={{ fontSize: FONT_SIZE.sm }}
+                          >
                             {m.message ?? m.content}
                           </ThemedText>
                         </View>
@@ -819,7 +1161,11 @@ export default function ExchangeDetailScreen() {
               />
             )}
 
-            <Button size="sm" variant="outline" onPress={() => setSessionChatOpen(false)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() => setSessionChatOpen(false)}
+            >
               {tc("close")}
             </Button>
           </View>
@@ -833,9 +1179,32 @@ export default function ExchangeDetailScreen() {
         animationType="fade"
         onRequestClose={() => setPlaybackUrl(null)}
       >
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center", padding: SPACING[4] }}>
-          <View style={{ width: "100%", maxWidth: 420, backgroundColor: theme.card, borderRadius: RADIUS.xl, padding: SPACING[4], gap: SPACING[4] }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.85)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: SPACING[4],
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              backgroundColor: theme.card,
+              borderRadius: RADIUS.xl,
+              padding: SPACING[4],
+              gap: SPACING[4],
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg }}>
                 {t("recordingPlayback")}
               </ThemedText>
@@ -844,11 +1213,13 @@ export default function ExchangeDetailScreen() {
               </Pressable>
             </View>
 
-            {playbackUrl ? (
-              <InAppVideoPlayer url={playbackUrl} />
-            ) : null}
+            {playbackUrl ? <InAppVideoPlayer url={playbackUrl} /> : null}
 
-            <Button size="sm" variant="outline" onPress={() => setPlaybackUrl(null)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() => setPlaybackUrl(null)}
+            >
               {tc("close")}
             </Button>
           </View>
@@ -859,17 +1230,18 @@ export default function ExchangeDetailScreen() {
       <ActionSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        title={t('exchangeActions')}
+        title={t("exchangeActions")}
         options={[
           {
-            label: t('viewPartnerProfile'),
+            label: t("viewPartnerProfile"),
             icon: <ArrowLeft size={18} color={theme.foreground} />,
-            onPress: () => other?.id && router.push(`/users/${other.id}` as any),
+            onPress: () =>
+              other?.id && router.push(`/users/${other.id}` as any),
           },
           {
-            label: t('reportIssue'),
+            label: t("reportIssue"),
             icon: <AlertTriangle size={18} color={theme.destructive as any} />,
-            subtitle: t('flagExchangeSupport'),
+            subtitle: t("flagExchangeSupport"),
             onPress: () =>
               toast.toast({
                 title: "Report sent",
@@ -884,13 +1256,13 @@ export default function ExchangeDetailScreen() {
       <AlertDialog
         open={confirmComplete}
         onOpenChange={setConfirmComplete}
-        title={t('markExchangeComplete')}
-        description={t('markCompleteDesc')}
-        confirmLabel={t('markComplete')}
+        title={t("markExchangeComplete")}
+        description={t("markCompleteDesc")}
+        confirmLabel={t("markComplete")}
         onConfirm={async () => {
           await completeQ.mutateAsync(id!);
           track(AnalyticsEvent.EXCHANGE_MARKED_COMPLETE, { exchange_id: id! });
-          toast.toast({ title: t('exchangeCompleted'), variant: "success" });
+          toast.toast({ title: t("exchangeCompleted"), variant: "success" });
           await q.refetch();
         }}
       />
@@ -902,7 +1274,13 @@ export default function ExchangeDetailScreen() {
         animationType="slide"
         onRequestClose={() => setTagSheet(false)}
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" }}>
+        <SafeAreaView
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            justifyContent: "flex-end",
+          }}
+        >
           <View
             style={{
               backgroundColor: theme.card,
@@ -915,13 +1293,19 @@ export default function ExchangeDetailScreen() {
               borderColor: theme.border,
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <View>
                 <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.lg }}>
-                  {tr('reviewQualities')}
+                  {tr("reviewQualities")}
                 </ThemedText>
                 <ThemedText type="caption" muted>
-                  {tr('selectAllApply')}
+                  {tr("selectAllApply")}
                 </ThemedText>
               </View>
               <Pressable onPress={() => setTagSheet(false)} hitSlop={8}>
@@ -929,9 +1313,18 @@ export default function ExchangeDetailScreen() {
               </Pressable>
             </View>
 
-            <ScrollView contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2.5], paddingVertical: SPACING[2] }}>
+            <ScrollView
+              contentContainerStyle={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: SPACING[2.5],
+                paddingVertical: SPACING[2],
+              }}
+            >
               {(
-                Object.keys(REVIEW_TAG_LABELS) as (keyof typeof REVIEW_TAG_LABELS)[]
+                Object.keys(
+                  REVIEW_TAG_LABELS,
+                ) as (keyof typeof REVIEW_TAG_LABELS)[]
               ).map((k) => {
                 const active = tags.includes(k);
                 const tagKeyMap: Record<string, string> = {
@@ -952,7 +1345,9 @@ export default function ExchangeDetailScreen() {
                     key={k}
                     onPress={() => {
                       setTags((prev) =>
-                        prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k],
+                        prev.includes(k)
+                          ? prev.filter((x) => x !== k)
+                          : [...prev, k],
                       );
                     }}
                     style={{
@@ -962,20 +1357,30 @@ export default function ExchangeDetailScreen() {
                       paddingHorizontal: SPACING[3.5],
                       paddingVertical: SPACING[2.5],
                       borderRadius: RADIUS.pill,
-                      backgroundColor: active ? getAccent("indigo").bg : theme.background,
+                      backgroundColor: active
+                        ? getAccent("indigo").bg
+                        : theme.background,
                       borderWidth: 1.5,
-                      borderColor: active ? getAccent("indigo").main : theme.border,
+                      borderColor: active
+                        ? getAccent("indigo").main
+                        : theme.border,
                     }}
                   >
                     <CheckCircle2
                       size={16}
-                      color={active ? getAccent("indigo").main : theme.mutedForeground}
+                      color={
+                        active
+                          ? getAccent("indigo").main
+                          : theme.mutedForeground
+                      }
                     />
                     <ThemedText
                       type="smallBold"
                       style={{
                         fontSize: FONT_SIZE.xs,
-                        color: active ? getAccent("indigo").main : theme.foreground,
+                        color: active
+                          ? getAccent("indigo").main
+                          : theme.foreground,
                       }}
                     >
                       {localizedLabel}
@@ -1095,8 +1500,8 @@ function SessionsBody({
   exchange,
 }: any) {
   const theme = useTheme();
-  const t = useT('exchanges');
-  const tc = useT('common');
+  const t = useT("exchanges");
+  const tc = useT("common");
 
   if (loading)
     return (
@@ -1123,9 +1528,15 @@ function SessionsBody({
           value={sessionFilter}
           onChange={setSessionFilter}
           items={[
-            { value: "all", label: `${t('all')} (${sessions?.length ?? 0})` },
-            { value: "taught", label: `${taughtSkillName ?? t('taught')} (${taughtSessions?.length ?? 0})` },
-            { value: "received", label: `${receivedSkillName ?? t('received')} (${receivedSessions?.length ?? 0})` },
+            { value: "all", label: `${t("all")} (${sessions?.length ?? 0})` },
+            {
+              value: "taught",
+              label: `${taughtSkillName ?? t("taught")} (${taughtSessions?.length ?? 0})`,
+            },
+            {
+              value: "received",
+              label: `${receivedSkillName ?? t("received")} (${receivedSessions?.length ?? 0})`,
+            },
           ]}
         />
       )}
@@ -1152,7 +1563,7 @@ function SessionsBody({
               <CalendarClock size={26} color={getAccent("indigo").main} />
             </View>
             <ThemedText type="default" style={{ fontWeight: "700" }}>
-              {t('noSessions')}
+              {t("noSessions")}
             </ThemedText>
             <ThemedText
               type="small"
@@ -1163,7 +1574,7 @@ function SessionsBody({
                 maxWidth: 280,
               }}
             >
-              {t('coordinateScheduleDesc')}
+              {t("coordinateScheduleDesc")}
             </ThemedText>
           </CardContent>
         </Card>
@@ -1180,18 +1591,49 @@ function SessionsBody({
 
             // Derive teacher info
             const isTaughtSkill = s.skillId === exchange?.taughtSkillId;
-            const teacherName = isTaughtSkill ? exchange?.receiver?.name : exchange?.sender?.name;
-            const isCurrentUserTeacher = (isTaughtSkill ? exchange?.receiver?.id : exchange?.sender?.id) === currentUserId;
+            const teacherName = isTaughtSkill
+              ? exchange?.receiver?.name
+              : exchange?.sender?.name;
+            const isCurrentUserTeacher =
+              (isTaughtSkill
+                ? exchange?.receiver?.id
+                : exchange?.sender?.id) === currentUserId;
 
             const sessionDate = s.scheduledAt ?? s.startTime;
-            const durationMinutes = s.duration ?? (isTaughtSkill ? exchange?.requestedSkillDuration : exchange?.offeredSkillDuration) ?? 60;
+            const durationMinutes =
+              s.duration ??
+              (isTaughtSkill
+                ? exchange?.requestedSkillDuration
+                : exchange?.offeredSkillDuration) ??
+              60;
 
             return (
-              <Card key={s.id} style={{ backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border }}>
+              <Card
+                key={s.id}
+                style={{
+                  backgroundColor: theme.card,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                }}
+              >
                 <CardContent style={{ gap: SPACING[3.5], padding: SPACING[4] }}>
                   {/* Header Row */}
-                  <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: SPACING[2] }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[3], flex: 1 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: SPACING[2],
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: SPACING[3],
+                        flex: 1,
+                      }}
+                    >
                       <View
                         style={{
                           width: 42,
@@ -1224,37 +1666,90 @@ function SessionsBody({
                         />
                       </View>
                       <View style={{ flex: 1, gap: 2 }}>
-                        <ThemedText type="cardTitle" style={{ fontSize: FONT_SIZE.md, fontWeight: "700" }}>
-                          {String(s.skill?.name ?? (isTaughtSkill ? taughtSkillName : receivedSkillName) ?? "")}
+                        <ThemedText
+                          type="cardTitle"
+                          style={{ fontSize: FONT_SIZE.md, fontWeight: "700" }}
+                        >
+                          {String(
+                            s.skill?.name ??
+                              (isTaughtSkill
+                                ? taughtSkillName
+                                : receivedSkillName) ??
+                              "",
+                          )}
                         </ThemedText>
-                        <ThemedText type="caption" muted style={{ fontSize: FONT_SIZE.xs }}>
-                          {sessionDate ? formatDateTimeShort(sessionDate) : t('scheduledSession')} • {durationMinutes} min
+                        <ThemedText
+                          type="caption"
+                          muted
+                          style={{ fontSize: FONT_SIZE.xs }}
+                        >
+                          {sessionDate
+                            ? formatDateTimeShort(sessionDate)
+                            : t("scheduledSession")}{" "}
+                          • {durationMinutes} min
                         </ThemedText>
                       </View>
                     </View>
 
-                    <Badge variant={isCancelled ? "destructive" : isCompleted ? "accent" : "outline"} accent={isCompleted ? "green" : undefined}>
+                    <Badge
+                      variant={
+                        isCancelled
+                          ? "destructive"
+                          : isCompleted
+                            ? "accent"
+                            : "outline"
+                      }
+                      accent={isCompleted ? "green" : undefined}
+                    >
                       {labelForStatus(s.status, t)}
                     </Badge>
                   </View>
 
                   {/* Teacher & Role Callout */}
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2], padding: SPACING[2.5], borderRadius: RADIUS.md, backgroundColor: theme.secondary }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: SPACING[2],
+                      padding: SPACING[2.5],
+                      borderRadius: RADIUS.md,
+                      backgroundColor: theme.secondary,
+                    }}
+                  >
                     <BookOpen size={14} color={theme.primary} />
-                    <ThemedText type="caption" style={{ fontSize: FONT_SIZE.xs, color: theme.foreground }}>
-                      {isCurrentUserTeacher ? t('youTeachSession') : t('partnerTeachesSession', { name: teacherName ?? t('peerTrader') })}
+                    <ThemedText
+                      type="caption"
+                      style={{
+                        fontSize: FONT_SIZE.xs,
+                        color: theme.foreground,
+                      }}
+                    >
+                      {isCurrentUserTeacher
+                        ? t("youTeachSession")
+                        : t("partnerTeachesSession", {
+                            name: teacherName ?? t("peerTrader"),
+                          })}
                     </ThemedText>
                   </View>
 
                   {/* Action Buttons Row */}
-                  <View style={{ flexDirection: "row", gap: SPACING[2], flexWrap: "wrap", alignItems: "center" }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: SPACING[2],
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                    }}
+                  >
                     <Button
                       size="sm"
                       variant="outline"
                       onPress={() => onViewSessionChat(s.id, s.skill?.name)}
-                      leftIcon={<MessageSquare size={14} color={theme.foreground} />}
+                      leftIcon={
+                        <MessageSquare size={14} color={theme.foreground} />
+                      }
                     >
-                      {t('sessionChat')}
+                      {t("sessionChat")}
                     </Button>
 
                     {!isDone && (
@@ -1262,53 +1757,102 @@ function SessionsBody({
                         size="sm"
                         variant={isLive ? "default" : "secondary"}
                         onPress={() => onJoin(s.id)}
-                        leftIcon={isLive ? <Zap size={14} color="#fff" /> : <Video size={14} color={theme.foreground} />}
+                        leftIcon={
+                          isLive ? (
+                            <Zap size={14} color="#fff" />
+                          ) : (
+                            <Video size={14} color={theme.foreground} />
+                          )
+                        }
                       >
-                        {isLive ? t('joinLive') : t('joinRoom')}
+                        {isLive ? t("joinLive") : t("joinRoom")}
                       </Button>
                     )}
                   </View>
 
                   {/* Session Status Actions */}
                   {isScheduled && (
-                    <View style={{ flexDirection: "row", gap: SPACING[2], paddingTop: SPACING[1], borderTopWidth: 1, borderTopColor: theme.border + "40" }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: SPACING[2],
+                        paddingTop: SPACING[1],
+                        borderTopWidth: 1,
+                        borderTopColor: theme.border + "40",
+                      }}
+                    >
                       {!isCurrentUserTeacher && (
                         <Button
                           size="sm"
                           variant="outline"
                           onPress={() => onUpdateStatus(s.id, "COMPLETED")}
-                          leftIcon={<CheckCircle2 size={14} color={getAccent("green").main} />}
+                          leftIcon={
+                            <CheckCircle2
+                              size={14}
+                              color={getAccent("green").main}
+                            />
+                          }
                           style={{ flex: 1 }}
                         >
-                          {t('markComplete')}
+                          {t("markComplete")}
                         </Button>
                       )}
                       <Button
                         size="sm"
                         variant="outline"
                         onPress={() => onUpdateStatus(s.id, "MISSED")}
-                        leftIcon={<XCircle size={14} color={getAccent("red").main} />}
+                        leftIcon={
+                          <XCircle size={14} color={getAccent("red").main} />
+                        }
                         style={{ flex: !isCurrentUserTeacher ? 1 : undefined }}
                       >
-                        {t('markMissed')}
+                        {t("markMissed")}
                       </Button>
                     </View>
                   )}
 
                   {/* Recordings Section */}
                   {recordings.length > 0 && (
-                    <View style={{ paddingTop: SPACING[2], borderTopWidth: 1, borderTopColor: theme.border + "40", gap: SPACING[2] }}>
-                      <ThemedText type="caption" style={{ fontSize: 10, fontWeight: "700", textTransform: "uppercase", color: theme.mutedForeground }}>
-                        {t('recordings')}
+                    <View
+                      style={{
+                        paddingTop: SPACING[2],
+                        borderTopWidth: 1,
+                        borderTopColor: theme.border + "40",
+                        gap: SPACING[2],
+                      }}
+                    >
+                      <ThemedText
+                        type="caption"
+                        style={{
+                          fontSize: 10,
+                          fontWeight: "700",
+                          textTransform: "uppercase",
+                          color: theme.mutedForeground,
+                        }}
+                      >
+                        {t("recordings")}
                       </ThemedText>
-                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          flexWrap: "wrap",
+                          gap: SPACING[2],
+                        }}
+                      >
                         {recordings.map((rec: any, idx: number) => {
-                          const isExpired = rec.recordingExpiresAt && new Date() > new Date(rec.recordingExpiresAt);
-                          const isProcessing = rec.recordingStatus === "PROCESSING";
+                          const isExpired =
+                            rec.recordingExpiresAt &&
+                            new Date() > new Date(rec.recordingExpiresAt);
+                          const isProcessing =
+                            rec.recordingStatus === "PROCESSING";
                           const isReady = rec.recordingStatus === "COMPLETED";
 
                           // Formulate status label cleanly without returning empty string ""
-                          const statusSuffix = isProcessing ? ` (${t('processing')})` : isExpired ? ` (${t('expired')})` : "";
+                          const statusSuffix = isProcessing
+                            ? ` (${t("processing")})`
+                            : isExpired
+                              ? ` (${t("expired")})`
+                              : "";
 
                           return (
                             <Button
@@ -1317,9 +1861,12 @@ function SessionsBody({
                               variant="outline"
                               disabled={!isReady || isExpired}
                               onPress={() => onWatchRecording(rec.id)}
-                              leftIcon={<Play size={14} color={theme.foreground} />}
+                              leftIcon={
+                                <Play size={14} color={theme.foreground} />
+                              }
                             >
-                              {t('part', { num: recordings.length - idx }) + statusSuffix}
+                              {t("part", { num: recordings.length - idx }) +
+                                statusSuffix}
                             </Button>
                           );
                         })}
@@ -1365,9 +1912,20 @@ const ChatMessageItem = React.memo(
 
     return (
       <View style={{ alignItems: mine ? "flex-end" : "flex-start" }}>
-        <View style={{ flexDirection: "row", gap: SPACING[2], alignItems: "flex-end", maxWidth: "85%" }}>
-          {!mine && <Avatar uri={m.sender?.image} fallback={m.sender?.name} size={28} />}
-          <View style={{ flex: 1, alignItems: mine ? "flex-end" : "flex-start" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: SPACING[2],
+            alignItems: "flex-end",
+            maxWidth: "85%",
+          }}
+        >
+          {!mine && (
+            <Avatar uri={m.sender?.image} fallback={m.sender?.name} size={28} />
+          )}
+          <View
+            style={{ flex: 1, alignItems: mine ? "flex-end" : "flex-start" }}
+          >
             <View
               style={{
                 padding: SPACING[3],
@@ -1383,7 +1941,10 @@ const ChatMessageItem = React.memo(
               {m.content ? (
                 <ThemedText
                   type="small"
-                  style={{ color: mine ? "#fff" : theme.foreground, fontSize: FONT_SIZE.sm }}
+                  style={{
+                    color: mine ? "#fff" : theme.foreground,
+                    fontSize: FONT_SIZE.sm,
+                  }}
                 >
                   {m.content}
                 </ThemedText>
@@ -1391,7 +1952,11 @@ const ChatMessageItem = React.memo(
 
               {/* Image Attachment Thumbnail Preview */}
               {isImage && m.fileUrl ? (
-                <Pressable onPress={() => onPreviewImage(m.fileUrl)} hitSlop={4} style={{ marginTop: m.content ? SPACING[2] : 0 }}>
+                <Pressable
+                  onPress={() => onPreviewImage(m.fileUrl)}
+                  hitSlop={4}
+                  style={{ marginTop: m.content ? SPACING[2] : 0 }}
+                >
                   <ExpoImage
                     source={{ uri: m.fileUrl }}
                     recyclingKey={m.id || m.fileUrl}
@@ -1405,16 +1970,25 @@ const ChatMessageItem = React.memo(
 
               {/* Non-Image File Attachment Card */}
               {!isImage && m.fileName ? (
-                <View style={{ marginTop: m.content ? SPACING[2] : 0, gap: SPACING[2] }}>
+                <View
+                  style={{
+                    marginTop: m.content ? SPACING[2] : 0,
+                    gap: SPACING[2],
+                  }}
+                >
                   <Pressable
-                    onPress={() => m.fileUrl && onDownloadFile(m.fileUrl, m.fileName)}
+                    onPress={() =>
+                      m.fileUrl && onDownloadFile(m.fileUrl, m.fileName)
+                    }
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
                       gap: SPACING[2],
                       padding: SPACING[2.5],
                       borderRadius: RADIUS.sm,
-                      backgroundColor: mine ? "rgba(255,255,255,0.15)" : theme.background,
+                      backgroundColor: mine
+                        ? "rgba(255,255,255,0.15)"
+                        : theme.background,
                     }}
                   >
                     <FileText size={16} color={mine ? "#fff" : theme.primary} />
@@ -1422,7 +1996,10 @@ const ChatMessageItem = React.memo(
                       <ThemedText
                         type="smallBold"
                         numberOfLines={1}
-                        style={{ fontSize: FONT_SIZE.xs, color: mine ? "#fff" : theme.foreground }}
+                        style={{
+                          fontSize: FONT_SIZE.xs,
+                          color: mine ? "#fff" : theme.foreground,
+                        }}
                       >
                         {m.fileName}
                       </ThemedText>
@@ -1457,16 +2034,22 @@ const ChatMessageItem = React.memo(
   (prev, next) =>
     prev.m.id === next.m.id &&
     prev.m.createdAt === next.m.createdAt &&
-    prev.currentUserId === next.currentUserId
+    prev.currentUserId === next.currentUserId,
 );
 
 /* ============================================================================
  * EXCHANGE CHAT BODY (WITH FULL ATTACHMENT / FILE UPLOAD SUPPORT)
  * ========================================================================= */
 
-function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; currentUserId: string }) {
+function ExchangeChatBody({
+  exchangeId,
+  currentUserId,
+}: {
+  exchangeId: string;
+  currentUserId: string;
+}) {
   const theme = useTheme();
-  const t = useT('exchanges');
+  const t = useT("exchanges");
   const toast = useToast();
   const insets = useSafeAreaInsets();
 
@@ -1474,21 +2057,31 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
 
   const [text, setText] = React.useState("");
   const [uploading, setUploading] = React.useState(false);
-  const [uploadProgress, setUploadProgress] = React.useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = React.useState<string | null>(
+    null,
+  );
   const [attachmentSheetOpen, setAttachmentSheetOpen] = React.useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = React.useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = React.useState<string | null>(
+    null,
+  );
 
   // React Query hooks for exchange chat
-  const { data: messages = [], isLoading: loading } = useExchangeChatMessages(exchangeId, {
-    refetchInterval: 4000,
-  });
+  const { data: messages = [], isLoading: loading } = useExchangeChatMessages(
+    exchangeId,
+    {
+      refetchInterval: 4000,
+    },
+  );
   const sendMsgMutation = useSendExchangeChatMessage();
   const uploadUrlMutation = useExchangeChatUploadUrl();
 
   // Scroll to bottom when messages list updates
   React.useEffect(() => {
     if (messages.length > 0) {
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(
+        () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+        100,
+      );
     }
   }, [messages.length]);
 
@@ -1502,7 +2095,10 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
         exchangeId,
         payload: { content: msgContent },
       });
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(
+        () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+        100,
+      );
     } catch {
       toast.toast({ title: "Failed to send message", variant: "error" });
       setText(msgContent);
@@ -1510,7 +2106,11 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
   };
 
   // Upload attachment file (Image, Document, Camera)
-  const uploadAttachment = async (fileUri: string, fileName: string, mimeType: string) => {
+  const uploadAttachment = async (
+    fileUri: string,
+    fileName: string,
+    mimeType: string,
+  ) => {
     try {
       setUploading(true);
       setUploadProgress(fileName);
@@ -1522,7 +2122,6 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
         contentType: mimeType,
       });
 
-      
       // Step 2: Upload file
       const file = new File(fileUri);
       const fileUploadRes = await fetch(uploadUrl, {
@@ -1533,7 +2132,11 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
         body: file,
       });
 
-      if (!fileUploadRes.ok || fileUploadRes.status < 200 || fileUploadRes.status >= 300) {
+      if (
+        !fileUploadRes.ok ||
+        fileUploadRes.status < 200 ||
+        fileUploadRes.status >= 300
+      ) {
         throw new Error("File upload to storage failed");
       }
 
@@ -1548,9 +2151,16 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
       });
 
       toast.toast({ title: "File shared successfully", variant: "success" });
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(
+        () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+        100,
+      );
     } catch (err: any) {
-      toast.toast({ title: "File upload failed", description: err?.message, variant: "error" });
+      toast.toast({
+        title: "File upload failed",
+        description: err?.message,
+        variant: "error",
+      });
     } finally {
       setUploading(false);
       setUploadProgress(null);
@@ -1562,7 +2172,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
     setAttachmentSheetOpen(false);
     await new Promise((r) => setTimeout(() => r(null), 400));
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       quality: 0.8,
     });
 
@@ -1627,11 +2237,12 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
       //   await new Promise((resolve) => setTimeout(() => resolve(undefined), 250));
       // }
 
-      toast.toast({ title: t('downloadingFile'), variant: "info" });
+      toast.toast({ title: t("downloadingFile"), variant: "info" });
 
-      const rawName = fileName || url.split('/').pop()?.split('?')[0] || `file_${Date.now()}`;
-      const name = rawName.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const ext = name.split('.').pop()?.toLowerCase() || '';
+      const rawName =
+        fileName || url.split("/").pop()?.split("?")[0] || `file_${Date.now()}`;
+      const name = rawName.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const ext = name.split(".").pop()?.toLowerCase() || "";
 
       let mimeType = "application/octet-stream";
 
@@ -1653,12 +2264,14 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
         mimeType = "application/zip";
       } else if (ext === "txt") {
         mimeType = "text/plain";
-      }      
+      }
 
       let fileUri = url;
       if (url.startsWith("http://") || url.startsWith("https://")) {
         const targetFile = new File(Paths.cache, name);
-        const downloadedFile = await File.downloadFileAsync(url, targetFile, { idempotent: true });
+        const downloadedFile = await File.downloadFileAsync(url, targetFile, {
+          idempotent: true,
+        });
         fileUri = downloadedFile?.uri || targetFile.uri;
       }
 
@@ -1670,7 +2283,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
         });
       } else {
         toast.toast({
-          title: t('fileDownloaded'),
+          title: t("fileDownloaded"),
           description: name,
           variant: "success",
         });
@@ -1678,7 +2291,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
     } catch (err: any) {
       console.error("Error saving/sharing file:", err);
       toast.toast({
-        title: t('saveFailed'),
+        title: t("saveFailed"),
         description: err?.message || String(err),
         variant: "error",
       });
@@ -1691,18 +2304,48 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
       keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       style={{ flex: 1 }}
     >
-      <Card style={{ minHeight: 440, maxHeight: 540, backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border, overflow: "hidden" }}>
-        <CardContent style={{ flex: 1, padding: SPACING[3], gap: SPACING[2], justifyContent: "space-between" }}>
+      <Card
+        style={{
+          minHeight: 440,
+          maxHeight: 540,
+          backgroundColor: theme.card,
+          borderWidth: 1,
+          borderColor: theme.border,
+          overflow: "hidden",
+        }}
+      >
+        <CardContent
+          style={{
+            flex: 1,
+            padding: SPACING[3],
+            gap: SPACING[2],
+            justifyContent: "space-between",
+          }}
+        >
           {loading ? (
             <SkeletonText lines={5} />
           ) : messages.length === 0 ? (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: SPACING[3] }}>
+            <View
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                gap: SPACING[3],
+              }}
+            >
               <MessageCircle size={32} color={theme.primary} />
               <ThemedText type="default" style={{ fontWeight: "700" }}>
-                {t('noMessagesYet')}
+                {t("noMessagesYet")}
               </ThemedText>
-              <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: "center", maxWidth: 260 }}>
-                {t('noMessagesDesc')}
+              <ThemedText
+                type="small"
+                style={{
+                  color: theme.mutedForeground,
+                  textAlign: "center",
+                  maxWidth: 260,
+                }}
+              >
+                {t("noMessagesDesc")}
               </ThemedText>
             </View>
           ) : (
@@ -1710,7 +2353,10 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
               ref={scrollViewRef}
               nestedScrollEnabled
               showsVerticalScrollIndicator={true}
-              contentContainerStyle={{ gap: SPACING[3], paddingVertical: SPACING[2] }}
+              contentContainerStyle={{
+                gap: SPACING[3],
+                paddingVertical: SPACING[2],
+              }}
               keyboardShouldPersistTaps="handled"
             >
               {messages.map((m: any) => (
@@ -1740,7 +2386,15 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
               }}
             >
               <Loader2 size={14} color={getAccent("indigo").main} />
-              <ThemedText type="caption" style={{ color: getAccent("indigo").main, fontSize: FONT_SIZE.xs, flex: 1, fontWeight: "600" }}>
+              <ThemedText
+                type="caption"
+                style={{
+                  color: getAccent("indigo").main,
+                  fontSize: FONT_SIZE.xs,
+                  flex: 1,
+                  fontWeight: "600",
+                }}
+              >
                 Uploading {uploadProgress ?? "file"}...
               </ThemedText>
             </View>
@@ -1783,7 +2437,7 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
             <TextInput
               value={text}
               onChangeText={setText}
-              placeholder={t('typeMessagePlaceholder')}
+              placeholder={t("typeMessagePlaceholder")}
               placeholderTextColor={theme.mutedForeground}
               style={{
                 flex: 1,
@@ -1807,7 +2461,10 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
                 width: 40,
                 height: 40,
                 borderRadius: RADIUS.pill,
-                backgroundColor: !text.trim() || sendMsgMutation.isPending || uploading ? theme.muted : theme.primary,
+                backgroundColor:
+                  !text.trim() || sendMsgMutation.isPending || uploading
+                    ? theme.muted
+                    : theme.primary,
                 alignItems: "center",
                 justifyContent: "center",
               }}
@@ -1825,21 +2482,21 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
         <ActionSheet
           open={attachmentSheetOpen}
           onClose={() => setAttachmentSheetOpen(false)}
-          title={t('shareAttachment')}
-          description={t('selectAttachmentSource')}
+          title={t("shareAttachment")}
+          description={t("selectAttachmentSource")}
           options={[
             {
-              label: t('takePhoto'),
+              label: t("takePhoto"),
               icon: <Camera size={18} color={theme.primary} />,
               onPress: handleTakePhoto,
             },
             {
-              label: t('getFromPhotos'),
+              label: t("getFromPhotos"),
               icon: <ImageIcon size={18} color={theme.primary} />,
               onPress: handlePickImage,
             },
             {
-              label: t('addFile'),
+              label: t("addFile"),
               icon: <FileText size={18} color={theme.primary} />,
               onPress: handlePickDocument,
             },
@@ -1853,8 +2510,17 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
           animationType="fade"
           onRequestClose={() => setPreviewImageUrl(null)}
         >
-          <StatusBar backgroundColor="rgba(0,0,0,0.95)" barStyle="light-content" />
-          <SafeAreaView style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.95)", justifyContent: "space-between" }}>
+          <StatusBar
+            backgroundColor="rgba(0,0,0,0.95)"
+            barStyle="light-content"
+          />
+          <SafeAreaView
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.95)",
+              justifyContent: "space-between",
+            }}
+          >
             {/* Header Bar with Download & Close */}
             <View
               style={{
@@ -1867,12 +2533,24 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
                 zIndex: 10,
               }}
             >
-              <ThemedText type="smallBold" style={{ color: "#fff", fontSize: FONT_SIZE.md }}>
-                {t('imagePreview')}
+              <ThemedText
+                type="smallBold"
+                style={{ color: "#fff", fontSize: FONT_SIZE.md }}
+              >
+                {t("imagePreview")}
               </ThemedText>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[3] }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: SPACING[3],
+                }}
+              >
                 <Pressable
-                  onPress={() => previewImageUrl && handleDownloadAndSaveFile(previewImageUrl)}
+                  onPress={() =>
+                    previewImageUrl &&
+                    handleDownloadAndSaveFile(previewImageUrl)
+                  }
                   style={{
                     width: 40,
                     height: 40,
@@ -1905,7 +2583,11 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
             {/* Centered Image with backdrop tap dismiss */}
             {previewImageUrl && (
               <Pressable
-                style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
                 onPress={() => setPreviewImageUrl(null)}
               >
                 <ExpoImage
@@ -1927,10 +2609,17 @@ function ExchangeChatBody({ exchangeId, currentUserId }: { exchangeId: string; c
  * DETAILS TAB BODY (PARTICIPANTS & SKILLS BREAKDOWN MATCHING WEB)
  * ========================================================================= */
 
-function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loading }: any) {
+function DetailsBody({
+  exchange,
+  currentUser,
+  otherUser,
+  isSender,
+  isTwoWay,
+  loading,
+}: any) {
   const theme = useTheme();
-  const t = useT('exchanges');
-  const tc = useT('common');
+  const t = useT("exchanges");
+  const tc = useT("common");
 
   if (loading)
     return (
@@ -1946,30 +2635,54 @@ function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loa
       {/* Participants Card */}
       <Card>
         <CardHeader>
-          <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground, textTransform: "uppercase" }}>
-            {t('exchangeParticipants')}
+          <CardTitle
+            style={{
+              fontSize: FONT_SIZE.sm,
+              color: theme.mutedForeground,
+              textTransform: "uppercase",
+            }}
+          >
+            {t("exchangeParticipants")}
           </CardTitle>
         </CardHeader>
         <CardContent style={{ gap: SPACING[4] }}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-around" }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-around",
+            }}
+          >
             {/* Me */}
             <View style={{ alignItems: "center", gap: SPACING[1.5] }}>
-              <Avatar uri={currentUser?.image} fallback={currentUser?.name} size={48} />
+              <Avatar
+                uri={currentUser?.image}
+                fallback={currentUser?.name}
+                size={48}
+              />
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
                 {currentUser?.name ?? tc("you")}
               </ThemedText>
-              <Badge variant="outline">{isSender ? t("sender") : t("receiver")}</Badge>
+              <Badge variant="outline">
+                {isSender ? t("sender") : t("receiver")}
+              </Badge>
             </View>
 
             <ArrowRightLeft size={22} color={theme.mutedForeground} />
 
             {/* Partner */}
             <View style={{ alignItems: "center", gap: SPACING[1.5] }}>
-              <Avatar uri={otherUser?.image} fallback={otherUser?.name} size={48} />
+              <Avatar
+                uri={otherUser?.image}
+                fallback={otherUser?.name}
+                size={48}
+              />
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
                 {otherUser?.name ?? t("peerTrader")}
               </ThemedText>
-              <Badge variant="outline">{isSender ? t("receiver") : t("sender")}</Badge>
+              <Badge variant="outline">
+                {isSender ? t("receiver") : t("sender")}
+              </Badge>
             </View>
           </View>
         </CardContent>
@@ -1978,33 +2691,65 @@ function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loa
       {/* Skills Being Exchanged Details */}
       <Card>
         <CardHeader>
-          <CardTitle style={{ fontSize: FONT_SIZE.sm, color: theme.mutedForeground, textTransform: "uppercase" }}>
-            {t('skillsBeingExchanged')}
+          <CardTitle
+            style={{
+              fontSize: FONT_SIZE.sm,
+              color: theme.mutedForeground,
+              textTransform: "uppercase",
+            }}
+          >
+            {t("skillsBeingExchanged")}
           </CardTitle>
         </CardHeader>
         <CardContent style={{ gap: SPACING[3] }}>
-          <View style={{ padding: SPACING[3], borderRadius: RADIUS.md, backgroundColor: theme.secondary, gap: 4 }}>
+          <View
+            style={{
+              padding: SPACING[3],
+              borderRadius: RADIUS.md,
+              backgroundColor: theme.secondary,
+              gap: 4,
+            }}
+          >
             <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-              {t('taughtSkill')}
+              {t("taughtSkill")}
             </ThemedText>
             <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
               {exchange?.taughtSkill?.name ?? "Skill"}
             </ThemedText>
-            <ThemedText type="caption" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.xs }}>
-              {t("sessionsCountDuration", { sessions: exchange?.requestedSkillSessions ?? 1, duration: exchange?.requestedSkillDuration ?? 60 })}
+            <ThemedText
+              type="caption"
+              style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.xs }}
+            >
+              {t("sessionsCountDuration", {
+                sessions: exchange?.requestedSkillSessions ?? 1,
+                duration: exchange?.requestedSkillDuration ?? 60,
+              })}
             </ThemedText>
           </View>
 
           {isTwoWay && exchange?.receivedSkill && (
-            <View style={{ padding: SPACING[3], borderRadius: RADIUS.md, backgroundColor: theme.secondary, gap: 4 }}>
+            <View
+              style={{
+                padding: SPACING[3],
+                borderRadius: RADIUS.md,
+                backgroundColor: theme.secondary,
+                gap: 4,
+              }}
+            >
               <ThemedText type="caption" muted style={{ fontSize: 11 }}>
-                {t('receivedSkill')}
+                {t("receivedSkill")}
               </ThemedText>
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
                 {exchange?.receivedSkill?.name}
               </ThemedText>
-              <ThemedText type="caption" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.xs }}>
-                {t("sessionsCountDuration", { sessions: exchange?.offeredSkillSessions ?? 1, duration: exchange?.offeredSkillDuration ?? 60 })}
+              <ThemedText
+                type="caption"
+                style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.xs }}
+              >
+                {t("sessionsCountDuration", {
+                  sessions: exchange?.offeredSkillSessions ?? 1,
+                  duration: exchange?.offeredSkillDuration ?? 60,
+                })}
               </ThemedText>
             </View>
           )}
@@ -2016,8 +2761,8 @@ function DetailsBody({ exchange, currentUser, otherUser, isSender, isTwoWay, loa
 
 function OverviewBody({ exchange, loading, points, other }: any) {
   const theme = useTheme();
-  const t = useT('exchanges');
-  const tc = useT('common');
+  const t = useT("exchanges");
+  const tc = useT("common");
 
   if (loading)
     return (
@@ -2033,7 +2778,13 @@ function OverviewBody({ exchange, loading, points, other }: any) {
       {/* Points Card */}
       <Card>
         <CardHeader>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: SPACING[2],
+            }}
+          >
             <View
               style={{
                 width: 36,
@@ -2058,7 +2809,13 @@ function OverviewBody({ exchange, loading, points, other }: any) {
               <Row label={t("grossValue")} value={`${points.gross} pts`} />
               <Row label={t("platformFee")} value={`-${points.fee} pts`} dim />
               <Separator />
-              <Row label={t("netToFacilitator")} value={`${points.net} pts`} strong accent="amber" main />
+              <Row
+                label={t("netToFacilitator")}
+                value={`${points.net} pts`}
+                strong
+                accent="amber"
+                main
+              />
             </>
           ) : (
             <ThemedText type="small" style={{ color: theme.mutedForeground }}>
@@ -2071,7 +2828,13 @@ function OverviewBody({ exchange, loading, points, other }: any) {
       {/* Event Timeline Card */}
       <Card>
         <CardHeader>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: SPACING[2],
+            }}
+          >
             <View
               style={{
                 width: 36,
@@ -2099,7 +2862,9 @@ function OverviewBody({ exchange, loading, points, other }: any) {
           />
           {exchange?.acceptedAt ? (
             <TimelineDot
-              icon={<CheckCircle2 size={14} color={getAccent("emerald").main} />}
+              icon={
+                <CheckCircle2 size={14} color={getAccent("emerald").main} />
+              }
               label={t("accepted")}
               at={exchange.acceptedAt}
               accent="emerald"
@@ -2127,7 +2892,13 @@ function OverviewBody({ exchange, loading, points, other }: any) {
       {/* Security & Protection */}
       <Card>
         <CardHeader>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: SPACING[2],
+            }}
+          >
             <View
               style={{
                 width: 36,
@@ -2147,7 +2918,10 @@ function OverviewBody({ exchange, loading, points, other }: any) {
           </View>
         </CardHeader>
         <CardContent>
-          <ThemedText type="small" style={{ color: theme.mutedForeground, lineHeight: 20 }}>
+          <ThemedText
+            type="small"
+            style={{ color: theme.mutedForeground, lineHeight: 20 }}
+          >
             {t("trustedExchangeSafety")}
           </ThemedText>
         </CardContent>
@@ -2170,8 +2944,8 @@ function ReviewBody({
   openTags,
 }: any) {
   const theme = useTheme();
-  const t = useT('exchanges');
-  const tr = useT('review');
+  const t = useT("exchanges");
+  const tr = useT("review");
 
   const theirReview = exchange?.theirReview;
   const myReview = exchange?.myReview;
@@ -2181,7 +2955,13 @@ function ReviewBody({
       {canReview ? (
         <Card style={{ borderColor: getAccent("amber").border }}>
           <CardHeader>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[2] }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: SPACING[2],
+              }}
+            >
               <View
                 style={{
                   width: 36,
@@ -2192,11 +2972,17 @@ function ReviewBody({
                   justifyContent: "center",
                 }}
               >
-                <Star size={18} color={getAccent("amber").main} fill={getAccent("amber").main} />
+                <Star
+                  size={18}
+                  color={getAccent("amber").main}
+                  fill={getAccent("amber").main}
+                />
               </View>
               <View style={{ flex: 1 }}>
                 <CardTitle>{tr("title")}</CardTitle>
-                <CardDescription>{tr("description", { name: exchange?.otherUser?.name })}</CardDescription>
+                <CardDescription>
+                  {tr("description", { name: exchange?.otherUser?.name })}
+                </CardDescription>
               </View>
             </View>
           </CardHeader>
@@ -2206,17 +2992,31 @@ function ReviewBody({
                 {[1, 2, 3, 4, 5].map((n) => {
                   const active = n <= rating;
                   return (
-                    <Pressable key={n} onPress={() => setRating(n)} hitSlop={10}>
+                    <Pressable
+                      key={n}
+                      onPress={() => setRating(n)}
+                      hitSlop={10}
+                    >
                       <Star
                         size={32}
-                        color={active ? getAccent("amber").main : theme.mutedForeground}
+                        color={
+                          active
+                            ? getAccent("amber").main
+                            : theme.mutedForeground
+                        }
                         fill={active ? getAccent("amber").main : "transparent"}
                       />
                     </Pressable>
                   );
                 })}
               </View>
-              <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.lg, color: getAccent("amber").main }}>
+              <ThemedText
+                type="smallBold"
+                style={{
+                  fontSize: FONT_SIZE.lg,
+                  color: getAccent("amber").main,
+                }}
+              >
                 {tr("starsOutOf5", { rating })}
               </ThemedText>
             </View>
@@ -2225,7 +3025,7 @@ function ReviewBody({
               label={t("howDidItGo")}
               value={comment}
               onChangeText={setComment}
-              placeholder={tr('shareFeedback')}
+              placeholder={tr("shareFeedback")}
               numberOfLines={4}
               description={`${comment.length}/500`}
             />
@@ -2240,25 +3040,42 @@ function ReviewBody({
                 backgroundColor: theme.background,
               }}
             >
-              <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm, marginBottom: SPACING[1] }}>
+              <ThemedText
+                type="smallBold"
+                style={{ fontSize: FONT_SIZE.sm, marginBottom: SPACING[1] }}
+              >
                 {tr("qualitiesCount", { count: tags.length })}
               </ThemedText>
               {tags.length === 0 ? (
-                <ThemedText type="small" style={{ color: theme.mutedForeground }}>
+                <ThemedText
+                  type="small"
+                  style={{ color: theme.mutedForeground }}
+                >
                   {tr("tapToSelectQualities")}
                 </ThemedText>
               ) : (
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: SPACING[2],
+                  }}
+                >
                   {tags.map((t: string) => (
                     <Badge key={t} variant="accent" accent="indigo">
-                      {REVIEW_TAG_LABELS[t as keyof typeof REVIEW_TAG_LABELS] ?? t}
+                      {REVIEW_TAG_LABELS[t as keyof typeof REVIEW_TAG_LABELS] ??
+                        t}
                     </Badge>
                   ))}
                 </View>
               )}
             </Pressable>
 
-            <Button onPress={onSubmit} loading={submitting} leftIcon={<CheckCircle2 size={16} color="#fff" />}>
+            <Button
+              onPress={onSubmit}
+              loading={submitting}
+              leftIcon={<CheckCircle2 size={16} color="#fff" />}
+            >
               {tr("submitReview")}
             </Button>
           </CardContent>
@@ -2267,11 +3084,27 @@ function ReviewBody({
         <ReviewCard review={myReview} />
       ) : !loading ? (
         <Card>
-          <CardContent style={{ paddingVertical: SPACING[6], alignItems: "center", gap: SPACING[2] }}>
-            <ThemedText type="default" style={{ fontWeight: "700", textAlign: "center" }}>
+          <CardContent
+            style={{
+              paddingVertical: SPACING[6],
+              alignItems: "center",
+              gap: SPACING[2],
+            }}
+          >
+            <ThemedText
+              type="default"
+              style={{ fontWeight: "700", textAlign: "center" }}
+            >
               {tr("completeToReview")}
             </ThemedText>
-            <ThemedText type="small" style={{ color: theme.mutedForeground, textAlign: "center", fontSize: FONT_SIZE.sm }}>
+            <ThemedText
+              type="small"
+              style={{
+                color: theme.mutedForeground,
+                textAlign: "center",
+                fontSize: FONT_SIZE.sm,
+              }}
+            >
               {tr("reviewsUnlockDesc")}
             </ThemedText>
           </CardContent>
@@ -2280,7 +3113,10 @@ function ReviewBody({
 
       {theirReview ? (
         <>
-          <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md, marginLeft: SPACING[0.5] }}>
+          <ThemedText
+            type="smallBold"
+            style={{ fontSize: FONT_SIZE.md, marginLeft: SPACING[0.5] }}
+          >
             {tr("theirReviewForYou")}
           </ThemedText>
           <ReviewCard review={theirReview} />
@@ -2293,7 +3129,13 @@ function ReviewBody({
 function Row({ label, value, dim, strong, accent, main }: any) {
   const theme = useTheme();
   return (
-    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
       <ThemedText
         type="small"
         style={{
@@ -2331,7 +3173,15 @@ function TimelineDot({
   const theme = useTheme();
   const palette = getAccent(accent);
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING[3], paddingHorizontal: SPACING[4], paddingVertical: SPACING[3] }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: SPACING[3],
+        paddingHorizontal: SPACING[4],
+        paddingVertical: SPACING[3],
+      }}
+    >
       <View
         style={{
           width: 28,
@@ -2351,7 +3201,10 @@ function TimelineDot({
           {label}
         </ThemedText>
         {at ? (
-          <ThemedText type="small" style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}>
+          <ThemedText
+            type="small"
+            style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}
+          >
             {formatDateTimeShort(at)}
           </ThemedText>
         ) : null}
@@ -2363,16 +3216,26 @@ function TimelineDot({
 function labelForStatus(s: string, t?: any) {
   if (t) {
     switch (s) {
-      case "COMMITTED": return t("committed");
-      case "IN_PROGRESS": return t("in_progress");
-      case "COMPLETED": return t("completed");
-      case "CANCELLED": return t("cancelled");
-      case "ACCEPTED": return t("accepted");
-      case "SCHEDULED": return t("scheduled");
-      case "PENDING": return t("pending");
-      case "REJECTED": return t("rejected");
-      case "EXPIRED": return t("expired");
-      default: return s ? s.replace(/_/g, " ") : t("active");
+      case "COMMITTED":
+        return t("committed");
+      case "IN_PROGRESS":
+        return t("in_progress");
+      case "COMPLETED":
+        return t("completed");
+      case "CANCELLED":
+        return t("cancelled");
+      case "ACCEPTED":
+        return t("accepted");
+      case "SCHEDULED":
+        return t("scheduled");
+      case "PENDING":
+        return t("pending");
+      case "REJECTED":
+        return t("rejected");
+      case "EXPIRED":
+        return t("expired");
+      default:
+        return s ? s.replace(/_/g, " ") : t("active");
     }
   }
   switch (s) {

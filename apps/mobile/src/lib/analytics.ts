@@ -1,5 +1,5 @@
-import { posthog } from './posthog';
-import { AnalyticsEvent, type AnalyticsEventProperties } from '@skil-ex2/shared';
+import { posthog } from "./posthog";
+import { AnalyticsEvent, type AnalyticsEventProperties } from "@skillex/shared";
 
 export { AnalyticsEvent };
 export type { AnalyticsEventProperties };
@@ -19,7 +19,10 @@ export function track<E extends keyof AnalyticsEventProperties>(
 /**
  * Track screen transitions manually for Expo Router.
  */
-export function trackScreen(screenName: string, properties?: Record<string, any>): void {
+export function trackScreen(
+  screenName: string,
+  properties?: Record<string, any>,
+): void {
   posthog?.screen(screenName, properties);
 }
 
@@ -28,7 +31,7 @@ export function trackScreen(screenName: string, properties?: Record<string, any>
  */
 export function identifyUser(
   userId: string,
-  properties?: { email?: string; name?: string; [key: string]: any }
+  properties?: { email?: string; name?: string; [key: string]: any },
 ): void {
   if (!posthog) return;
   posthog.identify(userId, {

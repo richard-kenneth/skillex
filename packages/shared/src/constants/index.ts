@@ -186,7 +186,15 @@ export function getReviewTagLabel(tag: ReviewTag | string): string {
 }
 
 // ─── Day Names ─────────────────────────────────────────────────────────────
-export const DAY_NAMES_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export const DAY_NAMES_SHORT = [
+  "Sun",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat",
+];
 export const DAY_NAMES_LONG = [
   "Sunday",
   "Monday",
@@ -274,12 +282,14 @@ export function calculateExchangeProgress(exchange: {
     exchange.requestedSkillSessions +
     (exchange.receivedSkillId ? exchange.offeredSkillSessions : 0);
   if (totalSessions === 0) return 0;
-  const percentage = Math.round((exchange.completedSessions / totalSessions) * 100);
+  const percentage = Math.round(
+    (exchange.completedSessions / totalSessions) * 100,
+  );
   return Math.min(100, Math.max(0, percentage));
 }
 
 export function calculateAverageRating(
-  reviews: Array<{ rating: number }> | null | undefined
+  reviews: Array<{ rating: number }> | null | undefined,
 ): number {
   if (!reviews || reviews.length === 0) return 0;
   const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
@@ -330,10 +340,7 @@ export function formatDateShort(dateStr: string, locale?: string): string {
   }
 }
 
-export function formatDateTimeShort(
-  dateStr: string,
-  locale?: string
-): string {
+export function formatDateTimeShort(dateStr: string, locale?: string): string {
   try {
     return new Date(dateStr).toLocaleString(locale ?? "en-US", {
       month: "short",

@@ -1,19 +1,36 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar"
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import * as React from "react";
+import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-interface AvatarProps extends React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> {
-  size?: "default" | "sm" | "lg"
-  previewable?: boolean
-  src?: string
+interface AvatarProps extends React.ComponentPropsWithoutRef<
+  typeof AvatarPrimitive.Root
+> {
+  size?: "default" | "sm" | "lg";
+  previewable?: boolean;
+  src?: string;
 }
 
 const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
-  ({ className, size = "default", previewable = false, src, children, ...props }, ref) => {
+  (
+    {
+      className,
+      size = "default",
+      previewable = false,
+      src,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const [open, setOpen] = React.useState(false);
 
     const handleClick = (e: React.MouseEvent<HTMLSpanElement>) => {
@@ -32,8 +49,10 @@ const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
         onClick={handleClick}
         className={cn(
           "group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten",
-          previewable && src && "cursor-zoom-in hover:opacity-90 transition-opacity",
-          className
+          previewable &&
+            src &&
+            "cursor-zoom-in hover:opacity-90 transition-opacity",
+          className,
         )}
         {...props}
       >
@@ -48,7 +67,9 @@ const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="sm:max-w-md p-0 overflow-hidden border border-border/60 bg-black/90 shadow-2xl ring-0 flex items-center justify-center max-h-[85vh]">
               <DialogTitle className="sr-only">Avatar Preview</DialogTitle>
-              <DialogDescription className="sr-only">Full size view of user avatar</DialogDescription>
+              <DialogDescription className="sr-only">
+                Full size view of user avatar
+              </DialogDescription>
               <div className="relative p-2 flex items-center justify-center w-full h-full max-h-[80vh]">
                 <img
                   src={src}
@@ -63,7 +84,7 @@ const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
     }
 
     return rootElement;
-  }
+  },
 );
 Avatar.displayName = "Avatar";
 
@@ -73,11 +94,11 @@ function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
       data-slot="avatar-image"
       className={cn(
         "aspect-square size-full rounded-full object-cover",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
 function AvatarFallback({
@@ -89,11 +110,11 @@ function AvatarFallback({
       data-slot="avatar-fallback"
       className={cn(
         "flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
 function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
@@ -105,11 +126,11 @@ function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
         "group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden",
         "group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2",
         "group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
 function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
@@ -118,11 +139,11 @@ function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="avatar-group"
       className={cn(
         "group/avatar-group flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
 function AvatarGroupCount({
@@ -134,11 +155,11 @@ function AvatarGroupCount({
       data-slot="avatar-group-count"
       className={cn(
         "relative flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm text-muted-foreground ring-2 ring-background group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -148,4 +169,4 @@ export {
   AvatarGroup,
   AvatarGroupCount,
   AvatarBadge,
-}
+};

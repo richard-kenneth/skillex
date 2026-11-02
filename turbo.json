@@ -1,6 +1,12 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalEnv": [
+    "NEXT_PUBLIC_API_BASE_URL",
+    "NEXT_PUBLIC_CLIENT_SIDE_API_BASE_URL",
+    "NEXT_PUBLIC_CLIENT_BASE_URL",
+    "NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY",
+    "NEXT_PUBLIC_PRELAUNCH_MODE",
+    "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
     "NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN",
     "NEXT_PUBLIC_POSTHOG_HOST",
     "POSTHOG_PROJECT_TOKEN",
@@ -12,6 +18,22 @@
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "lint": {},
+    "lint:fix": {
+      "cache": false
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "format": {
+      "cache": false
+    },
+    "format:check": {
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true

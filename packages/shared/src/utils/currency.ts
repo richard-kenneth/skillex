@@ -10,7 +10,7 @@ Decimal.set({
 export const POINT_TO_USD_RATE = 0.01;
 
 // Structural Split economic constants (display defaults)
-export const DEFAULT_EXCHANGE_COMMISSION_RATE = 0.10;
+export const DEFAULT_EXCHANGE_COMMISSION_RATE = 0.1;
 export const DEFAULT_FACILITATION_FEE = 5;
 export const DEFAULT_WITHDRAWAL_SPREAD = 0.06;
 export const MIN_PURCHASE_POINTS = 500;
@@ -84,7 +84,12 @@ export const applyCurrencyPrecision = (
  * Standardizes the derivation of the gross amount, platform fee, and net gain.
  */
 export const calculatePointsBreakdown = (pointsAmount: number | string) => {
-  const gross = Math.max(0, typeof pointsAmount === "number" ? pointsAmount : parseInt(pointsAmount, 10) || 0);
+  const gross = Math.max(
+    0,
+    typeof pointsAmount === "number"
+      ? pointsAmount
+      : parseInt(pointsAmount, 10) || 0,
+  );
   const fee = Math.floor(gross * DEFAULT_EXCHANGE_COMMISSION_RATE);
   const net = gross - fee;
 

@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -7,21 +7,34 @@ import {
   Text,
   View,
   ViewStyle,
-} from 'react-native';
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-} from 'react-native-reanimated';
-import { useTheme } from '@/hooks/use-theme';
-import { FONT_SIZE, FONT_WEIGHT, RADIUS, SPACING, TYPOGRAPHY } from '@/constants/theme';
+} from "react-native-reanimated";
+import { useTheme } from "@/hooks/use-theme";
+import {
+  FONT_SIZE,
+  FONT_WEIGHT,
+  RADIUS,
+  SPACING,
+  TYPOGRAPHY,
+} from "@/constants/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type Variant = 'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
-type Size = 'sm' | 'md' | 'lg' | 'icon';
+type Variant =
+  | "default"
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "destructive"
+  | "link";
+type Size = "sm" | "md" | "lg" | "icon";
 
-export interface ButtonProps extends Omit<PressableProps, 'children'> {
+export interface ButtonProps extends Omit<PressableProps, "children"> {
   variant?: Variant;
   size?: Size;
   loading?: boolean;
@@ -33,8 +46,8 @@ export interface ButtonProps extends Omit<PressableProps, 'children'> {
 
 export const Button = forwardRef<View, ButtonProps>(function Button(
   {
-    variant = 'default',
-    size = 'md',
+    variant = "default",
+    size = "md",
     loading,
     disabled,
     leftIcon,
@@ -45,7 +58,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
     onPressOut,
     ...rest
   },
-  ref
+  ref,
 ) {
   const theme = useTheme();
   const isDisabled = disabled || loading;
@@ -66,10 +79,10 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
   };
 
   const base: ViewStyle = {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   };
 
   const variants: Record<Variant, ViewStyle> = {
@@ -85,18 +98,18 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
       borderColor: theme.border,
     },
     outline: {
-      backgroundColor: 'transparent',
+      backgroundColor: "transparent",
       borderWidth: 1,
       borderColor: theme.border,
     },
     ghost: {
-      backgroundColor: 'transparent',
+      backgroundColor: "transparent",
     },
     destructive: {
       backgroundColor: theme.destructive,
     },
     link: {
-      backgroundColor: 'transparent',
+      backgroundColor: "transparent",
     },
   };
 
@@ -140,7 +153,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
     link: theme.foreground,
   };
 
-  const textVariant = size === 'sm' ? TYPOGRAPHY.buttonSm : TYPOGRAPHY.button;
+  const textVariant = size === "sm" ? TYPOGRAPHY.buttonSm : TYPOGRAPHY.button;
 
   return (
     <AnimatedPressable
@@ -164,12 +177,14 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
       ) : (
         <>
           {leftIcon ? <View style={styles.iconSlot}>{leftIcon}</View> : null}
-          {typeof children === 'string' || typeof children === 'number' ? (
+          {typeof children === "string" || typeof children === "number" ? (
             <Text
               style={[
                 textVariant,
                 { color: textColors[variant] },
-                variant === 'link' && { textDecorationLine: 'underline' as const },
+                variant === "link" && {
+                  textDecorationLine: "underline" as const,
+                },
               ]}
               numberOfLines={1}
             >
@@ -187,8 +202,8 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
 
 const styles = StyleSheet.create({
   iconSlot: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
   },
 });

@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { SkillType } from '../generated/prisma/client';
@@ -24,12 +25,16 @@ interface AuthRequest extends Request {
 export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
 
+  // Category metadata is small and cache-friendly, so allow normal browsing.
   @Get('categories')
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
   getCategories() {
     return this.skillsService.findAllCategories();
   }
 
+  // Search runs a database query per request, so keep the budget tighter.
   @Get('search')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   searchSkills(@Query('q') query: string) {
     return this.skillsService.searchSkills(query || '');
   }

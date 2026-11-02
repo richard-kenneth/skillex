@@ -1,34 +1,55 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Resend } from 'resend';
 import * as webpush from 'web-push';
+import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 // Expo push notification API endpoint
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
+export interface PushSubscriptionInput {
+  endpoint?: string;
+  keys?: {
+    p256dh?: string;
+    auth?: string;
+  };
+}
+
+interface ExpoPushTicket {
+  status?: string;
+  message?: string;
+  details?: {
+    error?: string;
+  };
+}
+
+interface ExpoPushResponse {
+  data?: ExpoPushTicket[];
+}
+
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private readonly resend = process.env.RESEND_API_KEY
-    ? new Resend(process.env.RESEND_API_KEY)
-    : null;
+  private readonly webPushEnabled: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly emailService: EmailService,
   ) {
     // Configure VAPID keys if present
     const vapidPubKey = process.env.VAPID_PUBLIC_KEY;
     const vapidPrivKey = process.env.VAPID_PRIVATE_KEY;
-    const vapidEmail = process.env.VAPID_EMAIL || 'mailto:admin@skilex.com';
+    const vapidEmail = process.env.VAPID_EMAIL || 'mailto:admin@skillex.local';
 
-    if (vapidPubKey && vapidPrivKey) {
-      webpush.setVapidDetails(vapidEmail, vapidPubKey, vapidPrivKey);
+    this.webPushEnabled = Boolean(vapidPubKey && vapidPrivKey);
+
+    if (this.webPushEnabled) {
+      webpush.setVapidDetails(vapidEmail, vapidPubKey!, vapidPrivKey!);
       this.logger.log('VAPID details configured successfully');
     } else {
-      this.logger.warn(
-        'VAPID public or private key is missing in environment variables. Web Push notifications will not be sent.',
+      this.logger.log(
+        'Web push disabled: VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY are not set.',
       );
     }
   }
@@ -203,8 +224,8 @@ export class NotificationsService {
 
     if (tokens.length === 0) return;
 
-    const messages = tokens.map((t: any) => ({
-      to: t.token,
+    const messages = tokens.map((token) => ({
+      to: token.token,
       title,
       body,
       sound: 'default',
@@ -228,24 +249,37 @@ export class NotificationsService {
         body: JSON.stringify(messages),
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as ExpoPushResponse;
 
-      if (result.errors) {
-        for (const [token, error] of Object.entries(result.errors)) {
-          this.logger.error(`Expo push error for token ${token}:`, error);
+      if (Array.isArray(result.data)) {
+        for (const [index, ticket] of result.data.entries()) {
+          if (ticket.status !== 'error') continue;
+
+          const error = ticket.details?.error;
+          this.logger.error(
+            `Expo push error for token ${tokens[index]?.token ?? 'unknown'}: ${ticket.message ?? error ?? 'unknown error'}`,
+          );
+
           // Remove invalid tokens
           if (
             error === 'DeviceNotRegistered' ||
             error === 'InvalidCredentials'
           ) {
-            await this.prisma.pushToken
-              .deleteMany({ where: { token } })
-              .catch(() => {});
+            const token = tokens[index]?.token;
+            if (token) {
+              await this.prisma.pushToken
+                .deleteMany({ where: { token } })
+                .catch(() => undefined);
+            }
           }
         }
       }
-    } catch (err) {
-      this.logger.error('Failed to send Expo push notification:', err);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send Expo push notification: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
   }
 
@@ -260,7 +294,7 @@ export class NotificationsService {
   }
 
   // Push Subscriptions
-  async saveSubscription(userId: string, subscription: any) {
+  async saveSubscription(userId: string, subscription: PushSubscriptionInput) {
     const { endpoint, keys } = subscription;
     if (!endpoint || !keys?.p256dh || !keys?.auth) {
       throw new Error('Invalid subscription format');
@@ -288,6 +322,8 @@ export class NotificationsService {
     body: string,
     link?: string,
   ) {
+    if (!this.webPushEnabled) return;
+
     const subscriptions = await this.prisma.pushSubscription.findMany({
       where: { userId },
     });
@@ -304,7 +340,7 @@ export class NotificationsService {
       },
     });
 
-    const promises = subscriptions.map(async (sub: any) => {
+    const promises = subscriptions.map(async (sub) => {
       const pushSub = {
         endpoint: sub.endpoint,
         keys: {
@@ -315,17 +351,26 @@ export class NotificationsService {
 
       try {
         await webpush.sendNotification(pushSub, payload);
-      } catch (err: any) {
-        if (err.statusCode === 410 || err.statusCode === 404) {
+      } catch (error) {
+        const statusCode =
+          typeof error === 'object' &&
+          error !== null &&
+          'statusCode' in error &&
+          typeof (error as { statusCode?: unknown }).statusCode === 'number'
+            ? (error as { statusCode: number }).statusCode
+            : undefined;
+
+        if (statusCode === 410 || statusCode === 404) {
           // Subscription expired/defunct -> remove it
           this.logger.log(`Removing expired subscription: ${sub.id}`);
           await this.prisma.pushSubscription
             .delete({ where: { id: sub.id } })
-            .catch(() => {});
+            .catch(() => undefined);
         } else {
           this.logger.error(
-            `Error sending Web Push to subscription ${sub.id}:`,
-            err,
+            `Error sending Web Push to subscription ${sub.id}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
           );
         }
       }
@@ -340,45 +385,32 @@ export class NotificationsService {
     message: string,
     link?: string,
   ) {
-    if (!this.resend) {
-      this.logger.warn('Resend API key is missing. Skipping email.');
-      return;
-    }
-
     const actionUrl = link
       ? `${process.env.CLIENT_BASE_URL || 'http://localhost:3000'}${link}`
       : null;
-    const fromEmail =
-      process.env.ONBOARDING_EMAIL_FROM || 'onboarding@richardkenneth.com';
 
-    try {
-      await this.resend.emails.send({
-        from: fromEmail,
-        to,
-        subject: title,
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <h2 style="color: #1a202c; margin-bottom: 16px;">${title}</h2>
-            <p style="color: #4a5568; line-height: 1.6; margin-bottom: 24px;">
-              ${message}
-            </p>
-            ${
-              actionUrl
-                ? `
-            <a href="${actionUrl}" style="display: inline-block; background-color: #3182ce; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
-              View in App
-            </a>`
-                : ''
-            }
-            <p style="color: #718096; font-size: 12px; margin-top: 32px; border-t: 1px solid #edf2f7; padding-top: 16px;">
-              This is a transactional email from Skill Exchange. You can adjust your notification settings in your profile dashboard.
-            </p>
-          </div>
-        `,
-      });
-      this.logger.log(`Email sent successfully to ${to}`);
-    } catch (err) {
-      this.logger.error(`Failed to send email to ${to}:`, err);
-    }
+    await this.emailService.send({
+      to,
+      subject: title,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <h2 style="color: #1a202c; margin-bottom: 16px;">${title}</h2>
+          <p style="color: #4a5568; line-height: 1.6; margin-bottom: 24px;">
+            ${message}
+          </p>
+          ${
+            actionUrl
+              ? `
+          <a href="${actionUrl}" style="display: inline-block; background-color: #3182ce; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+            View in App
+          </a>`
+              : ''
+          }
+          <p style="color: #718096; font-size: 12px; margin-top: 32px; border-t: 1px solid #edf2f7; padding-top: 16px;">
+            This is a transactional email from SkillEx. You can adjust your notification settings in your profile dashboard.
+          </p>
+        </div>
+      `,
+    });
   }
 }

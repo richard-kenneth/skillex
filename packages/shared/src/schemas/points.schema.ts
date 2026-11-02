@@ -18,16 +18,10 @@ export const WithdrawPointsSchema = v.strictObject({
   amount: v.pipe(
     v.number(),
     v.integer("Amount must be a whole number."),
-    v.minValue(100, "Must withdraw at least 100 points.")
+    v.minValue(100, "Must withdraw at least 100 points."),
   ),
-  bankCode: v.pipe(
-    v.string(),
-    v.nonEmpty("Bank code is required.")
-  ),
-  accountNumber: v.pipe(
-    v.string(),
-    v.nonEmpty("Account number is required.")
-  ),
+  bankCode: v.pipe(v.string(), v.nonEmpty("Bank code is required.")),
+  accountNumber: v.pipe(v.string(), v.nonEmpty("Account number is required.")),
 });
 
 export type WithdrawPointsPayload = v.InferInput<typeof WithdrawPointsSchema>;

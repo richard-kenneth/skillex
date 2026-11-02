@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Skill Exchange",
-    short_name: "Skill Exchange",
+    name: "SkillEx",
+    short_name: "SkillEx",
     description: "Learn, Teach, Grow. Swap skills and knowledge securely.",
     start_url: "/",
     display: "standalone",

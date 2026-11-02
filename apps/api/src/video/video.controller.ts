@@ -18,7 +18,7 @@ import {
   type SendSessionChatMessageDto,
   type StartRecordingDto,
   type StopRecordingDto,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import { Request } from 'express';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
@@ -71,7 +71,6 @@ export class VideoController {
   ) {
     return this.videoService.getSessionDetails(id, req.user.id);
   }
-
 
   /* ─── Recording Consent ─────────────────────────────────── */
 

@@ -24,20 +24,20 @@ export default async function RequestsPage() {
     { headers: reqHeaders },
   );
 
-  const requests = res.ok
-    ? await res.json()
-    : { sent: [], received: [] };
+  const requests = res.ok ? await res.json() : { sent: [], received: [] };
 
   return (
     <div className="container py-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-6">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground">
-            {t("description")}
-          </p>
+          <p className="text-muted-foreground">{t("description")}</p>
         </div>
-        <Button variant="outline" asChild className="gap-2 border-zinc-800 hover:bg-zinc-900">
+        <Button
+          variant="outline"
+          asChild
+          className="gap-2 border-zinc-800 hover:bg-zinc-900"
+        >
           <Link href="/matches">
             <ArrowLeft className="h-4 w-4" />
             {tm("backToMatches")}

@@ -3,8 +3,15 @@
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import {
-  ArrowLeftRight, Video, Coins, Users, Film,
-  MessageCircle, Calendar, Star, Gift,
+  ArrowLeftRight,
+  Video,
+  Coins,
+  Users,
+  Film,
+  MessageCircle,
+  Calendar,
+  Star,
+  Gift,
 } from "lucide-react";
 
 const features = [
@@ -23,7 +30,10 @@ export function FeaturesSection() {
   const t = useTranslations("home");
 
   return (
-    <section id="features" className="relative py-24 overflow-hidden scroll-mt-16">
+    <section
+      id="features"
+      className="relative py-24 overflow-hidden scroll-mt-16"
+    >
       {/* Subtle background glow */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-indigo-500/5 blur-[150px]" />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Modal,
   Pressable,
@@ -6,7 +6,7 @@ import {
   StyleSheet,
   View,
   ViewStyle,
-} from 'react-native';
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -15,15 +15,20 @@ import Animated, {
   FadeOut,
   SlideInDown,
   SlideOutDown,
-} from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, ChevronDown } from 'lucide-react-native';
-import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
-import { RADIUS, SPACING, SHADOWS, ICON_SIZE, ANIMATION } from '@/constants/theme';
-import { Input } from './input';
-import { useT } from 'lib/i18n';
-
+} from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Check, ChevronDown } from "lucide-react-native";
+import { ThemedText } from "@/components/themed-text";
+import { useTheme } from "@/hooks/use-theme";
+import {
+  RADIUS,
+  SPACING,
+  SHADOWS,
+  ICON_SIZE,
+  ANIMATION,
+} from "@/constants/theme";
+import { Input } from "./input";
+import { useT } from "lib/i18n";
 
 // ─── Skeleton ───────────────────────────────────────────────────────────────
 
@@ -55,14 +60,20 @@ export function Skeleton({
   );
 }
 
-export function SkeletonText({ lines = 3, style }: { lines?: number; style?: ViewStyle }) {
+export function SkeletonText({
+  lines = 3,
+  style,
+}: {
+  lines?: number;
+  style?: ViewStyle;
+}) {
   return (
     <View style={[{ gap: SPACING[2] }, style]}>
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
           key={i}
           height={14}
-          width={i === lines - 1 ? '60%' : '100%'}
+          width={i === lines - 1 ? "60%" : "100%"}
         />
       ))}
     </View>
@@ -75,13 +86,15 @@ export function SkeletonCard({ style }: { style?: ViewStyle }) {
       style={[
         {
           padding: SPACING[4],
-          borderRadius: RADIUS['2xl'],
+          borderRadius: RADIUS["2xl"],
           gap: SPACING[3],
         },
         style,
       ]}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING[3] }}>
+      <View
+        style={{ flexDirection: "row", alignItems: "center", gap: SPACING[3] }}
+      >
         <Skeleton width={44} height={44} rounded />
         <View style={{ flex: 1, gap: 6 }}>
           <Skeleton width="50%" height={16} />
@@ -123,8 +136,12 @@ function TabPressable({
     <Animated.View style={[animatedStyle, fullWidth && { flex: 1 }]}>
       <Pressable
         onPress={onPress}
-        onPressIn={() => { scale.value = withSpring(0.95, { damping: 15, stiffness: 250 }); }}
-        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 200 }); }}
+        onPressIn={() => {
+          scale.value = withSpring(0.95, { damping: 15, stiffness: 250 });
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, { damping: 15, stiffness: 200 });
+        }}
         style={style}
       >
         {children}
@@ -138,29 +155,30 @@ export function Tabs<T extends string>({
   onChange,
   items,
   style,
-  variant = 'pills',
+  variant = "pills",
   fullWidth = false,
 }: {
   value: T;
   onChange: (v: T) => void;
   items: TabItem<T>[];
   style?: any;
-  variant?: 'pills' | 'underline' | 'scroll';
+  variant?: "pills" | "underline" | "scroll";
   fullWidth?: boolean;
 }) {
   const theme = useTheme();
-  const isScrollable = items.length > 3 || variant === 'scroll';
+  const isScrollable = items.length > 3 || variant === "scroll";
 
   const content = (
     <View
       style={[
         {
-          flexDirection: 'row',
-          gap: variant === 'pills' ? SPACING[1.5] : SPACING[3],
-          padding: variant === 'pills' ? SPACING[1] : 0,
-          backgroundColor: variant === 'pills' ? theme.secondary : 'transparent',
-          borderRadius: variant === 'pills' ? RADIUS.xl : 0,
-          width: fullWidth ? '100%' : undefined,
+          flexDirection: "row",
+          gap: variant === "pills" ? SPACING[1.5] : SPACING[3],
+          padding: variant === "pills" ? SPACING[1] : 0,
+          backgroundColor:
+            variant === "pills" ? theme.secondary : "transparent",
+          borderRadius: variant === "pills" ? RADIUS.xl : 0,
+          width: fullWidth ? "100%" : undefined,
         },
         style,
       ]}
@@ -173,16 +191,16 @@ export function Tabs<T extends string>({
             onPress={() => onChange(it.value)}
             fullWidth={fullWidth}
           >
-            {variant === 'underline' ? (
+            {variant === "underline" ? (
               <View
                 style={{
                   paddingVertical: SPACING[2.5],
                   paddingHorizontal: SPACING[1],
                   borderBottomWidth: 2,
-                  borderBottomColor: active ? theme.foreground : 'transparent',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  borderBottomColor: active ? theme.foreground : "transparent",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
                   gap: SPACING[1.5],
                 }}
               >
@@ -191,12 +209,14 @@ export function Tabs<T extends string>({
                   type="label"
                   style={{
                     color: active ? theme.foreground : theme.mutedForeground,
-                    fontWeight: active ? '600' : '400',
+                    fontWeight: active ? "600" : "400",
                   }}
                 >
                   {it.label}
                 </ThemedText>
-                {it.badge != null && <TabBadge active={active}>{it.badge}</TabBadge>}
+                {it.badge != null && (
+                  <TabBadge active={active}>{it.badge}</TabBadge>
+                )}
               </View>
             ) : (
               /* Pills or Scroll */
@@ -205,13 +225,13 @@ export function Tabs<T extends string>({
                   paddingHorizontal: SPACING[3.5],
                   paddingVertical: SPACING[2],
                   borderRadius: RADIUS.lg,
-                  backgroundColor: active ? theme.background : 'transparent',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
+                  backgroundColor: active ? theme.background : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "row",
                   gap: SPACING[1.5],
                   borderWidth: active ? 1 : 0,
-                  borderColor: active ? theme.border : 'transparent',
+                  borderColor: active ? theme.border : "transparent",
                 }}
               >
                 {it.icon}
@@ -219,12 +239,14 @@ export function Tabs<T extends string>({
                   type="label"
                   style={{
                     color: active ? theme.foreground : theme.mutedForeground,
-                    fontWeight: active ? '600' : '400',
+                    fontWeight: active ? "600" : "400",
                   }}
                 >
                   {it.label}
                 </ThemedText>
-                {it.badge != null && <TabBadge active={active}>{it.badge}</TabBadge>}
+                {it.badge != null && (
+                  <TabBadge active={active}>{it.badge}</TabBadge>
+                )}
               </View>
             )}
           </TabPressable>
@@ -248,7 +270,13 @@ export function Tabs<T extends string>({
   return content;
 }
 
-function TabBadge({ active, children }: { active: boolean; children: React.ReactNode }) {
+function TabBadge({
+  active,
+  children,
+}: {
+  active: boolean;
+  children: React.ReactNode;
+}) {
   const theme = useTheme();
   return (
     <View
@@ -258,14 +286,14 @@ function TabBadge({ active, children }: { active: boolean; children: React.React
         paddingHorizontal: 5,
         borderRadius: 9,
         backgroundColor: active ? theme.primary : theme.secondary,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <ThemedText
         style={{
           fontSize: 10,
-          fontWeight: '600',
+          fontWeight: "600",
           color: active ? theme.primaryForeground : theme.mutedForeground,
         }}
       >
@@ -314,15 +342,17 @@ export function ActionSheet<T extends string = string>({
   if (!open) return null;
 
   return (
-    <Modal visible transparent animationType="none" onRequestClose={handleClose}>
+    <Modal
+      visible
+      transparent
+      animationType="none"
+      onRequestClose={handleClose}
+    >
       <View style={StyleSheet.absoluteFill}>
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(200)}
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: theme.overlay },
-          ]}
+          style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlay }]}
         >
           <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         </Animated.View>
@@ -341,13 +371,25 @@ export function ActionSheet<T extends string = string>({
             ]}
           >
             <View style={styles.handleBar}>
-              <View style={[styles.handle, { backgroundColor: theme.border }]} />
+              <View
+                style={[styles.handle, { backgroundColor: theme.border }]}
+              />
             </View>
 
             {title || description ? (
-              <View style={{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[2], gap: 2 }}>
+              <View
+                style={{
+                  paddingHorizontal: SPACING[4],
+                  paddingBottom: SPACING[2],
+                  gap: 2,
+                }}
+              >
                 {title && <ThemedText type="cardTitle">{title}</ThemedText>}
-                {description && <ThemedText type="caption" muted>{description}</ThemedText>}
+                {description && (
+                  <ThemedText type="caption" muted>
+                    {description}
+                  </ThemedText>
+                )}
               </View>
             ) : null}
 
@@ -362,7 +404,11 @@ export function ActionSheet<T extends string = string>({
                   }}
                   style={({ pressed }) => [
                     styles.sheetOption,
-                    { backgroundColor: pressed ? theme.secondary : 'transparent' },
+                    {
+                      backgroundColor: pressed
+                        ? theme.secondary
+                        : "transparent",
+                    },
                   ]}
                 >
                   {opt.icon}
@@ -370,13 +416,17 @@ export function ActionSheet<T extends string = string>({
                     <ThemedText
                       type="label"
                       style={{
-                        color: opt.destructive ? theme.destructive : theme.foreground,
+                        color: opt.destructive
+                          ? theme.destructive
+                          : theme.foreground,
                       }}
                     >
                       {opt.label}
                     </ThemedText>
                     {opt.subtitle ? (
-                      <ThemedText type="caption" muted>{opt.subtitle}</ThemedText>
+                      <ThemedText type="caption" muted>
+                        {opt.subtitle}
+                      </ThemedText>
                     ) : null}
                   </View>
                 </Pressable>
@@ -416,10 +466,10 @@ export function SelectField({
   searchable?: boolean;
 }) {
   const theme = useTheme();
-  const t = useT('common');
-  const displayPlaceholder = placeholder ?? t('selectOption');
+  const t = useT("common");
+  const displayPlaceholder = placeholder ?? t("selectOption");
   const [open, setOpen] = React.useState(false);
-  const [search, setSearch] = React.useState('');
+  const [search, setSearch] = React.useState("");
 
   const selectedOpt = options.find((o) => o.value === value);
 
@@ -464,14 +514,25 @@ export function SelectField({
       )}
 
       {open && (
-        <Modal visible transparent animationType="none" onRequestClose={() => setOpen(false)}>
+        <Modal
+          visible
+          transparent
+          animationType="none"
+          onRequestClose={() => setOpen(false)}
+        >
           <View style={StyleSheet.absoluteFill}>
             <Animated.View
               entering={FadeIn.duration(200)}
               exiting={FadeOut.duration(200)}
-              style={[StyleSheet.absoluteFill, { backgroundColor: theme.overlay }]}
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: theme.overlay },
+              ]}
             >
-              <Pressable style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
+              <Pressable
+                style={StyleSheet.absoluteFill}
+                onPress={() => setOpen(false)}
+              />
             </Animated.View>
 
             <View style={styles.sheetContainer} pointerEvents="box-none">
@@ -483,24 +544,36 @@ export function SelectField({
                   {
                     backgroundColor: theme.card,
                     borderColor: theme.border,
-                    maxHeight: '75%',
+                    maxHeight: "75%",
                   },
                 ]}
               >
                 <View style={styles.handleBar}>
-                  <View style={[styles.handle, { backgroundColor: theme.border }]} />
+                  <View
+                    style={[styles.handle, { backgroundColor: theme.border }]}
+                  />
                 </View>
 
                 {label && (
-                  <View style={{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[2] }}>
+                  <View
+                    style={{
+                      paddingHorizontal: SPACING[4],
+                      paddingBottom: SPACING[2],
+                    }}
+                  >
                     <ThemedText type="cardTitle">{label}</ThemedText>
                   </View>
                 )}
 
                 {searchable && (
-                  <View style={{ paddingHorizontal: SPACING[4], paddingBottom: SPACING[3] }}>
+                  <View
+                    style={{
+                      paddingHorizontal: SPACING[4],
+                      paddingBottom: SPACING[3],
+                    }}
+                  >
                     <Input
-                      placeholder={t('searchOptions')}
+                      placeholder={t("searchOptions")}
                       value={search}
                       onChangeText={setSearch}
                     />
@@ -508,7 +581,10 @@ export function SelectField({
                 )}
 
                 <ScrollView
-                  contentContainerStyle={{ paddingHorizontal: SPACING[2], paddingBottom: SPACING[6] }}
+                  contentContainerStyle={{
+                    paddingHorizontal: SPACING[2],
+                    paddingBottom: SPACING[6],
+                  }}
                   keyboardShouldPersistTaps="handled"
                 >
                   {filtered.map((opt) => {
@@ -519,7 +595,7 @@ export function SelectField({
                         onPress={() => {
                           onChange(opt.value);
                           setOpen(false);
-                          setSearch('');
+                          setSearch("");
                         }}
                         style={({ pressed }) => [
                           styles.selectOption,
@@ -527,8 +603,8 @@ export function SelectField({
                             backgroundColor: isSel
                               ? theme.secondary
                               : pressed
-                              ? theme.muted
-                              : 'transparent',
+                                ? theme.muted
+                                : "transparent",
                           },
                         ]}
                       >
@@ -536,7 +612,7 @@ export function SelectField({
                           type="body"
                           style={{
                             color: isSel ? theme.foreground : theme.foreground,
-                            fontWeight: isSel ? '600' : '400',
+                            fontWeight: isSel ? "600" : "400",
                             flex: 1,
                           }}
                         >
@@ -559,17 +635,17 @@ export function SelectField({
 const styles = StyleSheet.create({
   sheetContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   sheetCard: {
-    borderTopLeftRadius: RADIUS['3xl'],
-    borderTopRightRadius: RADIUS['3xl'],
+    borderTopLeftRadius: RADIUS["3xl"],
+    borderTopRightRadius: RADIUS["3xl"],
     borderTopWidth: 1,
     paddingTop: SPACING[2],
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   handleBar: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: SPACING[2],
   },
   handle: {
@@ -578,8 +654,8 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   sheetOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: SPACING[4],
     paddingVertical: SPACING[3],
     borderRadius: RADIUS.lg,
@@ -590,14 +666,14 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     paddingHorizontal: SPACING[4],
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   selectOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: SPACING[4],
     paddingVertical: SPACING[3],
     borderRadius: RADIUS.lg,

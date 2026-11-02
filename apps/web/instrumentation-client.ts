@@ -1,7 +1,7 @@
-import posthog from "posthog-js"
+import posthog from "posthog-js";
 
-const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
-const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST
+const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
+const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
 // Disable PostHog in development mode per configuration
 if (process.env.NODE_ENV !== "development" && posthogKey && posthogHost) {
@@ -16,5 +16,5 @@ if (process.env.NODE_ENV !== "development" && posthogKey && posthogHost) {
         password: true,
       },
     },
-  })
+  });
 }

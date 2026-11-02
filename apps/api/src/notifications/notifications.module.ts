@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { EmailModule } from '../email/email.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsListener } from './notifications.listener';
 import { NotificationsService } from './notifications.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, EmailModule],
   controllers: [NotificationsController],
   providers: [NotificationsService, NotificationsListener],
   exports: [NotificationsService],

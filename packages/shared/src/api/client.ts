@@ -1,13 +1,25 @@
-import type { CreateExchangeRequestPayload, CreateReviewPayload, ProposeSlotsDto, ProposeTermsAndSlotsDto, UpdateAvailabilityDto } from "../schemas/exchange.schema";
+import type {
+  CreateExchangeRequestPayload,
+  CreateReviewPayload,
+  ProposeSlotsDto,
+  ProposeTermsAndSlotsDto,
+  UpdateAvailabilityDto,
+} from "../schemas/exchange.schema";
 import { SendMessageDto } from "../schemas/exchange.schema";
 import { PurchasePointsDto, WithdrawPointsDto } from "../schemas/points.schema";
-import type { ProfileFormPayload, UpdateProfileDto } from "../schemas/profile.schema";
+import type {
+  ProfileFormPayload,
+  UpdateProfileDto,
+} from "../schemas/profile.schema";
 import { AddSkillDto } from "../schemas/skills.schema";
-import type { RecordingConsentPayload, StartRecordingPayload, StopRecordingPayload } from "../schemas/video.schema";
+import type {
+  RecordingConsentPayload,
+  StartRecordingPayload,
+  StopRecordingPayload,
+} from "../schemas/video.schema";
 import type {
   Bank,
   Exchange,
-  ExchangeChatMessage,
   ExchangeRequest,
   FeeConfig,
   MatchesResponse,
@@ -16,27 +28,28 @@ import type {
   PointsTransaction,
   PurchaseInitiationResult,
   RecordingEstimate,
-  Referral,
   ReferralCodeData,
   ReferralStats,
   ResolveAccountResult,
   Review,
   SessionChatHistory,
-  SessionChatMessage, Skill,
+  SessionChatMessage,
+  Skill,
   SkillCategory,
   UserSkill,
-  VideoTokenResponse
+  VideoTokenResponse,
 } from "../types";
 
 export type FetchImpl = (
   input: RequestInfo | URL,
-  init?: RequestInit
+  init?: RequestInit,
 ) => Promise<Response>;
 
 export interface ApiClientConfig {
   baseUrl: string;
   fetchImpl?: FetchImpl;
-  getAuthHeaders?: () => Promise<Record<string, string>> | Record<string, string>;
+  getAuthHeaders?: () =>
+    Promise<Record<string, string>> | Record<string, string>;
   withCredentials?: boolean;
 }
 
@@ -57,13 +70,13 @@ export function createApiClient(config: ApiClientConfig) {
 
   if (!fetchImpl) {
     throw new Error(
-      "[createApiClient] No fetch implementation available and none provided."
+      "[createApiClient] No fetch implementation available and none provided.",
     );
   }
 
   async function request<T = unknown>(
     endpoint: string,
-    init: RequestInit = {}
+    init: RequestInit = {},
   ): Promise<T> {
     const headers = new Headers(init.headers ?? {});
 
@@ -119,15 +132,24 @@ export function createApiClient(config: ApiClientConfig) {
   };
 
   const uploads = {
-    getPresignedUrl: (params: { fileName: string; fileType: string; type?: string }) => {
+    getPresignedUrl: (params: {
+      fileName: string;
+      fileType: string;
+      type?: string;
+    }) => {
       const qs = new URLSearchParams(params as any).toString();
-      return request<{ uploadUrl: string; key: string; publicUrl: string }>(`/uploads/presigned-url?${qs}`);
+      return request<{ uploadUrl: string; key: string; publicUrl: string }>(
+        `/uploads/presigned-url?${qs}`,
+      );
     },
     confirmAvatar: (key: string) =>
-      request<{ success: boolean; imageUrl: string }>(`/uploads/confirm-avatar`, {
-        method: "POST",
-        body: JSON.stringify({ key }),
-      }),
+      request<{ success: boolean; imageUrl: string }>(
+        `/uploads/confirm-avatar`,
+        {
+          method: "POST",
+          body: JSON.stringify({ key }),
+        },
+      ),
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -188,7 +210,10 @@ export function createApiClient(config: ApiClientConfig) {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    proposeTermsAndSlots: (requestId: string, payload: ProposeTermsAndSlotsDto) =>
+    proposeTermsAndSlots: (
+      requestId: string,
+      payload: ProposeTermsAndSlotsDto,
+    ) =>
       request<void>(`/exchanges/requests/${requestId}/propose`, {
         method: "POST",
         body: JSON.stringify(payload),
@@ -210,7 +235,11 @@ export function createApiClient(config: ApiClientConfig) {
       }),
     markComplete: (id: string) =>
       request<void>(`/exchanges/${id}/complete`, { method: "POST" }),
-    updateSessionStatus: (exchangeId: string, sessionId: string, status: string) =>
+    updateSessionStatus: (
+      exchangeId: string,
+      sessionId: string,
+      status: string,
+    ) =>
       request<void>(`/exchanges/${exchangeId}/sessions/${sessionId}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
@@ -220,20 +249,32 @@ export function createApiClient(config: ApiClientConfig) {
         request<any[]>(`/exchanges/${exchangeId}/chat`),
       send: (
         exchangeId: string,
-        payload: { content?: string; fileKey?: string; fileName?: string; fileType?: string } | string
+        payload:
+          | {
+              content?: string;
+              fileKey?: string;
+              fileName?: string;
+              fileType?: string;
+            }
+          | string,
       ) =>
         request<any>(`/exchanges/${exchangeId}/chat`, {
           method: "POST",
-          body: JSON.stringify(typeof payload === "string" ? { content: payload } : payload),
+          body: JSON.stringify(
+            typeof payload === "string" ? { content: payload } : payload,
+          ),
         }),
       uploadUrl: (
         exchangeId: string,
-        payload: { fileName: string; contentType: string }
+        payload: { fileName: string; contentType: string },
       ) =>
-        request<{ uploadUrl: string; key: string }>(`/exchanges/${exchangeId}/chat/upload`, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        }),
+        request<{ uploadUrl: string; key: string }>(
+          `/exchanges/${exchangeId}/chat/upload`,
+          {
+            method: "POST",
+            body: JSON.stringify(payload),
+          },
+        ),
     },
   };
 
@@ -243,10 +284,9 @@ export function createApiClient(config: ApiClientConfig) {
   const points = {
     balance: () =>
       request<{ balance: number } | number>(`/points/balance`).then((res) =>
-        typeof res === "number" ? res : (res as any).balance ?? res
+        typeof res === "number" ? res : ((res as any).balance ?? res),
       ),
-    transactions: () =>
-      request<PointsTransaction[]>(`/points/transactions`),
+    transactions: () => request<PointsTransaction[]>(`/points/transactions`),
     banks: () => request<Bank[]>(`/points/banks`),
     feeConfig: () => request<FeeConfig>(`/points/fee-config`),
     rates: () => request<Record<string, number>>(`/points/rates`),
@@ -260,10 +300,7 @@ export function createApiClient(config: ApiClientConfig) {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    resolveAccount: (payload: {
-      accountNumber: string;
-      bankCode: string;
-    }) =>
+    resolveAccount: (payload: { accountNumber: string; bankCode: string }) =>
       request<ResolveAccountResult>(`/points/resolve-account`, {
         method: "POST",
         body: JSON.stringify(payload),
@@ -300,8 +337,7 @@ export function createApiClient(config: ApiClientConfig) {
   // ─────────────────────────────────────────────────────────────────────────
   const reviews = {
     mine: () => request<Review[]>(`/reviews/user/me`),
-    byUserId: (userId: string) =>
-      request<Review[]>(`/reviews/user/${userId}`),
+    byUserId: (userId: string) => request<Review[]>(`/reviews/user/${userId}`),
     create: (payload: CreateReviewPayload) =>
       request<Review>(`/reviews`, {
         method: "POST",
@@ -315,10 +351,9 @@ export function createApiClient(config: ApiClientConfig) {
   const referrals = {
     code: () =>
       request<ReferralCodeData | string>(`/referrals/my-code`).then((res) =>
-        typeof res === "string" ? res : res.referralCode ?? res
+        typeof res === "string" ? res : (res.referralCode ?? res),
       ),
-    stats: () =>
-      request<ReferralStats>(`/referrals/stats`),
+    stats: () => request<ReferralStats>(`/referrals/stats`),
     apply: (code: string) =>
       request<void>(`/referrals/apply`, {
         method: "POST",
@@ -340,12 +375,12 @@ export function createApiClient(config: ApiClientConfig) {
       }>(`/video/session/${encodeURIComponent(roomId)}`),
     token: (room: string) =>
       request<VideoTokenResponse>(
-        `/video/token?room=${encodeURIComponent(room)}`
+        `/video/token?room=${encodeURIComponent(room)}`,
       ),
     record: {
       estimate: (room: string) =>
         request<RecordingEstimate>(
-          `/video/recording/estimate?room=${encodeURIComponent(room)}`
+          `/video/recording/estimate?room=${encodeURIComponent(room)}`,
         ),
       consent: (payload: RecordingConsentPayload) =>
         request<void>(`/video/recording/consent`, {
@@ -367,9 +402,7 @@ export function createApiClient(config: ApiClientConfig) {
     },
     chat: {
       list: (exchangeSessionId: string) =>
-        request<SessionChatHistory>(
-          `/video/chat/${exchangeSessionId}`
-        ),
+        request<SessionChatHistory>(`/video/chat/${exchangeSessionId}`),
       send: (exchangeSessionId: string, message: string) =>
         request<SessionChatMessage>(`/video/chat/${exchangeSessionId}`, {
           method: "POST",
@@ -402,8 +435,7 @@ export function createApiClient(config: ApiClientConfig) {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    count: () =>
-      request<{ count: number }>(`/waitlist/count`),
+    count: () => request<{ count: number }>(`/waitlist/count`),
   };
 
   return {

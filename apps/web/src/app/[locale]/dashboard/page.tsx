@@ -18,7 +18,11 @@ import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
   return {
@@ -44,7 +48,7 @@ export default async function DashboardPage() {
     {
       headers: new Headers(await headers()),
     },
-  );  
+  );
 
   const fullUser = response.ok ? await response.json() : user;
   const userSkills = fullUser.skills || [];
@@ -69,7 +73,11 @@ export default async function DashboardPage() {
       : "0.0";
 
   // ── Onboarding completion flags (server-derived, cross-device by design) ──
-  const hasCompletedProfile = !!(fullUser.name && fullUser.bio && fullUser.image);
+  const hasCompletedProfile = !!(
+    fullUser.name &&
+    fullUser.bio &&
+    fullUser.image
+  );
   const hasOfferingSkills = offeringSkills.length > 0;
   const hasSeekingSkills = seekingSkills.length > 0;
 
@@ -81,7 +89,9 @@ export default async function DashboardPage() {
           <p className="text-muted-foreground flex items-center gap-2">
             {t.rich("welcomeBackWithName", {
               name: fullUser.name,
-              bold: (chunks) => <span className="font-semibold text-foreground">{chunks}</span>
+              bold: (chunks) => (
+                <span className="font-semibold text-foreground">{chunks}</span>
+              ),
             })}
           </p>
         </div>
@@ -91,7 +101,9 @@ export default async function DashboardPage() {
             className="px-3 py-1 text-sm font-medium flex items-center gap-2 bg-primary/10 border-primary/20 hover:bg-primary/20 transition-colors"
           >
             <Coins className="h-4 w-4 text-primary" />
-            <span>{tc("points_count", { count: fullUser.pointsBalance ?? 0 })}</span>
+            <span>
+              {tc("points_count", { count: fullUser.pointsBalance ?? 0 })}
+            </span>
           </Badge>
           <Button
             variant="outline"
@@ -181,9 +193,7 @@ export default async function DashboardPage() {
               <Users className="h-5 w-5 text-primary" />
               {t("recentConnections")}
             </CardTitle>
-            <CardDescription>
-              {t("recentConnectionsDesc")}
-            </CardDescription>
+            <CardDescription>{t("recentConnectionsDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
@@ -211,9 +221,7 @@ export default async function DashboardPage() {
                 <Star className="h-5 w-5 text-primary" />
                 {t("skillsOverview")}
               </CardTitle>
-              <CardDescription>
-                {t("description")}
-              </CardDescription>
+              <CardDescription>{t("description")}</CardDescription>
             </div>
             <Button
               variant="ghost"

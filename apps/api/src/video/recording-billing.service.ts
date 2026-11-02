@@ -1,7 +1,13 @@
-import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
+import { errorMessage } from '../common/errors/error-message';
 
 @Injectable()
 export class RecordingBillingService {
@@ -39,10 +45,15 @@ export class RecordingBillingService {
       }
 
       const affordableMinutes = Math.floor(user.pointsBalance / rate);
-      const approvedMinutes = Math.min(affordableMinutes, remainingSessionMinutes);
+      const approvedMinutes = Math.min(
+        affordableMinutes,
+        remainingSessionMinutes,
+      );
 
       if (approvedMinutes < 1) {
-        throw new BadRequestException('Insufficient points to record. Minimum 1 minute required.');
+        throw new BadRequestException(
+          'Insufficient points to record. Minimum 1 minute required.',
+        );
       }
 
       const upfrontCost = approvedMinutes * rate;
@@ -73,7 +84,7 @@ export class RecordingBillingService {
     // 3. Schedule the delayed BullMQ job to stop the recording
     const delayMs = result.approvedMinutes * 60 * 1000;
     const jobId = `stop-recording-${sessionRecordingId}`;
-    
+
     await this.timeoutQueue.add(
       'stop-recording',
       {
@@ -110,7 +121,9 @@ export class RecordingBillingService {
     });
 
     if (!recording) {
-      this.logger.warn(`Recording ${sessionRecordingId} not found in database.`);
+      this.logger.warn(
+        `Recording ${sessionRecordingId} not found in database.`,
+      );
       return;
     }
 
@@ -118,7 +131,9 @@ export class RecordingBillingService {
 
     // If no user was charged (e.g. error starting or not a paid recording), do nothing
     if (!billingUserId || totalLockedPoints <= 0) {
-      this.logger.log(`No locked points or billing user for recording ${sessionRecordingId}. Skipping settlement.`);
+      this.logger.log(
+        `No locked points or billing user for recording ${sessionRecordingId}. Skipping settlement.`,
+      );
       return;
     }
 
@@ -186,10 +201,14 @@ export class RecordingBillingService {
       const job = await this.timeoutQueue.getJob(jobId);
       if (job) {
         await job.remove();
-        this.logger.log(`Removed scheduled job ${jobId} (early stop/settlement completed)`);
+        this.logger.log(
+          `Removed scheduled job ${jobId} (early stop/settlement completed)`,
+        );
       }
-    } catch (err: any) {
-      this.logger.warn(`Failed to remove job for recording ${sessionRecordingId}: ${err.message}`);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to remove job for recording ${sessionRecordingId}: ${errorMessage(err)}`,
+      );
     }
   }
 }

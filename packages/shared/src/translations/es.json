@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Intercambio de Habilidades",
+    "appName": "SkillEx",
     "loading": "Cargando...",
     "error": "Ocurrió un error",
     "cancel": "Cancelar",
@@ -68,20 +68,20 @@
     "offlineToast": "Sigues sin conexión. Reintentando..."
   },
   "metadata": {
-    "homeTitle": "Intercambio de habilidades | Aprende, enseña, crece",
+    "homeTitle": "SkillEx | Aprende, enseña, crece",
     "homeDescription": "Domina nuevas habilidades enseñando lo que sabes. Intercambios de habilidades en video 1 a 1 con aprendices de todo el mundo.",
-    "matchesTitle": "Mis coincidencias | Intercambio de habilidades",
+    "matchesTitle": "Mis coincidencias | SkillEx",
     "matchesDescription": "Ver sus coincidencias de habilidades, coincidencias parciales y conectarse con socios de aprendizaje potenciales.",
-    "exchangesTitle": "Mis intercambios | Intercambio de habilidades",
-    "pointsTitle": "Saldo de puntos y transacciones | Intercambio de habilidades",
-    "dashboardTitle": "Panel de control | Intercambio de habilidades",
-    "profileTitle": "Configuración del perfil | Intercambio de habilidades",
-    "signinTitle": "Iniciar sesión | Intercambio de habilidades",
-    "signupTitle": "Registrarse | Intercambio de habilidades",
-    "forgotPasswordTitle": "Olvidé mi contraseña | Intercambio de habilidades",
-    "resetPasswordTitle": "Restablecer contraseña | Intercambio de habilidades",
-    "roomTitle": "Sesión de video en vivo | Intercambio de habilidades",
-    "offlineTitlePage": "Estás sin conexión | Intercambio de habilidades"
+    "exchangesTitle": "Mis intercambios | SkillEx",
+    "pointsTitle": "Saldo de puntos y transacciones | SkillEx",
+    "dashboardTitle": "Panel de control | SkillEx",
+    "profileTitle": "Configuración del perfil | SkillEx",
+    "signinTitle": "Iniciar sesión | SkillEx",
+    "signupTitle": "Registrarse | SkillEx",
+    "forgotPasswordTitle": "Olvidé mi contraseña | SkillEx",
+    "resetPasswordTitle": "Restablecer contraseña | SkillEx",
+    "roomTitle": "Sesión de video en vivo | SkillEx",
+    "offlineTitlePage": "Estás sin conexión | SkillEx"
   },
   "nav": {
     "home": "Inicio",
@@ -188,7 +188,7 @@
     "pointsReferralReward": "200 puntos por referido",
 
     "platformTitle": "Disponible en todas partes",
-    "platformSubtitle": "Usa Skill Exchange en cualquier dispositivo, en tu idioma.",
+    "platformSubtitle": "Usa SkillEx en cualquier dispositivo, en tu idioma.",
     "platformWeb": "Aplicación web (PWA)",
     "platformWebDesc": "Funciona en cualquier navegador. Instálala como una app nativa.",
     "platformAndroid": "Aplicación Android",
@@ -206,8 +206,8 @@
     "trustOpenDesc": "Desarrollado con Next.js, NestJS, PostgreSQL, LiveKit y Prisma.",
 
     "faqTitle": "Preguntas frecuentes",
-    "faqSubtitle": "Todo lo que necesitas saber sobre Skill Exchange.",
-    "faq1Q": "¿Skill Exchange es gratis?",
+    "faqSubtitle": "Todo lo que necesitas saber sobre SkillEx.",
+    "faq1Q": "¿SkillEx es gratis?",
     "faq1A": "¡Sí! Puedes intercambiar habilidades de forma gratuita mediante intercambios directos.",
     "faq2Q": "¿Cómo funcionan los puntos?",
     "faq2A": "Los puntos son la moneda de la plataforma. Puedes comprarlos, ganarlos o recibirlos.",
@@ -218,7 +218,7 @@
     "faq5Q": "¿Cómo funciona el programa de referidos?",
     "faq5A": "Comparte tu enlace único. Cuando un amigo complete su primer intercambio, ambos ganan 200 puntos.",
     "faq6Q": "¿En qué idiomas está disponible la plataforma?",
-    "faq6A": "Skill Exchange está disponible en inglés, francés, español y portugués.",
+    "faq6A": "SkillEx está disponible en inglés, francés, español y portugués.",
     "faq7Q": "¿Cuándo es el lanzamiento completo?",
     "faq7A": "Estamos dando los toques finales. ¡Únete a la lista de espera o crea tu perfil!",
 
@@ -228,7 +228,7 @@
     "footerTagline": "Aprende, Enseña, Crece. Intercambia habilidades y conocimientos de forma segura.",
     "footerPrivacy": "Política de privacidad",
     "footerTerms": "Términos de servicio",
-    "footerRights": "© {year} Skill Exchange. Todos los derechos reservados.",
+    "footerRights": "© {year} SkillEx. Todos los derechos reservados.",
 
     "comingSoonTitle": "Próximamente",
     "comingSoonDesc": "Esta función se lanzará pronto. ¡Configura tu perfil para estar listo!",
@@ -236,9 +236,9 @@
   },
   "auth": {
     "signInTitle": "Bienvenido de vuelta",
-    "signInDescription": "Inicia sesión en tu cuenta de Skill Exchange",
+    "signInDescription": "Inicia sesión en tu cuenta de SkillEx",
     "signUpTitle": "Crear una cuenta",
-    "signUpDescription": "Únete a la comunidad Skill Exchange",
+    "signUpDescription": "Únete a la comunidad SkillEx",
     "email": "Correo electrónico",
     "emailPlaceholder": "nombre@ejemplo.com",
     "password": "Contraseña",
@@ -1038,7 +1038,7 @@
     "errorLoading": "Error al cargar datos de puntos",
     "resolveAccountFailed": "No se pudo resolver la cuenta",
     "resolveAccountError": "Error al resolver la cuenta",
-    "purchaseTitle": "Compra de puntos Skil-Ex",
+    "purchaseTitle": "Compra de puntos SkillEx",
     "purchaseDesc": "Recarga de puntos",
     "purchaseFailed": "Error en la compra",
     "somethingWentWrong": "Algo salió mal",
@@ -1381,7 +1381,7 @@
     "close": "Cerrar",
     "exchangeLabel": "Intercambio",
     "linkCopied": "Enlace copiado",
-    "shareReferralMessage": "¡Únete a Skil-Ex con mi enlace de referido para aprender y ganar puntos! {link}",
+    "shareReferralMessage": "¡Únete a SkillEx con mi enlace de referido para aprender y ganar puntos! {link}",
     "inviteFriendsDesc": "Gana 200 pts por referido. Tu código:",
     "copy": "Copiar",
     "shareLink": "Compartir enlace",
@@ -1464,8 +1464,8 @@
     "person": "persona",
     "rewardReceived": "Recompensa de Referido",
     "bonusReceived": "Bono de Referido",
-    "shareSubject": "Intercambio de Habilidades",
-    "shareLinkText": "¡Únete a mí en Skill Exchange! Usa mi código de referido: {code}",
+    "shareSubject": "SkillEx",
+    "shareLinkText": "¡Únete a mí en SkillEx! Usa mi código de referido: {code}",
     "errorLoading": "Error al cargar los datos de referido",
     "applyPlaceholderExample": "ej. ALEX-88F2",
     "appliedTitle": "Código aplicado",
@@ -1546,7 +1546,7 @@
     "unreadCount": "{count} sin leer"
   },
   "onboarding": {
-    "wizardTitle": "Comienza con Skill Exchange",
+    "wizardTitle": "Comienza con SkillEx",
     "wizardDesc": "Una guía rápida para configurar tu perfil y empezar a intercambiar habilidades.",
     "skipForNow": "Omitir por ahora",
     "back": "Atrás",
@@ -1564,7 +1564,7 @@
     "profileItem3": "Escribe una breve biografía sobre ti",
     "profileCta": "Ir a la configuración del perfil",
     "skillsTitle": "Agrega tus habilidades",
-    "skillsDesc": "Las habilidades son el corazón de Skill Exchange. Añade lo que puedes enseñar y lo que quieres aprender.",
+    "skillsDesc": "Las habilidades son el corazón de SkillEx. Añade lo que puedes enseñar y lo que quieres aprender.",
     "skillsOffer": "Habilidades que ofrezco",
     "skillsOfferDesc": "Conocimientos o experiencia que puedes enseñar a otros a cambio de sus habilidades.",
     "skillsSeek": "Habilidades que busco",
@@ -1577,7 +1577,7 @@
     "matchType2": "Más coincidencias",
     "matchType2Desc": "Usuarios que ofrecen las habilidades que buscas. Intercambia usando tu saldo de puntos.",
     "doneTitle": "¡Casi listo/a!",
-    "doneDesc": "Aquí está tu lista de configuración. Completa los elementos restantes para aprovechar al máximo Skill Exchange.",
+    "doneDesc": "Aquí está tu lista de configuración. Completa los elementos restantes para aprovechar al máximo SkillEx.",
     "doneItem1": "Completa tu perfil",
     "doneItem2": "Agrega una habilidad que puedas ofrecer",
     "doneItem3": "Agrega una habilidad que quieras aprender",
@@ -1668,7 +1668,7 @@
     "cancel": "Cancelar",
     "sendRequest": "Enviar solicitud",
     "invalid": "Inválido",
-    "shareProfileMessage": "Mira a {name} en Skil-Ex",
+    "shareProfileMessage": "Mira a {name} en SkillEx",
     "thisUser": "este usuario"
   }
 }

@@ -1,6 +1,6 @@
-# Skil-Ex2 Shared Package
+# SkillEx Shared Package
 
-This package contains shared business logic, constants, and utilities used by both the `api` and `web` applications within the Skil-Ex2 monorepo.
+This package contains shared business logic, constants, and utilities used by both the `api` and `web` applications within the SkillEx monorepo.
 
 ## 📦 Contents
 
@@ -13,7 +13,7 @@ This package contains shared business logic, constants, and utilities used by bo
 Since this is a workspace package, you can import it in other apps using:
 
 ```typescript
-import { someConstant } from "@skil-ex2/shared";
+import { someConstant } from "@skillex/shared";
 ```
 
 ## 🛠️ Build & Development

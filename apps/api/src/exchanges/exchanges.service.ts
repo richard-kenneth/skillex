@@ -12,12 +12,18 @@ import {
   ProposeTermsAndSlotsDto,
   SendMessageDto,
   type UpdateAvailabilityDto,
-} from '@skil-ex2/shared';
+} from '@skillex/shared';
 import { ExchangeRequest, SessionStatus } from '../generated/prisma/client';
 import { PointsService } from '../points/points.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReferralsService } from '../referrals/referrals.service';
 import { R2Service } from '../uploads/r2.service';
+import {
+  buildChatAttachmentKey,
+  getAttachmentExtension,
+  isExchangeChatKey,
+  sanitizeFileName,
+} from '../uploads/upload-policy';
 
 @Injectable()
 export class ExchangesService {
@@ -720,42 +726,64 @@ export class ExchangesService {
 
   /**
    * Internal mechanism to commit an exchange.
-   * Creates the Exchange, ExchangeSession records, and locks escrow.
+   * Claims the request, locks escrow, and creates the Exchange and
+   * ExchangeSession records in one transaction.
    */
   private async commitExchangeInternal(request: ExchangeRequest) {
-    const pointsAmount = request.pointsProposal;
-    const pointsPayerId = request.pointsPayerId;
+    await this.prisma.$transaction(async (tx) => {
+      // Claim the request first. Two auto-commits can race (for example, two
+      // slot acceptances); the conditional update makes only one proceed.
+      const claimed = await tx.exchangeRequest.updateMany({
+        where: { id: request.id, status: 'PENDING' },
+        data: { status: 'COMMITTED' },
+      });
 
-    if (pointsAmount > 0 && pointsPayerId) {
-      await this.pointsService.lockEscrow(
-        pointsPayerId,
-        pointsAmount,
-        request.id,
-      );
-    }
+      if (claimed.count !== 1) return;
 
-    // Get accepted slots to create sessions
-    const acceptedSlots = await this.prisma.proposedSlot.findMany({
-      where: { requestId: request.id, status: 'ACCEPTED' },
-      orderBy: { createdAt: 'asc' },
-    });
+      // Re-read after the claim so escrow and sessions use the terms that are
+      // actually committed, not the snapshot passed in by checkAutoCommit.
+      const committed = await tx.exchangeRequest.findUniqueOrThrow({
+        where: { id: request.id },
+      });
 
-    // Create the exchange with sessions
-    await this.prisma.$transaction([
-      this.prisma.exchange.create({
+      const pointsAmount = committed.pointsProposal;
+      const pointsPayerId = committed.pointsPayerId;
+
+      if (pointsAmount > 0) {
+        if (!pointsPayerId) {
+          throw new BadRequestException(
+            'pointsPayerId is required when proposing points.',
+          );
+        }
+
+        await this.pointsService.lockEscrowInTransaction(
+          tx,
+          pointsPayerId,
+          pointsAmount,
+          committed.id,
+        );
+      }
+
+      // Get accepted slots to create sessions
+      const acceptedSlots = await tx.proposedSlot.findMany({
+        where: { requestId: committed.id, status: 'ACCEPTED' },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      await tx.exchange.create({
         data: {
-          requestId: request.id,
-          senderId: request.senderId,
-          receiverId: request.receiverId,
-          taughtSkillId: request.requestedSkillId,
-          receivedSkillId: request.offeredSkillId,
+          requestId: committed.id,
+          senderId: committed.senderId,
+          receiverId: committed.receiverId,
+          taughtSkillId: committed.requestedSkillId,
+          receivedSkillId: committed.offeredSkillId,
           pointsAmount,
           pointsPayerId,
           escrowLocked: pointsAmount > 0,
-          requestedSkillSessions: request.requestedSkillSessions,
-          requestedSkillDuration: request.requestedSkillDuration,
-          offeredSkillSessions: request.offeredSkillSessions,
-          offeredSkillDuration: request.offeredSkillDuration,
+          requestedSkillSessions: committed.requestedSkillSessions,
+          requestedSkillDuration: committed.requestedSkillDuration,
+          offeredSkillSessions: committed.offeredSkillSessions,
+          offeredSkillDuration: committed.offeredSkillDuration,
           status: 'COMMITTED',
           sessions: {
             create: acceptedSlots.map((slot) => {
@@ -768,19 +796,15 @@ export class ExchangesService {
                 skillId: slot.skillId,
                 scheduledAt,
                 duration:
-                  slot.skillId === request.requestedSkillId
-                    ? request.requestedSkillDuration
-                    : request.offeredSkillDuration,
+                  slot.skillId === committed.requestedSkillId
+                    ? committed.requestedSkillDuration
+                    : committed.offeredSkillDuration,
               };
             }),
           },
         },
-      }),
-      this.prisma.exchangeRequest.update({
-        where: { id: request.id },
-        data: { status: 'COMMITTED' },
-      }),
-    ]);
+      });
+    });
   }
 
   /**
@@ -940,7 +964,7 @@ export class ExchangesService {
     const updatedRequest = await this.prisma.exchangeRequest.update({
       where: { id: requestId },
       data: {
-        [availabilityField]: data as any,
+        [availabilityField]: data,
       },
       include: {
         sender: { select: { id: true, name: true, image: true } },
@@ -992,8 +1016,10 @@ export class ExchangesService {
       throw new ForbiddenException('You are not part of this exchange');
     }
 
-    const myReview = exchange.reviews.find((r) => r.reviewerId === userId) || null;
-    const theirReview = exchange.reviews.find((r) => r.reviewerId !== userId) || null;
+    const myReview =
+      exchange.reviews.find((r) => r.reviewerId === userId) || null;
+    const theirReview =
+      exchange.reviews.find((r) => r.reviewerId !== userId) || null;
 
     return {
       ...exchange,
@@ -1067,6 +1093,16 @@ export class ExchangesService {
       throw new ForbiddenException('You are not part of this exchange');
     }
 
+    // Completion is idempotent: a repeated request must never trigger a
+    // second escrow release, facilitation fee, or referral reward.
+    if (exchange.status === 'COMPLETED') {
+      return this.getExchangeById(userId, exchangeId);
+    }
+
+    if (exchange.status === 'CANCELLED') {
+      throw new BadRequestException('This exchange has been cancelled');
+    }
+
     const isSender = exchange.senderId === userId;
     const updateData = isSender
       ? { senderCompleted: true }
@@ -1079,13 +1115,24 @@ export class ExchangesService {
 
     // Check mutual completion
     if (updatedExchange.senderCompleted && updatedExchange.receiverCompleted) {
-      await this.prisma.exchange.update({
-        where: { id: exchangeId },
+      // Atomically claim the completion. If another request already claimed
+      // it, that request is responsible for the payouts.
+      const claimed = await this.prisma.exchange.updateMany({
+        where: {
+          id: exchangeId,
+          status: { not: 'COMPLETED' },
+          senderCompleted: true,
+          receiverCompleted: true,
+        },
         data: {
           status: 'COMPLETED',
           completedAt: new Date(),
         },
       });
+
+      if (claimed.count !== 1) {
+        return this.getExchangeById(userId, exchangeId);
+      }
 
       // Release escrow if points were involved
       if (
@@ -1119,10 +1166,7 @@ export class ExchangesService {
 
       // Apply facilitation fee to both participants (platform revenue on every swap)
       await Promise.allSettled([
-        this.pointsService.applyFacilitationFee(
-          exchange.senderId,
-          exchangeId,
-        ),
+        this.pointsService.applyFacilitationFee(exchange.senderId, exchangeId),
         this.pointsService.applyFacilitationFee(
           exchange.receiverId,
           exchangeId,
@@ -1170,14 +1214,23 @@ export class ExchangesService {
       );
     }
 
+    if (fileKey) {
+      if (!isExchangeChatKey(exchangeId, fileKey)) {
+        throw new BadRequestException('Invalid attachment key');
+      }
+      if (!fileType || !getAttachmentExtension(fileType)) {
+        throw new BadRequestException('Unsupported attachment type');
+      }
+    }
+
     const message = await this.prisma.exchangeChatMessage.create({
       data: {
         exchangeId,
         senderId: userId,
         content: content || null,
         fileKey: fileKey || null,
-        fileName: fileName || null,
-        fileType: fileType || null,
+        fileName: fileName ? sanitizeFileName(fileName) : null,
+        fileType: fileKey ? fileType!.toLowerCase() : null,
       },
       include: {
         sender: { select: { id: true, name: true, image: true } },
@@ -1188,7 +1241,8 @@ export class ExchangesService {
       exchangeId: exchange.id,
       messageId: message.id,
       senderId: userId,
-      receiverId: userId === exchange.senderId ? exchange.receiverId : exchange.senderId,
+      receiverId:
+        userId === exchange.senderId ? exchange.receiverId : exchange.senderId,
       content: content || (fileKey ? 'Sent an attachment' : ''),
     });
 
@@ -1216,7 +1270,9 @@ export class ExchangesService {
     // If any message has a fileKey, generate a presigned download URL
     return Promise.all(
       messages.map(async (msg) => {
-        if (msg.fileKey) {
+        // Only sign keys that belong to this exchange. This also protects
+        // against malformed rows created before upload keys were validated.
+        if (msg.fileKey && isExchangeChatKey(exchangeId, msg.fileKey)) {
           const fileUrl = await this.r2.getPresignedDownloadUrl(
             msg.fileKey,
             3600,
@@ -1243,13 +1299,17 @@ export class ExchangesService {
       throw new ForbiddenException('You are not part of this exchange');
     }
 
-    const key = `exchange-chat/${exchangeId}/${Date.now()}-${fileName}`;
+    if (!getAttachmentExtension(contentType)) {
+      throw new BadRequestException('Unsupported attachment type');
+    }
+
+    const key = buildChatAttachmentKey(exchangeId, contentType);
     const uploadUrl = await this.r2.getPresignedUploadUrl(
       key,
-      contentType,
+      contentType.toLowerCase(),
       3600,
     );
 
-    return { uploadUrl, key };
+    return { uploadUrl, key, fileName: sanitizeFileName(fileName) };
   }
 }

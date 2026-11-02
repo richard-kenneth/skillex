@@ -58,7 +58,7 @@ import {
   QUERY_KEYS,
   REVIEW_TAG_LABELS,
   SkillType,
-} from "@skil-ex2/shared";
+} from "@skillex/shared";
 import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router, useRouter } from "expo-router";
@@ -115,7 +115,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
-  const t = useT('profile');
+  const t = useT("profile");
 
   const userQ = useCurrentUser();
   const user = userQ.data as any;
@@ -129,10 +129,10 @@ export default function ProfileScreen() {
   }, [userQ]);
 
   const handleSignOut = async () => {
-    Alert.alert(t('signOut'), t('signOutConfirm'), [
-      { text: t('cancel'), style: "cancel" },
+    Alert.alert(t("signOut"), t("signOutConfirm"), [
+      { text: t("cancel"), style: "cancel" },
       {
-        text: t('signOut'),
+        text: t("signOut"),
         style: "destructive",
         onPress: async () => {
           const { error } = await authClient.signOut();
@@ -149,8 +149,8 @@ export default function ProfileScreen() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       {/* Custom Header */}
       <CustomHeader
-        title={t('title')}
-        subtitle={t('manageAccountDesc')}
+        title={t("title")}
+        subtitle={t("manageAccountDesc")}
         showNotifications={true}
         showSearch={true}
         rightAction={
@@ -162,11 +162,11 @@ export default function ProfileScreen() {
                 width: 40,
                 height: 40,
                 borderRadius: RADIUS.xl,
-                backgroundColor: getAccent('red').bg,
+                backgroundColor: getAccent("red").bg,
                 alignItems: "center",
                 justifyContent: "center",
                 borderWidth: 1,
-                borderColor: getAccent('red').border,
+                borderColor: getAccent("red").border,
               },
               pressed && { opacity: 0.8 },
             ]}
@@ -176,7 +176,14 @@ export default function ProfileScreen() {
         }
       />
 
-      <View style={{ width: "100%", maxWidth: MAX_CONTENT_WIDTH, flex: 1, alignSelf: "center" }}>
+      <View
+        style={{
+          width: "100%",
+          maxWidth: MAX_CONTENT_WIDTH,
+          flex: 1,
+          alignSelf: "center",
+        }}
+      >
         <ScrollView
           contentContainerStyle={{
             paddingBottom: insets.bottom + 100,
@@ -216,54 +223,70 @@ export default function ProfileScreen() {
               items={[
                 {
                   value: "edit",
-                  label: t('editTab'),
+                  label: t("editTab"),
                   icon: (
                     <UserRound
                       size={14}
-                      color={tab === 'edit' ? theme.foreground : theme.mutedForeground}
+                      color={
+                        tab === "edit"
+                          ? theme.foreground
+                          : theme.mutedForeground
+                      }
                     />
                   ),
                 },
                 {
                   value: "skills",
-                  label: t('skillsTab'),
+                  label: t("skillsTab"),
                   icon: (
                     <GraduationCap
                       size={14}
-                      color={tab === 'skills' ? theme.foreground : theme.mutedForeground}
+                      color={
+                        tab === "skills"
+                          ? theme.foreground
+                          : theme.mutedForeground
+                      }
                     />
                   ),
                 },
                 {
                   value: "reviews",
-                  label: t('reviewsTab'),
+                  label: t("reviewsTab"),
                   icon: (
                     <Star
                       size={14}
-                      color={tab === 'reviews' ? theme.foreground : theme.mutedForeground}
+                      color={
+                        tab === "reviews"
+                          ? theme.foreground
+                          : theme.mutedForeground
+                      }
                     />
                   ),
                 },
                 {
                   value: "referrals",
-                  label: t('referralsTab'),
+                  label: t("referralsTab"),
                   icon: (
                     <Gift
                       size={14}
                       color={
-                        tab === 'referrals' ? theme.foreground : theme.mutedForeground
+                        tab === "referrals"
+                          ? theme.foreground
+                          : theme.mutedForeground
                       }
                     />
                   ),
                 },
                 {
                   value: "notifications",
-                  label: t('alertsTab'),
+                  label: t("alertsTab"),
                   icon: (
                     <Bell
                       size={14}
                       color={
-                        tab === 'notifications' ? theme.foreground : theme.mutedForeground
+                        tab === "notifications"
+                          ? theme.foreground
+                          : theme.mutedForeground
                       }
                     />
                   ),
@@ -290,7 +313,7 @@ export default function ProfileScreen() {
 
 function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
   const reviewsQ = useMyReviews();
-  const t = useT('profile');
+  const t = useT("profile");
 
   const avg = reviewsQ.data
     ? calculateAverageRating(reviewsQ.data as any[])
@@ -332,7 +355,7 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                     color: "#fafafa",
                   }}
                 >
-                  {user?.name ?? t('yourName')}
+                  {user?.name ?? t("yourName")}
                 </ThemedText>
                 <View
                   style={{
@@ -351,7 +374,7 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                     }}
                     numberOfLines={1}
                   >
-                    {user?.email ?? t('emailNotSet')}
+                    {user?.email ?? t("emailNotSet")}
                   </ThemedText>
                 </View>
                 <View
@@ -369,16 +392,12 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                       gap: 4,
                     }}
                   >
-                    <Star
-                      size={14}
-                      color="#f59e0b"
-                      fill="#f59e0b"
-                    />
+                    <Star size={14} color="#f59e0b" fill="#f59e0b" />
                     <ThemedText
                       type="smallBold"
                       style={{ fontSize: FONT_SIZE.sm, color: "#fafafa" }}
                     >
-                      {avg > 0 ? avg.toFixed(1) : t('new')}
+                      {avg > 0 ? avg.toFixed(1) : t("new")}
                     </ThemedText>
                     <ThemedText
                       type="small"
@@ -388,17 +407,12 @@ function ProfileHeaderCard({ user, loading }: { user: any; loading: boolean }) {
                     </ThemedText>
                   </View>
                   <StatBadge
-                    icon={
-                      <GraduationCap
-                        size={12}
-                        color="#4ade80"
-                      />
-                    }
-                    label={`${offering.length} ${t('teach')}`}
+                    icon={<GraduationCap size={12} color="#4ade80" />}
+                    label={`${offering.length} ${t("teach")}`}
                   />
                   <StatBadge
                     icon={<BookOpen size={12} color="#818cf8" />}
-                    label={`${seeking.length} ${t('learn')}`}
+                    label={`${seeking.length} ${t("learn")}`}
                   />
                 </View>
               </>
@@ -440,7 +454,7 @@ function AvatarUploader({
   fallback?: string;
 }) {
   const theme = useTheme();
-  const t = useT('profile');
+  const t = useT("profile");
   const userQ = useCurrentUser();
   const toast = useToast();
   const [preview, setPreview] = React.useState<string | null>(null);
@@ -454,8 +468,8 @@ function AvatarUploader({
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         toast.toast({
-          title: t('permissionDenied'),
-          description: t('allowAccessPhoto'),
+          title: t("permissionDenied"),
+          description: t("allowAccessPhoto"),
           variant: "error",
         });
         return;
@@ -476,18 +490,20 @@ function AvatarUploader({
 
   const handleSaveAvatar = async (uriToUpload: string) => {
     try {
-      const filename = uriToUpload.split('/').pop() || `avatar_${Date.now()}.jpg`;
+      const filename =
+        uriToUpload.split("/").pop() || `avatar_${Date.now()}.jpg`;
       const match = /\.(\w+)$/.exec(filename);
       const mimeType = match ? `image/${match[1]}` : `image/jpeg`;
 
-      const name = filename || uriToUpload.split('/').pop() || `avatar_${Date.now()}.jpg`;
-      const type = mimeType || (match ? `image/${match[1]}` : 'image/jpeg');
+      const name =
+        filename || uriToUpload.split("/").pop() || `avatar_${Date.now()}.jpg`;
+      const type = mimeType || (match ? `image/${match[1]}` : "image/jpeg");
 
       // 1. Request presigned URL from backend
       const { uploadUrl, key } = await getPresignedUrlMutation.mutateAsync({
         fileName: name,
         fileType: type,
-        type: 'avatar',
+        type: "avatar",
       });
 
       // Step 2: Upload file
@@ -500,7 +516,11 @@ function AvatarUploader({
         body: file,
       });
 
-      if (!fileUploadRes.ok || fileUploadRes.status < 200 || fileUploadRes.status >= 300) {
+      if (
+        !fileUploadRes.ok ||
+        fileUploadRes.status < 200 ||
+        fileUploadRes.status >= 300
+      ) {
         throw new Error("File upload to storage failed");
       }
 
@@ -510,12 +530,12 @@ function AvatarUploader({
       if (!success) throw new Error("Could not confirm avatar upload.");
       // Dismiss preview modal upon success so toast renders visibly on the root screen
       setPreview(null);
-      toast.toast({ title: t('profilePictureUpdated'), variant: "success" });
+      toast.toast({ title: t("profilePictureUpdated"), variant: "success" });
     } catch (err: any) {
       setPreview(null);
       toast.toast({
-        title: t('imageUploadFailed'),
-        description: err?.message || t('couldNotUpdateProfilePicture'),
+        title: t("imageUploadFailed"),
+        description: err?.message || t("couldNotUpdateProfilePicture"),
         variant: "error",
       });
     }
@@ -556,7 +576,9 @@ function AvatarUploader({
           uri={preview}
           onClose={() => setPreview(null)}
           onUpload={() => handleSaveAvatar(preview)}
-          uploading={getPresignedUrlMutation.isPending || confirmMutation.isPending}
+          uploading={
+            getPresignedUrlMutation.isPending || confirmMutation.isPending
+          }
           isNewPick={preview !== current}
         />
       )}
@@ -578,7 +600,7 @@ function ImagePreviewModal({
   isNewPick?: boolean;
 }) {
   const theme = useTheme();
-  const t = useT('profile');
+  const t = useT("profile");
   return (
     <Modal visible onRequestClose={onClose} transparent animationType="fade">
       <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
@@ -598,8 +620,11 @@ function ImagePreviewModal({
             paddingVertical: SPACING[3],
           }}
         >
-          <ThemedText type="smallBold" style={{ color: "#fff", fontSize: FONT_SIZE.md }}>
-            {t('profilePicture')}
+          <ThemedText
+            type="smallBold"
+            style={{ color: "#fff", fontSize: FONT_SIZE.md }}
+          >
+            {t("profilePicture")}
           </ThemedText>
           <Pressable
             onPress={onClose}
@@ -617,7 +642,14 @@ function ImagePreviewModal({
           </Pressable>
         </View>
 
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: SPACING[4] }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: SPACING[4],
+          }}
+        >
           <ExpoImage
             source={{ uri }}
             style={{ width: 280, height: 280, borderRadius: 140 }}
@@ -628,11 +660,11 @@ function ImagePreviewModal({
         <View style={{ padding: SPACING[4], gap: SPACING[3] }}>
           {isNewPick && onUpload ? (
             <Button onPress={onUpload} loading={uploading}>
-              {t('saveProfilePicture')}
+              {t("saveProfilePicture")}
             </Button>
           ) : null}
           <Button variant="outline" onPress={onClose} disabled={uploading}>
-            {t('close')}
+            {t("close")}
           </Button>
         </View>
       </SafeAreaView>
@@ -645,7 +677,7 @@ function ImagePreviewModal({
 function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
   const theme = useTheme();
   const toast = useToast();
-  const t = useT('profile');
+  const t = useT("profile");
   const updateUser = useUpdateProfile();
 
   const [name, setName] = React.useState("");
@@ -671,20 +703,20 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
         has_name: !!name?.trim(),
         has_bio: !!bio?.trim(),
       });
-      toast.toast({ title: t('profileSaved'), variant: "success" });
+      toast.toast({ title: t("profileSaved"), variant: "success" });
     } catch (e: any) {
       if (e instanceof v.ValiError) {
         const map: Record<string, string> = {};
         const issues = v.flatten(e.issues);
         Object.entries(issues.nested ?? {}).forEach(([k, v]) => {
-          map[k] = (v as any)[0] ?? t('invalid');
+          map[k] = (v as any)[0] ?? t("invalid");
         });
         setErrors(map);
         return;
       }
       toast.toast({
-        title: t('couldNotSave'),
-        description: e?.message ?? t('tryAgain'),
+        title: t("couldNotSave"),
+        description: e?.message ?? t("tryAgain"),
         variant: "error",
       });
     }
@@ -694,31 +726,29 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>{t('profileInformation')}</CardTitle>
-          <CardDescription>
-            {t('profileInformationDesc')}
-          </CardDescription>
+          <CardTitle>{t("profileInformation")}</CardTitle>
+          <CardDescription>{t("profileInformationDesc")}</CardDescription>
         </CardHeader>
         <CardContent style={{ gap: SPACING[4] }}>
           <Input
-            label={t('displayName')}
+            label={t("displayName")}
             value={name}
             onChangeText={setName}
-            placeholder={t('yourName')}
+            placeholder={t("yourName")}
             error={errors.name}
             leftSlot={<UserRound size={16} color={theme.mutedForeground} />}
           />
           <Textarea
-            label={t('bio')}
+            label={t("bio")}
             value={bio}
             onChangeText={setBio}
-            placeholder={t('bioPlaceholder')}
+            placeholder={t("bioPlaceholder")}
             numberOfLines={5}
             error={errors.bio}
             description={`${bio.length}/500`}
           />
           <Button onPress={save} loading={updateUser.isPending || loading}>
-            {t('saveChanges')}
+            {t("saveChanges")}
           </Button>
         </CardContent>
       </Card>
@@ -730,7 +760,7 @@ function EditProfilePane({ user, loading }: { user: any; loading: boolean }) {
 
 function AppPreferencesCard() {
   const theme = useTheme();
-  const t = useT('profile');
+  const t = useT("profile");
   const { locale, setLocale } = useI18n();
   const { mode, setMode } = useThemeContext();
   const localeOpts = SUPPORTED_LOCALES.map((l) => ({
@@ -741,10 +771,8 @@ function AppPreferencesCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('appPreferences')}</CardTitle>
-        <CardDescription>
-          {t('appPreferencesDesc')}
-        </CardDescription>
+        <CardTitle>{t("appPreferences")}</CardTitle>
+        <CardDescription>{t("appPreferencesDesc")}</CardDescription>
       </CardHeader>
       <CardContent style={{ gap: SPACING[4] }}>
         <View style={{ gap: SPACING[2] }}>
@@ -756,9 +784,11 @@ function AppPreferencesCard() {
               marginLeft: SPACING[0.5],
             }}
           >
-            {t('language')}
+            {t("language")}
           </ThemedText>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}>
+          <View
+            style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING[2] }}
+          >
             {localeOpts.map((opt) => (
               <Pressable
                 key={opt.value}
@@ -771,9 +801,7 @@ function AppPreferencesCard() {
                   borderColor:
                     locale === opt.value ? theme.primary : theme.border,
                   backgroundColor:
-                    locale === opt.value
-                      ? theme.primary
-                      : theme.secondary,
+                    locale === opt.value ? theme.primary : theme.secondary,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: SPACING[1.5],
@@ -782,14 +810,19 @@ function AppPreferencesCard() {
                 <Globe2
                   size={15}
                   color={
-                    locale === opt.value ? theme.primaryForeground : theme.mutedForeground
+                    locale === opt.value
+                      ? theme.primaryForeground
+                      : theme.mutedForeground
                   }
                 />
                 <ThemedText
                   type="label"
                   style={{
-                    color: locale === opt.value ? theme.primaryForeground : theme.foreground,
-                    fontWeight: locale === opt.value ? '600' : '400',
+                    color:
+                      locale === opt.value
+                        ? theme.primaryForeground
+                        : theme.foreground,
+                    fontWeight: locale === opt.value ? "600" : "400",
                   }}
                 >
                   {opt.label}
@@ -808,7 +841,7 @@ function AppPreferencesCard() {
               letterSpacing: 1,
             }}
           >
-            {t('appearance')}
+            {t("appearance")}
           </ThemedText>
           <View style={{ flexDirection: "row", gap: SPACING[2] }}>
             <AppearanceChip
@@ -820,7 +853,7 @@ function AppPreferencesCard() {
                   }
                 />
               }
-              label={t('system')}
+              label={t("system")}
               active={mode === "system"}
               onPress={() => setMode("system")}
             />
@@ -833,7 +866,7 @@ function AppPreferencesCard() {
                   }
                 />
               }
-              label={t('light')}
+              label={t("light")}
               active={mode === "light"}
               onPress={() => setMode("light")}
             />
@@ -846,7 +879,7 @@ function AppPreferencesCard() {
                   }
                 />
               }
-              label={t('dark')}
+              label={t("dark")}
               active={mode === "dark"}
               onPress={() => setMode("dark")}
             />
@@ -888,7 +921,7 @@ function AppearanceChip({ icon, label, active, onPress }: any) {
 
 function SkillsPane({ user }: { user: any }) {
   const theme = useTheme();
-  const t = useT('profile');
+  const t = useT("profile");
   const skillsQ = useSkills();
   const catsQ = useSkillCategories();
   const addQ = useAddUserSkill();
@@ -939,7 +972,9 @@ function SkillsPane({ user }: { user: any }) {
       });
       toast.toast({
         title:
-          type === "OFFERING" ? t('addedTeachingSkill') : t('addedLearningSkill'),
+          type === "OFFERING"
+            ? t("addedTeachingSkill")
+            : t("addedLearningSkill"),
         variant: "success",
       });
       reset();
@@ -947,22 +982,22 @@ function SkillsPane({ user }: { user: any }) {
       await userQ.refetch();
     } catch (e: any) {
       toast.toast({
-        title: t('failedToAddSkill'),
-        description: e?.message ?? t('tryAgain'),
+        title: t("failedToAddSkill"),
+        description: e?.message ?? t("tryAgain"),
         variant: "error",
       });
     }
   };
 
   const remove = async (id: string) => {
-    Alert.alert(t('removeSkill'), t('removeSkillConfirm'), [
-      { text: t('cancel'), style: "cancel" },
+    Alert.alert(t("removeSkill"), t("removeSkillConfirm"), [
+      { text: t("cancel"), style: "cancel" },
       {
-        text: t('remove'),
+        text: t("remove"),
         style: "destructive",
         onPress: async () => {
           await removeQ.mutateAsync(id);
-          toast.toast({ title: t('skillRemoved'), variant: "success" });
+          toast.toast({ title: t("skillRemoved"), variant: "success" });
           await userQ.refetch();
         },
       },
@@ -981,37 +1016,35 @@ function SkillsPane({ user }: { user: any }) {
             }}
           >
             <View>
-              <CardTitle>{t('skills')}</CardTitle>
-              <CardDescription>
-                {t('skillsDesc')}
-              </CardDescription>
+              <CardTitle>{t("skills")}</CardTitle>
+              <CardDescription>{t("skillsDesc")}</CardDescription>
             </View>
             <Button
               size="sm"
               leftIcon={<Plus size={14} color="#fff" />}
               onPress={() => setDialogOpen(true)}
             >
-              {t('add')}
+              {t("add")}
             </Button>
           </View>
         </CardHeader>
         <CardContent style={{ gap: SPACING[5] }}>
           <SkillGroup
-            title={t('iCanTeach')}
+            title={t("iCanTeach")}
             accent="emerald"
             icon={<GraduationCap size={16} color={getAccent("emerald").main} />}
             list={offering}
             onRemove={remove}
-            empty={t('addSkillsToShare')}
+            empty={t("addSkillsToShare")}
           />
           <Separator />
           <SkillGroup
-            title={t('iWantToLearn')}
+            title={t("iWantToLearn")}
             accent="blue"
             icon={<BookOpen size={16} color={getAccent("blue").main} />}
             list={seeking}
             onRemove={remove}
-            empty={t('addSkillsToLearn')}
+            empty={t("addSkillsToLearn")}
           />
         </CardContent>
       </Card>
@@ -1021,10 +1054,8 @@ function SkillsPane({ user }: { user: any }) {
         onOpenChange={(o) => !addQ.isPending && setDialogOpen(o)}
       >
         <DialogHeader onClose={() => setDialogOpen(false)}>
-          <DialogTitle>{t('addSkill')}</DialogTitle>
-          <DialogDescription>
-            {t('addSkillDesc')}
-          </DialogDescription>
+          <DialogTitle>{t("addSkill")}</DialogTitle>
+          <DialogDescription>{t("addSkillDesc")}</DialogDescription>
         </DialogHeader>
         <DialogContent style={{ gap: SPACING[4] }}>
           <View style={{ gap: SPACING[2] }}>
@@ -1036,7 +1067,7 @@ function SkillsPane({ user }: { user: any }) {
                 marginLeft: SPACING[0.5],
               }}
             >
-              {t('skillType')}
+              {t("skillType")}
             </ThemedText>
             <View style={{ flexDirection: "row", gap: SPACING[2] }}>
               <Pressable
@@ -1067,7 +1098,7 @@ function SkillsPane({ user }: { user: any }) {
                   }
                 />
                 <ThemedText type="smallBold" style={{ fontSize: 12 }}>
-                  {t('iTeach')}
+                  {t("iTeach")}
                 </ThemedText>
               </Pressable>
               <Pressable
@@ -1098,56 +1129,56 @@ function SkillsPane({ user }: { user: any }) {
                   }
                 />
                 <ThemedText type="smallBold" style={{ fontSize: 12 }}>
-                  {t('iLearn')}
+                  {t("iLearn")}
                 </ThemedText>
               </Pressable>
             </View>
           </View>
           <SelectField
-            label={t('category')}
+            label={t("category")}
             value={categoryId}
             onChange={setCategoryId}
-            placeholder={t('pickCategory')}
+            placeholder={t("pickCategory")}
             options={[
-              { label: t('allCategories'), value: "" as any },
+              { label: t("allCategories"), value: "" as any },
               ...categories.map((c: any) => ({ label: c.name, value: c.id })),
             ]}
           />
           <SelectField
-            label={t('skill')}
+            label={t("skill")}
             value={skillId}
             onChange={setSkillId}
-            placeholder={t('searchOrSelectSkill')}
+            placeholder={t("searchOrSelectSkill")}
             options={[
-              { label: t('customSkill'), value: "__custom__" },
+              { label: t("customSkill"), value: "__custom__" },
               ...filtered.map((s: any) => ({ label: s.name, value: s.id })),
             ]}
             searchable
           />
           {skillId === "__custom__" ? (
             <Input
-              label={t('customSkillName')}
+              label={t("customSkillName")}
               value={customSkill}
               onChangeText={setCustomSkill}
-              placeholder={t('customSkillPlaceholder')}
+              placeholder={t("customSkillPlaceholder")}
             />
           ) : null}
           <SelectField
-            label={t('level')}
+            label={t("level")}
             value={level}
             onChange={setLevel}
             options={[
-              { label: t('beginner'), value: "BEGINNER" },
-              { label: t('intermediate'), value: "INTERMEDIATE" },
-              { label: t('advanced'), value: "ADVANCED" },
-              { label: t('expert'), value: "EXPERT" },
+              { label: t("beginner"), value: "BEGINNER" },
+              { label: t("intermediate"), value: "INTERMEDIATE" },
+              { label: t("advanced"), value: "ADVANCED" },
+              { label: t("expert"), value: "EXPERT" },
             ]}
           />
           <Textarea
-            label={t('experience')}
+            label={t("experience")}
             value={experience}
             onChangeText={setExperience}
-            placeholder={t('experiencePlaceholder')}
+            placeholder={t("experiencePlaceholder")}
             numberOfLines={3}
           />
         </DialogContent>
@@ -1157,7 +1188,7 @@ function SkillsPane({ user }: { user: any }) {
             onPress={() => setDialogOpen(false)}
             disabled={addQ.isPending}
           >
-            {t('cancel')}
+            {t("cancel")}
           </Button>
           <Button
             onPress={submit}
@@ -1166,7 +1197,7 @@ function SkillsPane({ user }: { user: any }) {
               !((skillId && skillId !== "__custom__") || customSkill.trim())
             }
           >
-            {t('addSkill')}
+            {t("addSkill")}
           </Button>
         </DialogFooter>
       </Dialog>
@@ -1190,7 +1221,7 @@ function SkillGroup({
   empty: string;
 }) {
   const theme = useTheme();
-  const t = useT('profile');
+  const t = useT("profile");
   return (
     <View style={{ gap: SPACING[2] }}>
       <View
@@ -1252,7 +1283,7 @@ function SkillGroup({
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-                  {s.skill?.name ?? s.skillName ?? t('skill')}
+                  {s.skill?.name ?? s.skillName ?? t("skill")}
                   {s.level ? (
                     <ThemedText
                       type="small"
@@ -1294,7 +1325,7 @@ function SkillGroup({
 
 function ReviewsPane() {
   const theme = useTheme();
-  const t = useT('profile');
+  const t = useT("profile");
   const reviewsQ = useMyReviews();
   const loading = reviewsQ.isLoading;
   const reviews = reviewsQ.data ?? [];
@@ -1309,8 +1340,8 @@ function ReviewsPane() {
     <View style={{ gap: SPACING[4] }}>
       <Card>
         <CardHeader>
-          <CardTitle>{t('reviews')}</CardTitle>
-          <CardDescription>{t('reviewsDesc')}</CardDescription>
+          <CardTitle>{t("reviews")}</CardTitle>
+          <CardDescription>{t("reviewsDesc")}</CardDescription>
         </CardHeader>
         <CardContent style={{ gap: SPACING[4] }}>
           <View
@@ -1358,7 +1389,8 @@ function ReviewsPane() {
                   marginTop: 4,
                 }}
               >
-                {reviews.length} {reviews.length === 1 ? t('review') : t('reviews')}
+                {reviews.length}{" "}
+                {reviews.length === 1 ? t("review") : t("reviews")}
               </ThemedText>
             </View>
             <View style={{ flex: 1, gap: SPACING[1] }}>
@@ -1453,7 +1485,7 @@ function ReviewsPane() {
               <Star size={24} color={theme.mutedForeground} />
             </View>
             <ThemedText type="default" style={{ fontWeight: "700" }}>
-              {t('noReviewsYet')}
+              {t("noReviewsYet")}
             </ThemedText>
             <ThemedText
               type="small"
@@ -1463,7 +1495,7 @@ function ReviewsPane() {
                 fontSize: FONT_SIZE.sm,
               }}
             >
-              {t('noReviewsDesc')}
+              {t("noReviewsDesc")}
             </ThemedText>
           </CardContent>
         </Card>
@@ -1480,7 +1512,7 @@ function ReviewsPane() {
 
 export function ReviewCard({ review }: { review: any }) {
   const theme = useTheme();
-    const t = useT('profile');
+  const t = useT("profile");
 
   const rating = Math.round(review.rating ?? 0);
   const tags: string[] = review.tags ?? [];
@@ -1509,7 +1541,7 @@ export function ReviewCard({ review }: { review: any }) {
           </Pressable>
           <View style={{ flex: 1 }}>
             <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.md }}>
-              {review.reviewer?.name ?? t('user')}
+              {review.reviewer?.name ?? t("user")}
             </ThemedText>
             <View
               style={{
@@ -1588,7 +1620,7 @@ export function ReviewCard({ review }: { review: any }) {
               type="small"
               style={{ color: theme.mutedForeground, fontSize: FONT_SIZE.sm }}
             >
-              {t('exchangeLabel')}: {review.exchange.taughtSkillName} ↔{" "}
+              {t("exchangeLabel")}: {review.exchange.taughtSkillName} ↔{" "}
               {review.exchange.receivedSkillName}
             </ThemedText>
           </View>
@@ -1601,7 +1633,7 @@ export function ReviewCard({ review }: { review: any }) {
 /* ---------------------------- Referrals Pane ---------------------------- */
 
 function ReferralsPane() {
-  const t = useT('profile');
+  const t = useT("profile");
   const refCodeQ = useReferralCode();
   const refStatsQ = useReferralStats();
   const toast = useToast();
@@ -1617,12 +1649,12 @@ function ReferralsPane() {
   const copy = async () => {
     const Clipboard = await import("expo-clipboard");
     await Clipboard.setStringAsync(shareLink);
-    toast.toast({ title: t('linkCopied'), variant: "success" });
+    toast.toast({ title: t("linkCopied"), variant: "success" });
   };
   const share = async () => {
     try {
       await Share.share({
-        message: t('shareReferralMessage', { link: shareLink }),
+        message: t("shareReferralMessage", { link: shareLink }),
       });
     } catch {}
   };
@@ -1651,10 +1683,8 @@ function ReferralsPane() {
               <Gift size={20} color={getAccent("violet").main} />
             </View>
             <View style={{ flex: 1 }}>
-              <CardTitle>{t('inviteFriends')}</CardTitle>
-              <CardDescription>
-                {t('inviteFriendsDesc')}
-              </CardDescription>
+              <CardTitle>{t("inviteFriends")}</CardTitle>
+              <CardDescription>{t("inviteFriendsDesc")}</CardDescription>
             </View>
           </View>
         </CardHeader>
@@ -1700,7 +1730,7 @@ function ReferralsPane() {
             >
               <Copy size={14} color={theme.foreground} />
               <ThemedText type="smallBold" style={{ fontSize: FONT_SIZE.sm }}>
-                {t('copy')}
+                {t("copy")}
               </ThemedText>
             </Pressable>
           </View>
@@ -1711,25 +1741,25 @@ function ReferralsPane() {
               leftIcon={<Share2 size={16} color={theme.foreground} />}
               onPress={share}
             >
-              {t('shareLink')}
+              {t("shareLink")}
             </Button>
           </View>
           <View style={{ flexDirection: "row", gap: SPACING[2] }}>
             <MiniStat
               icon={<Users size={16} color={getAccent("indigo").main} />}
-              label={t('referrals')}
+              label={t("referrals")}
               value={stats?.totalReferrals ?? 0}
               accent="indigo"
             />
             <MiniStat
               icon={<TrendingUp size={16} color={getAccent("emerald").main} />}
-              label={t('referralsActive')}
+              label={t("referralsActive")}
               value={stats?.activeReferrals ?? 0}
               accent="emerald"
             />
             <MiniStat
               icon={<HandCoins size={16} color={getAccent("amber").main} />}
-              label={t('referralsPointsEarned')}
+              label={t("referralsPointsEarned")}
               value={stats?.pointsEarned ?? 0}
               accent="amber"
             />
@@ -1739,10 +1769,8 @@ function ReferralsPane() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('recentReferrals')}</CardTitle>
-          <CardDescription>
-            {t('recentReferralsDesc')}
-          </CardDescription>
+          <CardTitle>{t("recentReferrals")}</CardTitle>
+          <CardDescription>{t("recentReferralsDesc")}</CardDescription>
         </CardHeader>
         <CardContent style={{ gap: SPACING[2] }}>
           {loading ? (
@@ -1758,7 +1786,7 @@ function ReferralsPane() {
               }}
             >
               <ThemedText type="default" style={{ fontWeight: "700" }}>
-                {t('noReferralsYet')}
+                {t("noReferralsYet")}
               </ThemedText>
               <ThemedText
                 type="small"
@@ -1768,7 +1796,7 @@ function ReferralsPane() {
                   fontSize: FONT_SIZE.sm,
                 }}
               >
-                {t('noReferralsDesc')}
+                {t("noReferralsDesc")}
               </ThemedText>
             </View>
           ) : (
@@ -1790,7 +1818,7 @@ function ReferralsPane() {
                     type="smallBold"
                     style={{ fontSize: FONT_SIZE.md }}
                   >
-                    {r.user?.name ?? t('friend')}
+                    {r.user?.name ?? t("friend")}
                   </ThemedText>
                   <ThemedText
                     type="small"
@@ -1811,11 +1839,11 @@ function ReferralsPane() {
                     }}
                   >
                     <Badge variant="accent" accent="emerald">
-                      {t('ptsBadge', { count: 200 })}
+                      {t("ptsBadge", { count: 200 })}
                     </Badge>
                   </View>
                 ) : (
-                  <Badge variant="outline">{t('pending')}</Badge>
+                  <Badge variant="outline">{t("pending")}</Badge>
                 )}
               </View>
             ))
@@ -1877,7 +1905,7 @@ function MiniStat({
 
 function NotificationsPrefsPane() {
   const theme = useTheme();
-  const t = useT('profile');
+  const t = useT("profile");
   const updateQ = useUpdateNotificationPreferences();
 
   const userQ = useCurrentUser();
@@ -1889,35 +1917,35 @@ function NotificationsPrefsPane() {
     await updateQ.mutateAsync(patch);
     await userQ.refetch();
   };
-  
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('notificationPreferences')}</CardTitle>
-        <CardDescription>{t('notificationPreferencesDesc')}</CardDescription>
+        <CardTitle>{t("notificationPreferences")}</CardTitle>
+        <CardDescription>{t("notificationPreferencesDesc")}</CardDescription>
       </CardHeader>
       <CardContent style={{ gap: SPACING[4] }}>
         {loading && !user ? <SkeletonText lines={6} /> : null}
         <View style={{ gap: SPACING[3] }}>
           <Switch
-            label={t('inApp')}
-            description={t('inAppDesc')}
+            label={t("inApp")}
+            description={t("inAppDesc")}
             value={user.inAppNotifications ?? true}
             onValueChange={(v) => {
               set({ inAppNotifications: v });
             }}
           />
           <Switch
-            label={t('emailDigests')}
-            description={t('emailDigestsDesc')}
+            label={t("emailDigests")}
+            description={t("emailDigestsDesc")}
             value={user.emailNotifications ?? true}
             onValueChange={(v) => {
               set({ emailNotifications: v });
             }}
           />
           <Switch
-            label={t('pushNotificationsLabel')}
-            description={t('pushNotificationsDesc')}
+            label={t("pushNotificationsLabel")}
+            description={t("pushNotificationsDesc")}
             value={user.pushNotifications ?? true}
             onValueChange={(v) => {
               set({ pushNotifications: v });

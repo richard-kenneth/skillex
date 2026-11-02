@@ -69,7 +69,13 @@ const variants = {
 // Individual step content components
 // ─────────────────────────────────────────────
 
-function WelcomeStep({ userName, t }: { userName: string; t: ReturnType<typeof useTranslations> }) {
+function WelcomeStep({
+  userName,
+  t,
+}: {
+  userName: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
   return (
     <div className="flex flex-col items-center text-center space-y-5 py-2">
       {/* Animated icon */}
@@ -156,7 +162,9 @@ function ProfileStep({
       </motion.div>
 
       <div className="space-y-2">
-        <h2 className="text-2xl font-extrabold tracking-tight">{t("profileTitle")}</h2>
+        <h2 className="text-2xl font-extrabold tracking-tight">
+          {t("profileTitle")}
+        </h2>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
           {t("profileDesc")}
         </p>
@@ -168,14 +176,16 @@ function ProfileStep({
           <div key={item.label} className="flex items-center gap-3 px-4 py-3">
             <div
               className={`h-5 w-5 rounded-full flex-shrink-0 flex items-center justify-center ${
-                item.done ? "bg-green-500/20 text-green-500 border-0" : "border-2 border-blue-400/60"
+                item.done
+                  ? "bg-green-500/20 text-green-500 border-0"
+                  : "border-2 border-blue-400/60"
               }`}
             >
-              {item.done ? (
-                <CheckCircle2 className="h-4 w-4" />
-              ) : null}
+              {item.done ? <CheckCircle2 className="h-4 w-4" /> : null}
             </div>
-            <span className={`text-sm ${item.done ? "line-through text-muted-foreground/60" : "text-foreground/80"}`}>
+            <span
+              className={`text-sm ${item.done ? "line-through text-muted-foreground/60" : "text-foreground/80"}`}
+            >
               {item.label}
             </span>
           </div>
@@ -195,7 +205,13 @@ function ProfileStep({
   );
 }
 
-function SkillsStep({ t, onNavigate }: { t: ReturnType<typeof useTranslations>; onNavigate: () => void }) {
+function SkillsStep({
+  t,
+  onNavigate,
+}: {
+  t: ReturnType<typeof useTranslations>;
+  onNavigate: () => void;
+}) {
   return (
     <div className="flex flex-col items-center text-center space-y-5 py-2">
       <motion.div
@@ -208,7 +224,9 @@ function SkillsStep({ t, onNavigate }: { t: ReturnType<typeof useTranslations>; 
       </motion.div>
 
       <div className="space-y-2">
-        <h2 className="text-2xl font-extrabold tracking-tight">{t("skillsTitle")}</h2>
+        <h2 className="text-2xl font-extrabold tracking-tight">
+          {t("skillsTitle")}
+        </h2>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
           {t("skillsDesc")}
         </p>
@@ -217,11 +235,17 @@ function SkillsStep({ t, onNavigate }: { t: ReturnType<typeof useTranslations>; 
       {/* Two-column skill type cards */}
       <div className="grid grid-cols-2 gap-3 w-full">
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-left space-y-1">
-          <p className="text-xs font-bold uppercase tracking-widest text-primary">{t("skillsOffer")}</p>
-          <p className="text-xs text-muted-foreground">{t("skillsOfferDesc")}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-primary">
+            {t("skillsOffer")}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {t("skillsOfferDesc")}
+          </p>
         </div>
         <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-4 text-left space-y-1">
-          <p className="text-xs font-bold uppercase tracking-widest text-purple-500">{t("skillsSeek")}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-purple-500">
+            {t("skillsSeek")}
+          </p>
           <p className="text-xs text-muted-foreground">{t("skillsSeekDesc")}</p>
         </div>
       </div>
@@ -240,7 +264,12 @@ function SkillsStep({ t, onNavigate }: { t: ReturnType<typeof useTranslations>; 
 }
 
 function MatchesStep({ t }: { t: ReturnType<typeof useTranslations> }) {
-  const items: { label: string; color: string; border: string; desc: string }[] = [
+  const items: {
+    label: string;
+    color: string;
+    border: string;
+    desc: string;
+  }[] = [
     {
       label: t("matchType1"),
       color: "text-green-600 dark:text-green-400",
@@ -267,7 +296,9 @@ function MatchesStep({ t }: { t: ReturnType<typeof useTranslations> }) {
       </motion.div>
 
       <div className="space-y-2">
-        <h2 className="text-2xl font-extrabold tracking-tight">{t("matchesTitle")}</h2>
+        <h2 className="text-2xl font-extrabold tracking-tight">
+          {t("matchesTitle")}
+        </h2>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
           {t("matchesDesc")}
         </p>
@@ -275,8 +306,15 @@ function MatchesStep({ t }: { t: ReturnType<typeof useTranslations> }) {
 
       <div className="w-full space-y-3">
         {items.map((item) => (
-          <div key={item.label} className={`rounded-xl border ${item.border} p-4 text-left`}>
-            <p className={`text-xs font-bold uppercase tracking-widest ${item.color}`}>{item.label}</p>
+          <div
+            key={item.label}
+            className={`rounded-xl border ${item.border} p-4 text-left`}
+          >
+            <p
+              className={`text-xs font-bold uppercase tracking-widest ${item.color}`}
+            >
+              {item.label}
+            </p>
             <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
           </div>
         ))}
@@ -317,7 +355,9 @@ function DoneStep({
       </motion.div>
 
       <div className="space-y-2">
-        <h2 className="text-2xl font-extrabold tracking-tight">{t("doneTitle")}</h2>
+        <h2 className="text-2xl font-extrabold tracking-tight">
+          {t("doneTitle")}
+        </h2>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
           {t("doneDesc")}
         </p>
@@ -329,12 +369,16 @@ function DoneStep({
           <div key={item.label} className="flex items-center gap-3 px-4 py-3">
             <div
               className={`h-5 w-5 rounded-full flex-shrink-0 flex items-center justify-center ${
-                item.done ? "bg-primary/20 text-primary" : "border-2 border-muted-foreground/30"
+                item.done
+                  ? "bg-primary/20 text-primary"
+                  : "border-2 border-muted-foreground/30"
               }`}
             >
               {item.done && <CheckCircle2 className="h-4 w-4" />}
             </div>
-            <span className={`text-sm ${item.done ? "line-through text-muted-foreground/60" : "text-foreground/80"}`}>
+            <span
+              className={`text-sm ${item.done ? "line-through text-muted-foreground/60" : "text-foreground/80"}`}
+            >
               {item.label}
             </span>
           </div>
@@ -361,7 +405,10 @@ function ProgressDots({ total, current }: { total: number; current: number }) {
           key={i}
           animate={{
             width: i === current ? 20 : 6,
-            backgroundColor: i <= current ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.3)",
+            backgroundColor:
+              i <= current
+                ? "hsl(var(--primary))"
+                : "hsl(var(--muted-foreground) / 0.3)",
           }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
           className="h-1.5 rounded-full"
@@ -435,7 +482,10 @@ export function OnboardingWizard({
       if (storedIdx !== -1) {
         // If the stored step is complete, find the next incomplete step
         let targetIdx = storedIdx;
-        while (targetIdx < allSteps.length - 1 && isStepComplete(allSteps[targetIdx].id)) {
+        while (
+          targetIdx < allSteps.length - 1 &&
+          isStepComplete(allSteps[targetIdx].id)
+        ) {
           targetIdx++;
         }
         setStepIndex(targetIdx);
@@ -466,7 +516,8 @@ export function OnboardingWizard({
 
   // Only permanently hide the wizard if the user has explicitly dismissed/finalized it.
   // We check mounted to avoid SSR flash issues.
-  if (mounted && sessionToken && sessionStorage.getItem(SESSION_KEY)) return null;
+  if (mounted && sessionToken && sessionStorage.getItem(SESSION_KEY))
+    return null;
 
   const goNext = () => {
     if (stepIndex < activeSteps.length - 1) {
@@ -483,7 +534,9 @@ export function OnboardingWizard({
   };
 
   const handleDismiss = () => {
-    track(AnalyticsEvent.ONBOARDING_DISMISSED, { step: currentStep?.id ?? "unknown" });
+    track(AnalyticsEvent.ONBOARDING_DISMISSED, {
+      step: currentStep?.id ?? "unknown",
+    });
     sessionStorage.setItem(SESSION_KEY, "1");
     setOpen(false);
   };
@@ -516,15 +569,18 @@ export function OnboardingWizard({
   const isWelcome = currentStep?.id === "welcome";
 
   return (
-    <Dialog open={open} onOpenChange={(o) => {
-      if (!o) {
-        if (isClosingProgrammatically.current) {
-          isClosingProgrammatically.current = false;
-        } else {
-          handleDismiss();
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) {
+          if (isClosingProgrammatically.current) {
+            isClosingProgrammatically.current = false;
+          } else {
+            handleDismiss();
+          }
         }
-      }
-    }}>
+      }}
+    >
       <DialogContent
         showCloseButton={false}
         className="sm:max-w-md p-0 overflow-hidden border border-border/60 shadow-2xl bg-background"
@@ -533,7 +589,9 @@ export function OnboardingWizard({
         <div className="relative bg-gradient-to-br from-primary/8 via-background to-secondary/5 px-6 pt-6 pb-4 border-b border-border/40">
           <DialogHeader className="space-y-0">
             <DialogTitle className="sr-only">{t("wizardTitle")}</DialogTitle>
-            <DialogDescription className="sr-only">{t("wizardDesc")}</DialogDescription>
+            <DialogDescription className="sr-only">
+              {t("wizardDesc")}
+            </DialogDescription>
           </DialogHeader>
           <ProgressDots total={activeSteps.length} current={stepIndex} />
           {/* Dismiss link */}
@@ -559,18 +617,27 @@ export function OnboardingWizard({
               exit="exit"
               transition={{ duration: 0.22, ease: "easeInOut" }}
             >
-              {currentStep?.id === "welcome" && <WelcomeStep userName={userName} t={t} />}
+              {currentStep?.id === "welcome" && (
+                <WelcomeStep userName={userName} t={t} />
+              )}
               {currentStep?.id === "profile" && (
                 <ProfileStep
                   t={t}
-                  onNavigate={() => navigateTo("/dashboard/profile?step=profile")}
+                  onNavigate={() =>
+                    navigateTo("/dashboard/profile?step=profile")
+                  }
                   hasName={hasName}
                   hasBio={hasBio}
                   hasImage={hasImage}
                 />
               )}
               {currentStep?.id === "skills" && (
-                <SkillsStep t={t} onNavigate={() => navigateTo("/dashboard/profile?step=skills")} />
+                <SkillsStep
+                  t={t}
+                  onNavigate={() =>
+                    navigateTo("/dashboard/profile?step=skills")
+                  }
+                />
               )}
               {currentStep?.id === "matches" && <MatchesStep t={t} />}
               {currentStep?.id === "done" && (

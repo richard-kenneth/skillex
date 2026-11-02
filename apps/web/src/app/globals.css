@@ -133,14 +133,24 @@
     /* Disable scrolling rubber band at html level */
     overscroll-behavior: none;
   }
-  
+
   /* Disable tap highlight on mobile browsers */
-  a, button, [role="button"], select, input, textarea {
+  a,
+  button,
+  [role="button"],
+  select,
+  input,
+  textarea {
     -webkit-tap-highlight-color: transparent;
   }
-  
+
   /* Prevent text selection on interactive UI elements */
-  button, a, nav, header, [role="tab"], .select-none {
+  button,
+  a,
+  nav,
+  header,
+  [role="tab"],
+  .select-none {
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;

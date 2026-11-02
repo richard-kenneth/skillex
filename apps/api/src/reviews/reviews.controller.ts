@@ -8,19 +8,22 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { ReviewsService } from './reviews.service';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
 import { ValibotValidationPipe } from '../common/pipes/valibot.pipe';
-import { CreateReviewSchema, type CreateReviewDto } from '@skil-ex2/shared';
+import { CreateReviewSchema, type CreateReviewDto } from '@skillex/shared';
 
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
+  // A review is written once per completed exchange; limit retries and abuse.
   @Post()
   @UseGuards(BetterAuthGuard)
   @UsePipes(new ValibotValidationPipe(CreateReviewSchema))
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   createReview(
     @Req() req: Request & { user: { id: string } },
     @Body() data: CreateReviewDto,

@@ -129,7 +129,7 @@ self.addEventListener('push', (event) => {
   try {
     const data = event.data.json();
     const notification = data.notification;
-    const title = notification.title || 'Skill Exchange';
+    const title = notification.title || 'SkillEx';
     const options = {
       body: notification.body || '',
       icon: notification.icon || '/icon-192.png',

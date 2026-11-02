@@ -20,7 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Link, useRouter } from "@/i18n/navigation";
-import { calculatePointsBreakdown } from "@skil-ex2/shared";
+import { calculatePointsBreakdown } from "@skillex/shared";
 import {
   ArrowRightLeft,
   BookOpen,
@@ -130,7 +130,9 @@ export default function ExchangeDetails({
   const [updating, setUpdating] = useState<string | null>(null);
   const [showPointsBreakdown, setShowPointsBreakdown] = useState(false);
 
-  const hasReviewed = exchange.reviews?.some((r) => r.reviewerId === currentUser.id);
+  const hasReviewed = exchange.reviews?.some(
+    (r) => r.reviewerId === currentUser.id,
+  );
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -151,8 +153,8 @@ export default function ExchangeDetails({
     setConfirmModal({
       isOpen: true,
       title: isCompleted ? tc("confirm") : t("missed"),
-      description: isCompleted 
-        ? t("confirmMarkCompleted") 
+      description: isCompleted
+        ? t("confirmMarkCompleted")
         : t("confirmMarkMissed"),
       confirmText: isCompleted ? t("markedComplete") : t("markMissed"),
       onConfirm: () => updateSessionStatus(sessionId, status),
@@ -242,7 +244,10 @@ export default function ExchangeDetails({
       try {
         const data = JSON.parse(event.data);
         // Refresh if it's a general update for this exchange or a session update within it
-        if (data.exchangeId === exchange.id || data.requestId === exchange.requestId) {
+        if (
+          data.exchangeId === exchange.id ||
+          data.requestId === exchange.requestId
+        ) {
           router.refresh();
         }
       } catch (err) {
@@ -470,9 +475,7 @@ export default function ExchangeDetails({
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() =>
-                    router.push(`/room/${session.id}`)
-                  }
+                  onClick={() => router.push(`/room/${session.id}`)}
                 >
                   <Video className="h-4 w-4 mr-2" /> {t("joinRoom")}
                 </Button>
@@ -497,7 +500,9 @@ export default function ExchangeDetails({
                     variant="outline"
                     size="icon"
                     className="h-8 w-8 text-red-500 hover:text-red-600 border-red-500/30 hover:bg-red-500/10"
-                    onClick={() => handleSessionStatusClick(session.id, "MISSED")}
+                    onClick={() =>
+                      handleSessionStatusClick(session.id, "MISSED")
+                    }
                     disabled={updating === session.id}
                   >
                     <XCircle className="h-4 w-4" />
@@ -758,7 +763,9 @@ export default function ExchangeDetails({
                     onClick={() => !hasReviewed && setIsReviewModalOpen(true)}
                     disabled={hasReviewed}
                   >
-                    <Star className={`h-4 w-4 ${hasReviewed ? "fill-amber-400 text-amber-400" : ""}`} />
+                    <Star
+                      className={`h-4 w-4 ${hasReviewed ? "fill-amber-400 text-amber-400" : ""}`}
+                    />
                     {hasReviewed ? tr("reviewSubmitted") : t("leaveReview")}
                   </Button>
                 )}
@@ -1170,7 +1177,9 @@ export default function ExchangeDetails({
       {/* Confirmation Dialog */}
       <Dialog
         open={confirmModal.isOpen}
-        onOpenChange={(open) => setConfirmModal((prev) => ({ ...prev, isOpen: open }))}
+        onOpenChange={(open) =>
+          setConfirmModal((prev) => ({ ...prev, isOpen: open }))
+        }
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -1182,7 +1191,9 @@ export default function ExchangeDetails({
           <DialogFooter className="flex gap-2 sm:justify-end">
             <Button
               variant="outline"
-              onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+              onClick={() =>
+                setConfirmModal((prev) => ({ ...prev, isOpen: false }))
+              }
             >
               {tc("cancel")}
             </Button>

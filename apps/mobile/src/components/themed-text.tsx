@@ -1,29 +1,29 @@
-import { StyleSheet, Text, type TextProps } from 'react-native';
-import { TYPOGRAPHY } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { StyleSheet, Text, type TextProps } from "react-native";
+import { TYPOGRAPHY } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 export type TextVariant =
-  | 'body'
-  | 'bodySmall'
-  | 'caption'
-  | 'label'
-  | 'cardTitle'
-  | 'sectionTitle'
-  | 'screenTitle'
-  | 'display'
-  | 'overline'
-  | 'button'
-  | 'buttonSm'
-  | 'badge'
+  | "body"
+  | "bodySmall"
+  | "caption"
+  | "label"
+  | "cardTitle"
+  | "sectionTitle"
+  | "screenTitle"
+  | "display"
+  | "overline"
+  | "button"
+  | "buttonSm"
+  | "badge"
   // Legacy compat
-  | 'default'
-  | 'title'
-  | 'small'
-  | 'smallBold'
-  | 'subtitle'
-  | 'link'
-  | 'linkPrimary'
-  | 'code';
+  | "default"
+  | "title"
+  | "small"
+  | "smallBold"
+  | "subtitle"
+  | "link"
+  | "linkPrimary"
+  | "code";
 
 export type ThemedTextProps = TextProps & {
   type?: TextVariant;
@@ -33,7 +33,7 @@ export type ThemedTextProps = TextProps & {
 
 export function ThemedText({
   style,
-  type = 'body',
+  type = "body",
   themeColor,
   muted,
   ...rest
@@ -41,18 +41,14 @@ export function ThemedText({
   const theme = useTheme();
 
   const color = themeColor
-    ? (theme as any)[themeColor] ?? theme.foreground
+    ? ((theme as any)[themeColor] ?? theme.foreground)
     : muted
       ? theme.mutedForeground
       : theme.foreground;
 
   return (
     <Text
-      style={[
-        { color },
-        variantStyles[type] ?? variantStyles.body,
-        style,
-      ]}
+      style={[{ color }, variantStyles[type] ?? variantStyles.body, style]}
       {...rest}
     />
   );
@@ -78,22 +74,22 @@ const variantStyles = StyleSheet.create({
   small: TYPOGRAPHY.caption,
   smallBold: {
     ...TYPOGRAPHY.caption,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   subtitle: TYPOGRAPHY.sectionTitle,
   link: {
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   linkPrimary: {
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   code: {
-    fontFamily: 'monospace',
+    fontFamily: "monospace",
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });

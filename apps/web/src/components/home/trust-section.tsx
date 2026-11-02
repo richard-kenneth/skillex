@@ -11,7 +11,12 @@ const trustItems = [
 ];
 
 const techStack = [
-  "Next.js", "NestJS", "PostgreSQL", "LiveKit", "Prisma", "Tailwind CSS",
+  "Next.js",
+  "NestJS",
+  "PostgreSQL",
+  "LiveKit",
+  "Prisma",
+  "Tailwind CSS",
 ];
 
 export function TrustSection() {

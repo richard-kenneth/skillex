@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question or discuss an idea
+    url: https://github.com/richard-kenneth/skillex/discussions
+    about: Use Discussions for questions, ideas, and general help.
+  - name: Report a security vulnerability
+    url: https://github.com/richard-kenneth/skillex/security/advisories/new
+    about: Report vulnerabilities privately. Do not open a public issue.
+  - name: Corporate CLA or trademark request
+    url: https://github.com/richard-kenneth/skillex/discussions
+    about: Open a discussion and use the Corporate CLA or Trademark template. Do not post confidential information.

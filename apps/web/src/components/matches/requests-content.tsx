@@ -251,8 +251,10 @@ function RequestCard({
               </Badge>
               <span className="text-xs text-muted-foreground">
                 ({request.requestedSkillSessions}{" "}
-                {request.requestedSkillSessions !== 1 ? tc("sessions") : tc("session")},{" "}
-                {request.requestedSkillDuration}m)
+                {request.requestedSkillSessions !== 1
+                  ? tc("sessions")
+                  : tc("session")}
+                , {request.requestedSkillDuration}m)
               </span>
 
               {request.offeredSkill && (
@@ -267,8 +269,10 @@ function RequestCard({
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     ({request.offeredSkillSessions}{" "}
-                    {request.offeredSkillSessions !== 1 ? tc("sessions") : tc("session")},{" "}
-                    {request.offeredSkillDuration}m)
+                    {request.offeredSkillSessions !== 1
+                      ? tc("sessions")
+                      : tc("session")}
+                    , {request.offeredSkillDuration}m)
                   </span>
                 </>
               )}
@@ -278,7 +282,9 @@ function RequestCard({
             <div className="flex flex-col gap-0.5 text-[11px] font-medium bg-muted/40 p-2 rounded border border-border/30">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">
-                  {request.senderId === currentUserId ? tc("you") : (request.sender?.name ?? t("sender"))}
+                  {request.senderId === currentUserId
+                    ? tc("you")
+                    : (request.sender?.name ?? t("sender"))}
                 </span>
                 <span
                   className={
@@ -290,7 +296,9 @@ function RequestCard({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">
-                  {request.receiverId === currentUserId ? tc("you") : (request.receiver?.name ?? t("receiver"))}
+                  {request.receiverId === currentUserId
+                    ? tc("you")
+                    : (request.receiver?.name ?? t("receiver"))}
                 </span>
                 <span
                   className={
@@ -307,10 +315,14 @@ function RequestCard({
               <div className="flex items-center gap-2 text-sm">
                 <Coins className="h-3.5 w-3.5 text-amber-400" />
                 <span className="text-amber-400 font-medium">
-                  {request.pointsProposal} {tc("points_label", { count: request.pointsProposal })}
+                  {request.pointsProposal}{" "}
+                  {tc("points_label", { count: request.pointsProposal })}
                 </span>
                 <span className="text-muted-foreground">
-                  {t("paidBy")} {request.pointsPayerId === currentUserId ? tc("you") : (otherUser?.name ?? tc("them"))}
+                  {t("paidBy")}{" "}
+                  {request.pointsPayerId === currentUserId
+                    ? tc("you")
+                    : (otherUser?.name ?? tc("them"))}
                 </span>
               </div>
             )}

@@ -1,0 +1,109 @@
+name: skillex
+
+# Local development dependencies. Everything here is free and runs on your
+# machine; no third-party account is required.
+#
+#   docker compose up -d --wait postgres redis mailpit seaweedfs
+#   docker compose run --rm storage-init
+#   docker compose --profile video up -d # core services + LiveKit
+#
+# Credentials in this file are development-only. Never reuse them in production.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: skillex
+      POSTGRES_PASSWORD: skillex
+      POSTGRES_DB: skillex
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skillex -d skillex"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Catches all outbound email in development. Open http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+
+  # S3-compatible stand-in for Cloudflare R2. The S3 API is on :9000 and the
+  # filer UI is on :9001. SeaweedFS is Apache-2.0 and actively maintained; the
+  # MinIO community image is retired.
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    restart: unless-stopped
+    environment:
+      AWS_ACCESS_KEY_ID: skillex
+      AWS_SECRET_ACCESS_KEY: skillex-dev-secret
+      S3_BUCKET: skillex-uploads
+    ports:
+      - "9000:8333" # S3 API
+      - "9001:8888" # Filer UI
+    volumes:
+      - seaweedfs-data:/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8333"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # Creates the upload bucket and enables public read for uploaded files.
+  # SeaweedFS creates the bucket from S3_BUCKET; this waits for it and applies
+  # the same anonymous-read policy the old MinIO init container used.
+  storage-init:
+    image: chrislusf/seaweedfs:latest
+    depends_on:
+      seaweedfs:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      until echo 's3.bucket.list' | weed shell -master=seaweedfs:9333 | grep -q 'skillex-uploads'; do sleep 1; done;
+      echo 's3.anonymous.set -bucket=skillex-uploads -access=Read' | weed shell -master=seaweedfs:9333;
+      echo 'SeaweedFS bucket ready: skillex-uploads';
+      "
+    restart: "no"
+
+  # Optional video stack. Start with:
+  #   docker compose --profile video up -d
+  # The --dev mode uses the API key "devkey" and secret "secret".
+  livekit:
+    image: livekit/livekit-server:latest
+    profiles: ["video"]
+    restart: unless-stopped
+    command: ["--dev", "--bind", "0.0.0.0"]
+    ports:
+      - "7880:7880" # WebSocket / HTTP
+      - "7881:7881" # RTC TCP
+      - "7882:7882/udp" # RTC UDP
+
+volumes:
+  postgres-data:
+  redis-data:
+  seaweedfs-data:

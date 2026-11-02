@@ -21,8 +21,8 @@ interface Category {
 interface UserSkill {
   id: string;
   type: "OFFERING" | "SEEKING";
-  skill: { 
-    id: string; 
+  skill: {
+    id: string;
     name: string;
     category?: Category;
   };
@@ -43,7 +43,12 @@ interface MatchCardProps {
   currentUserId: string;
 }
 
-export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }: MatchCardProps) {
+export function MatchCard({
+  user,
+  isPerfect,
+  currentUserSkills,
+  currentUserId,
+}: MatchCardProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const t = useTranslations("matches");
   const tSponsors = useTranslations("sponsors");
@@ -52,29 +57,44 @@ export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }:
   const seeking = user.skills.filter((s) => s.type === "SEEKING");
 
   const mySeekingIds = new Set(
-    currentUserSkills.filter((s) => s.type === "SEEKING").map((s) => s.skill.id),
+    currentUserSkills
+      .filter((s) => s.type === "SEEKING")
+      .map((s) => s.skill.id),
   );
   const myOfferingIds = new Set(
-    currentUserSkills.filter((s) => s.type === "OFFERING").map((s) => s.skill.id),
+    currentUserSkills
+      .filter((s) => s.type === "OFFERING")
+      .map((s) => s.skill.id),
   );
 
   const getSponsor = (skill: UserSkill["skill"]) => {
     return skill.category?.sponsorName ? skill.category : null;
   };
 
-  const SponsorBadge = ({ category, tSponsors }: { category: Category; tSponsors: ReturnType<typeof useTranslations> }) => (
-    <a 
-      href={category.sponsorUrl ?? "#"} 
-      target="_blank" 
+  const SponsorBadge = ({
+    category,
+    tSponsors,
+  }: {
+    category: Category;
+    tSponsors: ReturnType<typeof useTranslations>;
+  }) => (
+    <a
+      href={category.sponsorUrl ?? "#"}
+      target="_blank"
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors mt-2"
     >
       {category.sponsorLogo && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={category.sponsorLogo} alt={category.sponsorName!} className="h-3.5 w-3.5 rounded-sm object-contain" />
+        <img
+          src={category.sponsorLogo}
+          alt={category.sponsorName!}
+          className="h-3.5 w-3.5 rounded-sm object-contain"
+        />
       )}
       <span className="text-[10px] font-medium text-muted-foreground">
-        {tSponsors("sponsoredBy")} <span className="text-primary font-bold">{category.sponsorName}</span>
+        {tSponsors("sponsoredBy")}{" "}
+        <span className="text-primary font-bold">{category.sponsorName}</span>
       </span>
     </a>
   );
@@ -98,14 +118,20 @@ export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }:
               src={user.image ?? ""}
               className="h-14 w-14 border-2 border-border/50 group-hover:border-primary/30 transition-colors"
             >
-              <AvatarImage src={user.image ?? ""} alt={user.name ?? t("anonymous")} />
+              <AvatarImage
+                src={user.image ?? ""}
+                alt={user.name ?? t("anonymous")}
+              />
               <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
                 {user.name?.charAt(0) ?? "U"}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-lg truncate">
-                <Link href={`/users/${user.id}`} className="hover:underline hover:text-primary transition-colors">
+                <Link
+                  href={`/users/${user.id}`}
+                  className="hover:underline hover:text-primary transition-colors"
+                >
                   {user.name ?? t("anonymous")}
                 </Link>
               </h3>
@@ -128,7 +154,9 @@ export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }:
                   return (
                     <div key={s.id} className="flex flex-col">
                       <Badge
-                        variant={mySeekingIds.has(s.skill.id) ? "default" : "secondary"}
+                        variant={
+                          mySeekingIds.has(s.skill.id) ? "default" : "secondary"
+                        }
                         className={
                           mySeekingIds.has(s.skill.id)
                             ? "bg-green-500/20 text-green-400 border-green-500/30 text-xs w-fit"
@@ -138,7 +166,12 @@ export function MatchCard({ user, isPerfect, currentUserSkills, currentUserId }:
                         {s.skill.name}
                         {mySeekingIds.has(s.skill.id) && " ✓"}
                       </Badge>
-                      {sponsor && <SponsorBadge category={sponsor} tSponsors={tSponsors} />}
+                      {sponsor && (
+                        <SponsorBadge
+                          category={sponsor}
+                          tSponsors={tSponsors}
+                        />
+                      )}
                     </div>
                   );
                 })}

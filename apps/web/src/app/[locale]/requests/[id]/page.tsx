@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useSession } from "@/lib/auth-client";
-import { calculatePointsBreakdown } from "@skil-ex2/shared";
+import { calculatePointsBreakdown } from "@skillex/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,

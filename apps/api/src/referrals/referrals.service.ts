@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { randomInt } from 'node:crypto';
+import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 const REFERRAL_CODE_LENGTH = 8;
@@ -33,14 +35,38 @@ export class ReferralsService {
       return { referralCode: user.referralCode };
     }
 
-    // Generate a unique code
-    const code = await this.generateUniqueCode();
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { referralCode: code },
-    });
+    // Generate a unique code. Retry if another request wins the race or the
+    // unique constraint is hit between the existence check and the update.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = await this.generateUniqueCode();
 
-    return { referralCode: code };
+      try {
+        const result = await this.prisma.user.updateMany({
+          where: { id: userId, referralCode: null },
+          data: { referralCode: code },
+        });
+
+        if (result.count === 1) {
+          return { referralCode: code };
+        }
+
+        // Another request already assigned a code; return the winning value.
+        const refreshed = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { referralCode: true },
+        });
+
+        if (refreshed?.referralCode) {
+          return { referralCode: refreshed.referralCode };
+        }
+      } catch (error) {
+        if (!this.isUniqueConstraintError(error)) throw error;
+      }
+    }
+
+    throw new BadRequestException(
+      'Could not generate a unique referral code. Please try again.',
+    );
   }
 
   /**
@@ -139,20 +165,41 @@ export class ReferralsService {
       );
     }
 
-    // Create the referral link
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: userId },
-        data: { referredById: referrer.id },
-      }),
-      this.prisma.referral.create({
-        data: {
-          referrerId: referrer.id,
-          refereeId: userId,
-          status: 'PENDING',
-        },
-      }),
-    ]);
+    // Create the referral link. The conditional update makes sure a user can
+    // only ever be attributed to one referrer, even under concurrent requests.
+    try {
+      const applied = await this.prisma.$transaction(async (tx) => {
+        const claimed = await tx.user.updateMany({
+          where: { id: userId, referredById: null },
+          data: { referredById: referrer.id },
+        });
+
+        if (claimed.count !== 1) return false;
+
+        await tx.referral.create({
+          data: {
+            referrerId: referrer.id,
+            refereeId: userId,
+            status: 'PENDING',
+          },
+        });
+
+        return true;
+      });
+
+      if (!applied) {
+        throw new BadRequestException(
+          'You have already been referred by another user.',
+        );
+      }
+    } catch (error) {
+      if (this.isUniqueConstraintError(error)) {
+        throw new BadRequestException(
+          'You have already used this referral code.',
+        );
+      }
+      throw error;
+    }
 
     this.eventEmitter.emit('referral.created', {
       referrerId: referrer.id,
@@ -200,22 +247,40 @@ export class ReferralsService {
     }
   }
 
+  /**
+   * Serialize all referral rewards for one referrer. The monthly cap is an
+   * aggregate, so without a row lock two referees completing at the same time
+   * could both pass the cap check and be paid.
+   */
+  private async lockReferrer(
+    tx: Prisma.TransactionClient,
+    referrerId: string,
+  ): Promise<void> {
+    await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${referrerId} FOR UPDATE`;
+  }
+
   private async convertReferral(
     referralId: string,
     referrerId: string,
     refereeId: string,
     config: { referralRewardReferrer: number; referralRewardReferee: number },
   ) {
-    const monthlyEarnings = await this.getMonthlyReferralEarnings(referrerId);
-    const referrerReward = Math.min(
-      config.referralRewardReferrer,
-      Math.max(0, config.referralRewardReferrer - monthlyEarnings),
-    );
+    const result = await this.prisma.$transaction(async (tx) => {
+      await this.lockReferrer(tx, referrerId);
 
-    await this.prisma.$transaction(async (tx) => {
-      // Mark referral as converted
-      await tx.referral.update({
-        where: { id: referralId },
+      const monthlyEarnings = await this.getMonthlyReferralEarnings(
+        referrerId,
+        tx,
+      );
+      const referrerReward = Math.min(
+        config.referralRewardReferrer,
+        Math.max(0, config.referralRewardReferrer - monthlyEarnings),
+      );
+
+      // Claim the conversion atomically. If two exchanges complete at the
+      // same time, only one request may pay the conversion rewards.
+      const claimed = await tx.referral.updateMany({
+        where: { id: referralId, status: 'PENDING' },
         data: {
           status: 'CONVERTED',
           convertedAt: new Date(),
@@ -223,6 +288,10 @@ export class ReferralsService {
           refereeRewarded: true,
         },
       });
+
+      if (claimed.count !== 1) {
+        return { converted: false, referrerReward: 0 };
+      }
 
       // Reward referrer
       if (referrerReward > 0) {
@@ -259,16 +328,22 @@ export class ReferralsService {
           },
         });
       }
+
+      return { converted: true, referrerReward };
     });
 
+    if (!result.converted) {
+      return false;
+    }
+
     this.logger.log(
-      `Referral ${referralId} converted. Referrer: +${referrerReward}, Referee: +${config.referralRewardReferee}`,
+      `Referral ${referralId} converted. Referrer: +${result.referrerReward}, Referee: +${config.referralRewardReferee}`,
     );
 
-    if (referrerReward > 0) {
+    if (result.referrerReward > 0) {
       this.eventEmitter.emit('referral.rewarded', {
         userId: referrerId,
-        amount: referrerReward,
+        amount: result.referrerReward,
         type: 'REWARD',
       });
     }
@@ -280,6 +355,8 @@ export class ReferralsService {
         type: 'REWARD',
       });
     }
+
+    return true;
   }
 
   private async awardReferralBonus(
@@ -292,33 +369,67 @@ export class ReferralsService {
       referralMonthlyCap: number;
     },
   ) {
-    // Check referral is within 30 days
-    const referral = await this.prisma.referral.findUnique({
-      where: { id: referralId },
-    });
+    const result = await this.prisma.$transaction(async (tx) => {
+      await this.lockReferrer(tx, referrerId);
 
-    if (!referral || !referral.convertedAt) return;
+      // Check referral is within 30 days
+      const referral = await tx.referral.findUnique({
+        where: { id: referralId },
+      });
 
-    const daysSinceConversion =
-      (Date.now() - referral.convertedAt.getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSinceConversion > 30) return;
+      if (!referral || !referral.convertedAt) {
+        return { awarded: false, bonusAmount: 0 };
+      }
 
-    // Check total bonus cap per referral
-    if (referral.bonusAwarded >= config.referralBonusCap) return;
+      // A single exchange must never pay the same referral bonus twice.
+      const alreadyAwarded = await tx.pointsTransaction.findFirst({
+        where: {
+          userId: referrerId,
+          type: 'REFERRAL_BONUS',
+          referenceId: exchangeId,
+        },
+        select: { id: true },
+      });
 
-    // Check monthly earnings cap
-    const monthlyEarnings = await this.getMonthlyReferralEarnings(referrerId);
-    if (monthlyEarnings >= config.referralMonthlyCap) return;
+      if (alreadyAwarded) return { awarded: false, bonusAmount: 0 };
 
-    const bonusAmount = Math.min(
-      config.referralBonusPerExchange,
-      config.referralBonusCap - referral.bonusAwarded,
-      config.referralMonthlyCap - monthlyEarnings,
-    );
+      const daysSinceConversion =
+        (Date.now() - referral.convertedAt.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceConversion > 30) {
+        return { awarded: false, bonusAmount: 0 };
+      }
 
-    if (bonusAmount <= 0) return;
+      // Check total bonus cap per referral
+      if (referral.bonusAwarded >= config.referralBonusCap) {
+        return { awarded: false, bonusAmount: 0 };
+      }
 
-    await this.prisma.$transaction(async (tx) => {
+      // Check monthly earnings cap
+      const monthlyEarnings = await this.getMonthlyReferralEarnings(
+        referrerId,
+        tx,
+      );
+      if (monthlyEarnings >= config.referralMonthlyCap) {
+        return { awarded: false, bonusAmount: 0 };
+      }
+
+      const bonusAmount = Math.min(
+        config.referralBonusPerExchange,
+        config.referralBonusCap - referral.bonusAwarded,
+        config.referralMonthlyCap - monthlyEarnings,
+      );
+
+      if (bonusAmount <= 0) return { awarded: false, bonusAmount: 0 };
+
+      const claimed = await tx.referral.updateMany({
+        where: { id: referralId, bonusAwarded: referral.bonusAwarded },
+        data: { bonusAwarded: { increment: bonusAmount } },
+      });
+
+      if (claimed.count !== 1) {
+        return { awarded: false, bonusAmount: 0 };
+      }
+
       await tx.user.update({
         where: { id: referrerId },
         data: { pointsBalance: { increment: bonusAmount } },
@@ -335,29 +446,33 @@ export class ReferralsService {
         },
       });
 
-      await tx.referral.update({
-        where: { id: referralId },
-        data: { bonusAwarded: { increment: bonusAmount } },
-      });
+      return { awarded: true, bonusAmount };
     });
 
+    if (!result.awarded) return false;
+
     this.logger.log(
-      `Referral bonus: +${bonusAmount} pts to referrer ${referrerId} for exchange ${exchangeId}`,
+      `Referral bonus: +${result.bonusAmount} pts to referrer ${referrerId} for exchange ${exchangeId}`,
     );
 
     this.eventEmitter.emit('referral.rewarded', {
       userId: referrerId,
-      amount: bonusAmount,
+      amount: result.bonusAmount,
       type: 'BONUS',
     });
+
+    return true;
   }
 
-  private async getMonthlyReferralEarnings(userId: string): Promise<number> {
+  private async getMonthlyReferralEarnings(
+    userId: string,
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<number> {
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const result = await this.prisma.pointsTransaction.aggregate({
+    const result = await client.pointsTransaction.aggregate({
       where: {
         userId,
         type: { in: ['REFERRAL_REWARD', 'REFERRAL_BONUS'] },
@@ -382,28 +497,34 @@ export class ReferralsService {
     return config;
   }
 
+  private isUniqueConstraintError(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: unknown }).code === 'P2002'
+    );
+  }
+
   private async generateUniqueCode(): Promise<string> {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I,O,0,1 for clarity
-    let attempts = 0;
 
-    while (attempts < 10) {
+    for (let attempts = 0; attempts < 10; attempts++) {
       let code = '';
       for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
+        code += chars.charAt(randomInt(chars.length));
       }
 
       const existing = await this.prisma.user.findUnique({
         where: { referralCode: code },
+        select: { id: true },
       });
 
       if (!existing) return code;
-      attempts++;
     }
 
-    // Fallback to longer code
-    return `${Date.now().toString(36).toUpperCase()}`.slice(
-      0,
-      REFERRAL_CODE_LENGTH,
+    throw new BadRequestException(
+      'Could not generate a unique referral code. Please try again.',
     );
   }
 }

@@ -16,7 +16,10 @@ export function HowItWorksSection() {
   const t = useTranslations("home");
 
   return (
-    <section id="how-it-works" className="relative py-24 overflow-hidden scroll-mt-16">
+    <section
+      id="how-it-works"
+      className="relative py-24 overflow-hidden scroll-mt-16"
+    >
       <div className="container mx-auto px-4 md:px-6">
         {/* Section header */}
         <motion.div
@@ -56,7 +59,9 @@ export function HowItWorksSection() {
                   }`}
                 >
                   {/* Step content */}
-                  <div className={`w-full md:w-1/2 ${isEven ? "md:pr-16 md:text-right" : "md:pl-16"}`}>
+                  <div
+                    className={`w-full md:w-1/2 ${isEven ? "md:pr-16 md:text-right" : "md:pl-16"}`}
+                  >
                     <div className={`${isEven ? "md:ml-auto" : ""} max-w-sm`}>
                       <span className="inline-block text-xs font-semibold uppercase tracking-wider text-violet-400 mb-1 md:hidden">
                         Step {i + 1}

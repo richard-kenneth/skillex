@@ -1,4 +1,4 @@
-// Main entry point for @skil-ex2/shared
+// Main entry point for @skillex/shared
 
 // Types
 export * from "./types";
@@ -11,5 +11,3 @@ export * from "./notifications";
 
 // Translations
 export * from "./translations";
-
-

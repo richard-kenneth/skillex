@@ -12,10 +12,15 @@ interface WaitlistFormProps {
   variant?: "default" | "footer";
 }
 
-export function WaitlistForm({ source, variant = "default" }: WaitlistFormProps) {
+export function WaitlistForm({
+  source,
+  variant = "default",
+}: WaitlistFormProps) {
   const t = useTranslations("home");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "already" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "already" | "error"
+  >("idle");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,13 +58,20 @@ export function WaitlistForm({ source, variant = "default" }: WaitlistFormProps)
     return (
       <div className="flex items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
         <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-        <span>{status === "success" ? t("waitlistSuccess") : t("waitlistAlreadyJoined")}</span>
+        <span>
+          {status === "success"
+            ? t("waitlistSuccess")
+            : t("waitlistAlreadyJoined")}
+        </span>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col sm:flex-row gap-3 w-full"
+    >
       <Input
         type="email"
         placeholder={t("emailPlaceholder")}

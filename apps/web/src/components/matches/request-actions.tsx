@@ -46,7 +46,7 @@ export function RequestActions({
           action === "reject"
             ? AnalyticsEvent.EXCHANGE_REQUEST_REJECTED
             : AnalyticsEvent.EXCHANGE_REQUEST_CANCELLED,
-          { request_id: requestId }
+          { request_id: requestId },
         );
       }
 
