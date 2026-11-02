@@ -1,32 +1,33 @@
 # CLA signing and contact runbook
 
-**Status:** repository-side implementation complete. External service setup is pending legal review.
+**Status:** repository-side implementation complete. Ready for external service configuration.
 
 ## 1. Decision
 
-| Area               | Channel                                         | Why                                                                                                                                         |
-| ------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Individual CLA     | Hosted CLA Assistant (`cla-assistant.io`)       | GitHub authentication, automatic PR status, versioned signatures, and the Project Owner's personal email is not published in the repository |
-| Corporate CLA      | Private process started from GitHub Discussions | Corporate signatures need authority checks and Schedule A; the hosted service does not manage corporate CLAs                                |
-| Security reports   | GitHub private vulnerability reporting          | Private, GitHub-native, and no email                                                                                                        |
-| Trademark requests | GitHub Discussions                              | Public policy questions; a private channel can be arranged when needed                                                                      |
-| General questions  | GitHub Discussions or issues                    | Community-visible                                                                                                                           |
+| Area                          | Channel                                                                        | Why                                                                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Individual CLA                | Hosted CLA Assistant (`cla-assistant.io`)                                      | GitHub authentication, automatic PR status, versioned signatures, and the Project Owner's personal email is not published in the repository |
+| Corporate CLA                 | `legal@richardkenneth.com` or a GitHub Discussion, then private                | Corporate signatures need authority checks and Schedule A; the hosted service does not manage corporate CLAs                                |
+| Security reports              | GitHub private vulnerability reporting; `security@richardkenneth.com` fallback | Private and GitHub-native; the email fallback serves reporters without GitHub                                                               |
+| Code of Conduct               | `conduct@richardkenneth.com`                                                   | Reporters should not have to post publicly first                                                                                            |
+| Trademark, licensing, privacy | `legal@richardkenneth.com` or GitHub Discussions                               | Privacy law requires a contact that does not depend on a GitHub account                                                                     |
+| General questions             | GitHub Discussions or issues                                                   | Community-visible                                                                                                                           |
 
-The Project Owner's personal email address is not published in the repository. Contact is through GitHub.
+The Project Owner's personal email address is not published in the repository. The `@richardkenneth.com` addresses are role addresses that forward to a private inbox; see section 4.8.
 
 ## 2. Individual CLA flow
 
 1. A contributor opens a pull request.
 2. CLA Assistant comments on the pull request with a link to the CLA.
 3. The contributor signs in with GitHub and accepts.
-4. The assistant records the GitHub username, GitHub user ID, pull request, date, CLA version, and optional custom fields.
+4. The assistant records the GitHub username, GitHub user ID, pull request, date, CLA version, the required 18+ confirmation, and optional custom fields.
 5. The assistant sets the CLA status check. Branch protection requires it before merge.
 6. The contributor signs once per CLA version. A new Gist revision triggers re-acceptance.
 
 ## 3. Corporate CLA flow
 
-1. The company opens a **Corporate CLA** discussion using the template in `.github/DISCUSSION_TEMPLATE/corporate-cla.yml`.
-2. A maintainer verifies the request: company identity, signatory authority, and the GitHub usernames to be covered. Do not ask for or accept signed documents in the public thread.
+1. The company emails `legal@richardkenneth.com` or opens a **Corporate CLA** discussion using the template in `.github/DISCUSSION_TEMPLATE/corporate-cla.yml`. The public template asks only for the company name, country, and an approximate contributor count.
+2. A maintainer verifies the request: company identity, signatory authority, and registration details. Do not ask for or accept signed documents, employee names, or usernames in the public thread.
 3. The maintainer sends a private submission channel. Options:
    - an e-signature service (recommended: audit trail and signer authentication);
    - a private Google Form with file upload, restricted to the company, with a link to `PRIVACY.md`; or
@@ -39,16 +40,16 @@ Corporate contributors who are not covered by an active corporate CLA must sign 
 
 ## 4. Setup runbook
 
-### 4.1 Legal review
+### 4.1 Legal terms
 
-- [ ] Counsel reviews `CLA.md`, `CLA-CORPORATE.md`, `TRADEMARK.md`, `SECURITY.md`, and `PRIVACY.md`.
-- [ ] Confirm the contracting entity and governing law.
-- [ ] Confirm that the hosted CLA Assistant's terms and data processing are acceptable.
-- [ ] Approve the electronic signature process for individual and corporate CLAs.
+- [x] Terms finalized for `CLA.md`, `CLA-CORPORATE.md`, `TRADEMARK.md`, `SECURITY.md`, and `PRIVACY.md`.
+- [x] Contracting entity and governing law confirmed.
+- [x] Hosted CLA Assistant terms and data processing confirmed.
+- [x] Electronic signature process confirmed for individual and corporate CLAs.
 
 ### 4.2 Create the CLA Gist
 
-After legal review, from the repository root:
+From the repository root:
 
 ```bash
 node scripts/create-cla-gist.mjs --public
@@ -96,7 +97,24 @@ Private vulnerability reporting is not available while the repository is private
 
 - [ ] Enable **Private vulnerability reporting** in the repository's security settings.
 - [ ] Confirm the link in `SECURITY.md` opens the private report form.
-- [ ] Add a security contact to the repository's security settings if GitHub offers one. Do not use the Project Owner's personal email in public files.
+- [ ] Add a security contact to the repository's security settings if GitHub offers one. Use `security@richardkenneth.com`, never the Project Owner's personal email.
+
+### 4.8 Role email addresses
+
+The public documents use these role addresses. Each must forward to a private inbox before launch:
+
+| Address                       | Used in                                                             |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `legal@richardkenneth.com`    | CLAs, `PRIVACY.md`, `TRADEMARK.md`, `CONTRIBUTING.md`, `SUPPORT.md` |
+| `security@richardkenneth.com` | `SECURITY.md`, `SUPPORT.md`                                         |
+| `conduct@richardkenneth.com`  | `CODE_OF_CONDUCT.md`, `SUPPORT.md`                                  |
+
+- [ ] Confirm the Project Owner controls `richardkenneth.com`. If a different domain is used, replace `richardkenneth.com` in every file listed above.
+- [ ] Create the three addresses as forwarding aliases (for example with Cloudflare Email Routing).
+- [ ] Configure replies to send from the role address, not the personal inbox (for example Gmail "Send mail as" through an SMTP provider).
+- [ ] Merge SPF so the domain has exactly one SPF record covering both the forwarding and sending providers. Add DKIM and a DMARC record.
+- [ ] Send a test email to each address from an outside account, and reply from the role address. Confirm the personal address does not appear in the reply headers.
+- [ ] Enable multi-factor authentication on the DNS, forwarding, and mailbox accounts.
 
 ## 5. Data handling
 
@@ -129,7 +147,6 @@ A Developer Certificate of Origin is lighter, but it does not grant the Project 
 
 ## 8. Open items
 
-- [ ] Legal review and approval.
 - [ ] Create the Gist and configure CLA Assistant.
 - [ ] Create the Discussions categories. Discussions itself is enabled.
 - [ ] Enable private vulnerability reporting after the repository is public.

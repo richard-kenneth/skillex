@@ -22,8 +22,8 @@ Related documents:
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | Credential rotation      | Every credential exposed outside the repository, including screenshots, chat, AI tools, and local backups, has been rotated | **Blocked**                                   |
 | Full-history secret scan | Both Gitleaks and Trufflehog full-history scans are clean                                                                   | **Trufflehog pending; staged Gitleaks clean** |
-| Legal review             | Counsel approves the CLA, Corporate CLA, `SECURITY.md`, and `PRIVACY.md`                                                    | **Blocked**                                   |
-| CLA Assistant            | The app is installed, linked to the CLA Gist, required by the `main` ruleset, and tested with an unsigned account           | **Blocked on legal**                          |
+| Legal review             | CLA, Corporate CLA, `SECURITY.md`, `PRIVACY.md`, and `TRADEMARK.md` terms finalized                                         | **Ready**                                     |
+| CLA Assistant            | The app is installed, linked to the CLA Gist, required by the `main` ruleset, and tested with an unsigned account           | **Pending setup**                             |
 | Local stack validation   | `pnpm run setup`, `pnpm dev`, and the dev container work on a machine with Docker                                           | **Runtime validation due**                    |
 | Landing page             | The current `main` build is deployed with SkillEx branding, working counters, a working waitlist, and no stale links        | **Redeploy pending**                          |
 | Demo assets              | The README has a real screenshot or GIF captured from seeded demo data                                                      | **Pending**                                   |

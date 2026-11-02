@@ -61,11 +61,12 @@ representative at an online or offline event.
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement.
 
-Do not post incident details in a public issue or discussion. To start a private
-conversation, open a discussion titled `Code of Conduct contact request` with
-no incident details and ask a maintainer to open a private channel. If the
-report concerns abuse on GitHub itself, you can also use GitHub's own
-report-abuse tools.
+Do not post incident details in a public issue or discussion. Report privately
+by email to **conduct@richardkenneth.com**. If you cannot use email, open a discussion
+titled `Code of Conduct contact request` with no incident details and ask a
+maintainer to open a private channel. If the report concerns abuse on GitHub
+itself, you can also use GitHub's own report-abuse tools. Information in reports
+is handled as described in [`PRIVACY.md`](./PRIVACY.md).
 
 All complaints will be reviewed and investigated promptly and fairly. All
 community leaders are obligated to respect the privacy and security of the

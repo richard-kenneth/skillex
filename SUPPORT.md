@@ -45,6 +45,8 @@ vulnerability reporting:
 
 <https://github.com/richard-kenneth/skillex/security/advisories/new>
 
+If you cannot use GitHub's private reporting, email **security@richardkenneth.com**.
+
 ## Contributing and the CLA
 
 Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) for setup, branch and commit
@@ -55,14 +57,17 @@ contributor.
 
 ## Corporate CLA, trademark, and licensing
 
-- **Corporate CLA:** open a discussion using the Corporate CLA template. Do not
-  post signed agreements or confidential information in the discussion.
+Private legal requests go to **legal@richardkenneth.com**. Public questions can go in a
+discussion.
+
+- **Corporate CLA:** email legal@richardkenneth.com or open a discussion using the
+  Corporate CLA template. Do not post signed agreements, employee details, or
+  confidential information in the discussion.
 - **Trademark:** see [`TRADEMARK.md`](./TRADEMARK.md) and open a discussion
-  titled `SkillEx trademark request`.
-- **Commercial licensing:** open a discussion titled `Commercial licensing
-request` with no confidential details. A maintainer will arrange a private
-  channel.
-- **Privacy requests:** see [`PRIVACY.md`](./PRIVACY.md).
+  titled `SkillEx trademark request`, or email legal@richardkenneth.com.
+- **Commercial licensing:** email legal@richardkenneth.com, or open a discussion titled
+  `Commercial licensing request` with no confidential details.
+- **Privacy requests:** email legal@richardkenneth.com. See [`PRIVACY.md`](./PRIVACY.md).
 
 ## Response expectations
 
@@ -87,5 +92,5 @@ To get a faster answer:
 ## Code of Conduct
 
 All community spaces are covered by the
-[Code of Conduct](./CODE_OF_CONDUCT.md). Report unacceptable behavior through
-the private process described there, not in a public thread.
+[Code of Conduct](./CODE_OF_CONDUCT.md). Report unacceptable behavior privately
+to **conduct@richardkenneth.com**, not in a public thread.

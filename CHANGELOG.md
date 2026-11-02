@@ -9,6 +9,20 @@ once versioned releases begin.
 
 ## [Unreleased]
 
+### Changed
+
+- Revised the individual and corporate CLAs: contributions are licensed to all
+  recipients under the AGPL, the patent license is sublicensable and covers
+  corporate Affiliates, contributors must be 18 or older, and Nigerian courts
+  have non-exclusive rather than exclusive jurisdiction.
+- Revised the privacy notice to cover security and Code of Conduct reports,
+  name recipients, set retention periods, and explain how to complain to the
+  Nigeria Data Protection Commission.
+- Tightened the security policy's scope and safe harbor, and clarified the
+  trademark policy for forks and self-hosted deployments.
+- Added role email addresses for legal, privacy, security, and Code of Conduct
+  contacts.
+
 ### Added
 
 - AGPL-3.0-only license, copyright notice, and trademark policy.

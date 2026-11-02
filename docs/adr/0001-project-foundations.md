@@ -47,7 +47,9 @@ The repository is currently private at `richard-kenneth/skillex`. The product ha
 - Contributors waive or consent to the non-assertion of moral rights to the extent permitted by law.
 - Contributors confirm they have the right to submit the Contribution, including employer permission when relevant.
 - The Project Owner may assign the CLA to a future company that holds or operates the project.
-- The agreement is governed by Nigerian law, with venue in Lagos State, subject to legal review.
+- The agreement is governed by Nigerian law, with non-exclusive jurisdiction for Nigerian courts.
+
+> **Amended 2 November 2026:** Nigerian courts have **non-exclusive** jurisdiction instead of exclusive Lagos venue. The CLA also licenses Contributions directly to all recipients under the AGPL, makes the patent license sublicensable, and requires contributors to be 18 or older.
 
 **Why a CLA instead of a DCO:**
 
@@ -58,9 +60,8 @@ A DCO is a lightweight attestation that the contributor has the right to submit 
 - The CLA must be signed before a contribution is merged. Issues and discussions remain open to everyone.
 - Individual CLAs are administered through the hosted CLA Assistant. Corporate CLAs are handled through a private, manually reviewed process. See `docs/legal/cla-signing.md`.
 - Corporate contributors must provide Schedule A and keep it current.
-- The CLA text and the signing process should be reviewed by qualified counsel before the public launch. See `docs/legal/cla-review-notes.md` and `docs/legal/cla-signing.md`.
 - The CLA is versioned. A future version applies only after a contributor accepts it.
-- The Project Owner's personal email address is not published in the repository. Contact is through GitHub, as described in `SECURITY.md`, `PRIVACY.md`, and `TRADEMARK.md`.
+- The Project Owner's personal email address is not published in the repository. Contact is through GitHub, as described in `SECURITY.md`, `PRIVACY.md`, and `TRADEMARK.md`. _(Amended 2 November 2026: role addresses `legal@`, `security@`, and `conduct@richardkenneth.com` forward to a private inbox, because privacy law requires a contact route that does not depend on a GitHub account.)_
 
 ### 3. Trademark: code is open, brand is reserved
 
@@ -108,7 +109,7 @@ Some identifiers are wired into external services and will be migrated separatel
 | Expo scheme | `skil-ex` | Used for auth redirects, deep links, and secure storage prefixes |
 | iOS bundle identifier | `com.skilex` | Tied to the Apple app record, provisioning, and push credentials |
 | Android application ID | `com.skil_ex` | Tied to Firebase/Google services and signing credentials |
-| Production domains and email addresses | `skilex.com`, `skilex-api`, `skil-ex2-web.vercel.app` | External DNS, email, OAuth, and deployment configuration |
+| Production domains and email addresses | `richardkenneth.com`, `skilex-api`, `skil-ex2-web.vercel.app` | External DNS, email, OAuth, and deployment configuration |
 | Local storage keys | `skilex_ref`, `skilex_auto_applied`, `skil-ex-theme-mode` | Changing them would discard existing local state |
 
 These are deployment and platform identifiers, not the public brand. They should be migrated only with a coordinated plan that updates the corresponding external services and redirect URIs.
@@ -158,7 +159,7 @@ These items are intentionally outside Phase 0 but are required before the reposi
 4. Publish the full README, Code of Conduct, Security Policy, issue forms, PR template, and architecture/environment docs (Phase 3).
 5. Enable the CLA assistant and test the individual and corporate signing flows.
 6. Apply GitHub security settings, branch protection, Dependabot, CodeQL, and private vulnerability reporting (Phase 4).
-7. Have qualified counsel review the CLA, trademark policy, and privacy implications before the public launch.
+7. Finalize the CLA, trademark policy, and privacy notice for launch.
 8. Migrate legacy platform identifiers (domains, bundle IDs, Expo slug/scheme) only when the external services can be updated together.
 
 ## References
@@ -169,5 +170,4 @@ These items are intentionally outside Phase 0 but are required before the reposi
 - `CLA.md` — individual CLA
 - `CLA-CORPORATE.md` — corporate CLA
 - `CONTRIBUTING.md` — contribution process and CLA signing
-- `docs/legal/cla-review-notes.md` — drafting notes and open questions for counsel
 - `docs/adr/0002-mobile-contribution-scope.md` — mobile scope decision

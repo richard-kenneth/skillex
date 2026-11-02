@@ -38,7 +38,9 @@ Before starting significant work, open an issue or comment on an existing one so
 
 ## Contributor License Agreement (CLA)
 
-We use a Contributor License Agreement instead of a DCO. The CLA lets the project accept your contribution under the AGPL while preserving the Project Owner's ability to offer commercial or other licenses in the future. You keep ownership of your work; you grant a broad license, not an assignment.
+We use a Contributor License Agreement instead of a DCO. Under the CLA, everyone who receives SkillEx gets your contribution under the AGPL, and the Project Owner also receives a broad license that preserves the ability to offer commercial or other licenses in the future. You keep ownership of your work; you grant licenses, not an assignment.
+
+You must be at least 18 to sign the CLA through the automated process. If you are under 18, email **legal@richardkenneth.com** before contributing; a contribution can be accepted only with a separate agreement countersigned by a parent or legal guardian.
 
 Read the full terms before contributing:
 
@@ -49,7 +51,7 @@ Read the full terms before contributing:
 
 1. Read `CLA.md`.
 2. Open your first pull request. The CLA Assistant bot will comment with a link to the CLA.
-3. Sign in with GitHub and click the acceptance button. The assistant records your GitHub username, GitHub user ID, the pull request, the date, and the CLA version.
+3. Sign in with GitHub, confirm that you are at least 18, and click the acceptance button. The assistant records your GitHub username, GitHub user ID, the pull request, the date, the CLA version, and any optional fields you complete.
 4. You only need to sign once per CLA version. If the CLA changes, the assistant will ask you to accept the new version.
 
 If the bot does not comment within a few minutes, leave a comment on the pull request asking a maintainer to check the CLA status. Do not paste personal information into the pull request.
@@ -59,7 +61,7 @@ If you do not want to sign the CLA, you can still participate in issues and disc
 ### How to sign (corporate)
 
 1. Read `CLA-CORPORATE.md`.
-2. Open a **Corporate CLA** discussion using the template at <https://github.com/richard-kenneth/skillex/discussions>. Include the corporation's legal name, country of incorporation, the authorized signatory's name and title, and the GitHub usernames to be covered. Do not post the signed agreement, personal email addresses, or confidential information.
+2. Email **legal@richardkenneth.com**, or open a **Corporate CLA** discussion using the template at <https://github.com/richard-kenneth/skillex/discussions>. Include the corporation's legal name and country of incorporation. Do not post the signed agreement, employee names or usernames, email addresses, or confidential information in a public discussion.
 3. A maintainer will reply with a private submission channel. Use that channel to send the completed Schedule A and the signed agreement.
 4. Wait for confirmation before submitting Contributions on the Corporation's behalf. The maintainer will add the authorized GitHub usernames to the CLA allowlist.
 
@@ -70,6 +72,10 @@ If you are contributing as part of your job, please check with your employer bef
 ### CLA records and privacy
 
 The individual CLA is administered through the hosted CLA Assistant service. We do not publish your personal email address or signed agreement in this repository. See [`PRIVACY.md`](./PRIVACY.md) for what is collected and how to make a privacy request.
+
+### Private channel
+
+Where the CLA or this guide refers to a private channel, use **legal@richardkenneth.com**, or another private channel a maintainer gives you in reply to a discussion.
 
 ## Development setup
 
@@ -164,7 +170,7 @@ See [`SECURITY.md`](./SECURITY.md) for what to include and what to expect. If pr
 
 ## License and trademarks
 
-By contributing, you agree that your Contributions are licensed to the public under the **GNU Affero General Public License, version 3 only (AGPL-3.0-only)**, and you grant the rights described in the CLA.
+SkillEx is licensed to the public under the **GNU Affero General Public License, version 3 only (AGPL-3.0-only)**. Your Contributions are licensed on the terms of the CLA you sign, which include a license to everyone who receives the Project under the AGPL. If this guide and the CLA differ, the CLA controls.
 
 The SkillEx name, logo, and other brand identifiers are not licensed under the AGPL. See [`TRADEMARK.md`](./TRADEMARK.md).
 
