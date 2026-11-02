@@ -32,7 +32,7 @@ exchange fair without turning every lesson into a cash transaction.
   routing.
 - **Web and mobile clients.** A Next.js web app and an Expo / React Native app
   share schemas and types through `@skillex/shared`.
-- **A zero-account local stack.** PostgreSQL, Redis, Mailpit, MinIO, and optional
+- **A zero-account local stack.** PostgreSQL, Redis, Mailpit, SeaweedFS, and optional
   LiveKit run through Docker Compose. Payments, email, storage, push, analytics,
   OAuth, and FX fall back to safe local behavior when credentials are absent.
 - **Demo data and a documented login.** The seeded database gives contributors a

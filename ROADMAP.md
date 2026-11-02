@@ -71,7 +71,7 @@ Status meanings:
 - [x] Apply the repository description, topics, Discussions, squash-only merges,
       auto-delete branches, Dependabot alerts and updates, and the `main`
       ruleset. Commit the CodeQL and OpenSSF Scorecard workflows.
-- [x] Add a zero-account local stack with PostgreSQL, Redis, Mailpit, MinIO, and
+- [x] Add a zero-account local stack with PostgreSQL, Redis, Mailpit, SeaweedFS, and
       optional LiveKit.
 - [x] Make optional integrations degrade safely and validate environment
       variables at startup.

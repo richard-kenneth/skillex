@@ -11,5 +11,5 @@ fi
 
 # Recreate any services that were stopped when the container shut down. Data
 # lives in named volumes, so this does not reseed or reset the database.
-docker compose up -d --wait postgres redis mailpit minio
-docker compose run --rm minio-init
+docker compose up -d --wait postgres redis mailpit seaweedfs
+docker compose run --rm storage-init

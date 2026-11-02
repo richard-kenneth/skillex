@@ -18,7 +18,7 @@ flowchart LR
   DB[("PostgreSQL")]
   Redis[("Redis<br/>cache and BullMQ")]
   Email["Mailpit, Resend,<br/>or SMTP"]
-  Storage["MinIO or<br/>Cloudflare R2"]
+  Storage["SeaweedFS or<br/>Cloudflare R2"]
   LiveKit["LiveKit<br/>(optional)"]
   Payments["Flutterwave<br/>(optional)"]
   Push["Web Push and<br/>Expo Push"]
@@ -50,7 +50,7 @@ authorization, validation, and side effects.
 | `packages/shared`    | Valibot schemas, TypeScript types, constants, analytics events, and currency utilities |
 | `docs/`              | Architecture, environment, mobile, and legal documentation                             |
 | `scripts/setup.mjs`  | One-command local setup                                                                |
-| `docker-compose.yml` | Local PostgreSQL, Redis, Mailpit, MinIO, and optional LiveKit                          |
+| `docker-compose.yml` | Local PostgreSQL, Redis, Mailpit, SeaweedFS, and optional LiveKit                      |
 
 The workspace is managed with pnpm and Turborepo. `@skillex/shared` is built
 before the apps consume it; the API also runs `prisma generate` after install so
@@ -158,7 +158,7 @@ caching degrade.
 
 ### Object storage
 
-`R2Service` talks to any S3-compatible store. Local development uses MinIO;
+`R2Service` talks to any S3-compatible store. Local development uses SeaweedFS;
 production normally uses Cloudflare R2. Uploads use short-lived presigned PUT
 URLs, and downloads use presigned GET URLs. The API derives the file extension
 from the MIME type and scopes keys to the authenticated user, so clients cannot

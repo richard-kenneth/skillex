@@ -71,7 +71,7 @@ pnpm run setup
 ```
 
 `pnpm run setup` creates the env files, starts PostgreSQL, Redis, Mailpit, and
-MinIO, applies migrations, and seeds demo data. If the services are already
+SeaweedFS, applies migrations, and seeds demo data. If the services are already
 running, `pnpm run setup -- --skip-install` is safe to re-run.
 
 Start the API and web app if they are not already running:

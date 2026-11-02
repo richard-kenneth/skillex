@@ -26,7 +26,7 @@ signed CLA. An AI agent cannot sign a CLA on a contributor's behalf.
 | `packages/shared`    | Valibot schemas, types, constants, currency helpers, analytics events |
 | `docs/`              | Architecture, environment, mobile, ADR, and legal documentation       |
 | `scripts/setup.mjs`  | One-command local setup                                               |
-| `docker-compose.yml` | Local PostgreSQL, Redis, Mailpit, MinIO, optional LiveKit             |
+| `docker-compose.yml` | Local PostgreSQL, Redis, Mailpit, SeaweedFS, optional LiveKit         |
 
 The API owns database access, authorization, validation, payments, storage,
 email, and LiveKit tokens. The web and mobile apps call the API; they do not

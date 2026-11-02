@@ -29,11 +29,11 @@
       "onAutoForward": "silent"
     },
     "9000": {
-      "label": "MinIO S3 API",
+      "label": "SeaweedFS S3 API",
       "onAutoForward": "silent"
     },
     "9001": {
-      "label": "MinIO console",
+      "label": "SeaweedFS UI",
       "onAutoForward": "silent"
     },
     "7880": {

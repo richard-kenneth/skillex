@@ -276,7 +276,7 @@ function startDocker() {
     return false;
   }
 
-  log("Starting postgres, redis, mailpit, and minio...");
+  log("Starting postgres, redis, mailpit, and seaweedfs...");
   run("docker", [
     "compose",
     "up",
@@ -285,11 +285,11 @@ function startDocker() {
     "postgres",
     "redis",
     "mailpit",
-    "minio",
+    "seaweedfs",
   ]);
 
-  log("Creating the local upload bucket...");
-  run("docker", ["compose", "run", "--rm", "minio-init"]);
+  log("Configuring the local upload bucket...");
+  run("docker", ["compose", "run", "--rm", "storage-init"]);
   return true;
 }
 
@@ -352,7 +352,8 @@ Local services:
   API              http://localhost:3001/api
   API health       http://localhost:3001/health
   Mailpit (email)  http://localhost:8025
-  MinIO console    http://localhost:9001  (skillex / skillex-dev-secret)
+  SeaweedFS UI     http://localhost:9001
+  SeaweedFS S3     http://localhost:9000  (skillex / skillex-dev-secret)
   LiveKit          optional: docker compose --profile video up -d
   Payments         local mock by default (no Flutterwave account required)
 

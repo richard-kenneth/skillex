@@ -13,7 +13,7 @@ pnpm run setup
 pnpm dev
 ```
 
-`pnpm run setup` starts PostgreSQL, Redis, Mailpit, and MinIO, applies migrations, and seeds demo data. See the [root README](../../README.md) for local URLs, the demo login, and optional integrations.
+`pnpm run setup` starts PostgreSQL, Redis, Mailpit, and SeaweedFS, applies migrations, and seeds demo data. See the [root README](../../README.md) for local URLs, the demo login, and optional integrations.
 
 To run only the API after the services are up:
 
@@ -73,7 +73,7 @@ The seed script is `prisma/seed.ts`. It is idempotent and skips demo data in pro
 
 - **Email:** Resend, SMTP, Mailpit (local), or disabled. See `src/email/email.service.ts`.
 - **Payments:** Flutterwave in production; a local mock in non-production when keys are absent.
-- **Storage:** Cloudflare R2 in production; MinIO locally. Upload endpoints return `503` when storage is not configured.
+- **Storage:** Cloudflare R2 in production; SeaweedFS locally. Upload endpoints return `503` when storage is not configured.
 - **Video:** LiveKit. Start it locally with `docker compose --profile video up -d` and set the three LiveKit variables.
 - **Analytics / push / FX:** disabled or fallback behavior when unconfigured.
 

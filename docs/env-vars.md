@@ -107,7 +107,7 @@ Upload endpoints return `503` when storage is disabled.
 | `R2_ENDPOINT`          | Group    | Absolute `http(s)` endpoint, for example `http://localhost:9000`.    |
 | `R2_PUBLIC_URL`        | No       | Public base URL for files. Falls back to `${R2_ENDPOINT}/${bucket}`. |
 
-Local development uses MinIO with access key `skillex`, secret
+Local development uses SeaweedFS with access key `skillex`, secret
 `skillex-dev-secret`, bucket `skillex-uploads`, and endpoint
 `http://localhost:9000`.
 
@@ -210,7 +210,7 @@ module. See [`docs/mobile-development.md`](./mobile-development.md).
 | PostgreSQL         | `localhost:5432`               | `skillex` / `skillex`, database `skillex` |
 | Redis              | `localhost:6379`               | none                                      |
 | Mailpit SMTP / UI  | `localhost:1025` / `:8025`     | none                                      |
-| MinIO S3 / console | `localhost:9000` / `:9001`     | `skillex` / `skillex-dev-secret`          |
+| SeaweedFS S3 / UI  | `localhost:9000` / `:9001`     | `skillex` / `skillex-dev-secret` (S3)     |
 | LiveKit (optional) | `ws://localhost:7880`          | `devkey` / `secret`                       |
 
 These credentials are for local development only. Never reuse them in a
@@ -263,7 +263,7 @@ values, not as confidential secrets, because they are compiled into the app.
   <http://localhost:8025>. Check that `EMAIL_TRANSPORT=auto` and
   `SMTP_HOST=localhost`.
 - **Uploads return `503`** — the R2 group is incomplete or storage is disabled.
-  Set all four core R2 values, or use the local MinIO defaults.
+  Set all four core R2 values, or use the local SeaweedFS defaults.
 - **Live video is disabled** — set all three LiveKit values, or leave all three
   empty. Restart the API after changing them.
 

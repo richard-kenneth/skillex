@@ -38,7 +38,7 @@ pnpm dev
 
 1. creates `apps/api/.env`, `apps/web/.env.local`, and `apps/mobile/.env` from the example files;
 2. generates local-only secrets;
-3. starts PostgreSQL, Redis, Mailpit, and MinIO with Docker Compose;
+3. starts PostgreSQL, Redis, Mailpit, and SeaweedFS with Docker Compose;
 4. builds the shared package, generates the Prisma client, applies migrations, and seeds demo data.
 
 Then open:
@@ -49,7 +49,8 @@ Then open:
 | API                    | <http://localhost:3001/api>                                |
 | API health             | <http://localhost:3001/health>                             |
 | Mailpit (caught email) | <http://localhost:8025>                                    |
-| MinIO console          | <http://localhost:9001> (`skillex` / `skillex-dev-secret`) |
+| SeaweedFS UI           | <http://localhost:9001>                                    |
+| SeaweedFS S3 API       | <http://localhost:9000> (`skillex` / `skillex-dev-secret`) |
 
 ### Demo login
 
@@ -67,7 +68,7 @@ The seed also creates `ada@skillex.dev`, `grace@skillex.dev`, `linus@skillex.dev
 | Database       | PostgreSQL in Docker                                                       |
 | Cache / queues | Redis in Docker                                                            |
 | Email          | Mailpit at `localhost:1025`; read it at `localhost:8025`                   |
-| File uploads   | MinIO bucket `skillex-uploads`                                             |
+| File uploads   | SeaweedFS bucket `skillex-uploads`                                         |
 | Payments       | Local mock: purchases credit points, withdrawals succeed, no external call |
 | Exchange rates | Transparent fallback rates                                                 |
 | Web push       | Disabled until VAPID keys are set                                          |
@@ -126,7 +127,7 @@ Mailpit is the zero-config default. To use Resend, set `RESEND_API_KEY` and `ONB
 
 ### Production object storage
 
-The local stack uses MinIO. In production, set `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT`, and `R2_PUBLIC_URL` for Cloudflare R2. If the R2 group is incomplete, upload endpoints return `503` instead of crashing the API.
+The local stack uses SeaweedFS. In production, set `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT`, and `R2_PUBLIC_URL` for Cloudflare R2. If the R2 group is incomplete, upload endpoints return `503` instead of crashing the API.
 
 ### OAuth, push, analytics, and FX
 
@@ -172,7 +173,7 @@ flowchart LR
   Mobile["Expo mobile app"] --> API
   API --> DB[("PostgreSQL")]
   API --> Redis[("Redis / BullMQ")]
-  API --> Storage[("MinIO or Cloudflare R2")]
+  API --> Storage[("SeaweedFS or Cloudflare R2")]
   API --> Email["Mailpit, Resend, or SMTP"]
   API --> LiveKit["LiveKit (optional)"]
   API --> Payments["Flutterwave (optional)"]

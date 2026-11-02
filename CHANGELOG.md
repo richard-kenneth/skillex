@@ -22,6 +22,8 @@ once versioned releases begin.
   trademark policy for forks and self-hosted deployments.
 - Added role email addresses for legal, privacy, security, and Code of Conduct
   contacts.
+- Replaced the retired MinIO community image with SeaweedFS for the local
+  S3-compatible stack.
 
 ### Added
 
@@ -41,7 +43,7 @@ once versioned releases begin.
   contribution scope.
 - One-command local setup with generated secrets, Docker Compose services, and
   rich demo data.
-- Zero-account local stack: PostgreSQL, Redis, Mailpit, MinIO, and an optional
+- Zero-account local stack: PostgreSQL, Redis, Mailpit, SeaweedFS, and an optional
   LiveKit profile.
 - Demo login and seeded users, skills, exchanges, reviews, referrals, points,
   notifications, and waitlist entries.

@@ -86,11 +86,11 @@ storage, payments, live video, push notifications, analytics, OAuth, and FX
 rates. In production, those are real accounts with real credentials. In a fresh
 clone, they are a wall.
 
-The local stack is designed to run PostgreSQL, Redis, Mailpit, MinIO, and
+The local stack is designed to run PostgreSQL, Redis, Mailpit, SeaweedFS, and
 optional LiveKit through Docker Compose. The API validates environment variables
 at startup: required variables fail fast with a clear message, and optional
 groups log that the feature is disabled. Payments default to a local mock. Email
-goes to Mailpit. Uploads go to MinIO. FX uses transparent fallback rates. A
+goes to Mailpit. Uploads go to SeaweedFS. FX uses transparent fallback rates. A
 partially configured group, such as a Google client ID without its secret, is
 rejected instead of silently weakening security.
 

@@ -94,7 +94,7 @@ What's in v0.1.0:
 Stack: Next.js 16, NestJS, PostgreSQL, Prisma 7, Better Auth, Redis/BullMQ,
 LiveKit, Expo, Turborepo.
 
-The local stack runs with zero paid accounts: Postgres, Redis, Mailpit, MinIO,
+The local stack runs with zero paid accounts: Postgres, Redis, Mailpit, SeaweedFS,
 and optional LiveKit.
 ```
 
@@ -172,7 +172,7 @@ Hi everyone — I've open-sourced SkillEx, a skill-exchange marketplace built wi
 Next.js, NestJS, PostgreSQL, and Expo.
 
 It is AGPL-3.0-only, and the local stack runs with zero paid accounts:
-PostgreSQL, Redis, Mailpit, MinIO, and optional LiveKit. There is seeded demo
+PostgreSQL, Redis, Mailpit, SeaweedFS, and optional LiveKit. There is seeded demo
 data, so you can sign in and click around immediately.
 
 I'm looking for feedback on the contributor experience, especially from people
@@ -211,7 +211,7 @@ experience:
 
 The repository includes a Next.js web app, NestJS API, Expo app, shared TypeScript
 package, Docker Compose stack, seeded demo data, and CI. The local stack uses
-Postgres, Redis, Mailpit, MinIO, and optional LiveKit. Payments default to a mock.
+Postgres, Redis, Mailpit, SeaweedFS, and optional LiveKit. Payments default to a mock.
 
 The full marketplace is not hosted publicly yet, so the local stack is the way to
 try it. I'd rather hear that the setup is broken now than after more people find
@@ -232,10 +232,10 @@ asking a contributor to sign up for a dozen services.
 
 What the local stack does:
 
-- PostgreSQL, Redis, Mailpit, and MinIO run in Docker Compose.
+- PostgreSQL, Redis, Mailpit, and SeaweedFS run in Docker Compose.
 - Payments use a local mock that credits points and approves withdrawals.
 - Email goes to Mailpit instead of Resend.
-- File uploads go to MinIO instead of Cloudflare R2.
+- File uploads go to SeaweedFS instead of Cloudflare R2.
 - FX uses transparent fallback rates.
 - LiveKit, OAuth, push, and analytics are optional.
 
@@ -298,7 +298,7 @@ What's in it:
 - @nestjs/throttler on public and expensive endpoints.
 - BullMQ with Redis for the recording-timeout job.
 - Pino structured logging.
-- Optional LiveKit, Flutterwave, Resend/SMTP, R2/MinIO, OAuth, push, and
+- Optional LiveKit, Flutterwave, Resend/SMTP, R2/SeaweedFS, OAuth, push, and
   PostHog integrations.
 
 The API owns database access, authorization, validation, payments, storage,
@@ -328,7 +328,7 @@ has to share its changes, which matters for a service that may charge fees.
 What's in the repo:
 
 - Next.js web app, NestJS API, Expo mobile app, shared TypeScript package.
-- Docker Compose local stack with Postgres, Redis, Mailpit, MinIO, and optional
+- Docker Compose local stack with Postgres, Redis, Mailpit, SeaweedFS, and optional
   LiveKit.
 - Mock payments, local email, local storage, and safe fallbacks for optional
   integrations.
@@ -361,7 +361,7 @@ I built SkillEx, a marketplace where people trade skills directly and settle
 unequal swaps with points. The code is AGPL-3.0-only.
 
 The part I'm most interested in feedback on is the local setup. The full stack
-runs with Docker Compose and no paid accounts: Postgres, Redis, Mailpit, MinIO,
+runs with Docker Compose and no paid accounts: Postgres, Redis, Mailpit, SeaweedFS,
 and optional LiveKit. Payments default to a mock, email goes to Mailpit, and
 optional integrations degrade safely when credentials are absent.
 
@@ -426,7 +426,7 @@ what you want, and settle the difference with points when a direct swap is not
 fair. It includes skill matching, escrow, reviews, referrals, live sessions, and
 four locales. The monorepo contains a Next.js 16 web app, a NestJS API, an Expo
 mobile app, and a shared TypeScript package. Contributors can run the full stack
-with Docker Compose and no paid accounts: PostgreSQL, Redis, Mailpit, MinIO, and
+with Docker Compose and no paid accounts: PostgreSQL, Redis, Mailpit, SeaweedFS, and
 optional LiveKit. Payments default to a local mock. The project is AGPL-3.0-only
 and has a starter backlog for new contributors.
 ```

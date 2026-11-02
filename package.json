@@ -22,7 +22,7 @@
     "format": "turbo run format",
     "format:check": "turbo run format:check",
     "setup": "node scripts/setup.mjs",
-    "db:up": "docker compose up -d --wait postgres redis mailpit minio && docker compose run --rm minio-init",
+    "db:up": "docker compose up -d --wait postgres redis mailpit seaweedfs && docker compose run --rm storage-init",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && pnpm db:up"
   },

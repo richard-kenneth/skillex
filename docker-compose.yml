@@ -3,8 +3,8 @@ name: skillex
 # Local development dependencies. Everything here is free and runs on your
 # machine; no third-party account is required.
 #
-#   docker compose up -d --wait postgres redis mailpit minio
-#   docker compose run --rm minio-init
+#   docker compose up -d --wait postgres redis mailpit seaweedfs
+#   docker compose run --rm storage-init
 #   docker compose --profile video up -d # core services + LiveKit
 #
 # Credentials in this file are development-only. Never reuse them in production.
@@ -53,31 +53,40 @@ services:
       - "1025:1025" # SMTP
       - "8025:8025" # Web UI
 
-  # S3-compatible stand-in for Cloudflare R2. Open http://localhost:9001.
-  minio:
-    image: minio/minio:latest
+  # S3-compatible stand-in for Cloudflare R2. The S3 API is on :9000 and the
+  # filer UI is on :9001. SeaweedFS is Apache-2.0 and actively maintained; the
+  # MinIO community image is retired.
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
     restart: unless-stopped
-    command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: skillex
-      MINIO_ROOT_PASSWORD: skillex-dev-secret
+      AWS_ACCESS_KEY_ID: skillex
+      AWS_SECRET_ACCESS_KEY: skillex-dev-secret
+      S3_BUCKET: skillex-uploads
     ports:
-      - "9000:9000" # S3 API
-      - "9001:9001" # Console
+      - "9000:8333" # S3 API
+      - "9001:8888" # Filer UI
     volumes:
-      - minio-data:/data
+      - seaweedfs-data:/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8333"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
-  # Creates the upload bucket once MinIO is accepting connections.
-  minio-init:
-    image: minio/mc:latest
+  # Creates the upload bucket and enables public read for uploaded files.
+  # SeaweedFS creates the bucket from S3_BUCKET; this waits for it and applies
+  # the same anonymous-read policy the old MinIO init container used.
+  storage-init:
+    image: chrislusf/seaweedfs:latest
     depends_on:
-      - minio
+      seaweedfs:
+        condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      until mc alias set local http://minio:9000 skillex skillex-dev-secret; do sleep 1; done;
-      mc mb --ignore-existing local/skillex-uploads;
-      mc anonymous set download local/skillex-uploads;
-      echo 'MinIO bucket ready: skillex-uploads';
+      until echo 's3.bucket.list' | weed shell -master=seaweedfs:9333 | grep -q 'skillex-uploads'; do sleep 1; done;
+      echo 's3.anonymous.set -bucket=skillex-uploads -access=Read' | weed shell -master=seaweedfs:9333;
+      echo 'SeaweedFS bucket ready: skillex-uploads';
       "
     restart: "no"
 
@@ -97,4 +106,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
-  minio-data:
+  seaweedfs-data:

@@ -95,7 +95,7 @@ pnpm run setup
 pnpm dev
 ```
 
-`pnpm run setup` creates the env files, generates local secrets, starts PostgreSQL, Redis, Mailpit, and MinIO, applies migrations, and seeds demo data. Open <http://localhost:3000> and sign in with:
+`pnpm run setup` creates the env files, generates local secrets, starts PostgreSQL, Redis, Mailpit, and SeaweedFS, applies migrations, and seeds demo data. Open <http://localhost:3000> and sign in with:
 
 ```text
 Email:    demo@skillex.dev
