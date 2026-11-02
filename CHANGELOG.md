@@ -119,6 +119,10 @@ once versioned releases begin.
   security-sensitive integration groups.
 - Added rate limits to public, authentication, upload, chat, payment, and
   webhook endpoints.
+- Added per-route limits to the public skill catalogue, review creation,
+  referral application, and the LiveKit webhook.
+- Redacted waitlist email addresses in API logs while keeping the event and
+  source context needed to debug duplicates.
 - Removed personal contact details from public documentation in favor of
   GitHub-mediated private channels.
 - Enabled Dependabot alerts and automated security fixes.

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { redactEmail } from '../common/security/redact-email';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -20,7 +21,9 @@ export class WaitlistService {
     });
 
     if (existing) {
-      this.logger.log(`Duplicate waitlist entry for ${email}, skipping`);
+      this.logger.log(
+        `Duplicate waitlist entry for ${redactEmail(email)} (source: ${source ?? 'unknown'}), skipping`,
+      );
       return { success: true, alreadyJoined: true };
     }
 
@@ -33,7 +36,9 @@ export class WaitlistService {
       },
     });
 
-    this.logger.log(`New waitlist entry: ${entry.email} (source: ${source})`);
+    this.logger.log(
+      `New waitlist entry: ${redactEmail(entry.email)} (source: ${source ?? 'unknown'})`,
+    );
 
     // Send confirmation email
     await this.sendConfirmationEmail(entry.email, entry.name);

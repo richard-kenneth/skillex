@@ -7,6 +7,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { WebhookReceiver } from 'livekit-server-sdk';
 import { VideoService } from './video.service';
@@ -29,7 +30,9 @@ export class WebhookController {
     this.receiver = new WebhookReceiver(apiKey, apiSecret);
   }
 
+  // LiveKit can burst events, so allow a generous but bounded rate.
   @Post('webhook')
+  @Throttle({ default: { limit: 120, ttl: 60_000 } })
   async handleWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('authorization') authHeader: string,

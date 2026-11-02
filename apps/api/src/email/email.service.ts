@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import nodemailer, { type Transporter } from 'nodemailer';
 import { Resend } from 'resend';
+import { redactEmail } from '../common/security/redact-email';
 
 export interface EmailMessage {
   to: string;
@@ -94,7 +95,7 @@ export class EmailService implements OnModuleInit {
   async send(message: EmailMessage): Promise<boolean> {
     if (this.transport.kind === 'disabled') {
       this.logger.debug(
-        `Email disabled; skipped "${message.subject}" to ${message.to}`,
+        `Email disabled; skipped "${message.subject}" to ${redactEmail(message.to)}`,
       );
       return false;
     }
@@ -111,7 +112,7 @@ export class EmailService implements OnModuleInit {
 
         if (result.error) {
           this.logger.error(
-            `Resend rejected "${message.subject}" to ${message.to}: ${result.error.message}`,
+            `Resend rejected "${message.subject}" to ${redactEmail(message.to)}: ${result.error.message}`,
           );
           return false;
         }
@@ -125,11 +126,13 @@ export class EmailService implements OnModuleInit {
         });
       }
 
-      this.logger.log(`Email sent to ${message.to}: ${message.subject}`);
+      this.logger.log(
+        `Email sent to ${redactEmail(message.to)}: ${message.subject}`,
+      );
       return true;
     } catch (error) {
       this.logger.error(
-        `Failed to send email to ${message.to}: ${
+        `Failed to send email to ${redactEmail(message.to)}: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

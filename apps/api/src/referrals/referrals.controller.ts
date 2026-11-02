@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApplyReferralSchema } from '@skillex/shared';
 import { Request } from 'express';
 import { BetterAuthGuard } from '../auth/better-auth.guard';
@@ -20,7 +21,9 @@ export class ReferralsController {
     return this.referralsService.getMyReferralStats(req.user.id);
   }
 
+  // Applying a code changes referral state; keep the write budget low.
   @Post('apply')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   applyCode(
     @Req() req: Request & { user: { id: string } },
     @Body(new ValibotValidationPipe(ApplyReferralSchema))
