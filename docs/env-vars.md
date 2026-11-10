@@ -10,12 +10,12 @@ API, web app, and mobile app, plus the local defaults created by
 
 ## How configuration is loaded
 
-| Component | File                           | Loaded by                               |
-| --------- | ------------------------------ | --------------------------------------- |
-| API       | `apps/api/.env`                | `dotenv` before NestJS starts           |
-| Web       | `apps/web/.env.local`          | Next.js                                 |
-| Mobile    | `apps/mobile/.env`             | Expo at build and bundle time           |
-| Compose   | `docker-compose.yml` variables | Docker Compose; development values only |
+| Component | File                  | Loaded by                               |
+| --------- | --------------------- | --------------------------------------- |
+| API       | `apps/api/.env`       | `dotenv` before NestJS starts           |
+| Web       | `apps/web/.env.local` | Next.js                                 |
+| Mobile    | `apps/mobile/.env`    | Expo at build and bundle time           |
+| Compose   | `.env`                | Docker Compose; development values only |
 
 `pnpm run setup` copies each example file and fills in local values. It is safe
 to re-run and will not overwrite an existing file.
@@ -24,6 +24,31 @@ The API validates its environment once at startup. Required values fail fast;
 optional integrations may be absent. A _partially_ configured group (for
 example, a Google client ID without its secret) is rejected with a clear error.
 Empty strings are treated as unset.
+
+## Compose (`.env`)
+
+The local stack publishes its host ports from the repository `.env` file, which
+`pnpm run setup` creates from [`.env.example`](../.env.example). Change a value
+only when the default port is already used by another program, then rerun
+`pnpm run setup`; it rewrites `DATABASE_URL`, `REDIS_URL`, `SMTP_PORT`, and the
+`R2_*` URLs in `apps/api/.env` to match. An intentional non-local value, such
+as a remote database, is left alone.
+
+| Variable               | Default | Service                |
+| ---------------------- | ------- | ---------------------- |
+| `POSTGRES_PORT`        | `5432`  | PostgreSQL             |
+| `REDIS_PORT`           | `6379`  | Redis                  |
+| `MAILPIT_SMTP_PORT`    | `1025`  | Mailpit SMTP           |
+| `MAILPIT_UI_PORT`      | `8025`  | Mailpit web UI         |
+| `SEAWEEDFS_S3_PORT`    | `9000`  | SeaweedFS S3 API       |
+| `SEAWEEDFS_UI_PORT`    | `9001`  | SeaweedFS filer UI     |
+| `LIVEKIT_PORT`         | `7880`  | LiveKit HTTP/WebSocket |
+| `LIVEKIT_RTC_TCP_PORT` | `7881`  | LiveKit RTC over TCP   |
+| `LIVEKIT_RTC_UDP_PORT` | `7882`  | LiveKit RTC over UDP   |
+
+Core services bind to `127.0.0.1`. LiveKit stays on all interfaces because
+device testing needs the LAN address. LiveKit is only started with
+`docker compose --profile video up -d`.
 
 ## API (`apps/api/.env`)
 
@@ -214,7 +239,8 @@ module. See [`docs/mobile-development.md`](./mobile-development.md).
 | LiveKit (optional) | `ws://localhost:7880`          | `devkey` / `secret`                       |
 
 These credentials are for local development only. Never reuse them in a
-deployment.
+deployment. The host ports in this table are the defaults; see
+[Compose](#compose-env) when a port is already in use.
 
 ## Deployment notes
 

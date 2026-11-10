@@ -18,17 +18,17 @@ Related documents:
 
 ## Blocking gates
 
-| Gate                     | Done when                                                                                                                   | Status                                        |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| Credential rotation      | Every credential exposed outside the repository, including screenshots, chat, AI tools, and local backups, has been rotated | **Blocked**                                   |
-| Full-history secret scan | Both Gitleaks and Trufflehog full-history scans are clean                                                                   | **Trufflehog pending; staged Gitleaks clean** |
-| Legal review             | CLA, Corporate CLA, `SECURITY.md`, `PRIVACY.md`, and `TRADEMARK.md` terms finalized                                         | **Ready**                                     |
-| CLA Assistant            | The app is installed, linked to the CLA Gist, required by the `main` ruleset, and tested with an unsigned account           | **Pending setup**                             |
-| Local stack validation   | `pnpm run setup`, `pnpm dev`, and the dev container work on a machine with Docker                                           | **Runtime validation due**                    |
-| Landing page             | The current `main` build is deployed with SkillEx branding, working counters, a working waitlist, and no stale links        | **Redeploy pending**                          |
-| Demo assets              | The README has a real screenshot or GIF captured from seeded demo data                                                      | **Pending**                                   |
-| Release notes            | [`release-notes-v0.1.0.md`](./release-notes-v0.1.0.md) is final, with the release date and commit recorded                  | **Draft ready**                               |
-| Post-public settings     | The day-zero checklist below is ready to run immediately after the visibility change                                        | **Ready**                                     |
+| Gate                     | Done when                                                                                                                   | Status                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Credential rotation      | Every credential exposed outside the repository, including screenshots, chat, AI tools, and local backups, has been rotated | **Blocked**                                                |
+| Full-history secret scan | Both Gitleaks and Trufflehog full-history scans are clean                                                                   | **Trufflehog pending; staged Gitleaks clean**              |
+| Legal review             | CLA, Corporate CLA, `SECURITY.md`, `PRIVACY.md`, and `TRADEMARK.md` terms finalized                                         | **Ready**                                                  |
+| CLA Assistant            | The app is installed, linked to the CLA Gist, required by the `main` ruleset, and tested with an unsigned account           | **Pending setup**                                          |
+| Local stack validation   | `pnpm run setup`, `pnpm dev`, and the dev container work on a machine with Docker                                           | **Compose + clean clone validated; dev container pending** |
+| Landing page             | The current `main` build is deployed with SkillEx branding, working counters, a working waitlist, and no stale links        | **Redeploy pending**                                       |
+| Demo assets              | The README has a real screenshot or GIF captured from seeded demo data                                                      | **Pending**                                                |
+| Release notes            | [`release-notes-v0.1.0.md`](./release-notes-v0.1.0.md) is final, with the release date and commit recorded                  | **Draft ready**                                            |
+| Post-public settings     | The day-zero checklist below is ready to run immediately after the visibility change                                        | **Ready**                                                  |
 
 Do not use this table as evidence that a gate is complete. Record the date,
 owner, and private evidence for each gate in the private launch record.
@@ -142,6 +142,14 @@ pnpm dev
 Sign in with the seeded demo account, browse skills, open an exchange, and
 confirm that Mailpit receives the expected local email. If this fails, fix the
 setup before announcing the launch.
+
+If a port is already used by another program, setup stops and names the
+variable to change in the repository `.env` file. Confirm that path too: it must
+not connect to the other program's database.
+
+Record the operating system, Docker version, and any skipped step in the
+private launch record. The dev container must be booted at least once before
+this gate is complete.
 
 ## Week A: soft launch
 

@@ -15,8 +15,10 @@
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { ensureDockerOnPath } from "./lib/docker-path.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const args = new Set(process.argv.slice(2));
@@ -25,6 +27,44 @@ const skipDocker = args.has("--skip-docker");
 const skipSeed = args.has("--skip-seed");
 
 const isWindows = process.platform === "win32";
+
+/**
+ * Host ports published by docker-compose.yml. Keep these in sync with
+ * docker-compose.yml and `.env.example`.
+ */
+const composePortEntries = [
+  {
+    env: "POSTGRES_PORT",
+    fallback: 5432,
+    service: "postgres",
+    label: "PostgreSQL",
+  },
+  { env: "REDIS_PORT", fallback: 6379, service: "redis", label: "Redis" },
+  {
+    env: "MAILPIT_SMTP_PORT",
+    fallback: 1025,
+    service: "mailpit",
+    label: "Mailpit SMTP",
+  },
+  {
+    env: "MAILPIT_UI_PORT",
+    fallback: 8025,
+    service: "mailpit",
+    label: "Mailpit UI",
+  },
+  {
+    env: "SEAWEEDFS_S3_PORT",
+    fallback: 9000,
+    service: "seaweedfs",
+    label: "SeaweedFS S3",
+  },
+  {
+    env: "SEAWEEDFS_UI_PORT",
+    fallback: 9001,
+    service: "seaweedfs",
+    label: "SeaweedFS UI",
+  },
+];
 
 function log(message) {
   console.log(`\n\u001b[36m>\u001b[0m ${message}`);
@@ -90,6 +130,25 @@ function hasCommand(command, commandArgs = ["--version"]) {
   return result.status === 0;
 }
 
+/** Run a command and return its stdout, or null when it fails. */
+function capture(command, commandArgs) {
+  const spawnOptions = {
+    cwd: root,
+    encoding: "utf8",
+    env: process.env,
+  };
+
+  const result = isWindows
+    ? spawnSync([command, ...commandArgs].map(quoteShellArg).join(" "), {
+        ...spawnOptions,
+        shell: true,
+      })
+    : spawnSync(command, commandArgs, spawnOptions);
+
+  if (result.error || result.status !== 0) return null;
+  return result.stdout ?? "";
+}
+
 const placeholderPatterns = [
   /^$/,
   /^changeme$/i,
@@ -139,6 +198,188 @@ function writeEnvFile(file, content) {
   writeFileSync(file, `${content.trimEnd()}\n`, "utf8");
 }
 
+/** Minimal dotenv parser for the root Compose overrides file. */
+function parseDotenv(content) {
+  const values = {};
+
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+
+    const separator = line.indexOf("=");
+    if (separator === -1) continue;
+
+    const key = line.slice(0, separator).trim();
+    let value = line.slice(separator + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    // Later lines win, matching dotenv and Docker Compose.
+    values[key] = value;
+  }
+
+  return values;
+}
+
+/** Read the effective value of KEY from a dotenv file body. */
+function envValue(content, key) {
+  const pattern = new RegExp(`^${key}=(.*)$`, "gm");
+  let value = "";
+
+  for (const match of content.matchAll(pattern)) {
+    value = match[1];
+  }
+
+  return value.trim().replace(/^["']|["']$/g, "");
+}
+
+function isLoopbackHost(host) {
+  const normalized = String(host ?? "")
+    .trim()
+    .toLowerCase();
+  return (
+    normalized === "" ||
+    ["localhost", "127.0.0.1", "::1", "[::1]"].includes(normalized)
+  );
+}
+
+function isLoopbackUrl(value) {
+  try {
+    return isLoopbackHost(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Update a value that `pnpm run setup` owns for the local stack. An intentional
+ * non-local value (a remote database or SMTP server) is left alone. When the
+ * file has duplicate keys, append a last-wins line instead of rewriting the
+ * earlier value, so hand-maintained overrides survive.
+ */
+function setManagedValue(content, key, value, shouldManage) {
+  const current = envValue(content, key);
+  if (!shouldManage(current)) return content;
+  if (current === value) return content;
+
+  const occurrences = content.match(new RegExp(`^${key}=.*$`, "gm")) ?? [];
+  if (occurrences.length > 1) {
+    return `${content.trimEnd()}\n${key}=${quote(value)}\n`;
+  }
+
+  return setEnv(content, key, value, { overwrite: true });
+}
+
+function resolveComposePorts() {
+  const fileEnv = parseDotenv(readEnvFile(join(root, ".env")));
+  const ports = {};
+
+  for (const entry of composePortEntries) {
+    const raw = process.env[entry.env] ?? fileEnv[entry.env];
+
+    if (raw === undefined || raw === "") {
+      ports[entry.env] = entry.fallback;
+      continue;
+    }
+
+    const value = Number(raw);
+    if (!Number.isInteger(value) || value < 1 || value > 65535) {
+      fail(
+        `${entry.env} must be an integer between 1 and 65535 (got "${raw}"). Fix .env and rerun.`,
+      );
+    }
+
+    ports[entry.env] = value;
+  }
+
+  return ports;
+}
+
+function isPortFree(port) {
+  return new Promise((resolveFree) => {
+    const server = createServer();
+    server.once("error", () => resolveFree(false));
+    server.once("listening", () => server.close(() => resolveFree(true)));
+    server.listen({ port, host: "127.0.0.1", exclusive: true });
+  });
+}
+
+/**
+ * Return the `${service}:${port}` pairs that this Compose project already
+ * publishes on 127.0.0.1, so a re-run does not report its own containers.
+ */
+function loopbackPublishedPorts() {
+  const raw = capture("docker", ["compose", "ps", "--format", "json"]);
+  if (!raw) return new Set();
+
+  const text = raw.trim();
+  if (!text) return new Set();
+
+  let entries;
+  try {
+    // Compose versions emit either a JSON array or one object per line.
+    entries = text.startsWith("[")
+      ? JSON.parse(text)
+      : text.split(/\r?\n/).map((line) => JSON.parse(line));
+  } catch {
+    return new Set();
+  }
+
+  const published = new Set();
+  for (const entry of entries) {
+    const service = entry?.Service;
+    if (!service) continue;
+
+    for (const publisher of entry.Publishers ?? []) {
+      if (publisher?.URL === "127.0.0.1" && publisher.PublishedPort) {
+        published.add(`${service}:${publisher.PublishedPort}`);
+      }
+    }
+  }
+
+  return published;
+}
+
+/**
+ * Fail early with an actionable message when a host port is taken. Core
+ * services publish on 127.0.0.1, so a clash with a locally installed
+ * PostgreSQL would otherwise shadow the Compose database and migrations could
+ * run against the wrong one.
+ */
+async function checkPortConflicts(ports) {
+  const ownPorts = loopbackPublishedPorts();
+  const conflicts = [];
+
+  for (const entry of composePortEntries) {
+    const port = ports[entry.env];
+
+    if (await isPortFree(port)) continue;
+    if (ownPorts.has(`${entry.service}:${port}`)) continue;
+
+    conflicts.push({ ...entry, port });
+  }
+
+  if (conflicts.length === 0) return;
+
+  const details = conflicts
+    .map(
+      ({ label, env, port }) => `  ${label}: port ${port} is in use (${env})`,
+    )
+    .join("\n");
+
+  fail(
+    `These local ports are already used by another program:\n${details}\n\n` +
+      "Set the listed variables in the repository `.env` file to free ports, then rerun\n" +
+      "`pnpm run setup`. Setup rewrites the matching URLs in apps/api/.env.\n\n" +
+      "Example: POSTGRES_PORT=55432\n\n" +
+      "If an older copy of this stack is still running, stop it first with `pnpm db:down`.",
+  );
+}
+
 function ensureEnvFile(exampleFile, targetFile) {
   if (existsSync(targetFile)) {
     log(`Keeping existing ${targetFile}`);
@@ -160,9 +401,14 @@ function secret(bytes = 32) {
   return randomBytes(bytes).toString("hex");
 }
 
-function configureApiEnv() {
+function configureApiEnv(ports) {
   const file = join(root, "apps", "api", ".env");
   let content = ensureEnvFile(join(root, "apps", "api", ".env.example"), file);
+
+  const postgresPort = ports.POSTGRES_PORT;
+  const redisPort = ports.REDIS_PORT;
+  const smtpPort = ports.MAILPIT_SMTP_PORT;
+  const storagePort = ports.SEAWEEDFS_S3_PORT;
 
   const values = {
     NODE_ENV: "development",
@@ -170,26 +416,52 @@ function configureApiEnv() {
     API_BASE_URL: "http://localhost:3001",
     CLIENT_BASE_URL: "http://localhost:3000",
     BETTER_AUTH_URL: "http://localhost:3001",
-    DATABASE_URL:
-      "postgresql://skillex:skillex@localhost:5432/skillex?schema=public",
-    REDIS_URL: "redis://localhost:6379",
+    DATABASE_URL: `postgresql://skillex:skillex@localhost:${postgresPort}/skillex?schema=public`,
+    REDIS_URL: `redis://localhost:${redisPort}`,
     BETTER_AUTH_SECRET: secret(48),
     INTERNAL_SECRET: secret(48),
     JWT_SECRET: secret(48),
     ONBOARDING_EMAIL_FROM: "SkillEx <dev@skillex.local>",
     EMAIL_TRANSPORT: "auto",
     SMTP_HOST: "localhost",
-    SMTP_PORT: "1025",
+    SMTP_PORT: String(smtpPort),
     SMTP_SECURE: "false",
     R2_ACCESS_KEY_ID: "skillex",
     R2_SECRET_ACCESS_KEY: "skillex-dev-secret",
     R2_BUCKET_NAME: "skillex-uploads",
-    R2_ENDPOINT: "http://localhost:9000",
-    R2_PUBLIC_URL: "http://localhost:9000/skillex-uploads",
+    R2_ENDPOINT: `http://localhost:${storagePort}`,
+    R2_PUBLIC_URL: `http://localhost:${storagePort}/skillex-uploads`,
     EXPO_SCHEME: "skil-ex",
   };
 
+  // These point at Docker services. Keep an intentional remote value, but
+  // rewrite a local one so a changed host port does not leave a stale URL.
+  const managedLocalUrls = new Set([
+    "DATABASE_URL",
+    "REDIS_URL",
+    "R2_ENDPOINT",
+    "R2_PUBLIC_URL",
+  ]);
+
   for (const [key, value] of Object.entries(values)) {
+    if (managedLocalUrls.has(key)) {
+      content = setManagedValue(
+        content,
+        key,
+        value,
+        (current) => isPlaceholder(current) || isLoopbackUrl(current),
+      );
+      continue;
+    }
+
+    if (key === "SMTP_PORT") {
+      // Only follow Mailpit while SMTP_HOST points at the local instance.
+      content = setManagedValue(content, key, value, () =>
+        isLoopbackHost(envValue(content, "SMTP_HOST")),
+      );
+      continue;
+    }
+
     content = setEnv(content, key, value);
   }
 
@@ -263,7 +535,7 @@ function configureMobileEnv() {
   writeEnvFile(file, content);
 }
 
-function startDocker() {
+async function startDocker(ports) {
   if (skipDocker) {
     warn("Skipping docker compose (--skip-docker)");
     return true;
@@ -275,6 +547,8 @@ function startDocker() {
     );
     return false;
   }
+
+  await checkPortConflicts(ports);
 
   log("Starting postgres, redis, mailpit, and seaweedfs...");
   run("docker", [
@@ -293,15 +567,22 @@ function startDocker() {
   return true;
 }
 
-function main() {
+async function main() {
   console.log("\nSkillEx local setup");
   console.log("===================");
+
+  ensureDockerOnPath();
 
   if (!hasCommand("pnpm")) {
     fail("pnpm is required. Install it from https://pnpm.io/installation");
   }
 
-  configureApiEnv();
+  // Docker Compose reads this file for the published host ports. Creating it
+  // from the example keeps the port settings discoverable and editable.
+  ensureEnvFile(join(root, ".env.example"), join(root, ".env"));
+  const ports = resolveComposePorts();
+
+  configureApiEnv(ports);
   configureWebEnv();
   configureMobileEnv();
 
@@ -310,7 +591,7 @@ function main() {
     run("pnpm", ["install"]);
   }
 
-  const dockerReady = startDocker();
+  const dockerReady = await startDocker(ports);
 
   log("Building the shared package...");
   run("pnpm", ["--filter", "@skillex/shared", "build"]);
@@ -341,6 +622,16 @@ The environment files were created:
     run("pnpm", ["--filter", "api", "exec", "prisma", "db", "seed"]);
   }
 
+  const customPorts = composePortEntries.filter(
+    (entry) => ports[entry.env] !== entry.fallback,
+  );
+  const portNote =
+    customPorts.length > 0
+      ? `\nLocal ports from .env:\n${customPorts
+          .map((entry) => `  ${entry.env}=${ports[entry.env]}`)
+          .join("\n")}\n`
+      : "";
+
   console.log(`
 \u001b[32m✓ Setup complete\u001b[0m
 
@@ -351,16 +642,18 @@ Local services:
   Web              http://localhost:3000
   API              http://localhost:3001/api
   API health       http://localhost:3001/health
-  Mailpit (email)  http://localhost:8025
-  SeaweedFS UI     http://localhost:9001
-  SeaweedFS S3     http://localhost:9000  (skillex / skillex-dev-secret)
+  Mailpit (email)  http://localhost:${ports.MAILPIT_UI_PORT}
+  SeaweedFS UI     http://localhost:${ports.SEAWEEDFS_UI_PORT}
+  SeaweedFS S3     http://localhost:${ports.SEAWEEDFS_S3_PORT}  (skillex / skillex-dev-secret)
   LiveKit          optional: docker compose --profile video up -d
   Payments         local mock by default (no Flutterwave account required)
-
+${portNote}
 Demo login:
   Email            demo@skillex.dev
   Password         Password123!
 `);
 }
 
-main();
+main().catch((error) => {
+  fail(error instanceof Error ? error.message : String(error));
+});
