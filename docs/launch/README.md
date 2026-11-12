@@ -22,6 +22,7 @@ Related documents:
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | Credential rotation      | Every credential exposed outside the repository, including screenshots, chat, AI tools, and local backups, has been rotated | **Blocked**                                                |
 | Full-history secret scan | Both Gitleaks and Trufflehog full-history scans are clean                                                                   | **Trufflehog pending; staged Gitleaks clean**              |
+| Dependency risk          | `pnpm audit --prod` has no critical advisories, and every remaining advisory is documented with a rationale                 | **0 critical; residual advisories documented**             |
 | Legal review             | CLA, Corporate CLA, `SECURITY.md`, `PRIVACY.md`, and `TRADEMARK.md` terms finalized                                         | **Ready**                                                  |
 | CLA Assistant            | The app is installed, linked to the CLA Gist, required by the `main` ruleset, and tested with an unsigned account           | **Pending setup**                                          |
 | Local stack validation   | `pnpm run setup`, `pnpm dev`, and the dev container work on a machine with Docker                                           | **Compose + clean clone validated; dev container pending** |
@@ -32,6 +33,26 @@ Related documents:
 
 Do not use this table as evidence that a gate is complete. Record the date,
 owner, and private evidence for each gate in the private launch record.
+
+### Dependency risk
+
+Run `pnpm audit --prod` before the release. Do not accept a critical advisory.
+For high and moderate advisories, upgrade the direct dependency or add a
+same-major override in `pnpm-workspace.yaml`. If no safe patch exists, record
+the advisory below with the reason it is accepted.
+
+| Advisory               | Severity | Path                                                 | Why it is accepted                                                                                                                                                                    |
+| ---------------------- | -------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `decode-uri-component` | High     | `query-string` 7 in React Navigation and Expo Router | The patched release is ESM-only and would break the CommonJS consumers; exploitation needs a crafted deep-link query string. Revisit when React Navigation moves to `query-string` 9. |
+| `image-size`           | High     | Metro asset pipeline                                 | Build-time only. Metro 0.84 calls the 1.x callable export; 2.x changed the export shape. Revisit with the next Expo SDK.                                                              |
+| `zod` 3.25.76          | High     | `@expo/cli`                                          | Build-time only. Expo pins Zod 3; the API, web app, and shared package use Zod 4.                                                                                                     |
+| `uuid` 7.0.3           | Moderate | `xcode` through `@expo/config-plugins`               | Build-time only. The advisory needs a caller-provided buffer, which this path does not use.                                                                                           |
+| `glob` 13.0.6          | Moderate | Expo CLI and `@nestjs/cli`                           | Build-time only. The patched 14 release is a major upgrade that Expo pins away from.                                                                                                  |
+| `minimatch` 10.2.6     | Moderate | ESLint 10, Expo fingerprint, and `glob` 13           | Build-time only. The patched 11 release is a major upgrade.                                                                                                                           |
+| `deepmerge` 4.3.1      | Low      | `@expo/config`                                       | Build-time only. No patched release exists.                                                                                                                                           |
+
+Re-run the audit after every Expo SDK or React Navigation upgrade. Remove an
+entry when its path resolves to a patched version.
 
 ## Day zero: make the repository public
 

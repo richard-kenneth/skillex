@@ -15,7 +15,7 @@ export const getAuthConfig = (
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
-  experimental: { joins: true },
+  advanced: { database: { joins: true } },
   plugins: [
     expo(),
     bearer(),
