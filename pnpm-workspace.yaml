@@ -20,12 +20,14 @@ overrides:
   fast-copy: 4.1.0
   fast-uri: 3.1.9
   follow-redirects: 1.16.3
+  handlebars: 4.7.10
   hono: 4.13.11
   ip-address: 10.7.4
   js-yaml: 4.3.2
   multer: 2.5.0
   mysql2: 3.24.6
   node-forge: 1.4.3
+  piscina: 4.9.4
   postcss: 8.5.32
   postcss-selector-parser: 7.1.6
   proxy-addr: 2.0.8
