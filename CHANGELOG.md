@@ -28,6 +28,9 @@ once versioned releases begin.
   file, bound the core services to `127.0.0.1`, and made `pnpm run setup` stop
   with an actionable message when a port is already in use instead of running
   migrations against a different local database.
+- Upgraded Next.js, Better Auth, Nodemailer, Zod, and other direct dependencies,
+  added same-major security overrides for transitive packages, and moved
+  build-only tooling to development dependencies.
 
 ### Added
 
