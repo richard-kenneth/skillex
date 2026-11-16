@@ -219,7 +219,7 @@ See [`apps/mobile/README.md`](./apps/mobile/README.md) for the quick version and
 
 ## Dev container / Codespaces
 
-The repository includes a [development container](./.devcontainer/devcontainer.json) with Node.js 22, pnpm, Docker-in-Docker, and the recommended VS Code extensions. Open the repository in a dev container or GitHub Codespace; the post-create script installs dependencies, starts the local services, migrates, and seeds the database. If you change local service ports in `.env`, update `forwardPorts` in `.devcontainer/devcontainer.json` to match.
+The repository includes a [development container](./.devcontainer/devcontainer.json) with Node.js 22, pnpm, Docker-in-Docker, and the recommended VS Code extensions. Open the repository in a dev container or GitHub Codespace; the post-create script installs dependencies, starts the local services, migrates, and seeds the database. Dependencies live in a container volume, so the dev container does not modify a host `node_modules`. If you change local service ports in `.env`, update `forwardPorts` in `.devcontainer/devcontainer.json` to match.
 
 ## Troubleshooting
 

@@ -17,6 +17,7 @@ coverage/
 Thumbs.db
 *.log
 *.pid
+.pnpm-store/
 
 # Prisma generated client
 */generated/prisma
