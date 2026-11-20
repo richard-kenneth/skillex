@@ -119,7 +119,7 @@ The API and web app are supported for contributions. The mobile app is community
 
 ### Dev container
 
-The repository includes a dev container for VS Code and GitHub Codespaces. It installs Node.js 22, pnpm, and Docker-in-Docker, then runs the same setup flow. See [`.devcontainer/devcontainer.json`](./.devcontainer/devcontainer.json).
+The repository includes a dev container for VS Code and GitHub Codespaces. It installs Node.js 22, pnpm, and Docker-in-Docker, then runs the same setup flow. Dependencies are stored in a container volume, so opening the dev container does not replace a host `node_modules`. See [`.devcontainer/devcontainer.json`](./.devcontainer/devcontainer.json).
 
 ## Branch names
 

@@ -117,6 +117,12 @@ once versioned releases begin.
 - Replaced a malformed character in the web environment example comment.
 - Corrected documentation that referred to mobile requirements and optional
   integration behavior inaccurately.
+- Normalized shell script line endings to LF, so the dev container's
+  `post-create.sh` runs on Windows checkouts instead of failing on
+  `set -euo pipefail`.
+- Moved dev container dependencies into a per-container volume and the pnpm
+  store into the container filesystem, so opening the dev container no longer
+  replaces or corrupts a host `node_modules`.
 
 ### Security
 

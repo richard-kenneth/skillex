@@ -1,0 +1,7 @@
+# Normalize text files in the repository. Shell scripts must keep LF endings
+# in every checkout so they run inside Linux containers and CI.
+* text=auto
+*.sh text eol=lf
+*.bash text eol=lf
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
