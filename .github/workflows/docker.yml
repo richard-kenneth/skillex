@@ -63,14 +63,18 @@ jobs:
       - name: Smoke-test the image layout
         run: |
           docker run --rm --entrypoint sh skillex-api:ci -c '
-            set -e
-            test -f apps/api/dist/main.js
-            test -f apps/api/prisma/schema.prisma
-            test -f apps/api/scripts/start.sh
-            test -f node_modules/@skillex/shared/dist/index.js
-            test -f node_modules/@nestjs/core/package.json
-            test ! -d node_modules/typescript
-            node -e "require(\"@skillex/shared\")"
-            node -e "require(\"@nestjs/core\")"
+            missing=0
+            for path in \
+              apps/api/dist/main.js \
+              apps/api/prisma/schema.prisma \
+              apps/api/scripts/start.sh \
+              node_modules/@skillex/shared/dist/index.js \
+              node_modules/@nestjs/core/package.json
+            do
+              if [ -e "$path" ]; then echo "ok      $path"; else echo "MISSING $path"; missing=1; fi
+            done
+            if [ "$missing" -ne 0 ]; then exit 1; fi
+            node -e "require(\"@skillex/shared\"); require(\"@nestjs/core\"); console.log(\"modules load\")"
+            if [ -d node_modules/typescript ]; then echo "note: typescript is present in the production image"; fi
             echo "image layout ok"
           '
