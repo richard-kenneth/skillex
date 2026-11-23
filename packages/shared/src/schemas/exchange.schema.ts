@@ -1,7 +1,7 @@
 import * as v from "valibot";
 
 export const CreateExchangeRequestSchema = v.strictObject({
-  receiverId: v.pipe(v.string(), v.length(32, "Invalid receiver ID.")),
+  receiverId: v.pipe(v.string(), v.minLength(1, "Invalid receiver ID.")),
   requestedSkillId: v.pipe(v.string(), v.uuid("Invalid requested skill ID.")),
   offeredSkillId: v.optional(
     v.pipe(v.string(), v.uuid("Invalid offered skill ID.")),
@@ -15,7 +15,7 @@ export const CreateExchangeRequestSchema = v.strictObject({
     0,
   ),
   pointsPayerId: v.optional(
-    v.pipe(v.string(), v.length(32, "Invalid payer ID.")),
+    v.pipe(v.string(), v.minLength(1, "Invalid payer ID.")),
   ),
 });
 
@@ -149,7 +149,7 @@ export const ProposeTermsAndSlotsSchema = v.strictObject({
     0,
   ),
   pointsPayerId: v.optional(
-    v.nullable(v.pipe(v.string(), v.length(32, "Invalid payer ID."))),
+    v.nullable(v.pipe(v.string(), v.minLength(1, "Invalid payer ID."))),
   ),
   slots: v.array(
     v.strictObject({
