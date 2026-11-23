@@ -107,9 +107,10 @@ once versioned releases begin.
   The seeded demo users use UUIDs, so requesting an exchange with the demo
   account failed validation with "Validation failed" even though the match was
   valid.
-- Built the deploy image without corepack. Corepack fetched the pinned pnpm
-  version at build time and aborted the image with exit code 1 when that
-  download failed; pnpm is now installed with npm, which retries.
+- Built the deploy image without corepack and copied the Prisma schema before
+  installing dependencies. The API's `postinstall` script runs
+  `prisma generate`, so the image build aborted with exit code 1 when only the
+  package manifest was present.
 - Ensured the API build emits `dist/main.js` when it runs after the typecheck
   script. The incremental build cache could otherwise make `nest build` skip
   output after `dist` was cleared.

@@ -20,6 +20,11 @@ FROM base AS builder
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json .npmrc ./
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY apps/api/package.json ./apps/api/package.json
+# `apps/api` runs `prisma generate` in its postinstall script, so the Prisma
+# schema and config must exist before dependencies are installed. Without them
+# the install aborts with exit code 1.
+COPY apps/api/prisma ./apps/api/prisma
+COPY apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 COPY apps/web/package.json ./apps/web/package.json
 COPY apps/mobile/package.json ./apps/mobile/package.json
 COPY apps/mobile/modules/audio-device-detector ./apps/mobile/modules/audio-device-detector
