@@ -2,7 +2,17 @@ FROM node:22-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV CI=true
-RUN corepack enable
+# Install pnpm directly instead of through corepack. Corepack downloads the
+# pinned package manager from the npm registry on first use, and a failed
+# download or signature check aborts the image build with exit code 1 and no
+# pnpm output. npm retries transient failures and reports them clearly.
+ENV NPM_CONFIG_FETCH_RETRIES=5
+ENV NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=20000
+ENV NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000
+RUN npm install --global pnpm@10.33.2
+# Keep the pnpm store inside the cached mount so dependency downloads survive
+# between builds.
+ENV npm_config_store_dir=/pnpm/store
 WORKDIR /app
 
 FROM base AS builder
@@ -15,7 +25,7 @@ COPY apps/mobile/package.json ./apps/mobile/package.json
 COPY apps/mobile/modules/audio-device-detector ./apps/mobile/modules/audio-device-detector
 
 # Install dependencies
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
 # Copy source code
 COPY packages/shared ./packages/shared
@@ -29,7 +39,7 @@ RUN pnpm --filter @skillex/shared build
 RUN pnpm --filter api build
 
 # Prune devDependencies to reduce image size
-RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile
+RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -51,7 +61,7 @@ COPY --from=builder /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 COPY --from=builder /app/apps/api/src/generated/prisma ./apps/api/src/generated/prisma
 COPY --from=builder /app/apps/api/scripts/start.sh ./apps/api/scripts/start.sh
 
-EXPOSE 8000
+EXPOSE 3001
 
 # Run entrypoint script
 ENTRYPOINT ["sh", "./apps/api/scripts/start.sh"]
