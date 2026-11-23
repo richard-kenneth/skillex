@@ -79,6 +79,8 @@ once versioned releases begin.
   newsletter checklist, and a build-in-public article draft.
 - Demo capture guide covering storyboard, privacy checks, file sizes, and README
   insertion for a real screenshot or GIF.
+- Demo GIF and four screenshots captured from the seeded local stack, with the
+  GIF linked from the README after the social preview banner.
 
 ### Changed
 
@@ -101,6 +103,14 @@ once versioned releases begin.
 
 ### Fixed
 
+- Accepted both UUID and 32-character user IDs in exchange request payloads.
+  The seeded demo users use UUIDs, so requesting an exchange with the demo
+  account failed validation with "Validation failed" even though the match was
+  valid.
+- Built the deploy image without corepack and copied the Prisma schema before
+  installing dependencies. The API's `postinstall` script runs
+  `prisma generate`, so the image build aborted with exit code 1 when only the
+  package manifest was present.
 - Ensured the API build emits `dist/main.js` when it runs after the typecheck
   script. The incremental build cache could otherwise make `nest build` skip
   output after `dist` was cleared.

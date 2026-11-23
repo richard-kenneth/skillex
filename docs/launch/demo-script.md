@@ -148,3 +148,21 @@ Do not substitute a mockup. Either:
    launch checklist.
 
 A missing GIF is a smaller problem than a misleading one.
+
+## Capture record
+
+The first committed capture (23 November 2026) used the seeded local stack with
+the demo account and no third-party integrations:
+
+| Item        | Value                                                                                                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| Frames      | 5 (landing, sign-in, matches, exchange request with the points breakdown tooltip, points wallet)                     |
+| Viewport    | 1176×861 CSS pixels at 1.5 device pixel ratio; the browser window could not reach 1440×900, so nothing was upscaled  |
+| Theme       | Dark, matching the social preview                                                                                    |
+| GIF         | `docs/assets/demo.gif`, 1176×861 per frame, 5 frames, 385 KB, 13.6 s per loop                                        |
+| Screenshots | `docs/assets/screenshot-landing.png`, `screenshot-skills.png`, `screenshot-exchange.png`, `screenshot-points.png`    |
+| Skipped     | Live session room (LiveKit was not configured) and the profile page (it was not needed for the five-shot storyboard) |
+
+The frames were captured from the running app, not composed. The Next.js
+development indicator was hidden for the capture so it does not appear in the
+README.

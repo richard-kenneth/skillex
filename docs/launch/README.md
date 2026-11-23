@@ -18,18 +18,18 @@ Related documents:
 
 ## Blocking gates
 
-| Gate                     | Done when                                                                                                                   | Status                                                     |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Credential rotation      | Every credential exposed outside the repository, including screenshots, chat, AI tools, and local backups, has been rotated | **Blocked**                                                |
-| Full-history secret scan | Both Gitleaks and Trufflehog full-history scans are clean                                                                   | **Clean (Gitleaks + Trufflehog)**                          |
-| Dependency risk          | `pnpm audit --prod` has no critical advisories, and every remaining advisory is documented with a rationale                 | **0 critical; residual advisories documented**             |
-| Legal review             | CLA, Corporate CLA, `SECURITY.md`, `PRIVACY.md`, and `TRADEMARK.md` terms finalized                                         | **Ready**                                                  |
-| CLA Assistant            | The app is installed, linked to the CLA Gist, required by the `main` ruleset, and tested with an unsigned account           | **Pending setup**                                          |
-| Local stack validation   | `pnpm run setup`, `pnpm dev`, and the dev container work on a machine with Docker                                           | **Compose + clean clone + dev container validated**        |
-| Landing page             | The current `main` build is deployed with SkillEx branding, working counters, a working waitlist, and no stale links        | **Redeploy pending**                                       |
-| Demo assets              | The README has a real screenshot or GIF captured from seeded demo data                                                      | **Pending**                                                |
-| Release notes            | [`release-notes-v0.1.0.md`](./release-notes-v0.1.0.md) is final, with the release date and commit recorded                  | **Draft ready**                                            |
-| Post-public settings     | The day-zero checklist below is ready to run immediately after the visibility change                                        | **Ready**                                                  |
+| Gate                     | Done when                                                                                                                   | Status                                              |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Credential rotation      | Every credential exposed outside the repository, including screenshots, chat, AI tools, and local backups, has been rotated | **Blocked**                                         |
+| Full-history secret scan | Both Gitleaks and Trufflehog full-history scans are clean                                                                   | **Clean (Gitleaks + Trufflehog)**                   |
+| Dependency risk          | `pnpm audit --prod` has no critical advisories, and every remaining advisory is documented with a rationale                 | **0 critical; residual advisories documented**      |
+| Legal review             | CLA, Corporate CLA, `SECURITY.md`, `PRIVACY.md`, and `TRADEMARK.md` terms finalized                                         | **Ready**                                           |
+| CLA Assistant            | The app is installed, linked to the CLA Gist, required by the `main` ruleset, and tested with an unsigned account           | **Pending setup**                                   |
+| Local stack validation   | `pnpm run setup`, `pnpm dev`, and the dev container work on a machine with Docker                                           | **Compose + clean clone + dev container validated** |
+| Landing page             | The current `main` build is deployed with SkillEx branding, working counters, a working waitlist, and no stale links        | **Redeploy pending**                                |
+| Demo assets              | The README has a real screenshot or GIF captured from seeded demo data                                                      | **Captured from seeded local stack**                |
+| Release notes            | [`release-notes-v0.1.0.md`](./release-notes-v0.1.0.md) is final, with the release date and commit recorded                  | **Draft ready**                                     |
+| Post-public settings     | The day-zero checklist below is ready to run immediately after the visibility change                                        | **Ready**                                           |
 
 Do not use this table as evidence that a gate is complete. Record the date,
 owner, and private evidence for each gate in the private launch record.
