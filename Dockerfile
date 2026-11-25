@@ -54,7 +54,7 @@ ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 
 # Explicitly place the built shared package into node_modules for hoisted resolution
-RUN mkdir -p ./node_modules/@skillex/shared
+RUN rm -rf ./node_modules/@skillex/shared && mkdir -p ./node_modules/@skillex/shared
 COPY --from=builder /app/packages/shared/dist ./node_modules/@skillex/shared/dist
 COPY --from=builder /app/packages/shared/package.json ./node_modules/@skillex/shared/package.json
 
