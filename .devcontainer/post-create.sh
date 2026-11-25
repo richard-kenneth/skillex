@@ -4,8 +4,8 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 if ! command -v pnpm >/dev/null 2>&1; then
-  echo "Installing pnpm 10.33.2..."
-  sudo npm install --global pnpm@10.33.2
+  echo "Installing pnpm 12.23.0..."
+  sudo npm install --global pnpm@12.23.0
 fi
 
 echo "Installing workspace dependencies..."
