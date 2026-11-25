@@ -21,19 +21,19 @@
     "test": "node -e \"console.log('No shared tests yet')\""
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^5.100.3"
+    "@tanstack/react-query": "^5.108.4"
   },
   "dependencies": {
     "decimal.js": "^10.6.0",
-    "valibot": "^1.3.1"
+    "valibot": "^1.5.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
-    "eslint": "^9.39.5",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.5.0",
-    "prettier": "^3.8.3",
+    "prettier": "^3.10.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.0"
   }
