@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV CI=true
@@ -46,7 +46,7 @@ RUN pnpm --filter api build
 # Prune devDependencies to reduce image size
 RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
