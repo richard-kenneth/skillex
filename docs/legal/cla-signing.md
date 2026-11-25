@@ -76,6 +76,13 @@ When `CLA.md` changes, edit the `CLA.md` file in the existing Gist. Do not creat
 
 ### 4.5 Test
 
+CLA Assistant does not process private repositories: it only requests the scopes
+that public repositories allow, so no status is posted while the repository is
+private (see
+[cla-assistant#600](https://github.com/cla-assistant/cla-assistant/issues/600)).
+Run this test immediately after the visibility change and before announcing the
+launch.
+
 - [ ] Open a test pull request from a GitHub account that has not signed.
 - [ ] Confirm the bot comments, the status is pending or failing, and the pull request cannot merge.
 - [ ] Sign the CLA with the test account and confirm the status turns green.
@@ -147,8 +154,9 @@ A Developer Certificate of Origin is lighter, but it does not grant the Project 
 
 ## 8. Open items
 
-- [ ] Create the Gist and configure CLA Assistant.
+- [x] Create the Gist and configure CLA Assistant.
 - [ ] Create the Discussions categories. Discussions itself is enabled.
 - [ ] Enable private vulnerability reporting after the repository is public.
-- [ ] Add the CLA Assistant status check to branch protection.
-- [ ] Test the full flow before the public launch.
+- [x] Add the CLA Assistant status check (`license/cla`) to branch protection.
+- [ ] Test the full flow on day zero. CLA Assistant does not run on private
+      repositories, so this cannot happen before the visibility change.
