@@ -30,7 +30,7 @@ COPY apps/mobile/package.json ./apps/mobile/package.json
 COPY apps/mobile/modules/audio-device-detector ./apps/mobile/modules/audio-device-detector
 
 # Install dependencies
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Copy source code
 COPY packages/shared ./packages/shared
@@ -44,7 +44,7 @@ RUN pnpm --filter @skillex/shared build
 RUN pnpm --filter api build
 
 # Prune devDependencies to reduce image size
-RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile
 
 FROM node:26-alpine AS runner
 WORKDIR /app
