@@ -12,7 +12,7 @@ Please do not report security vulnerabilities in public issues, discussions, or 
 
 Use GitHub's private vulnerability reporting:
 
-**<https://github.com/richard-kenneth/skillex/security/advisories/new>**
+**<https://github.com/theskillex/skillex/security/advisories/new>**
 
 If you cannot use GitHub's private reporting, email **security@richardkenneth.com**. If you would rather not send full details by email, send a short summary without exploit details and ask for another private channel.
 

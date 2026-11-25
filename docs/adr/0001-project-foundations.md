@@ -9,7 +9,7 @@
 
 SkillEx is preparing to become a public open-source repository. Before the repository is made public, we need durable decisions on licensing, contributor terms, trademarks, naming, contribution scope, and the primary goal of the launch. These decisions affect every later phase: security work, contributor setup, documentation, GitHub settings, and launch messaging.
 
-The repository is currently private at `richard-kenneth/skillex`. The product has been developed as a commercial skill-exchange marketplace with payments, live video, points, referrals, and a mobile app. The codebase is a pnpm + Turborepo monorepo with a Next.js web app, a NestJS API, an Expo/React Native mobile app, and a shared TypeScript package.
+The repository is currently private at `theskillex/skillex`. The product has been developed as a commercial skill-exchange marketplace with payments, live video, points, referrals, and a mobile app. The codebase is a pnpm + Turborepo monorepo with a Next.js web app, a NestJS API, an Expo/React Native mobile app, and a shared TypeScript package.
 
 ## Decisions
 
@@ -85,7 +85,7 @@ A DCO is a lightweight attestation that the contributor has the right to submit 
 
 **Rationale:**
 
-- The GitHub repository is already `richard-kenneth/skillex`, and the name uses the double-l spelling requested for the project.
+- The GitHub repository is already `theskillex/skillex`, and the name uses the double-l spelling requested for the project.
 - The public brand is written **SkillEx** (capital S and E) as a two-part compound. The technical slug is all lowercase (`skillex`) because repository names, package names, and URLs are case-sensitive and already established. The difference is intentional: **SkillEx** is the display name, `skillex` is the identifier.
 - The existing codebase mixes `skil-ex2`, `skilex`, `SkilEx`, `Skil-Ex`, and `Skill Exchange`. That inconsistency makes the project harder to recognize and search for.
 - A single product name plus a single technical slug is enough. We do not need to rename every historical identifier at once, especially where doing so would break authentication, deep links, push notifications, or existing deployments.

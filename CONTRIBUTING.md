@@ -63,7 +63,7 @@ The Project Owner and automated dependency bots are listed in the repository's C
 ### How to sign (corporate)
 
 1. Read `CLA-CORPORATE.md`.
-2. Email **legal@richardkenneth.com**, or open a **Corporate CLA** discussion using the template at <https://github.com/richard-kenneth/skillex/discussions>. Include the corporation's legal name and country of incorporation. Do not post the signed agreement, employee names or usernames, email addresses, or confidential information in a public discussion.
+2. Email **legal@richardkenneth.com**, or open a **Corporate CLA** discussion using the template at <https://github.com/theskillex/skillex/discussions>. Include the corporation's legal name and country of incorporation. Do not post the signed agreement, employee names or usernames, email addresses, or confidential information in a public discussion.
 3. A maintainer will reply with a private submission channel. Use that channel to send the completed Schedule A and the signed agreement.
 4. Wait for confirmation before submitting Contributions on the Corporation's behalf. The maintainer will add the authorized GitHub usernames to the CLA allowlist.
 
@@ -166,7 +166,7 @@ A good pull request:
 
 Please do not report security vulnerabilities in public issues, discussions, or pull requests. Use GitHub's private vulnerability reporting:
 
-**<https://github.com/richard-kenneth/skillex/security/advisories/new>**
+**<https://github.com/theskillex/skillex/security/advisories/new>**
 
 See [`SECURITY.md`](./SECURITY.md) for what to include and what to expect. If private reporting is not available, open a discussion asking a maintainer to enable a private channel, but do not include exploit details in the public post.
 

@@ -75,7 +75,7 @@ try {
   console.log('');
   console.log('Next steps:');
   console.log('1. Open https://cla-assistant.io and sign in with GitHub.');
-  console.log('2. Install the CLA Assistant app for richard-kenneth/skillex.');
+  console.log('2. Install the CLA Assistant app for theskillex/skillex.');
   console.log('3. Link the repository to the Gist above.');
   console.log('4. Require the CLA Assistant status check in branch protection.');
   console.log('5. Test with a pull request from a non-maintainer account.');

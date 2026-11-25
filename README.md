@@ -1,6 +1,6 @@
 # SkillEx
 
-[![CI](https://github.com/richard-kenneth/skillex/actions/workflows/ci.yml/badge.svg)](https://github.com/richard-kenneth/skillex/actions/workflows/ci.yml)
+[![CI](https://github.com/theskillex/skillex/actions/workflows/ci.yml/badge.svg)](https://github.com/theskillex/skillex/actions/workflows/ci.yml)
 [![License: AGPL-3.0-only](https://img.shields.io/badge/license-AGPL--3.0--only-blue.svg)](./LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
@@ -27,7 +27,7 @@ The project is a pnpm + Turborepo monorepo with a Next.js web app, a NestJS API,
 ### Run it
 
 ```bash
-git clone https://github.com/richard-kenneth/skillex.git
+git clone https://github.com/theskillex/skillex.git
 cd skillex
 pnpm install
 pnpm run setup
@@ -252,9 +252,9 @@ The AGPL does not grant rights to the SkillEx name, logo, or other brand identif
 ## Links
 
 - Live site and waitlist: <https://skil-ex2-web.vercel.app/?utm_source=github&utm_medium=readme&utm_campaign=v0.1.0>
-- Repository: <https://github.com/richard-kenneth/skillex>
-- Issues: <https://github.com/richard-kenneth/skillex/issues>
-- Discussions: <https://github.com/richard-kenneth/skillex/discussions>
+- Repository: <https://github.com/theskillex/skillex>
+- Issues: <https://github.com/theskillex/skillex/issues>
+- Discussions: <https://github.com/theskillex/skillex/discussions>
 - Architecture: [`docs/architecture.md`](./docs/architecture.md)
 - Environment variables: [`docs/env-vars.md`](./docs/env-vars.md)
 - Mobile development: [`docs/mobile-development.md`](./docs/mobile-development.md)

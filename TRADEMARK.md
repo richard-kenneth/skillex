@@ -82,7 +82,7 @@ Permission under this policy is given only in writing. A permission may be limit
 
 ## Reporting misuse
 
-If you see a use of the Marks that you believe violates this policy, open a discussion at <https://github.com/richard-kenneth/skillex/discussions> titled `SkillEx trademark request`, or email **legal@richardkenneth.com** if the report includes confidential information.
+If you see a use of the Marks that you believe violates this policy, open a discussion at <https://github.com/theskillex/skillex/discussions> titled `SkillEx trademark request`, or email **legal@richardkenneth.com** if the report includes confidential information.
 
 ## Contact
 
@@ -92,7 +92,7 @@ For trademark questions or permission requests:
 
 **Email:** **legal@richardkenneth.com**
 
-**Public requests:** open a discussion at <https://github.com/richard-kenneth/skillex/discussions> titled `SkillEx trademark request`.
+**Public requests:** open a discussion at <https://github.com/theskillex/skillex/discussions> titled `SkillEx trademark request`.
 
 Do not include confidential information in a public discussion.
 

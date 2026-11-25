@@ -13,7 +13,7 @@ Use **GitHub Discussions** for:
 - showing what you built or learned; and
 - general community conversation.
 
-<https://github.com/richard-kenneth/skillex/discussions>
+<https://github.com/theskillex/skillex/discussions>
 
 Search existing discussions before opening a new one. If you find a related
 thread, add to it instead of starting a duplicate.
@@ -22,7 +22,7 @@ thread, add to it instead of starting a duplicate.
 
 Open a **bug report** with the repository's issue form:
 
-<https://github.com/richard-kenneth/skillex/issues/new/choose>
+<https://github.com/theskillex/skillex/issues/new/choose>
 
 Include the smallest reproduction you can, the expected and actual behavior,
 your environment, and any relevant logs. Remove secrets, tokens, personal data,
@@ -43,7 +43,7 @@ agree on the approach and avoid duplicated work.
 vulnerability.** Follow [`SECURITY.md`](./SECURITY.md) and use GitHub's private
 vulnerability reporting:
 
-<https://github.com/richard-kenneth/skillex/security/advisories/new>
+<https://github.com/theskillex/skillex/security/advisories/new>
 
 If you cannot use GitHub's private reporting, email **security@richardkenneth.com**.
 

@@ -9,7 +9,7 @@ body:
         Thanks for helping improve SkillEx. Describe the problem before the
         solution so we can evaluate the need, not just the implementation.
 
-        For open-ended ideas, use [Discussions](https://github.com/richard-kenneth/skillex/discussions) instead. Search existing issues first.
+        For open-ended ideas, use [Discussions](https://github.com/theskillex/skillex/discussions) instead. Search existing issues first.
 
   - type: textarea
     id: problem

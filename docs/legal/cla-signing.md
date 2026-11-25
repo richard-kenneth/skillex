@@ -67,7 +67,7 @@ When `CLA.md` changes, edit the `CLA.md` file in the existing Gist. Do not creat
 ### 4.3 Configure CLA Assistant
 
 - [x] Sign in at <https://cla-assistant.io> with the `richard-kenneth` GitHub account.
-- [x] Install the CLA Assistant GitHub App for the `richard-kenneth/skillex` repository.
+- [x] Install the CLA Assistant GitHub App for the `theskillex/skillex` repository.
 - [x] Link the repository to the Gist from step 4.2.
 - [x] Set the minimum change threshold if desired. The default (any change) is appropriate for a code repository.
 - [x] Add maintainers and trusted bots to the allowlist. Use exact usernames; avoid broad wildcards.

@@ -7,7 +7,7 @@
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/richard-kenneth/skillex.git",
+    "url": "git+https://github.com/theskillex/skillex.git",
     "directory": "apps/api"
   },
   "scripts": {
