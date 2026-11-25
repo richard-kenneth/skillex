@@ -820,10 +820,7 @@ export default function PublicUserProfileScreen() {
         animationType="fade"
         onRequestClose={() => setFullscreenImage(null)}
       >
-        <StatusBar
-          backgroundColor="rgba(0,0,0,0.95)"
-          barStyle="light-content"
-        />
+        <StatusBar barStyle="light-content" />
         <SafeAreaView
           style={{
             flex: 1,

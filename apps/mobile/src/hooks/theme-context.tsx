@@ -73,11 +73,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resolvedTheme: "light" | "dark" =
-    mode === "system"
-      ? systemScheme === "unspecified"
-        ? "dark"
-        : (systemScheme as "light" | "dark")
-      : mode;
+    mode === "system" ? (systemScheme === "dark" ? "dark" : "light") : mode;
 
   const colors = Colors[resolvedTheme];
 

@@ -126,7 +126,7 @@ function ToastStack({
       statusBarTranslucent
       onRequestClose={() => {}}
     >
-      <StatusBar backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar barStyle="light-content" />
       <View style={styles.container}>
         <View
           style={{

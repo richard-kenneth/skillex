@@ -6,7 +6,7 @@ import { useT } from "lib/i18n";
 
 export default function AppTabs() {
   const scheme = useColorScheme();
-  const colors = Colors[scheme === "unspecified" ? "light" : scheme];
+  const colors = Colors[scheme === "dark" ? "dark" : "light"];
   const t = useT("nav");
 
   return (

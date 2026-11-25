@@ -42,7 +42,9 @@ export function Dialog({
       transparent
       animationType="none"
       statusBarTranslucent
-      onRequestClose={() => dismissable && onOpenChange(false)}
+      onRequestClose={() => {
+        if (dismissable) onOpenChange(false);
+      }}
     >
       <Pressable
         style={styles.overlay}

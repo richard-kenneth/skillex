@@ -1159,7 +1159,7 @@ function ChatTabSection({
   const theme = useTheme();
   const t = useT("requests");
   const c = useT("common");
-  const chatScrollRef = React.useRef<ScrollView>(null);
+  const chatScrollRef = React.useRef<React.ElementRef<typeof ScrollView>>(null);
 
   const messages = request?.messages ?? [];
 
