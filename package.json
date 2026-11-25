@@ -27,6 +27,6 @@
     "db:reset": "node scripts/docker.mjs compose down -v && pnpm db:up"
   },
   "devDependencies": {
-    "turbo": "^2.9.6"
+    "turbo": "^2.11.13"
   }
 }
