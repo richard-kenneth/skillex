@@ -17,7 +17,7 @@
     "title": "I confirm that I am at least 18 years old",
     "type": "boolean",
     "required": true,
-    "description": "If you are under 18, do not sign here. Email legal@richardkenneth.com before contributing."
+    "description": "If you are under 18, do not sign here. Section 5.3 of the agreement explains the separate process."
   },
   "agreement": {
     "title": "I have read and agree to the SkillEx Individual CLA",

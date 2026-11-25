@@ -57,6 +57,11 @@ node scripts/create-cla-gist.mjs --public
 
 The script creates a public Gist containing `CLA.md` and a `metadata` file with the optional custom fields. It prints the Gist URL. The Gist is public because the CLA is a public document; do not put personal data in it.
 
+Keep email addresses and URLs out of the `metadata` descriptions. CLA Assistant
+renders that file as markdown before reading it as JSON, so an address becomes an
+autolink with quotes and the signing page fails with a JSON parse error. The
+script now refuses to publish metadata that contains either.
+
 When `CLA.md` changes, edit the `CLA.md` file in the existing Gist. Do not create a new Gist, or existing links will break. The new Gist revision causes contributors to re-accept the updated CLA.
 
 ### 4.3 Configure CLA Assistant

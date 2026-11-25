@@ -29,6 +29,19 @@ if (!metadata.agreement || metadata.agreement.type !== 'boolean' || metadata.agr
   throw new Error('cla-metadata.json must contain a required boolean "agreement" field.');
 }
 
+// CLA Assistant renders this file as markdown before reading it as JSON. A bare
+// email address or URL becomes an autolink, which injects quotes into the JSON
+// and makes the signing page fail with a parse error.
+for (const [key, field] of Object.entries(metadata)) {
+  const text = `${field.title ?? ''} ${field.description ?? ''}`;
+  if (/@|https?:\/\//.test(text)) {
+    throw new Error(
+      `cla-metadata.json field "${key}" contains an email address or URL. ` +
+        'Markdown autolinking corrupts the metadata JSON; describe the process instead.',
+    );
+  }
+}
+
 const tempDir = mkdtempSync(join(tmpdir(), 'skillex-cla-'));
 
 try {

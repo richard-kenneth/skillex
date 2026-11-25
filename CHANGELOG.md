@@ -103,6 +103,11 @@ once versioned releases begin.
 
 ### Fixed
 
+- Removed the email address from the CLA metadata description. CLA Assistant
+  renders the metadata file as markdown, so the address became an autolink whose
+  quotes broke the JSON, and the signing page failed with a parse error instead
+  of showing the CLA. The Gist script now rejects email addresses and URLs in
+  metadata descriptions.
 - Accepted both UUID and 32-character user IDs in exchange request payloads.
   The seeded demo users use UUIDs, so requesting an exchange with the demo
   account failed validation with "Validation failed" even though the match was
