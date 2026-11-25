@@ -5,7 +5,7 @@ The SkillEx mobile app is built with [Expo](https://expo.dev) and [React Native]
 ## Requirements
 
 - Node.js 22+
-- pnpm 10.33.2 (pinned in the repository root)
+- pnpm 12.23.0 (pinned in the repository root)
 - Android Studio and an Android emulator/device for Android development
 - macOS with Xcode for local iOS development
 - An Expo development build; Expo Go alone is not sufficient because the app uses native modules

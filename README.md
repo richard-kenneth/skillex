@@ -20,8 +20,8 @@ The project is a pnpm + Turborepo monorepo with a Next.js web app, a NestJS API,
 
 ### Prerequisites
 
-- **Node.js 22+**
-- **pnpm 10.33.2** (`corepack enable` or `npm install -g pnpm@10.33.2`)
+- **Node.js 22+** (Node 26 LTS recommended)
+- **pnpm 12+** (`corepack enable` or `npm install -g pnpm@12.23.0`)
 - **Docker Desktop** (or Docker Engine with Compose v2)
 
 ### Run it

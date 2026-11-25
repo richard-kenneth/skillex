@@ -85,7 +85,7 @@ body:
       placeholder: |
         OS: Windows 11
         Node: 22.x
-        pnpm: 10.33.2
+        pnpm: 12.23.0
         Browser: Chrome 140
         Setup: local Docker Compose, `pnpm dev`
     validations:

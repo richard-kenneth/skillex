@@ -28,6 +28,15 @@ once versioned releases begin.
   file, bound the core services to `127.0.0.1`, and made `pnpm run setup` stop
   with an actionable message when a port is already in use instead of running
   migrations against a different local database.
+- Upgraded the development and CI toolchain to Node.js 26 (Active LTS),
+  pnpm 12.23.0, and Turborepo 2.11.13.
+- Upgraded NestJS to 12.x across `apps/api` with native ESM testing, and
+  Prisma to 7.10.1.
+- Upgraded `apps/mobile` to Expo SDK 58, React Native 0.88.1, and React 19.3.0,
+  adapting the floating tab bar navigation to Expo Router 58 and component refs
+  to React 19 element instance types.
+- Standardized ESLint 10.15.0, Prettier 3.10.1, and TanStack Query 5.108.4 across
+  the workspace.
 - Upgraded Next.js, Better Auth, Nodemailer, Zod, and other direct dependencies,
   added same-major security overrides for transitive packages, and moved
   build-only tooling to development dependencies.

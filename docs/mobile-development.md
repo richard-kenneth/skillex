@@ -11,7 +11,7 @@ work remain maintainer-led. Read
 
 ## Stack and constraints
 
-- Expo SDK 57 with React Native 0.86 and Expo Router.
+- Expo SDK 58 with React Native 0.88 and Expo Router.
 - Better Auth's Expo plugin with bearer tokens stored in SecureStore.
 - LiveKit React Native WebRTC for live sessions.
 - A local Expo module, `apps/mobile/modules/audio-device-detector`, with Android
@@ -26,7 +26,7 @@ directories are not committed; Expo generates them from `app.json`.
 
 | Platform | Requirements                                                                                                 |
 | -------- | ------------------------------------------------------------------------------------------------------------ |
-| Both     | Node.js 22+, pnpm 10.33.2, and a running SkillEx API                                                         |
+| Both     | Node.js 22+ (Node 26 LTS recommended), pnpm 12.23.0, and a running SkillEx API              |
 | Android  | Android Studio, the Android SDK, an emulator or USB device, and the JDK bundled with Android Studio          |
 | iOS      | macOS with Xcode and CocoaPods; a simulator or a signed development device                                   |
 | Push     | A physical device; Android also needs a Firebase `google-services.json` to receive remote push notifications |

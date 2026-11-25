@@ -221,7 +221,7 @@ also visible in the app bundle. Never put a secret in either file.
 | `POSTHOG_PROJECT_TOKEN`       | Pair     | empty                   | PostHog project token, exposed through `expo.extra`.                                          |
 | `POSTHOG_HOST`                | Pair     | empty                   | PostHog host, exposed through `expo.extra`.                                                   |
 
-The mobile app is built with Expo SDK 57 and React Native 0.86. It requires an
+The mobile app is built with Expo SDK 58 and React Native 0.88. It requires an
 Expo development build because it uses LiveKit WebRTC and a local native audio
 module. See [`docs/mobile-development.md`](./mobile-development.md).
 

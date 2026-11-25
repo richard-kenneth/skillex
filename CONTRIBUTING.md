@@ -83,8 +83,8 @@ Where the CLA or this guide refers to a private channel, use **legal@richardkenn
 
 ### Prerequisites
 
-- Node.js 22+
-- pnpm 10.33.2
+- Node.js 22+ (Active LTS 26 recommended)
+- pnpm 12.23.0 (pinned in `package.json`)
 - Docker Desktop (or Docker Engine with Compose v2)
 
 ### Quick start
