@@ -24,7 +24,7 @@ Related documents:
 | Full-history secret scan | Both Gitleaks and Trufflehog full-history scans are clean                                                                   | **Clean (Gitleaks + Trufflehog)**                   |
 | Dependency risk          | `pnpm audit --prod` has no critical advisories, and every remaining advisory is documented with a rationale                 | **0 critical; residual advisories documented**      |
 | Legal review             | CLA, Corporate CLA, `SECURITY.md`, `PRIVACY.md`, and `TRADEMARK.md` terms finalized                                         | **Ready**                                           |
-| CLA Assistant            | The app is installed, linked to the CLA Gist, required by the `main` ruleset, and tested with an unsigned account           | **Pending setup**                                   |
+| CLA Assistant            | The app is installed, linked to the CLA Gist, required by the `main` ruleset, and tested with an unsigned account           | **Blocked on visibility; test on day zero**         |
 | Local stack validation   | `pnpm run setup`, `pnpm dev`, and the dev container work on a machine with Docker                                           | **Compose + clean clone + dev container validated** |
 | Landing page             | The current `main` build is deployed with SkillEx branding, working counters, a working waitlist, and no stale links        | **Redeploy pending**                                |
 | Demo assets              | The README has a real screenshot or GIF captured from seeded demo data                                                      | **Captured from seeded local stack**                |
@@ -121,7 +121,20 @@ Do **not** enable CodeQL default setup. The repository uses advanced setup in
 [`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml). Confirm that
 the CodeQL and Scorecard workflows start now that the repository is public.
 
-### 4. Finish the GitHub UI steps
+### 4. Verify CLA Assistant
+
+CLA Assistant does not process private repositories, so this is the first point
+at which it can run. Open a pull request from a second account that has not
+signed and confirm that the `license/cla` check appears as pending, that the bot
+comments with a signing link, and that merge is blocked. Sign, confirm the check
+turns green, and open a second pull request from the same account to confirm no
+re-signing is requested.
+
+Do this before announcing the launch. If the check never appears, remove
+`license/cla` from the `Protect main` ruleset until the configuration is fixed
+rather than leaving contributors blocked.
+
+### 5. Finish the GitHub UI steps
 
 - Upload [`docs/assets/social-preview.png`](../assets/social-preview.png) under
   **Settings → General → Social preview**.
@@ -133,7 +146,7 @@ the CodeQL and Scorecard workflows start now that the repository is public.
 - Confirm the issue forms, Discussion templates, `SECURITY.md` advisory link,
   and `CODEOWNERS` all resolve.
 
-### 5. Publish the release
+### 6. Publish the release
 
 Use the release commit on `main`. Remove the draft comment from the release
 notes before creating the GitHub release.
@@ -148,7 +161,7 @@ gh release create v0.1.0 \
   --notes-file docs/launch/release-notes-v0.1.0.md
 ```
 
-### 6. Smoke-test from a clean checkout
+### 7. Smoke-test from a clean checkout
 
 On a machine with Docker:
 
