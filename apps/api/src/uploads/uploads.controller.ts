@@ -48,7 +48,7 @@ export class UploadsController {
 
     // Backend Control: Restrict file types and paths. The extension is derived
     // from the MIME type, never from a client-supplied file name.
-    let key = '';
+    let key: string;
     if (type === 'avatar') {
       if (!getAvatarExtension(fileType)) {
         throw new BadRequestException(

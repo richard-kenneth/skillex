@@ -5,6 +5,13 @@ import expoConfig from "eslint-config-expo/flat.js";
 export default defineConfig([
   expoConfig,
   {
+    settings: {
+      react: {
+        version: "19.2",
+      },
+    },
+  },
+  {
     ignores: ["dist/**", ".expo/**", "android/**", "ios/**"],
     rules: {
       // Reanimated shared values are intentionally mutated in event handlers;

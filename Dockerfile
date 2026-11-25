@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV CI=true
@@ -9,7 +9,7 @@ ENV CI=true
 ENV NPM_CONFIG_FETCH_RETRIES=5
 ENV NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=20000
 ENV NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000
-RUN npm install --global pnpm@10.33.2
+RUN npm install --global pnpm@12.23.0
 # Keep the pnpm store inside the cached mount so dependency downloads survive
 # between builds.
 ENV npm_config_store_dir=/pnpm/store
@@ -30,7 +30,7 @@ COPY apps/mobile/package.json ./apps/mobile/package.json
 COPY apps/mobile/modules/audio-device-detector ./apps/mobile/modules/audio-device-detector
 
 # Install dependencies
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Copy source code
 COPY packages/shared ./packages/shared
@@ -44,9 +44,9 @@ RUN pnpm --filter @skillex/shared build
 RUN pnpm --filter api build
 
 # Prune devDependencies to reduce image size
-RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile
 
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -54,7 +54,7 @@ ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 
 # Explicitly place the built shared package into node_modules for hoisted resolution
-RUN mkdir -p ./node_modules/@skillex/shared
+RUN rm -rf ./node_modules/@skillex/shared && mkdir -p ./node_modules/@skillex/shared
 COPY --from=builder /app/packages/shared/dist ./node_modules/@skillex/shared/dist
 COPY --from=builder /app/packages/shared/package.json ./node_modules/@skillex/shared/package.json
 
