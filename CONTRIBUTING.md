@@ -58,6 +58,8 @@ If the bot does not comment within a few minutes, leave a comment on the pull re
 
 If you do not want to sign the CLA, you can still participate in issues and discussions. We cannot merge code, documentation, or other material intended for inclusion in the project without a signed CLA.
 
+The Project Owner and automated dependency bots are listed in the repository's CLA allowlist and are exempt from signing. The `license/cla` check still reports success on their pull requests. A contributor is added to the allowlist only when an agreement covers them, such as a corporate CLA covering named employees.
+
 ### How to sign (corporate)
 
 1. Read `CLA-CORPORATE.md`.

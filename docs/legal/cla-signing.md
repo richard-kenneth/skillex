@@ -66,18 +66,18 @@ When `CLA.md` changes, edit the `CLA.md` file in the existing Gist. Do not creat
 
 ### 4.3 Configure CLA Assistant
 
-- [ ] Sign in at <https://cla-assistant.io> with the `richard-kenneth` GitHub account.
-- [ ] Install the CLA Assistant GitHub App for the `richard-kenneth/skillex` repository.
-- [ ] Link the repository to the Gist from step 4.2.
-- [ ] Set the minimum change threshold if desired. The default (any change) is appropriate for a code repository.
-- [ ] Add maintainers and trusted bots to the allowlist. Use exact usernames; avoid broad wildcards.
-- [ ] Confirm that the CLA Assistant privacy policy link in `PRIVACY.md` is current.
+- [x] Sign in at <https://cla-assistant.io> with the `richard-kenneth` GitHub account.
+- [x] Install the CLA Assistant GitHub App for the `richard-kenneth/skillex` repository.
+- [x] Link the repository to the Gist from step 4.2.
+- [x] Set the minimum change threshold if desired. The default (any change) is appropriate for a code repository.
+- [x] Add maintainers and trusted bots to the allowlist. Use exact usernames; avoid broad wildcards.
+- [x] Confirm that the CLA Assistant privacy policy link in `PRIVACY.md` is current.
 
 ### 4.4 Branch protection
 
-- [ ] Require the CLA Assistant status check before merging to the default branch.
-- [ ] Do not allow administrators to bypass the check for external contributions.
-- [ ] Keep the default `GITHUB_TOKEN` permissions read-only for normal CI. CLA Assistant is an external GitHub App and does not need a `pull_request_target` workflow in this repository.
+- [x] Require the CLA Assistant status check before merging to the default branch.
+- [x] Do not allow administrators to bypass the check for external contributions. The `Protect main` ruleset keeps an admin bypass for the Project Owner only, because the repository has a single maintainer.
+- [x] Keep the default `GITHUB_TOKEN` permissions read-only for normal CI. CLA Assistant is an external GitHub App and does not need a `pull_request_target` workflow in this repository.
 
 ### 4.5 Test
 
@@ -88,27 +88,31 @@ private (see
 Run this test immediately after the visibility change and before announcing the
 launch.
 
-- [ ] Open a test pull request from a GitHub account that has not signed.
-- [ ] Confirm the bot comments, the status is pending or failing, and the pull request cannot merge.
+- [x] Open a test pull request from a GitHub account that has not signed.
+- [x] Confirm the bot comments, the status is pending or failing, and the pull request cannot merge.
 - [ ] Sign the CLA with the test account and confirm the status turns green.
 - [ ] Open a second pull request from the same account and confirm no re-signing is required.
 - [ ] Update the Gist and confirm the bot requests re-acceptance.
 - [ ] Test a corporate allowlist entry with a test account.
 
+The first two items were confirmed on 25 November 2026. The remaining items need
+a second GitHub account; signing is a legal acceptance, so the Project Owner must
+complete it.
+
 ### 4.6 Discussions
 
 - [x] Enable GitHub Discussions.
-- [ ] Create a category named **Corporate CLA** with the slug `corporate-cla`.
-- [ ] Create a category named **Trademark** with the slug `trademark`.
-- [ ] Confirm the templates in `.github/DISCUSSION_TEMPLATE/` appear.
-- [ ] Pin a short post explaining the CLA process and linking to `CONTRIBUTING.md`.
+- [x] Create a category named **Corporate CLA** with the slug `corporate-cla`.
+- [x] Create a category named **Trademark** with the slug `trademark`.
+- [x] Confirm the templates in `.github/DISCUSSION_TEMPLATE/` appear.
+- [x] Pin a short post explaining the CLA process and linking to `CONTRIBUTING.md`.
 
 ### 4.7 Security reporting
 
 Private vulnerability reporting is not available while the repository is private. Enable it immediately after the public launch.
 
-- [ ] Enable **Private vulnerability reporting** in the repository's security settings.
-- [ ] Confirm the link in `SECURITY.md` opens the private report form.
+- [x] Enable **Private vulnerability reporting** in the repository's security settings.
+- [x] Confirm the link in `SECURITY.md` opens the private report form.
 - [ ] Add a security contact to the repository's security settings if GitHub offers one. Use `security@richardkenneth.com`, never the Project Owner's personal email.
 
 ### 4.8 Role email addresses
@@ -160,8 +164,14 @@ A Developer Certificate of Origin is lighter, but it does not grant the Project 
 ## 8. Open items
 
 - [x] Create the Gist and configure CLA Assistant.
-- [ ] Create the Discussions categories. Discussions itself is enabled.
-- [ ] Enable private vulnerability reporting after the repository is public.
+- [x] Create the Discussions categories. Discussions itself is enabled.
+- [x] Enable private vulnerability reporting after the repository is public.
 - [x] Add the CLA Assistant status check (`license/cla`) to branch protection.
-- [ ] Test the full flow on day zero. CLA Assistant does not run on private
-      repositories, so this cannot happen before the visibility change.
+- [x] Confirm the unsigned path on the public repository: pending status, bot
+      comment, and blocked merge. The Project Owner and automated bots are on the
+      allowlist, so their pull requests report success without a signature.
+- [ ] Sign the CLA from a second account, confirm the status turns green, and
+      confirm that a second pull request from that account does not ask for a new
+      signature. Signing is a legal acceptance, so the Project Owner must complete
+      it.
+- [ ] Test a corporate allowlist entry with a test account.
