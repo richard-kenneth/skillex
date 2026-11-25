@@ -13,7 +13,7 @@
   "dependencies": {
     "@better-auth/expo": "^1.7.20",
     "@config-plugins/react-native-webrtc": "^15.0.1",
-    "@expo/ui": "^57.0.7",
+    "@expo/ui": "^58.0.29",
     "@livekit/react-native": "^2.12.0",
     "@livekit/react-native-expo-plugin": "^1.0.2",
     "@livekit/react-native-webrtc": "^144.1.2",
