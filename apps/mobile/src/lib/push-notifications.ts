@@ -11,6 +11,7 @@ import {
 } from "@skillex/shared";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
+import { AndroidImportance } from "expo-notifications";
 import { authClient } from "lib/auth";
 import { Platform } from "react-native";
 import EventSource from "react-native-sse";
@@ -123,7 +124,7 @@ export async function registerForPushNotifications(): Promise<PushTokenResult> {
 async function setupAndroidChannels() {
   await Notifications.setNotificationChannelAsync("default", {
     name: "Default",
-    importance: Notifications.AndroidImportance.HIGH,
+    importance: AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: "#6366f1",
   });
@@ -131,7 +132,7 @@ async function setupAndroidChannels() {
   await Notifications.setNotificationChannelAsync("exchanges", {
     name: "Exchange Updates",
     description: "Notifications about your skill exchanges",
-    importance: Notifications.AndroidImportance.HIGH,
+    importance: AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: "#6366f1",
   });
@@ -139,14 +140,14 @@ async function setupAndroidChannels() {
   await Notifications.setNotificationChannelAsync("points", {
     name: "Points & Wallet",
     description: "Notifications about points and transactions",
-    importance: Notifications.AndroidImportance.DEFAULT,
+    importance: AndroidImportance.DEFAULT,
     lightColor: "#f59e0b",
   });
 
   await Notifications.setNotificationChannelAsync("sessions", {
     name: "Session Reminders",
     description: "Reminders for upcoming sessions",
-    importance: Notifications.AndroidImportance.HIGH,
+    importance: AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: "#3b82f6",
   });

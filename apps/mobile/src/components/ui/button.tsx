@@ -44,7 +44,10 @@ export interface ButtonProps extends Omit<PressableProps, "children"> {
   children?: React.ReactNode;
 }
 
-export const Button = forwardRef<View, ButtonProps>(function Button(
+export const Button = forwardRef<
+  React.ElementRef<typeof Pressable>,
+  ButtonProps
+>(function Button(
   {
     variant = "default",
     size = "md",

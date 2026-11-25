@@ -603,7 +603,7 @@ function ImagePreviewModal({
   const t = useT("profile");
   return (
     <Modal visible onRequestClose={onClose} transparent animationType="fade">
-      <StatusBar backgroundColor="rgba(0,0,0,0.9)" barStyle="light-content" />
+      <StatusBar barStyle="light-content" />
       <SafeAreaView
         style={{
           flex: 1,

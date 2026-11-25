@@ -2053,7 +2053,7 @@ function ExchangeChatBody({
   const toast = useToast();
   const insets = useSafeAreaInsets();
 
-  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollViewRef = React.useRef<React.ElementRef<typeof ScrollView>>(null);
 
   const [text, setText] = React.useState("");
   const [uploading, setUploading] = React.useState(false);
@@ -2510,10 +2510,7 @@ function ExchangeChatBody({
           animationType="fade"
           onRequestClose={() => setPreviewImageUrl(null)}
         >
-          <StatusBar
-            backgroundColor="rgba(0,0,0,0.95)"
-            barStyle="light-content"
-          />
+          <StatusBar barStyle="light-content" />
           <SafeAreaView
             style={{
               flex: 1,
