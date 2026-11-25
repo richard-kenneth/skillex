@@ -227,8 +227,8 @@ setup and security settings a few days of quiet testing first.
 | OSCAFest           | Talk or lightning demo                                                                                | Submit through the event's call for proposals                                                   |
 | Hacktoberfest 2027 | Seasonal contributor event                                                                            | Add the `hacktoberfest` topic in late September 2027, not before                                |
 
-The `hacktoberfest` topic is currently applied to the repository. Remove it
-until the 2027 event if the project should not appear in Hacktoberfest searches.
+The `hacktoberfest` topic is not applied. Add it in late September 2027, not
+before.
 
 ## Metrics and response
 
