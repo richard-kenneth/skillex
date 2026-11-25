@@ -1,13 +1,6 @@
-<!--
-Draft for the GitHub release body. Before publishing:
-- replace RELEASE_DATE with the release date;
-- confirm the release commit and CI run;
-- remove this comment.
--->
-
 # SkillEx v0.1.0
 
-**Release date:** RELEASE_DATE
+**Release date:** 25 November 2026
 
 SkillEx is now open source under the **GNU Affero General Public License,
 version 3 only (AGPL-3.0-only)**. `v0.1.0` is the first public source release of
