@@ -73,7 +73,7 @@ repository without GitHub Advanced Security. Enabling them returned HTTP 422.
 After the repository is public, run:
 
 ```bash
-gh repo edit richard-kenneth/skillex \
+gh repo edit theskillex/skillex \
   --enable-secret-scanning \
   --enable-secret-scanning-push-protection
 ```
@@ -113,7 +113,7 @@ repository is private.
 After the first public run, the badge can be added to the README:
 
 ```markdown
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/richard-kenneth/skillex/badge)](https://securityscorecards.dev/viewer/?uri=github.com/richard-kenneth/skillex)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/theskillex/skillex/badge)](https://securityscorecards.dev/viewer/?uri=github.com/theskillex/skillex)
 ```
 
 ## Protecting `main`
@@ -187,7 +187,7 @@ The templates in `.github/DISCUSSION_TEMPLATE/` use the `corporate-cla` and
 `trademark` slugs.
 
 The **👋 Start here** post is published at
-<https://github.com/richard-kenneth/skillex/discussions/17>. GitHub's public API
+<https://github.com/theskillex/skillex/discussions/17>. GitHub's public API
 can create a discussion but does not expose a mutation to pin one. Pin it
 manually from the discussion's **...** menu. Do not post personal contact
 details.
@@ -207,7 +207,7 @@ The repository uses these labels for triage and contributor discovery:
 | `blocked`                                | Waiting on another issue or external work      |
 
 The seeded backlog contains 9 `good first issue` and 6 `help wanted` issues.
-Browse it at <https://github.com/richard-kenneth/skillex/issues>. Keep the number
+Browse it at <https://github.com/theskillex/skillex/issues>. Keep the number
 of open starter issues small enough to review within 48 hours, and close or
 relabel issues that are no longer actionable.
 
@@ -225,23 +225,23 @@ are approved:
 ## Verification
 
 ```bash
-gh repo view richard-kenneth/skillex \
+gh repo view theskillex/skillex \
   --json visibility,description,repositoryTopics,hasDiscussionsEnabled,mergeCommitAllowed,squashMergeAllowed,rebaseMergeAllowed,deleteBranchOnMerge
 
-gh api repos/richard-kenneth/skillex/rulesets
-gh api repos/richard-kenneth/skillex/rules/branches/main
-gh api repos/richard-kenneth/skillex/actions/permissions/workflow
-gh api repos/richard-kenneth/skillex/vulnerability-alerts
-gh api repos/richard-kenneth/skillex/automated-security-fixes
-gh label list --repo richard-kenneth/skillex --limit 100
-gh issue list --repo richard-kenneth/skillex --limit 50
+gh api repos/theskillex/skillex/rulesets
+gh api repos/theskillex/skillex/rules/branches/main
+gh api repos/theskillex/skillex/actions/permissions/workflow
+gh api repos/theskillex/skillex/vulnerability-alerts
+gh api repos/theskillex/skillex/automated-security-fixes
+gh label list --repo theskillex/skillex --limit 100
+gh issue list --repo theskillex/skillex --limit 50
 ```
 
 After public, also verify:
 
 ```bash
-gh api repos/richard-kenneth/skillex/actions/permissions/fork-pr-contributor-approval
-gh api repos/richard-kenneth/skillex/private-vulnerability-reporting
+gh api repos/theskillex/skillex/actions/permissions/fork-pr-contributor-approval
+gh api repos/theskillex/skillex/private-vulnerability-reporting
 ```
 
 ## Launch gate

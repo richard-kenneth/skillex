@@ -8,9 +8,9 @@ body:
       value: |
         Thanks for taking the time to report a bug.
 
-        **Do not include secrets, `.env` contents, access tokens, passwords, or personal data.** For a security vulnerability, use [private vulnerability reporting](https://github.com/richard-kenneth/skillex/security/advisories/new) instead of a public issue.
+        **Do not include secrets, `.env` contents, access tokens, passwords, or personal data.** For a security vulnerability, use [private vulnerability reporting](https://github.com/theskillex/skillex/security/advisories/new) instead of a public issue.
 
-        Search [existing issues](https://github.com/richard-kenneth/skillex/issues) first.
+        Search [existing issues](https://github.com/theskillex/skillex/issues) first.
 
   - type: input
     id: summary

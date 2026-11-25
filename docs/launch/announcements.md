@@ -17,13 +17,13 @@ is public and the blocking gates in [`README.md`](./README.md) are cleared.
 
 | Destination             | URL                                                                    |
 | ----------------------- | ---------------------------------------------------------------------- |
-| Repository              | <https://github.com/richard-kenneth/skillex>                           |
-| Release                 | <https://github.com/richard-kenneth/skillex/releases/tag/v0.1.0>       |
+| Repository              | <https://github.com/theskillex/skillex>                           |
+| Release                 | <https://github.com/theskillex/skillex/releases/tag/v0.1.0>       |
 | Landing page + waitlist | <https://skil-ex2-web.vercel.app>                                      |
-| Discussions             | <https://github.com/richard-kenneth/skillex/discussions>               |
-| Starter issues          | <https://github.com/richard-kenneth/skillex/issues>                    |
-| Contributing            | <https://github.com/richard-kenneth/skillex/blob/main/CONTRIBUTING.md> |
-| Security                | <https://github.com/richard-kenneth/skillex/blob/main/SECURITY.md>     |
+| Discussions             | <https://github.com/theskillex/skillex/discussions>               |
+| Starter issues          | <https://github.com/theskillex/skillex/issues>                    |
+| Contributing            | <https://github.com/theskillex/skillex/blob/main/CONTRIBUTING.md> |
+| Security                | <https://github.com/theskillex/skillex/blob/main/SECURITY.md>     |
 
 ## UTM links
 

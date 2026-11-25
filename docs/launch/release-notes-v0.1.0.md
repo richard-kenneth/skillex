@@ -50,7 +50,7 @@ Requirements: Node.js 22+, pnpm 10.33.2, and Docker Desktop or Docker Engine wit
 Compose v2.
 
 ```bash
-git clone https://github.com/richard-kenneth/skillex.git
+git clone https://github.com/theskillex/skillex.git
 cd skillex
 pnpm install
 pnpm run setup
@@ -65,7 +65,7 @@ Password: Password123!
 ```
 
 The full setup, optional integrations, and troubleshooting steps are in the
-[README](https://github.com/richard-kenneth/skillex/blob/main/README.md).
+[README](https://github.com/theskillex/skillex/blob/main/README.md).
 
 ## What is intentionally not included yet
 
@@ -80,7 +80,7 @@ The full setup, optional integrations, and troubleshooting steps are in the
   optional integrations. A partially configured group fails startup with an
   actionable error instead of silently disabling security.
 - Rate-limit storage is in memory. Redis-backed storage and withdrawal-timeout
-  reconciliation are tracked in the [roadmap](https://github.com/richard-kenneth/skillex/blob/main/ROADMAP.md).
+  reconciliation are tracked in the [roadmap](https://github.com/theskillex/skillex/blob/main/ROADMAP.md).
 - Web and mobile test suites are incomplete. The API has service-level tests;
   Playwright and mobile CI are planned.
 - Releases and `CHANGELOG.md` are maintained manually for now. release-please is
@@ -91,10 +91,10 @@ The full setup, optional integrations, and troubleshooting steps are in the
 Please do not report vulnerabilities in public issues, discussions, or pull
 requests. Use GitHub's private vulnerability reporting:
 
-<https://github.com/richard-kenneth/skillex/security/advisories/new>
+<https://github.com/theskillex/skillex/security/advisories/new>
 
 The policy, response targets, scope, and safe-harbor terms are in
-[`SECURITY.md`](https://github.com/richard-kenneth/skillex/blob/main/SECURITY.md).
+[`SECURITY.md`](https://github.com/theskillex/skillex/blob/main/SECURITY.md).
 
 This release includes the pre-launch security work: constant-time secret
 comparison, webhook signature checks that do not log the expected secret,
@@ -105,24 +105,24 @@ for the full list.
 ## License and brand
 
 SkillEx is licensed under **AGPL-3.0-only**. See
-[`LICENSE`](https://github.com/richard-kenneth/skillex/blob/main/LICENSE) and
-[`NOTICE`](https://github.com/richard-kenneth/skillex/blob/main/NOTICE).
+[`LICENSE`](https://github.com/theskillex/skillex/blob/main/LICENSE) and
+[`NOTICE`](https://github.com/theskillex/skillex/blob/main/NOTICE).
 
 The license does not grant rights to the SkillEx name, logo, or other brand
 identifiers. See
-[`TRADEMARK.md`](https://github.com/richard-kenneth/skillex/blob/main/TRADEMARK.md).
+[`TRADEMARK.md`](https://github.com/theskillex/skillex/blob/main/TRADEMARK.md).
 
 ## Contributing
 
 Contributions to the web app, API, shared package, documentation, and tests are
 welcome. Mobile contributions are community-supported.
 
-- Read [`CONTRIBUTING.md`](https://github.com/richard-kenneth/skillex/blob/main/CONTRIBUTING.md)
+- Read [`CONTRIBUTING.md`](https://github.com/theskillex/skillex/blob/main/CONTRIBUTING.md)
   for setup, branch and commit conventions, the CLA, and review expectations.
 - Browse the starter backlog:
-  [9 `good first issue`s and 6 `help wanted` issues](https://github.com/richard-kenneth/skillex/issues).
-- Ask questions in [Discussions](https://github.com/richard-kenneth/skillex/discussions)
-  and follow the [Code of Conduct](https://github.com/richard-kenneth/skillex/blob/main/CODE_OF_CONDUCT.md).
+  [9 `good first issue`s and 6 `help wanted` issues](https://github.com/theskillex/skillex/issues).
+- Ask questions in [Discussions](https://github.com/theskillex/skillex/discussions)
+  and follow the [Code of Conduct](https://github.com/theskillex/skillex/blob/main/CODE_OF_CONDUCT.md).
 - Sign the CLA when your first pull request opens. The CLA Assistant will guide
   you.
 
@@ -130,7 +130,7 @@ We aim to respond to new issues and pull requests within 48 hours.
 
 ## What's next
 
-The [roadmap](https://github.com/richard-kenneth/skillex/blob/main/ROADMAP.md)
+The [roadmap](https://github.com/theskillex/skillex/blob/main/ROADMAP.md)
 covers Redis-backed throttling, withdrawal reconciliation, Playwright coverage,
 service tests, a self-hosting guide, release automation, mobile CI, and an
 accessibility audit.

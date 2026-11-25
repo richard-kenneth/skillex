@@ -95,7 +95,7 @@ Confirm that:
 Only after the blocking gates and the checks above are complete:
 
 ```bash
-gh repo edit richard-kenneth/skillex \
+gh repo edit theskillex/skillex \
   --visibility public \
   --accept-visibility-change-consequences
 ```
@@ -103,27 +103,27 @@ gh repo edit richard-kenneth/skillex \
 ### 3. Apply post-public security settings immediately
 
 ```bash
-gh repo edit richard-kenneth/skillex \
+gh repo edit theskillex/skillex \
   --enable-secret-scanning \
   --enable-secret-scanning-push-protection
 
 gh api --method PUT \
-  repos/richard-kenneth/skillex/private-vulnerability-reporting
+  repos/theskillex/skillex/private-vulnerability-reporting
 
 gh api --method PUT \
-  repos/richard-kenneth/skillex/actions/permissions/fork-pr-contributor-approval \
+  repos/theskillex/skillex/actions/permissions/fork-pr-contributor-approval \
   -f approval_policy=first_time_contributors
 ```
 
 Then verify:
 
 ```bash
-gh api repos/richard-kenneth/skillex/actions/permissions/workflow
-gh api repos/richard-kenneth/skillex/private-vulnerability-reporting
-gh api repos/richard-kenneth/skillex/actions/permissions/fork-pr-contributor-approval
-gh api repos/richard-kenneth/skillex/rules/branches/main
-gh api repos/richard-kenneth/skillex/vulnerability-alerts
-gh api repos/richard-kenneth/skillex/automated-security-fixes
+gh api repos/theskillex/skillex/actions/permissions/workflow
+gh api repos/theskillex/skillex/private-vulnerability-reporting
+gh api repos/theskillex/skillex/actions/permissions/fork-pr-contributor-approval
+gh api repos/theskillex/skillex/rules/branches/main
+gh api repos/theskillex/skillex/vulnerability-alerts
+gh api repos/theskillex/skillex/automated-security-fixes
 ```
 
 Do **not** enable CodeQL default setup. The repository uses advanced setup in
@@ -150,7 +150,7 @@ rather than leaving contributors blocked.
 - Create the **Corporate CLA** and **Trademark** Discussions categories with the
   slugs `corporate-cla` and `trademark`.
 - Pin the **👋 Start here** discussion at
-  <https://github.com/richard-kenneth/skillex/discussions/17>.
+  <https://github.com/theskillex/skillex/discussions/17>.
 - Pin the repository on the owner's profile and add a profile README link.
 - Confirm the issue forms, Discussion templates, `SECURITY.md` advisory link,
   and `CODEOWNERS` all resolve.
@@ -175,7 +175,7 @@ gh release create v0.1.0 \
 On a machine with Docker:
 
 ```bash
-git clone https://github.com/richard-kenneth/skillex.git
+git clone https://github.com/theskillex/skillex.git
 cd skillex
 pnpm install
 pnpm run setup

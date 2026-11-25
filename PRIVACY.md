@@ -127,4 +127,4 @@ We may update this notice as the project or its service providers change. The cu
 
 ## Contact
 
-Privacy questions and requests: **legal@richardkenneth.com**. You may also open a public discussion at <https://github.com/richard-kenneth/skillex/discussions> for general questions, but do not include personal information in it.
+Privacy questions and requests: **legal@richardkenneth.com**. You may also open a public discussion at <https://github.com/theskillex/skillex/discussions> for general questions, but do not include personal information in it.
